@@ -318,6 +318,9 @@
     <Compile Include="NSUNS4_Character_Manager\Tools\Tool_UnlockCharaTotalEditor.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="NSUNS4_Character_Manager\Tools\Tool_UnlockEvoItemParamEditor.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="NSUNS4_Character_Manager\XfbinParser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
@@ -443,6 +446,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="NSUNS4_Character_Manager\Tools\Tool_UnlockCharaTotalEditor.resx">
       <DependentUpon>Tool_UnlockCharaTotalEditor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="NSUNS4_Character_Manager\Tools\Tool_UnlockEvoItemParamEditor.resx">
+      <DependentUpon>Tool_UnlockEvoItemParamEditor.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

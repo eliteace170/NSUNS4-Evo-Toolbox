@@ -55,6 +55,7 @@ namespace NSUNS4_Character_Manager
         public static string conditionprmPath = "[null]";
         public static string damageprmPath = "[null]";
         public static string spTypeSupportParamPath = "[null]";
+        public static string unlockEvoItemParamPath = "[null]";
         private Button button9;
         private Button button10;
         private Button button11;
@@ -100,6 +101,7 @@ namespace NSUNS4_Character_Manager
         private Button button13;
         private LinkLabel linkLabel12;
         private Button button30;
+        private Button button31;
         public byte[] PRMEditorCopiedSection;
         public byte[] TheValue
         {
@@ -124,6 +126,7 @@ namespace NSUNS4_Character_Manager
         void CreateConfig()
         {
             List<string> cfg = new List<string>();
+            cfg.Add("[null]");
             cfg.Add("[null]");
             cfg.Add("[null]");
             cfg.Add("[null]");
@@ -179,6 +182,7 @@ namespace NSUNS4_Character_Manager
             cfg.Add(conditionprmPath);
             cfg.Add(damageprmPath);
             cfg.Add(spTypeSupportParamPath);
+            cfg.Add(unlockEvoItemParamPath);
             File.WriteAllLines(ConfigPath, cfg.ToArray());
             MessageBox.Show("Config file saved.");
         }
@@ -210,6 +214,7 @@ namespace NSUNS4_Character_Manager
             if (cfg.Length > 21) conditionprmPath = cfg[21];
             if (cfg.Length > 22) damageprmPath = cfg[22];
             if (cfg.Length > 23) spTypeSupportParamPath = cfg[23];
+            if (cfg.Length > 24) unlockEvoItemParamPath = cfg[24];
             //MessageBox.Show("Loaded paths.");
         }
 
@@ -697,6 +702,9 @@ namespace NSUNS4_Character_Manager
                 case "unlock":
                     unlPath = o.FileName;
                     break;
+                case "unlockEvo":
+                    unlockEvoItemParamPath = o.FileName;
+                    break;
                 case "csp":
                     cspPath = o.FileName;
                     break;
@@ -833,6 +841,7 @@ namespace NSUNS4_Character_Manager
             this.tabControl2 = new System.Windows.Forms.TabControl();
             this.tabPage3 = new System.Windows.Forms.TabPage();
             this.button30 = new System.Windows.Forms.Button();
+            this.button31 = new System.Windows.Forms.Button();
             this.button13 = new System.Windows.Forms.Button();
             this.button29 = new System.Windows.Forms.Button();
             this.button28 = new System.Windows.Forms.Button();
@@ -1214,6 +1223,7 @@ namespace NSUNS4_Character_Manager
             // tabPage3
             // 
             this.tabPage3.Controls.Add(this.button30);
+            this.tabPage3.Controls.Add(this.button31);
             this.tabPage3.Controls.Add(this.button13);
             this.tabPage3.Controls.Add(this.button29);
             this.tabPage3.Controls.Add(this.button28);
@@ -1252,6 +1262,17 @@ namespace NSUNS4_Character_Manager
             this.button30.Text = "spTypeSupportParam Editor";
             this.button30.UseVisualStyleBackColor = true;
             this.button30.Click += new System.EventHandler(this.button30_Click);
+            // 
+            // button31
+            // 
+            this.button31.Font = new System.Drawing.Font("Segoe UI", 8.5F);
+            this.button31.Location = new System.Drawing.Point(301, 337);
+            this.button31.Name = "button31";
+            this.button31.Size = new System.Drawing.Size(299, 38);
+            this.button31.TabIndex = 35;
+            this.button31.Text = "Unlock Evo ItemParam Editor\r\n(UnlockEvoItemParam.xfbin)";
+            this.button31.UseVisualStyleBackColor = true;
+            this.button31.Click += new System.EventHandler(this.button31_Click);
             // 
             // button13
             // 
@@ -1878,6 +1899,7 @@ namespace NSUNS4_Character_Manager
             conditionprmPath = datawin32Path + "\\spc\\conditionprm.bin.xfbin";
             damageprmPath = datawin32Path + "\\spc\\damageprm.bin.xfbin";
             spTypeSupportParamPath = datawin32Path + "\\spc\\WIN64\\spTypeSupportParam.xfbin";
+            unlockEvoItemParamPath = datawin32Path + "\\spc\\WIN64\\UnlockEvoItemParam.xfbin";
 
             SaveConfig();
         }
@@ -1904,6 +1926,7 @@ namespace NSUNS4_Character_Manager
                 damageprmPath = datawin32Path + "\\spc\\damageprm.bin.xfbin";
                 messageInfoPath = datawin32Path + "\\message";
                 spTypeSupportParamPath = datawin32Path + "\\spc\\WIN64\\spTypeSupportParam.xfbin";
+                unlockEvoItemParamPath = datawin32Path + "\\spc\\WIN64\\UnlockEvoItemParam.xfbin";
             }
                 
             else {
@@ -2005,6 +2028,12 @@ namespace NSUNS4_Character_Manager
 
         private void button30_Click(object sender, EventArgs e) {
             Tool_spTypeSupportParamEditor t = new Tool_spTypeSupportParamEditor();
+            t.Show();
+        }
+
+        private void button31_Click(object sender, EventArgs e)
+        {
+            Tool_UnlockEvoItemParamEditor t = new Tool_UnlockEvoItemParamEditor();
             t.Show();
         }
     }

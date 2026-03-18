@@ -18,7 +18,16 @@ namespace NSUNS4_Character_Manager.Tools
 		public List<bool> TypeSectionList = new List<bool>();
 		public List<bool> EnableDisableList = new List<bool>();
 		public List<bool> NormalStateList = new List<bool>();
-		public List<bool> AwakeningStateList = new List<bool>();
+ 		public List<byte> AwakeningStateList = new List<byte>();
+		[Flags]
+		private enum AwakeningStateFlags : byte
+		{
+			None = 0,
+			Base = 0x01,                  // Bit 0
+			Awake = 0x02,                 // Bit 1
+			InstantAwakening = 0x04       // Bit 2
+		}
+		private const byte AWAKENING_STATE_KNOWN_MASK = (byte)(AwakeningStateFlags.Base | AwakeningStateFlags.Awake | AwakeningStateFlags.InstantAwakening);
 		public List<bool> ReverseSectionList = new List<bool>();
 		public List<bool> EnableDisableCutNCList = new List<bool>();
 		public List<bool> EnableDisableUltList = new List<bool>();
@@ -49,7 +58,7 @@ namespace NSUNS4_Character_Manager.Tools
 			TypeSectionList = new List<bool>();
 			EnableDisableList = new List<bool>();
 			NormalStateList = new List<bool>();
-			AwakeningStateList = new List<bool>();
+			AwakeningStateList = new List<byte>();
 			ReverseSectionList = new List<bool>();
 			EnableDisableCutNCList = new List<bool>();
 			EnableDisableUltList = new List<bool>();
@@ -58,6 +67,36 @@ namespace NSUNS4_Character_Manager.Tools
 			TimingAwakeList = new List<int>();
 			TransparenceList = new List<float>();
 			listBox1.Items.Clear();
+		}
+		private byte GetAwakeningStateFlagsFromUi()
+		{
+			AwakeningStateFlags flags = AwakeningStateFlags.None;
+			if (checkBox21.Checked)
+			{
+				flags |= AwakeningStateFlags.Base;
+			}
+			if (checkBox22.Checked)
+			{
+				flags |= AwakeningStateFlags.Awake;
+			}
+			if (checkBox25.Checked)
+			{
+				flags |= AwakeningStateFlags.InstantAwakening;
+			}
+			return (byte)flags;
+		}
+
+		private void SetAwakeningStateFromFlags(byte flags)
+		{
+			AwakeningStateFlags state = (AwakeningStateFlags)flags;
+			checkBox21.Checked = (state & AwakeningStateFlags.Base) != 0;
+			checkBox22.Checked = (state & AwakeningStateFlags.Awake) != 0;
+			checkBox25.Checked = (state & AwakeningStateFlags.InstantAwakening) != 0;
+		}
+
+		private byte ComposeAwakeningStateFlagsForCurrentSelection(byte originalFlags)
+		{
+			return (byte)((originalFlags & (byte)(~AWAKENING_STATE_KNOWN_MASK & 0xFF)) | GetAwakeningStateFlagsFromUi());
 		}
 		private void openToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -117,7 +156,7 @@ namespace NSUNS4_Character_Manager.Tools
 				bool EnableDisableBool =Convert.ToBoolean(Main.b_ReadInt(FileBytes, (int)_ptr + 0x10));
 				bool EnableDisableNormalStateBool = Convert.ToBoolean(Main.b_ReadInt(FileBytes, (int)_ptr + 0x14));
 				int Timing = FileBytes[_ptr + 24] + FileBytes[_ptr + 25] * 0x100 + FileBytes[_ptr + 26] * 0x10000 + FileBytes[_ptr + 27] * 0x1000000;
-				bool EnableDisableAwakeningStateBool = Convert.ToBoolean(Main.b_ReadInt(FileBytes, (int)_ptr + 0x1C));
+ 				byte AwakeningStateFlags = (byte)(Main.b_ReadInt(FileBytes, (int)_ptr + 0x1C) & 0xFF);
 				bool ReverseSectionBool = Convert.ToBoolean(Main.b_ReadInt(FileBytes, (int)_ptr + 0x20));
 				bool EnableDisableCutNCBool = Convert.ToBoolean(Main.b_ReadInt(FileBytes, (int)_ptr + 0x24));
 				bool EnableDisableUltBool = Convert.ToBoolean(Main.b_ReadInt(FileBytes, (int)_ptr + 0x28));
@@ -152,7 +191,7 @@ namespace NSUNS4_Character_Manager.Tools
 				TypeSectionList.Add(TypeMesh);
 				EnableDisableList.Add(EnableDisableBool);
 				NormalStateList.Add(EnableDisableNormalStateBool);
-				AwakeningStateList.Add(EnableDisableAwakeningStateBool);
+ 				AwakeningStateList.Add(AwakeningStateFlags);
 				ReverseSectionList.Add(ReverseSectionBool);
 				EnableDisableCutNCList.Add(EnableDisableCutNCBool);
 				EnableDisableUltList.Add(EnableDisableUltBool);
@@ -249,8 +288,7 @@ namespace NSUNS4_Character_Manager.Tools
 				Slot_19_cb.Checked = SlotList[x][18];
 				Slot_20_cb.Checked = SlotList[x][19];
 				checkBox23.Checked = EnableDisableList[x];
-				checkBox21.Checked = AwakeningStateList[x];
-				checkBox22.Checked = NormalStateList[x];
+ 				SetAwakeningStateFromFlags(AwakeningStateList[x]);
 				Timing_v.Value = TimingAwakeList[x];
 				Reverse_v.Checked = ReverseSectionList[x];
 				CutNC_v.Checked = EnableDisableCutNCList[x];
@@ -302,13 +340,14 @@ namespace NSUNS4_Character_Manager.Tools
 					CharacodeList[i] = Characode_new;
 					MeshList[i] = MeshName_tb.Text;
 					SlotList[i] = Slot_newList;
+					bool normalState = NormalStateList[i];
 					if (Type_cb.SelectedIndex == 0)
 						TypeSectionList[i] = false;
 					else
 						TypeSectionList[i] = true;
 					EnableDisableList[i] = checkBox23.Checked;
-					NormalStateList[i] = checkBox22.Checked;
-					AwakeningStateList[i] = checkBox21.Checked;
+					NormalStateList[i] = normalState;
+					AwakeningStateList[i] = ComposeAwakeningStateFlagsForCurrentSelection(AwakeningStateList[i]);
 					ReverseSectionList[i] = Reverse_v.Checked;
 					EnableDisableCutNCList[i] = CutNC_v.Checked;
 					EnableDisableUltList[i] = Ult_v.Checked;
@@ -364,8 +403,8 @@ namespace NSUNS4_Character_Manager.Tools
 					else
 						TypeSectionList.Add(true);
 					EnableDisableList.Add(checkBox23.Checked);
-					NormalStateList.Add(checkBox22.Checked);
-					AwakeningStateList.Add(checkBox21.Checked);
+					NormalStateList.Add(NormalStateList[i]);
+					AwakeningStateList.Add(ComposeAwakeningStateFlagsForCurrentSelection(AwakeningStateList[i]));
 					ReverseSectionList.Add(Reverse_v.Checked);
 					EnableDisableCutNCList.Add(CutNC_v.Checked);
 					EnableDisableUltList.Add(Ult_v.Checked);
@@ -656,7 +695,7 @@ namespace NSUNS4_Character_Manager.Tools
 				{
 					file[304 + 160 * x2 + 24 + a8] = o_d[a8];
 				}
-				o_c = Convert.ToByte(AwakeningStateList[x2]);
+ 				o_c = AwakeningStateList[x2];
 				file[304 + 160 * x2 + 28] = o_c;
 				byte[] o_h = new byte[4] { 0xFF, 0xFF, 0xFF, 0xFF };
 				for (int a8 = 0; a8 < 4; a8++)
@@ -769,5 +808,10 @@ namespace NSUNS4_Character_Manager.Tools
 				MessageBox.Show("Open file before trying to search section");
 			}
 		}
+
+        private void checkBox25_CheckedChanged(object sender, EventArgs e)
+        {
+
+        }
     }
 }

@@ -1,4 +1,4 @@
-﻿namespace NSUNS4_Character_Manager.Tools
+namespace NSUNS4_Character_Manager.Tools
 {
     partial class Tool_appearenceAnmEditor
     {
@@ -62,6 +62,7 @@
             this.checkBox21 = new System.Windows.Forms.CheckBox();
             this.checkBox22 = new System.Windows.Forms.CheckBox();
             this.checkBox23 = new System.Windows.Forms.CheckBox();
+            this.checkBox25 = new System.Windows.Forms.CheckBox();
             this.label5 = new System.Windows.Forms.Label();
             this.CutNC_v = new System.Windows.Forms.CheckBox();
             this.ArmorBreak_v = new System.Windows.Forms.CheckBox();
@@ -396,22 +397,20 @@
             // 
             // checkBox21
             // 
-            this.checkBox21.AutoSize = true;
-            this.checkBox21.Location = new System.Drawing.Point(380, 334);
+            this.checkBox21.Location = new System.Drawing.Point(381, 334);
             this.checkBox21.Name = "checkBox21";
-            this.checkBox21.Size = new System.Drawing.Size(146, 19);
+            this.checkBox21.Size = new System.Drawing.Size(120, 19);
             this.checkBox21.TabIndex = 27;
-            this.checkBox21.Text = "Affect awakening state";
+            this.checkBox21.Text = "Base";
             this.checkBox21.UseVisualStyleBackColor = true;
             // 
             // checkBox22
             // 
-            this.checkBox22.AutoSize = true;
-            this.checkBox22.Location = new System.Drawing.Point(532, 334);
+            this.checkBox22.Location = new System.Drawing.Point(457, 334);
             this.checkBox22.Name = "checkBox22";
-            this.checkBox22.Size = new System.Drawing.Size(127, 19);
-            this.checkBox22.TabIndex = 28;
-            this.checkBox22.Text = "Affect normal state";
+            this.checkBox22.Size = new System.Drawing.Size(120, 19);
+            this.checkBox22.TabIndex = 25;
+            this.checkBox22.Text = "Awakening";
             this.checkBox22.UseVisualStyleBackColor = true;
             // 
             // checkBox23
@@ -420,16 +419,26 @@
             this.checkBox23.Location = new System.Drawing.Point(474, 118);
             this.checkBox23.Name = "checkBox23";
             this.checkBox23.Size = new System.Drawing.Size(135, 19);
-            this.checkBox23.TabIndex = 29;
+            this.checkBox23.TabIndex = 31;
             this.checkBox23.Text = "Enable/disable mesh";
             this.checkBox23.UseVisualStyleBackColor = true;
+            // 
+            // checkBox25
+            // 
+            this.checkBox25.Location = new System.Drawing.Point(552, 334);
+            this.checkBox25.Name = "checkBox25";
+            this.checkBox25.Size = new System.Drawing.Size(131, 19);
+            this.checkBox25.TabIndex = 30;
+            this.checkBox25.Text = "Instant Awakening";
+            this.checkBox25.UseVisualStyleBackColor = true;
+            this.checkBox25.CheckedChanged += new System.EventHandler(this.checkBox25_CheckedChanged);
             // 
             // label5
             // 
             this.label5.AutoSize = true;
             this.label5.Location = new System.Drawing.Point(377, 353);
             this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(353, 15);
+            this.label5.Size = new System.Drawing.Size(352, 15);
             this.label5.TabIndex = 31;
             this.label5.Text = "Timing when mesh will appear/disappear in awakening cinematic";
             this.label5.TextAlign = System.Drawing.ContentAlignment.TopCenter;
@@ -556,7 +565,7 @@
             this.label6.AutoSize = true;
             this.label6.Location = new System.Drawing.Point(434, 70);
             this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(87, 15);
+            this.label6.Size = new System.Drawing.Size(86, 15);
             this.label6.TabIndex = 51;
             this.label6.Text = "Type of section";
             // 
@@ -565,7 +574,7 @@
             this.label7.AutoSize = true;
             this.label7.Location = new System.Drawing.Point(378, 96);
             this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(142, 15);
+            this.label7.Size = new System.Drawing.Size(141, 15);
             this.label7.TabIndex = 52;
             this.label7.Text = "Transparence of 2UV map";
             // 
@@ -696,6 +705,7 @@
             this.Controls.Add(this.ArmorBreak_v);
             this.Controls.Add(this.CutNC_v);
             this.Controls.Add(this.label5);
+            this.Controls.Add(this.checkBox25);
             this.Controls.Add(this.checkBox23);
             this.Controls.Add(this.checkBox22);
             this.Controls.Add(this.checkBox21);
@@ -779,6 +789,7 @@
         private System.Windows.Forms.CheckBox checkBox21;
         private System.Windows.Forms.CheckBox checkBox22;
         private System.Windows.Forms.CheckBox checkBox23;
+        private System.Windows.Forms.CheckBox checkBox25;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.CheckBox CutNC_v;
         private System.Windows.Forms.CheckBox ArmorBreak_v;
@@ -803,3 +814,5 @@
         private System.Windows.Forms.Button button6;
     }
 }
+
+
