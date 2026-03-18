@@ -1,10 +1,14 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "N:\\Evo Toolbox-main\\",
+  "WorkspaceRootPath": "N:\\NSUNS4-Evo-Toolbox\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{3E2F498F-FBDE-4BB5-BCF9-EBC0698B2930}|NSUNS4-Toolbox.csproj|n:\\evo toolbox-main\\nsuns4_character_manager\\tools\\tool_unlockevoitemparameditor.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
-      "RelativeMoniker": "D:0:0:{3E2F498F-FBDE-4BB5-BCF9-EBC0698B2930}|NSUNS4-Toolbox.csproj|solutionrelative:nsuns4_character_manager\\tools\\tool_unlockevoitemparameditor.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
+      "AbsoluteMoniker": "D:0:0:{3E2F498F-FBDE-4BB5-BCF9-EBC0698B2930}|NSUNS4-Toolbox.csproj|n:\\nsuns4-evo-toolbox\\nsuns4_character_manager\\main.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
+      "RelativeMoniker": "D:0:0:{3E2F498F-FBDE-4BB5-BCF9-EBC0698B2930}|NSUNS4-Toolbox.csproj|solutionrelative:nsuns4_character_manager\\main.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3E2F498F-FBDE-4BB5-BCF9-EBC0698B2930}|NSUNS4-Toolbox.csproj|N:\\NSUNS4-Evo-Toolbox\\nsuns4_character_manager\\main.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3E2F498F-FBDE-4BB5-BCF9-EBC0698B2930}|NSUNS4-Toolbox.csproj|solutionrelative:nsuns4_character_manager\\main.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -14,18 +18,31 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 1,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "Tool_UnlockEvoItemParamEditor.cs [Design]",
-              "DocumentMoniker": "N:\\Evo Toolbox-main\\NSUNS4_Character_Manager\\Tools\\Tool_UnlockEvoItemParamEditor.cs",
-              "RelativeDocumentMoniker": "NSUNS4_Character_Manager\\Tools\\Tool_UnlockEvoItemParamEditor.cs",
-              "ToolTip": "N:\\Evo Toolbox-main\\NSUNS4_Character_Manager\\Tools\\Tool_UnlockEvoItemParamEditor.cs [Design]",
-              "RelativeToolTip": "NSUNS4_Character_Manager\\Tools\\Tool_UnlockEvoItemParamEditor.cs [Design]",
+              "DocumentIndex": 1,
+              "Title": "Main.cs",
+              "DocumentMoniker": "N:\\NSUNS4-Evo-Toolbox\\NSUNS4_Character_Manager\\Main.cs",
+              "RelativeDocumentMoniker": "NSUNS4_Character_Manager\\Main.cs",
+              "ToolTip": "N:\\NSUNS4-Evo-Toolbox\\NSUNS4_Character_Manager\\Main.cs",
+              "RelativeToolTip": "NSUNS4_Character_Manager\\Main.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-03-17T02:38:47.572Z",
+              "WhenOpened": "2026-03-18T02:45:24.873Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Main.cs [Design]",
+              "DocumentMoniker": "N:\\NSUNS4-Evo-Toolbox\\NSUNS4_Character_Manager\\Main.cs",
+              "RelativeDocumentMoniker": "NSUNS4_Character_Manager\\Main.cs",
+              "ToolTip": "N:\\NSUNS4-Evo-Toolbox\\NSUNS4_Character_Manager\\Main.cs [Design]",
+              "RelativeToolTip": "NSUNS4_Character_Manager\\Main.cs [Design]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-18T02:44:55.374Z",
               "EditorCaption": " [Design]"
             }
           ]

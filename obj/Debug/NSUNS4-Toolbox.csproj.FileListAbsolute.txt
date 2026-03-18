@@ -220,3 +220,76 @@ N:\Evo Toolbox-main\obj\Debug\NSUNS4-Toolbox.csproj.CoreCompileInputs.cache
 N:\Evo Toolbox-main\obj\Debug\NSUNS4-T.5540652A.Up2Date
 N:\Evo Toolbox-main\obj\Debug\NSUNS4 Toolbox.exe
 N:\Evo Toolbox-main\obj\Debug\NSUNS4 Toolbox.pdb
+N:\NSUNS4-Evo-Toolbox\bin\Debug\extraTools\NSUNS4_AdjustParamAT_Data_Editor.exe
+N:\NSUNS4-Evo-Toolbox\bin\Debug\extraTools\NSUNS4_costumeBreakColorParam_Editor.exe
+N:\NSUNS4-Evo-Toolbox\bin\Debug\extraTools\NSUNS4_DamageParam_Editor.exe
+N:\NSUNS4-Evo-Toolbox\bin\Debug\extraTools\NSUNS4_supportActionParam_Editor.exe
+N:\NSUNS4-Evo-Toolbox\bin\Debug\NSUNS4 Toolbox.exe.config
+N:\NSUNS4-Evo-Toolbox\bin\Debug\NSUNS4 Toolbox.exe
+N:\NSUNS4-Evo-Toolbox\bin\Debug\NSUNS4 Toolbox.pdb
+N:\NSUNS4-Evo-Toolbox\bin\Debug\Microsoft.Win32.Registry.dll
+N:\NSUNS4-Evo-Toolbox\bin\Debug\Microsoft.WindowsAPICodePack.dll
+N:\NSUNS4-Evo-Toolbox\bin\Debug\Microsoft.WindowsAPICodePack.Shell.dll
+N:\NSUNS4-Evo-Toolbox\bin\Debug\NAudio.Asio.dll
+N:\NSUNS4-Evo-Toolbox\bin\Debug\NAudio.Core.dll
+N:\NSUNS4-Evo-Toolbox\bin\Debug\NAudio.dll
+N:\NSUNS4-Evo-Toolbox\bin\Debug\NAudio.Midi.dll
+N:\NSUNS4-Evo-Toolbox\bin\Debug\NAudio.Wasapi.dll
+N:\NSUNS4-Evo-Toolbox\bin\Debug\NAudio.WinForms.dll
+N:\NSUNS4-Evo-Toolbox\bin\Debug\NAudio.WinMM.dll
+N:\NSUNS4-Evo-Toolbox\bin\Debug\System.dll
+N:\NSUNS4-Evo-Toolbox\bin\Debug\System.Drawing.dll
+N:\NSUNS4-Evo-Toolbox\bin\Debug\System.Security.AccessControl.dll
+N:\NSUNS4-Evo-Toolbox\bin\Debug\System.Security.Principal.Windows.dll
+N:\NSUNS4-Evo-Toolbox\bin\Debug\System.Windows.Forms.dll
+N:\NSUNS4-Evo-Toolbox\bin\Debug\Microsoft.Win32.Registry.xml
+N:\NSUNS4-Evo-Toolbox\bin\Debug\NAudio.xml
+N:\NSUNS4-Evo-Toolbox\bin\Debug\System.Security.AccessControl.xml
+N:\NSUNS4-Evo-Toolbox\bin\Debug\System.Security.Principal.Windows.xml
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4-Toolbox.csproj.AssemblyReference.cache
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Functions.Tool_ExportCharacter.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Functions.Tool_ExportCostume.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Functions.Tool_ImportCharacter.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Main.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Tool_AddCharacter.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Tool_AddCostume.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Misc.Tool_nus3bankEditor_v2.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Misc.Tool_PathList.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Misc.Tool_StageInfoEditor.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Misc.Tool_TextureReplacer.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Tools.PRMEditorInfo.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Tools.Tool_afterAttachObject.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Tools.Tool_appearenceAnmEditor.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Tools.Tool_AwakeAuraEditor.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Tools.Tool_battleParamEditor.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Tool_CharacodeEditor.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Tools.Tool_cmnparamEditor.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Tools.Tool_conditionprmEditor.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Tools.Tool_damageeffEditor.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Tools.Tool_damageprmEditor.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Tools.Tool_DSP_ItemList.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Tool_DuelPlayerParamEditor.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Tool_DuelPlayerParamEditor_Costumes.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Tools.Tool_DuelPlayerParamEditor_settings.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Tools.Tool_effectprmEditor.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Tools.Tool_IconEditor.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Tools.Tool_MessageInfoEditor.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Tools.Tool_MovesetCoder.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Tools.Tool_OugiFinishParamEditor.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Tools.Tool_playerCollisionEditor.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Tool_PlayerSettingParamEditor.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Tools.Tool_PortPRM.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Tool_RosterEditor.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Tool_RosterEditor_PositionData.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Tools.Tool_SkillCustomizeParamEditor_new.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Tool_SpcloadEditor.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Tools.Tool_SpSkillCustomizeParamEditor.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Tools.Tool_spTypeSupportParamEditor.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Tool_UnlockCharaTotalEditor.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4_Character_Manager.Tool_UnlockEvoItemParamEditor.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\Properties.Resources.resources
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4-Toolbox.csproj.GenerateResource.cache
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4-Toolbox.csproj.CoreCompileInputs.cache
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4-T.5540652A.Up2Date
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4 Toolbox.exe
+N:\NSUNS4-Evo-Toolbox\obj\Debug\NSUNS4 Toolbox.pdb

@@ -98,10 +98,13 @@ namespace NSUNS4_Character_Manager
         private LinkLabel linkLabel8;
         private LinkLabel linkLabel9;
         private LinkLabel linkLabel10;
-        private Button button13;
         private LinkLabel linkLabel12;
         private Button button30;
         private Button button31;
+        private FlowLayoutPanel extraToolsPanel;
+        private Button extraToolsButtonTemplate;
+        private TabPage tabPage7;
+        private string _extraToolsDirectory;
         public byte[] PRMEditorCopiedSection;
         public byte[] TheValue
         {
@@ -112,6 +115,11 @@ namespace NSUNS4_Character_Manager
         public Main()
         {
             InitializeComponent();
+            if (extraToolsButtonTemplate != null && System.ComponentModel.LicenseManager.UsageMode != System.ComponentModel.LicenseUsageMode.Designtime)
+            {
+                extraToolsButtonTemplate.Visible = false;
+            }
+            InitializeExtraToolsPanel();
 
             if (File.Exists(ConfigPath) == false)
             {
@@ -749,7 +757,233 @@ namespace NSUNS4_Character_Manager
 
         private void Main_Load(object sender, EventArgs e)
         {
+            PopulateExtraToolsButtons();
+        }
 
+        private void InitializeExtraToolsPanel()
+        {
+            _extraToolsDirectory = FindExtraToolsPath();
+            if (extraToolsPanel == null)
+            {
+                extraToolsPanel = new FlowLayoutPanel();
+                tabPage7.Controls.Add(extraToolsPanel);
+            }
+            else if (!tabPage7.Controls.Contains(extraToolsPanel))
+            {
+                tabPage7.Controls.Add(extraToolsPanel);
+            }
+
+            extraToolsPanel.Name = "extraToolsPanel";
+            extraToolsPanel.Dock = DockStyle.Fill;
+            extraToolsPanel.Location = new System.Drawing.Point(0, 0);
+            extraToolsPanel.AutoSize = false;
+            extraToolsPanel.AutoScroll = true;
+            extraToolsPanel.WrapContents = false;
+            extraToolsPanel.FlowDirection = FlowDirection.TopDown;
+            extraToolsPanel.Padding = new Padding(6);
+            extraToolsPanel.Margin = new Padding(0);
+            extraToolsPanel.BackColor = System.Drawing.Color.Transparent;
+        }
+
+        private void PopulateExtraToolsButtons()
+        {
+            if (string.IsNullOrWhiteSpace(_extraToolsDirectory))
+            {
+                if (extraToolsPanel != null)
+                {
+                    extraToolsPanel.Visible = false;
+                }
+                return;
+            }
+
+            string[] extraTools = Directory.GetFiles(_extraToolsDirectory, "*.exe", SearchOption.TopDirectoryOnly);
+            Array.Sort(extraTools, StringComparer.OrdinalIgnoreCase);
+
+            if (extraToolsPanel == null)
+            {
+                InitializeExtraToolsPanel();
+            }
+
+            extraToolsPanel.Visible = true;
+            if (System.ComponentModel.LicenseManager.UsageMode == System.ComponentModel.LicenseUsageMode.Designtime)
+            {
+                return;
+            }
+
+            extraToolsPanel.Controls.Clear();
+
+            foreach (string toolPath in extraTools)
+            {
+                string fileName = System.IO.Path.GetFileNameWithoutExtension(toolPath);
+                string label = fileName.Replace("_", " ");
+                string relativeToolPath = System.IO.Path.GetFullPath(toolPath);
+
+                Button extraToolButton = new Button
+                {
+                    Name = "extraToolButton_" + fileName,
+                    Text = label,
+                    Size = extraToolsButtonTemplate != null
+                        ? new System.Drawing.Size(Math.Max(50, extraToolsPanel.ClientSize.Width - 12), extraToolsButtonTemplate.Height)
+                        : new System.Drawing.Size(extraToolsPanel.ClientSize.Width - 12, 38),
+                    Font = (extraToolsButtonTemplate != null) ? extraToolsButtonTemplate.Font : new System.Drawing.Font("Segoe UI", 8.5F),
+                    Tag = relativeToolPath
+                };
+                extraToolButton.Margin = extraToolsButtonTemplate != null ? extraToolsButtonTemplate.Margin : new Padding(0, 0, 0, 4);
+
+                extraToolButton.Click += OpenExtraToolButton_Click;
+                extraToolsPanel.Controls.Add(extraToolButton);
+            }
+        }
+
+        private static string FindExtraToolsPath()
+        {
+            foreach (string root in GetExtraToolsSearchRoots())
+            {
+                string candidate = System.IO.Path.Combine(root, "extraTools");
+                if (Directory.Exists(candidate))
+                {
+                    return candidate;
+                }
+            }
+
+            return null;
+        }
+
+        private static IEnumerable<string> GetExtraToolsSearchRoots()
+        {
+            string currentDir = Path.GetFullPath(AppDomain.CurrentDomain.BaseDirectory).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            for (int level = 0; level < 12 && string.IsNullOrWhiteSpace(currentDir) == false; level++)
+            {
+                yield return currentDir;
+                string nested = Path.Combine(currentDir, "NSUNS4_Character_Manager");
+                if (Directory.Exists(nested))
+                {
+                    yield return nested;
+                }
+
+                currentDir = Path.GetDirectoryName(currentDir);
+                if (string.IsNullOrWhiteSpace(currentDir))
+                {
+                    yield break;
+                }
+            }
+
+            if (Directory.Exists("extraTools"))
+            {
+                yield return Path.GetFullPath("extraTools");
+            }
+        }
+
+        private void OpenExtraToolButton_Click(object sender, EventArgs e)
+        {
+            if (sender is Button extraToolButton && extraToolButton.Tag is string toolPath)
+            {
+            string fileName = System.IO.Path.GetFileName(toolPath);
+            string fullToolPath = toolPath;
+            if (string.IsNullOrWhiteSpace(fullToolPath) || File.Exists(fullToolPath) == false)
+            {
+                fullToolPath = FindExecutableInExtraTools(fileName);
+            }
+
+                if (string.IsNullOrWhiteSpace(fullToolPath) || File.Exists(fullToolPath) == false)
+                {
+                    MessageBox.Show("Could not find executable: " + fullToolPath);
+                    return;
+                }
+
+                try
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = fullToolPath,
+                        WorkingDirectory = Path.GetDirectoryName(fullToolPath),
+                        UseShellExecute = true
+                    });
+                }
+                catch (System.ComponentModel.Win32Exception ex) when (ex.NativeErrorCode == 1223) // ERROR_CANCELLED
+                {
+                    string fallbackPath = CopyToolToTempLaunchPath(fullToolPath);
+                    if (string.IsNullOrWhiteSpace(fallbackPath))
+                    {
+                        MessageBox.Show("Could not open " + fullToolPath + "\r\n\r\n" + ex.Message);
+                        return;
+                    }
+
+                    try
+                    {
+                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                        {
+                            FileName = fallbackPath,
+                            WorkingDirectory = Path.GetDirectoryName(fallbackPath),
+                            UseShellExecute = true
+                        });
+                    }
+                    catch (Exception fallbackEx)
+                    {
+                        MessageBox.Show("Could not open " + fallbackPath + "\r\n\r\n" + fallbackEx.Message);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Could not open " + fullToolPath + "\r\n\r\n" + ex.Message);
+                }
+            }
+        }
+
+        private static string CopyToolToTempLaunchPath(string toolPath)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(toolPath) || File.Exists(toolPath) == false)
+                    return null;
+
+                string tempDir = Path.Combine(Path.GetTempPath(), "NSUNS4 Toolbox", "extraTools");
+                Directory.CreateDirectory(tempDir);
+                string copiedPath = Path.Combine(tempDir, Path.GetFileName(toolPath));
+                File.Copy(toolPath, copiedPath, true);
+                return copiedPath;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private string FindExecutableInExtraTools(string fileName)
+        {
+            if (string.IsNullOrWhiteSpace(fileName))
+            {
+                return null;
+            }
+
+            foreach (string root in GetExtraToolsSearchRoots())
+            {
+                try
+                {
+                    string candidate = Path.Combine(root, "extraTools", fileName);
+                    if (File.Exists(candidate))
+                    {
+                        return candidate;
+                    }
+
+                    candidate = Path.Combine(root, fileName);
+                    if (File.Exists(candidate))
+                    {
+                        return candidate;
+                    }
+
+                    foreach (string found in Directory.EnumerateFiles(root, fileName, SearchOption.AllDirectories))
+                    {
+                        if (Path.GetFileName(found).Equals(fileName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            return found;
+                        }
+                    }
+                }
+                catch { }
+            }
+
+            return null;
         }
 
         //public static CRC32(string str)
@@ -836,13 +1070,13 @@ namespace NSUNS4_Character_Manager
             this.button14 = new System.Windows.Forms.Button();
             this.button17 = new System.Windows.Forms.Button();
             this.button22 = new System.Windows.Forms.Button();
+            this.extraToolsButtonTemplate = new System.Windows.Forms.Button();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.tabControl2 = new System.Windows.Forms.TabControl();
             this.tabPage3 = new System.Windows.Forms.TabPage();
             this.button30 = new System.Windows.Forms.Button();
             this.button31 = new System.Windows.Forms.Button();
-            this.button13 = new System.Windows.Forms.Button();
             this.button29 = new System.Windows.Forms.Button();
             this.button28 = new System.Windows.Forms.Button();
             this.button27 = new System.Windows.Forms.Button();
@@ -861,6 +1095,8 @@ namespace NSUNS4_Character_Manager
             this.linkLabel4 = new System.Windows.Forms.LinkLabel();
             this.label2 = new System.Windows.Forms.Label();
             this.linkLabel3 = new System.Windows.Forms.LinkLabel();
+            this.tabPage7 = new System.Windows.Forms.TabPage();
+            this.extraToolsPanel = new System.Windows.Forms.FlowLayoutPanel();
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.label1 = new System.Windows.Forms.Label();
             this.button25 = new System.Windows.Forms.Button();
@@ -875,6 +1111,8 @@ namespace NSUNS4_Character_Manager
             this.tabPage4.SuspendLayout();
             this.tabPage5.SuspendLayout();
             this.tabPage6.SuspendLayout();
+            this.tabPage7.SuspendLayout();
+            this.extraToolsPanel.SuspendLayout();
             this.tabPage2.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -1110,7 +1348,7 @@ namespace NSUNS4_Character_Manager
             // 
             // button18
             // 
-            this.button18.Location = new System.Drawing.Point(1, 3);
+            this.button18.Location = new System.Drawing.Point(-4, 3);
             this.button18.Name = "button18";
             this.button18.Size = new System.Drawing.Size(301, 38);
             this.button18.TabIndex = 23;
@@ -1181,6 +1419,17 @@ namespace NSUNS4_Character_Manager
             this.button22.UseVisualStyleBackColor = true;
             this.button22.Click += new System.EventHandler(this.button22_Click_3);
             // 
+            // extraToolsButtonTemplate
+            // 
+            this.extraToolsButtonTemplate.Font = new System.Drawing.Font("Segoe UI", 8.5F);
+            this.extraToolsButtonTemplate.Location = new System.Drawing.Point(6, 6);
+            this.extraToolsButtonTemplate.Margin = new System.Windows.Forms.Padding(0, 0, 0, 4);
+            this.extraToolsButtonTemplate.Name = "extraToolsButtonTemplate";
+            this.extraToolsButtonTemplate.Size = new System.Drawing.Size(598, 38);
+            this.extraToolsButtonTemplate.TabIndex = 1;
+            this.extraToolsButtonTemplate.Text = "Tool Button Template";
+            this.extraToolsButtonTemplate.UseVisualStyleBackColor = true;
+            // 
             // tabControl1
             // 
             this.tabControl1.Controls.Add(this.tabPage1);
@@ -1210,6 +1459,7 @@ namespace NSUNS4_Character_Manager
             this.tabControl2.Controls.Add(this.tabPage4);
             this.tabControl2.Controls.Add(this.tabPage5);
             this.tabControl2.Controls.Add(this.tabPage6);
+            this.tabControl2.Controls.Add(this.tabPage7);
             this.tabControl2.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabControl2.Font = new System.Drawing.Font("Segoe UI", 8.5F);
             this.tabControl2.Location = new System.Drawing.Point(3, 3);
@@ -1224,7 +1474,6 @@ namespace NSUNS4_Character_Manager
             // 
             this.tabPage3.Controls.Add(this.button30);
             this.tabPage3.Controls.Add(this.button31);
-            this.tabPage3.Controls.Add(this.button13);
             this.tabPage3.Controls.Add(this.button29);
             this.tabPage3.Controls.Add(this.button28);
             this.tabPage3.Controls.Add(this.button27);
@@ -1273,18 +1522,6 @@ namespace NSUNS4_Character_Manager
             this.button31.Text = "Unlock Evo ItemParam Editor\r\n(UnlockEvoItemParam.xfbin)";
             this.button31.UseVisualStyleBackColor = true;
             this.button31.Click += new System.EventHandler(this.button31_Click);
-            // 
-            // button13
-            // 
-            this.button13.Font = new System.Drawing.Font("Segoe UI", 8.5F);
-            this.button13.Location = new System.Drawing.Point(3, 372);
-            this.button13.Name = "button13";
-            this.button13.Size = new System.Drawing.Size(299, 38);
-            this.button13.TabIndex = 33;
-            this.button13.Text = "DamagePrm Editor";
-            this.button13.UseVisualStyleBackColor = true;
-            this.button13.Visible = false;
-            this.button13.Click += new System.EventHandler(this.button13_Click_1);
             // 
             // button29
             // 
@@ -1507,6 +1744,31 @@ namespace NSUNS4_Character_Manager
             this.linkLabel3.Text = "ACE Editor (acb/awb)";
             this.linkLabel3.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLabel3_LinkClicked);
             // 
+            // tabPage7
+            // 
+            this.tabPage7.Controls.Add(this.extraToolsPanel);
+            this.tabPage7.Location = new System.Drawing.Point(4, 22);
+            this.tabPage7.Name = "tabPage7";
+            this.tabPage7.Size = new System.Drawing.Size(602, 507);
+            this.tabPage7.TabIndex = 4;
+            this.tabPage7.Text = "Xact\'s Tools";
+            this.tabPage7.UseVisualStyleBackColor = true;
+            // 
+            // extraToolsPanel
+            // 
+            this.extraToolsPanel.AutoScroll = true;
+            this.extraToolsPanel.BackColor = System.Drawing.Color.Transparent;
+            this.extraToolsPanel.Controls.Add(this.extraToolsButtonTemplate);
+            this.extraToolsPanel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.extraToolsPanel.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
+            this.extraToolsPanel.Location = new System.Drawing.Point(0, 0);
+            this.extraToolsPanel.Margin = new System.Windows.Forms.Padding(0);
+            this.extraToolsPanel.Name = "extraToolsPanel";
+            this.extraToolsPanel.Padding = new System.Windows.Forms.Padding(6);
+            this.extraToolsPanel.Size = new System.Drawing.Size(602, 507);
+            this.extraToolsPanel.TabIndex = 0;
+            this.extraToolsPanel.WrapContents = false;
+            // 
             // tabPage2
             // 
             this.tabPage2.Controls.Add(this.label1);
@@ -1611,6 +1873,8 @@ namespace NSUNS4_Character_Manager
             this.tabPage5.ResumeLayout(false);
             this.tabPage6.ResumeLayout(false);
             this.tabPage6.PerformLayout();
+            this.tabPage7.ResumeLayout(false);
+            this.extraToolsPanel.ResumeLayout(false);
             this.tabPage2.ResumeLayout(false);
             this.tabPage2.PerformLayout();
             this.ResumeLayout(false);
