@@ -90,6 +90,7 @@ namespace NSUNS4_Character_Manager
         private sealed class UltimateChunk
         {
             public string Name = "";
+            public string NameSuffix = "";
             public int FileSectionOffset;
             public int OriginalEntryCount = -1;
             public byte[] SectionTemplate = new byte[0];
@@ -103,6 +104,8 @@ namespace NSUNS4_Character_Manager
             public string FilePath = "";
             public byte[] FileBytes = new byte[0];
             public int FileSectionOffset;
+            public string OriginalPrefix = "";
+            public string CurrentPrefix = "";
             public readonly List<BattleEntry> Entries = new List<BattleEntry>();
         }
 
@@ -111,6 +114,8 @@ namespace NSUNS4_Character_Manager
             public bool FileOpen;
             public string FilePath = "";
             public byte[] FileBytes = new byte[0];
+            public string OriginalPrefix = "";
+            public string CurrentPrefix = "";
             public readonly List<UltimateChunk> Chunks = new List<UltimateChunk>();
         }
 
@@ -179,6 +184,7 @@ namespace NSUNS4_Character_Manager
             battleListBox.Items.Add("No file loaded...");
             battleListBox.SelectedIndex = -1;
             suppressBattleSelectionEvents = false;
+            battlePrefixText.Text = "";
             ClearBattleEditorFields();
         }
 
@@ -192,6 +198,7 @@ namespace NSUNS4_Character_Manager
             ultimateEntryListBox.Items.Add("No file loaded...");
             ultimateEntryListBox.SelectedIndex = -1;
             suppressUltimateSelectionEvents = false;
+            ultimatePrefixText.Text = "";
             ClearUltimateEditorFields();
         }
 
@@ -201,6 +208,8 @@ namespace NSUNS4_Character_Manager
             battleState.FilePath = "";
             battleState.FileBytes = new byte[0];
             battleState.FileSectionOffset = 0;
+            battleState.OriginalPrefix = "";
+            battleState.CurrentPrefix = "";
             battleState.Entries.Clear();
             ResetBattleUi();
         }
@@ -210,6 +219,8 @@ namespace NSUNS4_Character_Manager
             ultimateState.FileOpen = false;
             ultimateState.FilePath = "";
             ultimateState.FileBytes = new byte[0];
+            ultimateState.OriginalPrefix = "";
+            ultimateState.CurrentPrefix = "";
             ultimateState.Chunks.Clear();
             ResetUltimateUi();
         }
@@ -254,6 +265,9 @@ namespace NSUNS4_Character_Manager
                 battleState.FilePath = dialog.FileName;
                 battleState.FileBytes = bytes;
                 battleState.FileSectionOffset = fileSection;
+                battleState.OriginalPrefix = GetBattleCharacterCodeFromPath(dialog.FileName);
+                battleState.CurrentPrefix = battleState.OriginalPrefix;
+                battlePrefixText.Text = battleState.CurrentPrefix;
                 OpenBattleEntries(bytes, fileSection, count, battleState.Entries);
                 RefreshBattleList();
             }
@@ -280,7 +294,11 @@ namespace NSUNS4_Character_Manager
                 ultimateState.FileOpen = true;
                 ultimateState.FilePath = dialog.FileName;
                 ultimateState.FileBytes = bytes;
+                ultimateState.OriginalPrefix = GetUltimateCharacterCodeFromPath(dialog.FileName);
+                ultimateState.CurrentPrefix = ultimateState.OriginalPrefix;
+                ultimatePrefixText.Text = ultimateState.CurrentPrefix;
                 OpenUltimateChunks(bytes, fileSection, ultimateState.Chunks);
+                InitializeUltimateChunkSuffixes();
                 RefreshUltimateChunkList();
             }
         }
@@ -340,7 +358,7 @@ namespace NSUNS4_Character_Manager
                 int chunkOffset = chunkIndex < chunkOffsets.Count ? chunkOffsets[chunkIndex] : 0;
                 short count = chunkOffset > 0 ? BitConverter.ToInt16(bytes, chunkOffset + 0x28) : (short)0;
                 int entryStart = chunkOffset > 0 ? chunkOffset + FileSectionHeaderSize + DataHeaderSize : 0;
-                UltimateChunk chunk = new UltimateChunk { Name = chunkName, FileSectionOffset = chunkOffset, OriginalEntryCount = count };
+                UltimateChunk chunk = new UltimateChunk { Name = chunkName, NameSuffix = chunkName, FileSectionOffset = chunkOffset, OriginalEntryCount = count };
                 if (chunkOffset > 0 && chunkOffset + FileSectionHeaderSize + DataHeaderSize <= bytes.Length)
                 {
                     chunk.SectionTemplate = new byte[FileSectionHeaderSize + DataHeaderSize];
@@ -380,6 +398,18 @@ namespace NSUNS4_Character_Manager
             }
         }
 
+        private void InitializeUltimateChunkSuffixes()
+        {
+            string prefix = ultimateState.OriginalPrefix ?? "";
+            foreach (UltimateChunk chunk in ultimateState.Chunks)
+            {
+                if (!string.IsNullOrWhiteSpace(prefix) && !string.IsNullOrWhiteSpace(chunk.Name) && chunk.Name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                    chunk.NameSuffix = chunk.Name.Substring(prefix.Length);
+                else
+                    chunk.NameSuffix = chunk.Name ?? "";
+            }
+        }
+
         private void RefreshBattleList()
         {
             int previousTopIndex = battleListBox.Items.Count > 0 ? battleListBox.TopIndex : 0;
@@ -408,7 +438,7 @@ namespace NSUNS4_Character_Manager
         {
             suppressUltimateSelectionEvents = true;
             ultimateChunkListBox.Items.Clear();
-            foreach (UltimateChunk chunk in ultimateState.Chunks) ultimateChunkListBox.Items.Add(chunk.Name);
+            foreach (UltimateChunk chunk in ultimateState.Chunks) ultimateChunkListBox.Items.Add(BuildUltimateChunkDisplayName(chunk));
             if (ultimateState.Chunks.Count == 0)
             {
                 ultimateChunkListBox.Items.Add("No chunks found...");
@@ -469,6 +499,14 @@ namespace NSUNS4_Character_Manager
         {
             string soundName = string.IsNullOrWhiteSpace(entry.SoundPL) ? "(none)" : entry.SoundPL;
             return "Frame: " + entry.SoundDelay + " | " + soundName;
+        }
+
+        private string BuildUltimateChunkDisplayName(UltimateChunk chunk)
+        {
+            if (chunk == null) return "";
+            string prefix = ultimateState.CurrentPrefix ?? "";
+            string suffix = chunk.NameSuffix ?? chunk.Name ?? "";
+            return prefix == "" ? suffix : prefix + suffix;
         }
 
         private void ClearBattleEditorFields()
@@ -838,7 +876,12 @@ namespace NSUNS4_Character_Manager
 
         private string GetUltimateCharacterCode()
         {
-            string fileName = Path.GetFileNameWithoutExtension(ultimateState.FilePath ?? "");
+            return GetUltimateCharacterCodeFromPath(ultimateState.FilePath);
+        }
+
+        private static string GetUltimateCharacterCodeFromPath(string filePath)
+        {
+            string fileName = Path.GetFileNameWithoutExtension(filePath ?? "");
             if (string.IsNullOrWhiteSpace(fileName)) return "";
             int suffixIndex = fileName.IndexOf("_ev_spl", StringComparison.OrdinalIgnoreCase);
             if (suffixIndex > 0) return fileName.Substring(0, suffixIndex);
@@ -849,10 +892,19 @@ namespace NSUNS4_Character_Manager
 
         private string GetUltimateDefaultSoundPl(string chunkName)
         {
-            string prefix = GetUltimateCharacterCode();
+            string prefix = string.IsNullOrWhiteSpace(ultimateState.CurrentPrefix) ? GetUltimateCharacterCode() : ultimateState.CurrentPrefix;
             if (string.IsNullOrWhiteSpace(prefix)) return chunkName ?? "";
             if (string.IsNullOrWhiteSpace(chunkName)) return prefix;
             return prefix + chunkName;
+        }
+
+        private void ApplyUltimatePrefix()
+        {
+            if (!ultimateState.FileOpen) { MessageBox.Show("No Ultimate file loaded..."); return; }
+            string prefix = ultimatePrefixText.Text.Trim();
+            if (prefix == "") { MessageBox.Show("Write a prefix first."); return; }
+            ultimateState.CurrentPrefix = prefix;
+            RefreshUltimateChunkList();
         }
         private void DuplicateUltimateEntry()
         {
@@ -955,10 +1007,13 @@ namespace NSUNS4_Character_Manager
                 }
             }
             byte[] output = ConvertBattleToFile();
+            if (!TryApplyBattlePrefixToMetadata(output))
+                return;
             File.WriteAllBytes(outputPath, output);
             battleState.FilePath = outputPath;
             battleState.FileBytes = output;
             battleState.FileSectionOffset = XfbinParser.GetFileSectionIndex(output);
+            battleState.OriginalPrefix = battleState.CurrentPrefix;
         }
 
         private void SaveUltimateFile(bool saveAs)
@@ -985,9 +1040,12 @@ namespace NSUNS4_Character_Manager
                 }
             }
             byte[] output = ConvertUltimateToFile();
+            if (!TryApplyUltimatePrefixToMetadata(output))
+                return;
             File.WriteAllBytes(outputPath, output);
             ultimateState.FilePath = outputPath;
             ultimateState.FileBytes = output;
+            ultimateState.OriginalPrefix = ultimateState.CurrentPrefix;
         }
 
         private byte[] ConvertBattleToFile()
@@ -1023,6 +1081,23 @@ namespace NSUNS4_Character_Manager
             return result;
         }
 
+        private bool TryApplyBattlePrefixToMetadata(byte[] output)
+        {
+            string originalPrefix = battleState.OriginalPrefix ?? "";
+            string currentPrefix = (battleState.CurrentPrefix ?? "").Trim();
+            if (currentPrefix == "") currentPrefix = originalPrefix;
+            if (string.Equals(originalPrefix, currentPrefix, StringComparison.Ordinal))
+                return true;
+            if (originalPrefix.Length != currentPrefix.Length)
+            {
+                MessageBox.Show("Battle prefix rename only supports the same character length as the original prefix.");
+                return false;
+            }
+            RewriteXfbinStringSectionPrefix(output, XfbinParser.GetPathSectionIndex(output), XfbinParser.GetPathCount(output), originalPrefix, currentPrefix);
+            RewriteXfbinStringSectionPrefix(output, XfbinParser.GetNameSectionIndex(output), XfbinParser.GetNameSectionCount(output), originalPrefix, currentPrefix);
+            return true;
+        }
+
         private byte[] ConvertUltimateToFile()
         {
             byte[] output = new byte[ultimateState.FileBytes.Length];
@@ -1034,6 +1109,75 @@ namespace NSUNS4_Character_Manager
                 for (int i = 0; i < chunk.Entries.Count; i++) WriteUltimateEntry(output, chunk.Entries[i].OriginalOffset, chunk.Entries[i]);
             }
             return output;
+        }
+
+        private bool TryApplyUltimatePrefixToMetadata(byte[] output)
+        {
+            string originalPrefix = ultimateState.OriginalPrefix ?? "";
+            string currentPrefix = (ultimateState.CurrentPrefix ?? "").Trim();
+            if (currentPrefix == "") currentPrefix = originalPrefix;
+            if (string.Equals(originalPrefix, currentPrefix, StringComparison.Ordinal))
+                return true;
+            if (originalPrefix.Length != currentPrefix.Length)
+            {
+                MessageBox.Show("Ultimate prefix rename only supports the same character length as the original prefix.");
+                return false;
+            }
+            RewriteXfbinStringSectionPrefix(output, XfbinParser.GetPathSectionIndex(output), XfbinParser.GetPathCount(output), originalPrefix, currentPrefix);
+            RewriteXfbinStringSectionPrefix(output, XfbinParser.GetNameSectionIndex(output), XfbinParser.GetNameSectionCount(output), originalPrefix, currentPrefix);
+            return true;
+        }
+
+        private static void RewriteXfbinStringSectionPrefix(byte[] output, int sectionIndex, int count, string originalPrefix, string currentPrefix)
+        {
+            int index = sectionIndex + 1;
+            for (int i = 0; i < count; i++)
+            {
+                string value = Main.b_ReadString(output, index);
+                string updated = ReplaceLeafPrefix(value, originalPrefix, currentPrefix);
+                if (!string.Equals(value, updated, StringComparison.Ordinal))
+                    WriteAsciiStringInPlace(output, index, value.Length, updated);
+                index += value.Length + 1;
+            }
+        }
+
+        private static string ReplaceLeafPrefix(string value, string originalPrefix, string currentPrefix)
+        {
+            if (string.IsNullOrEmpty(value) || string.IsNullOrEmpty(originalPrefix))
+                return value;
+            int slashIndex = Math.Max(value.LastIndexOf('/'), value.LastIndexOf('\\'));
+            int leafStart = slashIndex + 1;
+            int dotIndex = value.LastIndexOf('.');
+            if (dotIndex < leafStart)
+                dotIndex = value.Length;
+            string leaf = value.Substring(leafStart, dotIndex - leafStart);
+            if (!leaf.StartsWith(originalPrefix, StringComparison.Ordinal))
+                return value;
+            return value.Substring(0, leafStart) + currentPrefix + leaf.Substring(originalPrefix.Length) + value.Substring(dotIndex);
+        }
+
+        private static void WriteAsciiStringInPlace(byte[] output, int offset, int originalLength, string value)
+        {
+            byte[] bytes = Encoding.ASCII.GetBytes(value ?? "");
+            Array.Clear(output, offset, originalLength);
+            Array.Copy(bytes, 0, output, offset, Math.Min(bytes.Length, originalLength));
+        }
+
+        private static string GetBattleCharacterCodeFromPath(string filePath)
+        {
+            string fileName = Path.GetFileNameWithoutExtension(filePath ?? "");
+            if (string.IsNullOrWhiteSpace(fileName)) return "";
+            int suffixIndex = fileName.IndexOf("_ev", StringComparison.OrdinalIgnoreCase);
+            if (suffixIndex > 0) return fileName.Substring(0, suffixIndex);
+            return fileName;
+        }
+
+        private void ApplyBattlePrefix()
+        {
+            if (!battleState.FileOpen) { MessageBox.Show("No Battle file loaded..."); return; }
+            string prefix = battlePrefixText.Text.Trim();
+            if (prefix == "") { MessageBox.Show("Write a prefix first."); return; }
+            battleState.CurrentPrefix = prefix;
         }
 
         private static List<int> GetUltimateChunkOffsets(byte[] bytes, int firstFileSection)
@@ -1136,6 +1280,7 @@ namespace NSUNS4_Character_Manager
         private void battleSearchButton_Click(object sender, EventArgs e) { SearchBattleNext(); }
         private void battleCopyButton_Click(object sender, EventArgs e) { CopyBattleEntryToClipboard(); }
         private void battlePasteButton_Click(object sender, EventArgs e) { PasteBattleEntryFromClipboard(); }
+        private void battleApplyPrefixButton_Click(object sender, EventArgs e) { ApplyBattlePrefix(); }
         private void ultimateAddEntryButton_Click(object sender, EventArgs e) { AddUltimateEntry(); }
         private void ultimateDuplicateEntryButton_Click(object sender, EventArgs e) { DuplicateUltimateEntry(); }
         private void ultimateDeleteEntryButton_Click(object sender, EventArgs e) { DeleteUltimateEntry(); }
@@ -1143,6 +1288,7 @@ namespace NSUNS4_Character_Manager
         private void ultimateSearchButton_Click(object sender, EventArgs e) { SearchUltimateNext(); }
         private void ultimateCopyButton_Click(object sender, EventArgs e) { CopyUltimateEntryToClipboard(); }
         private void ultimatePasteButton_Click(object sender, EventArgs e) { PasteUltimateEntryFromClipboard(); }
+        private void ultimateApplyPrefixButton_Click(object sender, EventArgs e) { ApplyUltimatePrefix(); }
         private void infoToolStripMenuItem_Click(object sender, EventArgs e)
         {
             MessageBox.Show("Ultimate save currently supports editing existing binary structures only. Added or removed structures or entry count changes cannot be written yet. Use the Xfbin Parser to add a new entry");
