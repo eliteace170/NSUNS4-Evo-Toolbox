@@ -101,6 +101,7 @@ namespace NSUNS4_Character_Manager
         private LinkLabel linkLabel12;
         private Button button30;
         private Button button31;
+        private Button button32;
         private FlowLayoutPanel extraToolsPanel;
         private Button extraToolsButtonTemplate;
         private TabPage tabPage7;
@@ -1077,6 +1078,7 @@ namespace NSUNS4_Character_Manager
             this.tabPage3 = new System.Windows.Forms.TabPage();
             this.button30 = new System.Windows.Forms.Button();
             this.button31 = new System.Windows.Forms.Button();
+            this.button32 = new System.Windows.Forms.Button();
             this.button29 = new System.Windows.Forms.Button();
             this.button28 = new System.Windows.Forms.Button();
             this.button27 = new System.Windows.Forms.Button();
@@ -1474,6 +1476,7 @@ namespace NSUNS4_Character_Manager
             // 
             this.tabPage3.Controls.Add(this.button30);
             this.tabPage3.Controls.Add(this.button31);
+            this.tabPage3.Controls.Add(this.button32);
             this.tabPage3.Controls.Add(this.button29);
             this.tabPage3.Controls.Add(this.button28);
             this.tabPage3.Controls.Add(this.button27);
@@ -1522,6 +1525,17 @@ namespace NSUNS4_Character_Manager
             this.button31.Text = "Unlock Evo ItemParam Editor\r\n(UnlockEvoItemParam.xfbin)";
             this.button31.UseVisualStyleBackColor = true;
             this.button31.Click += new System.EventHandler(this.button31_Click);
+            // 
+            // button32
+            // 
+            this.button32.Font = new System.Drawing.Font("Segoe UI", 8.5F);
+            this.button32.Location = new System.Drawing.Point(3, 374);
+            this.button32.Name = "button32";
+            this.button32.Size = new System.Drawing.Size(299, 38);
+            this.button32.TabIndex = 36;
+            this.button32.Text = "Event Sound Editor\r\n(*_ev.xfbin)";
+            this.button32.UseVisualStyleBackColor = true;
+            this.button32.Click += new System.EventHandler(this.button32_Click);
             // 
             // button29
             // 
@@ -1751,7 +1765,7 @@ namespace NSUNS4_Character_Manager
             this.tabPage7.Name = "tabPage7";
             this.tabPage7.Size = new System.Drawing.Size(602, 507);
             this.tabPage7.TabIndex = 4;
-            this.tabPage7.Text = "Xact\'s Tools";
+            this.tabPage7.Text = "Extra Tools";
             this.tabPage7.UseVisualStyleBackColor = true;
             // 
             // extraToolsPanel
@@ -2298,6 +2312,12 @@ namespace NSUNS4_Character_Manager
         private void button31_Click(object sender, EventArgs e)
         {
             Tool_UnlockEvoItemParamEditor t = new Tool_UnlockEvoItemParamEditor();
+            t.Show();
+        }
+
+        private void button32_Click(object sender, EventArgs e)
+        {
+            Tool_EvEditor t = new Tool_EvEditor();
             t.Show();
         }
     }

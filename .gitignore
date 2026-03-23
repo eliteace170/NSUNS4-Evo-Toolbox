@@ -1,3 +1,14 @@
-/obj
-/bin
+/bin/
+/obj/
+/.vs/
+/.vscode/
+/packages/
+
+*.user
+*.suo
+*.cache
+
+*_output.xfbin
+_tmp_*
+_codex_write_test.tmp
 

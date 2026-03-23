@@ -1,0 +1,27 @@
+//------------------------------------------------
+//--- 010 Editor v15.0 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+BigEndian();
+uint Size;
+
+LittleEndian();
+uint Count;
+struct
+{
+
+int8 dlcID;
+int8 unlockType;
+int16 costumeid;
+int32 version;
+char MessageIDName[16];
+}
+UnlockEvoItemParam[Count]<read = costumeid, optimize= false>;
