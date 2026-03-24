@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <ProjectGuid>{3E2F498F-FBDE-4BB5-BCF9-EBC0698B2930}</ProjectGuid>
@@ -6,12 +6,13 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <OutputType>WinExe</OutputType>
     <LangVersion>7.3</LangVersion>
-    <AssemblyName>NSUNS4 Toolbox</AssemblyName>
+    <AssemblyName>NSUNS4Evo Toolbox</AssemblyName>
     <TargetFrameworkIdentifier>.NETFramework</TargetFrameworkIdentifier>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <IsWebBootstrapper>false</IsWebBootstrapper>
+    <TargetFrameworkProfile />
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -26,7 +27,6 @@
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
-    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -46,8 +46,18 @@
   <PropertyGroup>
     <ApplicationIcon>841951499398414356.ico</ApplicationIcon>
   </PropertyGroup>
+  <PropertyGroup />
   <PropertyGroup>
-    <NoWin32Manifest>true</NoWin32Manifest>
+    <TargetZone>LocalIntranet</TargetZone>
+  </PropertyGroup>
+  <PropertyGroup>
+    <GenerateManifests>true</GenerateManifests>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationManifest>Properties\app.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignManifests>true</SignManifests>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.Win32.Registry, Version=4.1.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
@@ -81,6 +91,9 @@
       <HintPath>packages\NAudio.WinMM.2.1.0\lib\netstandard2.0\NAudio.WinMM.dll</HintPath>
     </Reference>
     <Reference Include="PresentationCore" />
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>lib\XFBIN_LIB\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="System.Data" />
     <Reference Include="System.Security.AccessControl, Version=4.1.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>packages\System.Security.AccessControl.4.7.0\lib\net461\System.Security.AccessControl.dll</HintPath>
@@ -328,6 +341,7 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="NSUNS4_Character_Manager\XfbinParser.cs" />
+    <Compile Include="NSUNS4_Character_Manager\XfbinParserBackend.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -468,6 +482,7 @@
   <ItemGroup>
     <None Include="app.config" />
     <None Include="packages.config" />
+    <None Include="Properties\app.manifest" />
     <None Include="Resources\black.png" />
   </ItemGroup>
   <ItemGroup>
@@ -499,5 +514,16 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+  <Target Name="OrganizeDependencies" AfterTargets="Build">
+    <MakeDir Directories="$(OutputPath)dependencies" />
+    <ItemGroup>
+      <ManagedDependencyFiles Include="$(OutputPath)*.dll" />
+      <ManagedDependencyFiles Include="$(OutputPath)xfbin_parser.exe" Condition="Exists('$(OutputPath)xfbin_parser.exe')" />
+      <ManagedDependencyFiles Include="$(OutputPath)Newtonsoft.Json.xml" Condition="Exists('$(OutputPath)Newtonsoft.Json.xml')" />
+      <ManagedDependencyFiles Include="$(OutputPath)*.pdb" Exclude="$(OutputPath)NSUNS4Evo Toolbox.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(ManagedDependencyFiles)" DestinationFolder="$(OutputPath)dependencies" SkipUnchangedFiles="true" Condition="'@(ManagedDependencyFiles)' != ''" />
+    <Delete Files="@(ManagedDependencyFiles)" Condition="'@(ManagedDependencyFiles)' != ''" />
+  </Target>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

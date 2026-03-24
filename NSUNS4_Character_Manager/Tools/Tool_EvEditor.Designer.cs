@@ -51,6 +51,9 @@ namespace NSUNS4_Character_Manager
         private CheckBox battleLoopFlagValue;
         private TextBox battlePlAnmText;
         private ListBox ultimateChunkListBox;
+        private ComboBox ultimateAvailableChunkComboBox;
+        private Button ultimateAddChunkButton;
+        private Button ultimateDeleteChunkButton;
         private ListBox ultimateEntryListBox;
         private Button ultimateAddEntryButton;
         private Button ultimateDuplicateEntryButton;
@@ -151,6 +154,9 @@ namespace NSUNS4_Character_Manager
             this.battleCopyButton = new System.Windows.Forms.Button();
             this.battlePasteButton = new System.Windows.Forms.Button();
             this.ultimateTabPage = new System.Windows.Forms.TabPage();
+            this.ultimateAvailableChunkComboBox = new System.Windows.Forms.ComboBox();
+            this.ultimateAddChunkButton = new System.Windows.Forms.Button();
+            this.ultimateDeleteChunkButton = new System.Windows.Forms.Button();
             this.ultimateChunkListBox = new System.Windows.Forms.ListBox();
             this.ultimateEntryListBox = new System.Windows.Forms.ListBox();
             this.ultimateAddEntryButton = new System.Windows.Forms.Button();
@@ -891,6 +897,9 @@ namespace NSUNS4_Character_Manager
             // 
             // ultimateTabPage
             // 
+            this.ultimateTabPage.Controls.Add(this.ultimateAvailableChunkComboBox);
+            this.ultimateTabPage.Controls.Add(this.ultimateAddChunkButton);
+            this.ultimateTabPage.Controls.Add(this.ultimateDeleteChunkButton);
             this.ultimateTabPage.Controls.Add(this.ultimateChunkListBox);
             this.ultimateTabPage.Controls.Add(this.ultimateEntryListBox);
             this.ultimateTabPage.Controls.Add(this.ultimateApplyPrefixButton);
@@ -911,20 +920,49 @@ namespace NSUNS4_Character_Manager
             this.ultimateTabPage.TabIndex = 1;
             this.ultimateTabPage.Text = "Ultimate";
             // 
+            // ultimateAvailableChunkComboBox
+            // 
+            this.ultimateAvailableChunkComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.ultimateAvailableChunkComboBox.FormattingEnabled = true;
+            this.ultimateAvailableChunkComboBox.Location = new System.Drawing.Point(8, 40);
+            this.ultimateAvailableChunkComboBox.Name = "ultimateAvailableChunkComboBox";
+            this.ultimateAvailableChunkComboBox.Size = new System.Drawing.Size(148, 21);
+            this.ultimateAvailableChunkComboBox.TabIndex = 0;
+            // 
+            // ultimateAddChunkButton
+            // 
+            this.ultimateAddChunkButton.Location = new System.Drawing.Point(162, 39);
+            this.ultimateAddChunkButton.Name = "ultimateAddChunkButton";
+            this.ultimateAddChunkButton.Size = new System.Drawing.Size(50, 24);
+            this.ultimateAddChunkButton.TabIndex = 1;
+            this.ultimateAddChunkButton.Text = "Add";
+            this.ultimateAddChunkButton.UseVisualStyleBackColor = true;
+            this.ultimateAddChunkButton.Click += new System.EventHandler(this.ultimateAddChunkButton_Click);
+            // 
+            // ultimateDeleteChunkButton
+            // 
+            this.ultimateDeleteChunkButton.Location = new System.Drawing.Point(218, 39);
+            this.ultimateDeleteChunkButton.Name = "ultimateDeleteChunkButton";
+            this.ultimateDeleteChunkButton.Size = new System.Drawing.Size(50, 24);
+            this.ultimateDeleteChunkButton.TabIndex = 2;
+            this.ultimateDeleteChunkButton.Text = "Delete";
+            this.ultimateDeleteChunkButton.UseVisualStyleBackColor = true;
+            this.ultimateDeleteChunkButton.Click += new System.EventHandler(this.ultimateDeleteChunkButton_Click);
+            // 
             // ultimateChunkListBox
             // 
-            this.ultimateChunkListBox.Location = new System.Drawing.Point(8, 45);
+            this.ultimateChunkListBox.Location = new System.Drawing.Point(8, 69);
             this.ultimateChunkListBox.Name = "ultimateChunkListBox";
-            this.ultimateChunkListBox.Size = new System.Drawing.Size(260, 69);
-            this.ultimateChunkListBox.TabIndex = 0;
+            this.ultimateChunkListBox.Size = new System.Drawing.Size(260, 84);
+            this.ultimateChunkListBox.TabIndex = 3;
             this.ultimateChunkListBox.SelectedIndexChanged += new System.EventHandler(this.ultimateChunkListBox_SelectedIndexChanged);
             // 
             // ultimateEntryListBox
             // 
-            this.ultimateEntryListBox.Location = new System.Drawing.Point(8, 120);
+            this.ultimateEntryListBox.Location = new System.Drawing.Point(8, 159);
             this.ultimateEntryListBox.Name = "ultimateEntryListBox";
-            this.ultimateEntryListBox.Size = new System.Drawing.Size(260, 459);
-            this.ultimateEntryListBox.TabIndex = 1;
+            this.ultimateEntryListBox.Size = new System.Drawing.Size(260, 420);
+            this.ultimateEntryListBox.TabIndex = 4;
             this.ultimateEntryListBox.SelectedIndexChanged += new System.EventHandler(this.ultimateEntryListBox_SelectedIndexChanged);
             // 
             // ultimateAddEntryButton
@@ -932,7 +970,7 @@ namespace NSUNS4_Character_Manager
             this.ultimateAddEntryButton.Location = new System.Drawing.Point(8, 612);
             this.ultimateAddEntryButton.Name = "ultimateAddEntryButton";
             this.ultimateAddEntryButton.Size = new System.Drawing.Size(59, 28);
-            this.ultimateAddEntryButton.TabIndex = 2;
+            this.ultimateAddEntryButton.TabIndex = 5;
             this.ultimateAddEntryButton.Text = "Add";
             this.ultimateAddEntryButton.Click += new System.EventHandler(this.ultimateAddEntryButton_Click);
             // 
@@ -941,7 +979,7 @@ namespace NSUNS4_Character_Manager
             this.ultimateDuplicateEntryButton.Location = new System.Drawing.Point(199, 613);
             this.ultimateDuplicateEntryButton.Name = "ultimateDuplicateEntryButton";
             this.ultimateDuplicateEntryButton.Size = new System.Drawing.Size(69, 28);
-            this.ultimateDuplicateEntryButton.TabIndex = 3;
+            this.ultimateDuplicateEntryButton.TabIndex = 8;
             this.ultimateDuplicateEntryButton.Text = "Duplicate";
             this.ultimateDuplicateEntryButton.Click += new System.EventHandler(this.ultimateDuplicateEntryButton_Click);
             // 
@@ -950,7 +988,7 @@ namespace NSUNS4_Character_Manager
             this.ultimateDeleteEntryButton.Location = new System.Drawing.Point(199, 643);
             this.ultimateDeleteEntryButton.Name = "ultimateDeleteEntryButton";
             this.ultimateDeleteEntryButton.Size = new System.Drawing.Size(69, 28);
-            this.ultimateDeleteEntryButton.TabIndex = 6;
+            this.ultimateDeleteEntryButton.TabIndex = 11;
             this.ultimateDeleteEntryButton.Text = "Delete";
             this.ultimateDeleteEntryButton.Click += new System.EventHandler(this.ultimateDeleteEntryButton_Click);
             // 
@@ -959,7 +997,7 @@ namespace NSUNS4_Character_Manager
             this.ultimateSaveSelectedButton.Location = new System.Drawing.Point(8, 646);
             this.ultimateSaveSelectedButton.Name = "ultimateSaveSelectedButton";
             this.ultimateSaveSelectedButton.Size = new System.Drawing.Size(185, 28);
-            this.ultimateSaveSelectedButton.TabIndex = 7;
+            this.ultimateSaveSelectedButton.TabIndex = 12;
             this.ultimateSaveSelectedButton.Text = "Save";
             this.ultimateSaveSelectedButton.Click += new System.EventHandler(this.ultimateSaveSelectedButton_Click);
             // 
@@ -968,7 +1006,7 @@ namespace NSUNS4_Character_Manager
             this.ultimateCopyButton.Location = new System.Drawing.Point(69, 612);
             this.ultimateCopyButton.Name = "ultimateCopyButton";
             this.ultimateCopyButton.Size = new System.Drawing.Size(59, 28);
-            this.ultimateCopyButton.TabIndex = 4;
+            this.ultimateCopyButton.TabIndex = 6;
             this.ultimateCopyButton.Text = "Copy";
             this.ultimateCopyButton.Click += new System.EventHandler(this.ultimateCopyButton_Click);
             // 
@@ -977,7 +1015,7 @@ namespace NSUNS4_Character_Manager
             this.ultimatePasteButton.Location = new System.Drawing.Point(134, 612);
             this.ultimatePasteButton.Name = "ultimatePasteButton";
             this.ultimatePasteButton.Size = new System.Drawing.Size(59, 28);
-            this.ultimatePasteButton.TabIndex = 5;
+            this.ultimatePasteButton.TabIndex = 7;
             this.ultimatePasteButton.Text = "Paste";
             this.ultimatePasteButton.Click += new System.EventHandler(this.ultimatePasteButton_Click);
             // 
@@ -986,14 +1024,14 @@ namespace NSUNS4_Character_Manager
             this.ultimatePrefixText.Location = new System.Drawing.Point(8, 11);
             this.ultimatePrefixText.Name = "ultimatePrefixText";
             this.ultimatePrefixText.Size = new System.Drawing.Size(185, 23);
-            this.ultimatePrefixText.TabIndex = 8;
+            this.ultimatePrefixText.TabIndex = 9;
             // 
             // ultimateApplyPrefixButton
             // 
             this.ultimateApplyPrefixButton.Location = new System.Drawing.Point(199, 11);
             this.ultimateApplyPrefixButton.Name = "ultimateApplyPrefixButton";
             this.ultimateApplyPrefixButton.Size = new System.Drawing.Size(69, 23);
-            this.ultimateApplyPrefixButton.TabIndex = 9;
+            this.ultimateApplyPrefixButton.TabIndex = 10;
             this.ultimateApplyPrefixButton.Text = "Save Name";
             this.ultimateApplyPrefixButton.UseVisualStyleBackColor = true;
             this.ultimateApplyPrefixButton.Click += new System.EventHandler(this.ultimateApplyPrefixButton_Click);
@@ -1003,14 +1041,14 @@ namespace NSUNS4_Character_Manager
             this.ultimateSearchText.Location = new System.Drawing.Point(8, 583);
             this.ultimateSearchText.Name = "ultimateSearchText";
             this.ultimateSearchText.Size = new System.Drawing.Size(185, 23);
-            this.ultimateSearchText.TabIndex = 10;
+            this.ultimateSearchText.TabIndex = 13;
             // 
             // ultimateSearchButton
             // 
             this.ultimateSearchButton.Location = new System.Drawing.Point(199, 583);
             this.ultimateSearchButton.Name = "ultimateSearchButton";
             this.ultimateSearchButton.Size = new System.Drawing.Size(69, 24);
-            this.ultimateSearchButton.TabIndex = 11;
+            this.ultimateSearchButton.TabIndex = 14;
             this.ultimateSearchButton.Text = "Search";
             this.ultimateSearchButton.Click += new System.EventHandler(this.ultimateSearchButton_Click);
             // 

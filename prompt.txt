@@ -1,0 +1,94 @@
+When creating or modifying a tool in this project that edits data inside `.xfbin` files, follow these rules.
+
+Project requirements:
+- The UI must use Windows Forms.
+- The form layout must be designer-editable in Visual Studio.
+- Do not build the UI dynamically in code if it can be placed in the WinForms Designer.
+- Use a normal `.cs` + `.Designer.cs` pattern for forms.
+
+XFBIN container rules:
+- Do not implement custom raw XFBIN container rebuilding.
+- Do not use old direct byte-patching for XFBIN metadata/path/name/chunk-map/page structure.
+- Use `xfbin_parser.exe` through:
+  - `NSUNS4_Character_Manager/XfbinParserBackend.cs`
+- Treat `XfbinParserBackend` as the standard container backend for:
+  - unpacking an XFBIN
+  - finding binary chunk pages
+  - replacing an existing binary chunk
+  - adding a new binary chunk
+  - deleting a binary chunk
+  - repacking back into a valid `.xfbin`
+
+Separation of responsibilities:
+- Tool code is responsible for parsing and rebuilding the binary chunk format itself.
+- `XfbinParserBackend` is responsible for the XFBIN container.
+- Keep those concerns separate.
+
+When using a 010 Editor template as the source format:
+- Use the `01 editor templates` folder as the format reference.
+- Read the selected `.bt` template and map its structure into C# classes/fields.
+- Build the editor around that template’s fields and data layout.
+- If a sample `.xfbin` file is available, use it as the primary example for validation of field order, sizes, and save layout.
+
+Expected implementation pattern:
+1. Create a WinForms tool with a designer-editable layout.
+2. Add open/save/save as behavior.
+3. Use `XfbinParserBackend` to unpack the source `.xfbin`.
+4. Locate the target binary chunk or chunks.
+5. Parse the chunk bytes into strongly typed entry objects.
+6. Bind the entry list to WinForms controls.
+7. Allow the user to:
+   - add entries
+   - delete entries
+   - duplicate entries
+   - edit entries
+8. Rebuild the binary chunk bytes from the edited entry list.
+9. Use `XfbinParserBackend` to:
+   - update existing chunks
+   - add new chunks if needed
+   - delete removed chunks if needed
+10. Repack to the output `.xfbin`.
+
+UI expectations:
+- Use WinForms controls that are easy to edit in Visual Studio Designer.
+- Prefer explicit named controls over generated runtime-only controls.
+- The list view/list box should show meaningful labels for entries.
+- Expose important enum/flag values with the correct control type:
+  - enums as combo boxes
+  - booleans as check boxes
+  - strings as text boxes
+  - numeric values as numeric text boxes or numeric controls
+
+Code structure expectations:
+- Form logic in `Tool_Name.cs`
+- Layout in `Tool_Name.Designer.cs`
+- Keep binary parsing/writing methods grouped and readable
+- Prefer small helper methods for:
+  - open/load
+  - parse chunk
+  - refresh list
+  - load selected entry into UI
+  - build entry from UI
+  - rebuild chunk bytes
+  - save through `XfbinParserBackend`
+
+Behavior requirements:
+- Saving must preserve valid XFBIN structure by using `xfbin_parser.exe`
+- The tool must support entry add/delete/duplicate in the editor state
+- If the format allows multiple binary chunks, support chunk-level add/delete through `XfbinParserBackend`
+- Avoid assumptions that chunk names or prefixes must remain the same length
+
+Important restrictions:
+- Do not reintroduce `XFBIN_LIB-main` into the tool unless explicitly requested
+- Do not rely on temporary JSON formats other than the internal parser workflow already handled by `XfbinParserBackend`
+- Do not make the WinForms UI runtime-generated only, because the user needs to edit layout in Visual Studio
+
+If creating a brand new tool from a 010 Editor template, start by identifying:
+- the target `.bt` file
+- the sample `.xfbin`
+- the target chunk name/path pattern
+- the entry size
+- the entry count location
+- the field offsets and field types
+
+Then implement the editor around that structure using WinForms and `XfbinParserBackend`.

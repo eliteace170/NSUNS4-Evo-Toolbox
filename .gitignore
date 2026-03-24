@@ -3,6 +3,9 @@
 /.vs/
 /.vscode/
 /packages/
+/lib/
+/xfbinFiles/
+
 
 *.user
 *.suo
