@@ -2385,7 +2385,18 @@ namespace NSUNS4_Character_Manager
             "ME_SINK_FLOAT_SETSPEED",
             "ME_SET_CAPTION_AND_VOICE",
             "ME_GUDOUBALL_OPACITY_CTRL",
-            "ME_FINISH_5TYY_WHISTLE"
+            "ME_FINISH_5TYY_WHISTLE",
+            "ME_REMINISCENEBATTLE_CUTIN_FRAME",
+            "ME_SUPERARMOR_ON",
+            "ME_SUPERARMOR_OFF",
+            "ME_PUT_DECAL_ON_GROUND",
+            "ME_UNIQUE_EVENT_ON",
+            "ME_UNIQUE_EVENT_OFF",
+            "ME_8MTA_AWAKEAURA_ON",
+            "ME_8MTA_AWAKEAURA_OFF",
+            "ME_OFFSET_SCALE_THROW_EFFECT",
+            "ME_NOT_NOMALCOMBO_CAMERA_DIST",
+            "ME_NOT_NOMALCOMBO_CAMERA_DIST_RESET"
         };
         public static string[] ME_JOJO_ASBR_LIST = {
             "ME_ENEMY_CTRL_ON",

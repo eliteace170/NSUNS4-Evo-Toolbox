@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
+using NSUNS4_Character_Manager;
 
 namespace NSUNS4_Character_Manager.Tools
 {
@@ -59,6 +60,7 @@ namespace NSUNS4_Character_Manager.Tools
         List<string> effectSecSkillEntry = new List<string>();
         List<int> effectSecSkillValue = new List<int>();
         List<byte> EffectSection = new List<byte>();
+        List<int> effectVisibleIndices = new List<int>();
         public string[] sectionnames;
         //Collision Entry
         public bool collisionChanged = false;
@@ -80,6 +82,436 @@ namespace NSUNS4_Character_Manager.Tools
         List<int> verLength = new List<int>();
         public List<List<byte[]>> plAnmList = new List<List<byte[]>>();
         public List<List<List<byte[]>>> movementList = new List<List<List<byte[]>>>();
+        private readonly List<string> verChunkNames = new List<string>();
+        private readonly List<string> verChunkPaths = new List<string>();
+        private readonly List<string> removedVerChunkNames = new List<string>();
+        private string effectChunkName = "";
+        private string effectChunkPath = "";
+        private string collisionChunkName = "";
+        private string collisionChunkPath = "";
+
+        private static bool ChunkNameContains(XfbinBinaryChunkItem chunk, string value)
+        {
+            return chunk != null && !string.IsNullOrWhiteSpace(chunk.ChunkName) &&
+                   chunk.ChunkName.IndexOf(value, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private static bool BufferContainsAscii(byte[] bytes, string value)
+        {
+            if (bytes == null || bytes.Length == 0 || string.IsNullOrEmpty(value))
+                return false;
+            byte[] pattern = Encoding.ASCII.GetBytes(value);
+            if (pattern.Length == 0 || bytes.Length < pattern.Length)
+                return false;
+
+            for (int i = 0; i <= bytes.Length - pattern.Length; i++)
+            {
+                bool match = true;
+                for (int j = 0; j < pattern.Length; j++)
+                {
+                    if (bytes[i + j] != pattern[j])
+                    {
+                        match = false;
+                        break;
+                    }
+                }
+
+                if (match)
+                    return true;
+            }
+
+            return false;
+        }
+
+        private static List<XfbinBinaryChunkItem> GetMovesetBinaryChunks(string xfbinPath)
+        {
+            using (XfbinParserBackend backend = new XfbinParserBackend(xfbinPath))
+            {
+                return backend.GetBinaryChunks();
+            }
+        }
+
+        private static int GetPrmVerChunkRank(string chunkName)
+        {
+            string name = (chunkName ?? string.Empty).ToLowerInvariant();
+            if (name.EndsWith("prm_awa2")) return 0;
+            if (name.EndsWith("prm_awa")) return 1;
+            if (name.EndsWith("prm_mot")) return 2;
+            if (name.EndsWith("prm_motcmn")) return 3;
+            if (name.EndsWith("prm_skl")) return 4;
+            if (name.EndsWith("prm_spl")) return 5;
+            if (name.EndsWith("prm_upgrade01")) return 6;
+            if (name.EndsWith("prm_upgrade02")) return 7;
+            if (name.EndsWith("prm_upgrade03")) return 8;
+            if (name.EndsWith("prm_boss")) return 9;
+            if (name.EndsWith("prm_boss01")) return 10;
+            if (name.EndsWith("prm_boss02")) return 11;
+            if (name.EndsWith("prm_boss03")) return 12;
+            if (name.EndsWith("prm_boss04")) return 13;
+            return int.MaxValue;
+        }
+
+        private static string GetPrmSectionLabel(string chunkName)
+        {
+            string name = (chunkName ?? string.Empty).ToLowerInvariant();
+            if (name.EndsWith("prm_awa2")) return "Awakening 2";
+            if (name.EndsWith("prm_awa")) return "Awakening";
+            if (name.EndsWith("prm_mot")) return "Base";
+            if (name.EndsWith("prm_motcmn")) return "Damage animations";
+            if (name.EndsWith("prm_skl")) return "Jutsu";
+            if (name.EndsWith("prm_spl")) return "Ultimate Jutsu";
+            if (name.EndsWith("prm_upgrade01")) return "Expansion A";
+            if (name.EndsWith("prm_upgrade02")) return "Expansion B";
+            if (name.EndsWith("prm_upgrade03")) return "Expansion C";
+            if (name.EndsWith("prm_boss")) return "Boss";
+            if (name.EndsWith("prm_boss01")) return "Boss 1";
+            if (name.EndsWith("prm_boss02")) return "Boss 2";
+            if (name.EndsWith("prm_boss03")) return "Boss 3";
+            if (name.EndsWith("prm_boss04")) return "Boss 4";
+            return string.IsNullOrWhiteSpace(chunkName) ? "Section" : chunkName;
+        }
+
+        private string FormatMovementListItem(byte[] section)
+        {
+            if (section == null || section.Length < 0x24)
+                return "Frame: 0 Motion: 0";
+
+            int frame = Main.b_ReadIntFromTwoBytes(section, 0x20);
+            int function = Main.b_ReadIntFromTwoBytes(section, 0x22);
+            string functionText = function >= 0 && function < t_function.Items.Count
+                ? t_function.Items[function].ToString()
+                : function.ToString();
+
+            return "Frame: " + frame.ToString() + " Motion: " + functionText;
+        }
+
+        private static readonly string[] AllowedPrmSectionSuffixes =
+        {
+            "prm_awa2",
+            "prm_awa",
+            "prm_mot",
+            "prm_motcmn",
+            "prm_skl",
+            "prm_spl",
+            "prm_upgrade01",
+            "prm_upgrade02",
+            "prm_upgrade03",
+            "prm_boss",
+            "prm_boss01",
+            "prm_boss02",
+            "prm_boss03",
+            "prm_boss04"
+        };
+
+        private static string GetPrmSectionSuffixFromLabel(string label)
+        {
+            switch (label)
+            {
+                case "Awakening 2": return "prm_awa2";
+                case "Awakening": return "prm_awa";
+                case "Base": return "prm_mot";
+                case "Damage animations": return "prm_motcmn";
+                case "Jutsu": return "prm_skl";
+                case "Ultimate Jutsu": return "prm_spl";
+                case "Expansion A": return "prm_upgrade01";
+                case "Expansion B": return "prm_upgrade02";
+                case "Expansion C": return "prm_upgrade03";
+                case "Boss": return "prm_boss";
+                case "Boss 1": return "prm_boss01";
+                case "Boss 2": return "prm_boss02";
+                case "Boss 3": return "prm_boss03";
+                case "Boss 4": return "prm_boss04";
+                default: return string.Empty;
+            }
+        }
+
+        private string GetPrmSectionNamePrefix()
+        {
+            string firstChunkName = verChunkNames.FirstOrDefault(x => !string.IsNullOrWhiteSpace(x));
+            if (string.IsNullOrWhiteSpace(firstChunkName))
+                return string.Empty;
+
+            foreach (string suffix in AllowedPrmSectionSuffixes)
+            {
+                if (firstChunkName.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+                    return firstChunkName.Substring(0, firstChunkName.Length - suffix.Length);
+            }
+
+            return string.Empty;
+        }
+
+        private string BuildPrmChunkPath(string chunkName)
+        {
+            string existingPath = verChunkPaths.FirstOrDefault(x => !string.IsNullOrWhiteSpace(x));
+            if (string.IsNullOrWhiteSpace(existingPath))
+                return chunkName + ".bin";
+
+            string normalized = existingPath.Replace('\\', '/');
+            int slashIndex = normalized.LastIndexOf('/');
+            string directory = slashIndex >= 0 ? normalized.Substring(0, slashIndex + 1) : string.Empty;
+            string extension = Path.GetExtension(normalized);
+            if (string.IsNullOrWhiteSpace(extension))
+                extension = ".bin";
+
+            return directory + chunkName + extension;
+        }
+
+        private void RefreshPrmSectionAddOptions()
+        {
+            if (prmSectionAddComboBox == null)
+                return;
+
+            string selected = prmSectionAddComboBox.SelectedItem as string;
+            prmSectionAddComboBox.Items.Clear();
+
+            foreach (string suffix in AllowedPrmSectionSuffixes)
+            {
+                string label = GetPrmSectionLabel(suffix);
+                if (!sectionnames.Contains(label))
+                    prmSectionAddComboBox.Items.Add(label);
+            }
+
+            if (!string.IsNullOrWhiteSpace(selected) && prmSectionAddComboBox.Items.Contains(selected))
+                prmSectionAddComboBox.SelectedItem = selected;
+            else if (prmSectionAddComboBox.Items.Count > 0)
+                prmSectionAddComboBox.SelectedIndex = 0;
+        }
+
+        private void AddPrmSection()
+        {
+            if (!fileOpen)
+            {
+                MessageBox.Show("Open prm file");
+                return;
+            }
+
+            string missingLabel = prmSectionAddComboBox.SelectedItem as string;
+            if (string.IsNullOrWhiteSpace(missingLabel))
+            {
+                MessageBox.Show("No additional PRM sections are available to add.");
+                return;
+            }
+
+            string suffix = GetPrmSectionSuffixFromLabel(missingLabel);
+            string prefix = GetPrmSectionNamePrefix();
+            if (string.IsNullOrWhiteSpace(suffix) || string.IsNullOrWhiteSpace(prefix))
+            {
+                MessageBox.Show("Could not determine the new section name from the current file.");
+                return;
+            }
+
+            string newChunkName = prefix + suffix;
+            string newChunkPath = BuildPrmChunkPath(newChunkName);
+            int insertIndex = Array.IndexOf(AllowedPrmSectionSuffixes, suffix);
+            if (insertIndex < 0 || insertIndex > plAnmList.Count)
+                insertIndex = plAnmList.Count;
+
+            List<string> labels = sectionnames.ToList();
+            labels.Insert(insertIndex, missingLabel);
+            sectionnames = labels.ToArray();
+            verChunkNames.Insert(insertIndex, newChunkName);
+            verChunkPaths.Insert(insertIndex, newChunkPath);
+            verSection.Insert(insertIndex, new byte[0x44]);
+            plAnmList.Insert(insertIndex, new List<byte[]>());
+            movementList.Insert(insertIndex, new List<List<byte[]>>());
+            listBox1.Items.Insert(insertIndex, missingLabel);
+            listBox1.SelectedIndex = insertIndex;
+            RefreshPrmSectionAddOptions();
+
+            if (autosave.Checked)
+                AutoSave();
+        }
+
+        private void DeletePrmSection()
+        {
+            if (!fileOpen)
+            {
+                MessageBox.Show("Open prm file");
+                return;
+            }
+
+            int sectionIndex = listBox1.SelectedIndex;
+            if (sectionIndex < 0 || sectionIndex >= sectionnames.Length)
+                return;
+
+            string label = sectionnames[sectionIndex];
+            if (string.IsNullOrWhiteSpace(GetPrmSectionSuffixFromLabel(label)))
+                return;
+
+            if (sectionIndex < verChunkNames.Count && !string.IsNullOrWhiteSpace(verChunkNames[sectionIndex]))
+                removedVerChunkNames.Add(verChunkNames[sectionIndex]);
+
+            listBox1.Items.RemoveAt(sectionIndex);
+            sectionnames = sectionnames.Where((x, i) => i != sectionIndex).ToArray();
+            if (sectionIndex < verChunkNames.Count) verChunkNames.RemoveAt(sectionIndex);
+            if (sectionIndex < verChunkPaths.Count) verChunkPaths.RemoveAt(sectionIndex);
+            if (sectionIndex < verSection.Count) verSection.RemoveAt(sectionIndex);
+            if (sectionIndex < plAnmList.Count) plAnmList.RemoveAt(sectionIndex);
+            if (sectionIndex < movementList.Count) movementList.RemoveAt(sectionIndex);
+            RefreshPrmSectionAddOptions();
+
+            anm_list.Items.Clear();
+            mov_list.Items.Clear();
+            if (listBox1.Items.Count > 0)
+                listBox1.SelectedIndex = Math.Max(0, sectionIndex - 1);
+
+            if (autosave.Checked)
+                AutoSave();
+        }
+
+        private void LoadEffectAndCollisionChunks(List<XfbinBinaryChunkItem> binaryChunks)
+        {
+            effectSecFound = false;
+            effectSecLength = 0;
+            effectSecCount = 0;
+            effectSecName.Clear();
+            effectSecSkillName.Clear();
+            effectSecSkillEntry.Clear();
+            effectSecSkillValue.Clear();
+            EffectSection.Clear();
+            effectVisibleIndices.Clear();
+            collisionSecLength = 0;
+            collisionSecCount = 0;
+            collisionSecTypeValue.Clear();
+            collisionSecStateValue.Clear();
+            collisionSecEnablerBoneValue.Clear();
+            collisionSecRadiusValue.Clear();
+            collisionSecYPosValue.Clear();
+            collisionSecZPosValue.Clear();
+            collisionSecBoneName.Clear();
+            effectChunkName = "";
+            effectChunkPath = "";
+            collisionChunkName = "";
+            collisionChunkPath = "";
+            listBox2.Items.Clear();
+
+            XfbinBinaryChunkItem effectChunk = binaryChunks.FirstOrDefault(x => ChunkNameContains(x, "prm_sklslot"));
+            if (effectChunk != null)
+            {
+                effectChunkName = effectChunk.ChunkName ?? "";
+                effectChunkPath = effectChunk.ChunkPath ?? "";
+                byte[] effectBytes = effectChunk.BinaryData ?? new byte[0];
+                effectSecFound = true;
+                if (effectBytes.Length >= 4)
+                {
+                    effectSecLength = Main.b_ReadIntRev(effectBytes, 0);
+                    effectSecCount = effectSecLength / 0x81;
+                }
+                else
+                {
+                    effectSecLength = 0;
+                    effectSecCount = 0;
+                }
+                for (int z = 0; z < effectSecCount; z++)
+                {
+                    int skillIndex = 4 + (z * 0x81);
+                    int skillNameIndex = skillIndex + 0x40;
+                    int skillEntryIndex = skillIndex + 0x60;
+                    int skillValueIndex = skillIndex + 0x80;
+                    if (skillValueIndex >= effectBytes.Length)
+                        break;
+
+                    string skill = Main.b_ReadString2(effectBytes, skillIndex, 0x20);
+                    string skillName = Main.b_ReadString2(effectBytes, skillNameIndex, 0x20);
+                    string skillEntry = Main.b_ReadString2(effectBytes, skillEntryIndex, 0x20);
+                    int skillValue = effectBytes[skillValueIndex];
+                    effectSecName.Add(skill);
+                    effectSecSkillName.Add(skillName);
+                    effectSecSkillEntry.Add(skillEntry);
+                    effectSecSkillValue.Add(skillValue);
+                    if (IsEffectTerminator(effectSecName.Count - 1))
+                        break;
+
+                    effectVisibleIndices.Add(effectSecName.Count - 1);
+                    listBox2.Items.Add(skill);
+                }
+                button1.Enabled = true;
+                button2.Enabled = true;
+                button3.Enabled = true;
+            }
+            else
+            {
+                button1.Enabled = false;
+                button2.Enabled = false;
+                button3.Enabled = false;
+                MessageBox.Show("Effect section couldn't be found. If you used character prm, send this file in modding group and make sure it's original file from game.\nEffects will not be affected!");
+            }
+
+            editCollisionOfPlayerToolStripMenuItem.Enabled = false;
+            XfbinBinaryChunkItem collisionChunk = binaryChunks.FirstOrDefault(x => ChunkNameContains(x, "prm_hit"));
+            if (collisionChunk != null)
+            {
+                collisionChunkName = collisionChunk.ChunkName ?? "";
+                collisionChunkPath = collisionChunk.ChunkPath ?? "";
+                byte[] collisionBytes = collisionChunk.BinaryData ?? new byte[0];
+                if (collisionBytes.Length >= 8)
+                {
+                    collisionSecLength = Main.b_ReadIntRev(collisionBytes, 0);
+                    collisionSecCount = Main.b_ReadInt(collisionBytes, 4);
+                }
+                else
+                {
+                    collisionSecLength = 0;
+                    collisionSecCount = 0;
+                }
+                for (int z = 0; z < collisionSecCount; z++)
+                {
+                    int collisionTypeIndex = 8 + (z * 0x5C);
+                    int collisionStateIndex = collisionTypeIndex + 0x4;
+                    int collisionLoadBoneIndex = collisionTypeIndex + 0x8;
+                    int collisionHitboxIndex = collisionTypeIndex + 0x10;
+                    int collisionRadiusValueIndex = collisionTypeIndex + 0x50;
+                    int collisionYPosValueIndex = collisionTypeIndex + 0x54;
+                    int collisionZPosValueIndex = collisionTypeIndex + 0x58;
+                    if (collisionZPosValueIndex + 3 >= collisionBytes.Length)
+                        break;
+
+                    int collisionType = collisionBytes[collisionTypeIndex];
+                    int collisionState = collisionBytes[collisionStateIndex];
+                    int collisionLoadBone = collisionBytes[collisionLoadBoneIndex];
+                    long collisionRadiusValue = collisionBytes[collisionRadiusValueIndex] + collisionBytes[collisionRadiusValueIndex + 1] * 0x100 + collisionBytes[collisionRadiusValueIndex + 2] * 0x10000 + collisionBytes[collisionRadiusValueIndex + 3] * 0x1000000;
+                    long collisionYPosValue = collisionBytes[collisionYPosValueIndex] + collisionBytes[collisionYPosValueIndex + 1] * 0x100 + collisionBytes[collisionYPosValueIndex + 2] * 0x10000 + collisionBytes[collisionYPosValueIndex + 3] * 0x1000000;
+                    long collisionZPosValue = collisionBytes[collisionZPosValueIndex] + collisionBytes[collisionZPosValueIndex + 1] * 0x100 + collisionBytes[collisionZPosValueIndex + 2] * 0x10000 + collisionBytes[collisionZPosValueIndex + 3] * 0x1000000;
+                    string collisionHitbox = Main.b_ReadString2(collisionBytes, collisionHitboxIndex, 0x20);
+
+                    collisionSecTypeValue.Add(collisionType);
+                    collisionSecStateValue.Add(collisionState);
+                    collisionSecEnablerBoneValue.Add(collisionLoadBone);
+                    collisionSecRadiusValue.Add(collisionRadiusValue);
+                    collisionSecYPosValue.Add(collisionYPosValue);
+                    collisionSecZPosValue.Add(collisionZPosValue);
+                    collisionSecBoneName.Add(collisionHitbox);
+                }
+                editCollisionOfPlayerToolStripMenuItem.Enabled = true;
+            }
+        }
+
+        private int GetEffectActualIndexFromVisibleIndex(int visibleIndex)
+        {
+            if (visibleIndex < 0 || visibleIndex >= effectVisibleIndices.Count)
+                return -1;
+            return effectVisibleIndices[visibleIndex];
+        }
+
+        private bool IsEffectTerminator(int index)
+        {
+            if (index < 0 || index >= effectSecName.Count)
+                return false;
+
+            return IsEndMarker(effectSecName[index]) ||
+                   (index < effectSecSkillName.Count && IsEndMarker(effectSecSkillName[index])) ||
+                   (index < effectSecSkillEntry.Count && IsEndMarker(effectSecSkillEntry[index]));
+        }
+
+        private static bool IsEndMarker(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return false;
+
+            string normalized = value.Replace("\0", string.Empty).Trim();
+            return normalized.Equals("END", StringComparison.OrdinalIgnoreCase) ||
+                   normalized.StartsWith("END", StringComparison.OrdinalIgnoreCase);
+        }
 
         public void OpenFile(string loadPath = "")
         {
@@ -94,7 +526,23 @@ namespace NSUNS4_Character_Manager.Tools
             }
             else
                 filePath = loadPath;
+
+            listBox1.Items.Clear();
+            anm_list.Items.Clear();
+            mov_list.Items.Clear();
+            verSection.Clear();
+            anmCount.Clear();
+            anmSection.Clear();
+            verList.Clear();
+            verLength.Clear();
+            plAnmList.Clear();
+            movementList.Clear();
+
             fileBytes = File.ReadAllBytes(filePath);
+            List<XfbinBinaryChunkItem> binaryChunks = GetMovesetBinaryChunks(filePath);
+            verChunkNames.Clear();
+            verChunkPaths.Clear();
+            removedVerChunkNames.Clear();
 
             // Find all ver sections
             int actualver = 0;
@@ -109,333 +557,54 @@ namespace NSUNS4_Character_Manager.Tools
                 }
             }
 
-            // Add all ver section byte data
-            for(int x = 0; x < verList.Count; x++)
+            List<XfbinBinaryChunkItem> verChunks = binaryChunks
+                .Where(x => BufferContainsAscii(x.BinaryData, "ver0.000"))
+                .Where(x => GetPrmVerChunkRank(x.ChunkName) != int.MaxValue)
+                .OrderBy(x => GetPrmVerChunkRank(x.ChunkName))
+                .ThenBy(x => x.ChunkName ?? string.Empty, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            verSection.Clear();
+            List<string> detectedSectionLabels = new List<string>();
+            foreach (XfbinBinaryChunkItem chunk in verChunks)
             {
-                List<byte> actualSection = new List<byte>();
-                int begin = verList[x];
-                int end = verLength[x];
-
-                for(int y = 0; y < end; y++)
-                {
-                    actualSection.Add(fileBytes[begin + y]);
-                }
-
-                verSection.Add(actualSection.ToArray());
-                //File.WriteAllBytes(filePath + "_" + x.ToString(), actualSection.ToArray());
+                verSection.Add(chunk.BinaryData);
+                verChunkNames.Add(chunk.ChunkName ?? "");
+                verChunkPaths.Add(chunk.ChunkPath ?? "");
+                detectedSectionLabels.Add(GetPrmSectionLabel(chunk.ChunkName));
             }
-            List<string> NamesList = new List<string>();
-            //Effect data
-            NamesList = XfbinParser.GetNameList(fileBytes);
-            int EffectIndex = 0;
-            int EffectIndexCounter = -1;
-            do {
-                EffectIndex++;
-                EffectIndexCounter = NamesList[EffectIndex - 1].IndexOf("prm_sklslot");
-            }
-            while (EffectIndexCounter == -1);
-            byte[] EffectEntry = new byte[8]
+
+            if (verSection.Count == 0)
             {
-                    0x00,
-                    0x00,
-                    0x00,
-                    (byte)EffectIndex,
-                    0x00,
-                    0x63,
-                    0x00,
-                    0x00
-            };
-            int EffectPos = XfbinParser.FindBytes(fileBytes, EffectEntry, 0);
-            //MessageBox.Show(EffectPos.ToString("X2"));
-            if (EffectPos == -1) {
-                EffectEntry = new byte[6]
+                for (int i = 0; i < verList.Count; i++)
                 {
-                        0x00,
-                        0x00,
-                        0x00,
-                        (byte)EffectIndex,
-                        0x00,
-                        0x63
-                };
-                EffectPos = XfbinParser.FindBytes(fileBytes, EffectEntry, 0);
+                    if (verList[i] < 0 || verLength[i] <= 0 || verList[i] + verLength[i] > fileBytes.Length)
+                        continue;
+
+                    byte[] section = new byte[verLength[i]];
+                    Array.Copy(fileBytes, verList[i], section, 0, verLength[i]);
+                    verSection.Add(section);
+                    verChunkNames.Add(string.Empty);
+                    verChunkPaths.Add(string.Empty);
+                    detectedSectionLabels.Add("Section " + i.ToString());
+                }
             }
-            if (EffectPos == -1) {
-                EffectEntry = new byte[6]
-                {
-                        0x00,
-                        0x00,
-                        0x00,
-                        (byte)EffectIndex,
-                        0x00,
-                        0x79
-                };
-                EffectPos = XfbinParser.FindBytes(fileBytes, EffectEntry, 0);
-            }
-            if (EffectPos == -1) {
-                EffectEntry = new byte[6]
-                {
-                        0x00,
-                        0x00,
-                        0x00,
-                        (byte)EffectIndex,
-                        0x00,
-                        0x7A
-                };
-                EffectPos = XfbinParser.FindBytes(fileBytes, EffectEntry, 0);
-            }
-            if (EffectPos != -1)
+
+            LoadEffectAndCollisionChunks(binaryChunks);
+            sectionnames = detectedSectionLabels.ToArray();
+            RefreshPrmSectionAddOptions();
+            for (int a = 0; a < verSection.Count; a++)
             {
-                button1.Enabled = true;
-                button2.Enabled = true;
-                button3.Enabled = true;
-                EffectPos = EffectPos + 12;
-                effectSecFound = true;
-                effectSecLength = Main.b_ReadIntRev(fileBytes, EffectPos - 4);
-                int begin = EffectPos;
-                int end = effectSecLength;
-                effectSecCount = effectSecLength / 0x81;
-                for (int z = 0; z < effectSecCount; z++)
-                {
-                    int SkillIndex = (z * 0x81) + EffectPos;
-                    int SkillNameIndex = (z * 0x81) + 0x40 + EffectPos;
-                    int SkillEntryIndex = (z * 0x81) + 0x60 + EffectPos;
-                    int SkillValueIndex = (z * 0x81) + 0x80 + EffectPos;
-                    string Skill = Main.b_ReadString2(fileBytes, SkillIndex, 0x20);
-                    string SkillName = Main.b_ReadString2(fileBytes, SkillNameIndex, 0x20);
-                    string SkillEntry = Main.b_ReadString2(fileBytes, SkillEntryIndex, 0x20);
-                    int SkillValue = fileBytes[SkillValueIndex];
-                    effectSecName.Add(Skill);
-                    effectSecSkillName.Add(SkillName);
-                    effectSecSkillEntry.Add(SkillEntry);
-                    effectSecSkillValue.Add(SkillValue);
-                    listBox2.Items.Add(Skill);
-                }
-
-                //Hit Collision data
-                int HitIndex = 0;
-                int HitIndexCounter = -1;
-                do {
-                    HitIndex++;
-                    HitIndexCounter = NamesList[HitIndex - 1].IndexOf("prm_hit");
-                }
-                while (HitIndexCounter == -1);
-                byte[] CollisionEntry = new byte[8]
-                {
-                    0x00,
-                    0x00,
-                    0x00,
-                    (byte)HitIndex,
-                    0x00,
-                    0x63,
-                    0x00,
-                    0x00
-                };
-                int CollisionPos = XfbinParser.FindBytes(fileBytes, CollisionEntry, 0);
-                if (CollisionPos == -1)
-                {
-                    CollisionEntry = new byte[6]
-                    {
-                        0x00,
-                        0x00,
-                        0x00,
-                        (byte)HitIndex,
-                        0x00,
-                        0x63
-                    };
-                    CollisionPos = XfbinParser.FindBytes(fileBytes, CollisionEntry, 0);
-                }
-                if (CollisionPos == -1)
-                {
-                    CollisionEntry = new byte[6]
-                    {
-                        0x00,
-                        0x00,
-                        0x00,
-                        (byte)HitIndex,
-                        0x00,
-                        0x79
-                    };
-                    CollisionPos = XfbinParser.FindBytes(fileBytes, CollisionEntry, 0);
-                }
-                if (CollisionPos == -1)
-                {
-                    CollisionEntry = new byte[6]
-                    {
-                        0x00,
-                        0x00,
-                        0x00,
-                        (byte)HitIndex,
-                        0x00,
-                        0x7A
-                    };
-                    CollisionPos = XfbinParser.FindBytes(fileBytes, CollisionEntry, 0);
-                }
-                if (CollisionPos != -1)
-                {
-                    editCollisionOfPlayerToolStripMenuItem.Enabled = true;
-
-                    CollisionPos = CollisionPos + 16;
-                    collisionSecLength = Main.b_ReadIntRev(fileBytes, CollisionPos - 8);
-                    collisionSecCount = collisionSecLength / 0x5C;
-                    for (int z = 0; z < collisionSecCount; z++)
-                    {
-                        int CollisionTypeIndex = (z * 0x5C) + CollisionPos;
-                        int CollisionStateIndex = (z * 0x5C) + 0x4 + CollisionPos;
-                        int CollisionLoadBoneIndex = (z * 0x5C) + 0x8 + CollisionPos;
-                        int CollisionHitboxIndex = (z * 0x5C) + 0x10 + CollisionPos;
-                        int CollisionRadiusValueIndex = (z * 0x5C) + 0x50 + CollisionPos;
-                        int CollisionYPosValueIndex = (z * 0x5C) + 0x54 + CollisionPos;
-                        int CollisionZPosValueIndex = (z * 0x5C) + 0x58 + CollisionPos;
-
-
-                        int CollisionType = fileBytes[CollisionTypeIndex];
-                        int CollisionState = fileBytes[CollisionStateIndex];
-                        int CollisionLoadBone = fileBytes[CollisionLoadBoneIndex];
-                        long CollisionRadiusValue = fileBytes[CollisionRadiusValueIndex] + fileBytes[CollisionRadiusValueIndex+1] * 0x100 + fileBytes[CollisionRadiusValueIndex + 2] * 0x10000 + fileBytes[CollisionRadiusValueIndex + 3] * 0x1000000;
-                        long CollisionYPosValue = fileBytes[CollisionYPosValueIndex] + fileBytes[CollisionYPosValueIndex + 1] * 0x100 + fileBytes[CollisionYPosValueIndex + 2] * 0x10000 + fileBytes[CollisionYPosValueIndex + 3] * 0x1000000;
-                        long CollisionZPosValue = fileBytes[CollisionZPosValueIndex] + fileBytes[CollisionZPosValueIndex + 1] * 0x100 + fileBytes[CollisionZPosValueIndex + 2] * 0x10000 + fileBytes[CollisionZPosValueIndex + 3] * 0x1000000;
-                        string CollisionHitbox = Main.b_ReadString2(fileBytes, CollisionHitboxIndex, 0x20);
-
-                        collisionSecTypeValue.Add(CollisionType);
-                        collisionSecStateValue.Add(CollisionState);
-                        collisionSecEnablerBoneValue.Add(CollisionLoadBone);
-                        collisionSecRadiusValue.Add(CollisionRadiusValue);
-                        collisionSecYPosValue.Add(CollisionYPosValue);
-                        collisionSecZPosValue.Add(CollisionZPosValue);
-                        collisionSecBoneName.Add(CollisionHitbox);
-                    }
-                }
-
-                }
-            else
-            {
-                button1.Enabled = false;
-                button2.Enabled = false;
-                button3.Enabled = false;
-                MessageBox.Show("Effect section couldn't be found. If you used character prm, send this file in modding group and make sure it's original file from game.\nEffects will not be affected!");
-
-            }
-            //MessageBox.Show(EffectPos.ToString("X2"));
-            // List all anm sections
-            int motDMG = XfbinParser.FindString(fileBytes, "prm_motcmn", 0);
-            int awaSec = XfbinParser.FindString(fileBytes, "prm_awa", 0);
-            int bossSec = XfbinParser.FindString(fileBytes, "prm_boss", 0);
-
-            int BossIndex = 0;
-            if (awaSec != -1 && bossSec != -1) {
-                int BossIndexCounter = -1;
-                do {
-                    BossIndex++;
-                    BossIndexCounter = NamesList[BossIndex - 1].IndexOf("prm_boss");
-                }
-                while (BossIndexCounter == -1);
-            }
-            
-
-            if (motDMG == -1 && awaSec !=-1 && (BossIndex > 8 || bossSec == -1))
-            {
-                string[] sectionnames_loc =
-                {
-                    "Awakening",
-                    "Base",
-                    "Jutsu",
-                    "Ultimate Jutsu",
-                    "Expansion A",
-                    "Expansion B",
-                    "Expansion C",
-                    "Expansion D",
-                    "Expansion E",
-                    "Expansion F",
-                    "Expansion G",
-                    "Expansion H",
-                    "Expansion I"
-                };
-                sectionnames = sectionnames_loc;
-            }
-            else if (motDMG != -1 && awaSec != -1 && (BossIndex > 8 || bossSec == -1))
-            {
-                string[] sectionnames_loc =
-                {
-                    "Awakening",
-                    "Base",
-                    "Damage animations",
-                    "Jutsu",
-                    "Ultimate Jutsu",
-                    "Expansion A",
-                    "Expansion B",
-                    "Expansion C",
-                    "Expansion D",
-                    "Expansion E",
-                    "Expansion F",
-                    "Expansion G",
-                    "Expansion H",
-                    "Expansion I"
-                };
-                sectionnames = sectionnames_loc;
-            }
-            else if (motDMG != -1 && awaSec == -1 && (BossIndex > 8 || bossSec == -1))
-            {
-                string[] sectionnames_loc =
-                {
-                    "Base",
-                    "Damage animations",
-                    "Jutsu",
-                    "Ultimate Jutsu",
-                    "Expansion A",
-                    "Expansion B",
-                    "Expansion C",
-                    "Expansion D",
-                    "Expansion E",
-                    "Expansion F",
-                    "Expansion G",
-                    "Expansion H",
-                    "Expansion I"
-                };
-                sectionnames = sectionnames_loc;
-            }
-            else if (motDMG == -1 && awaSec == -1 && (BossIndex > 8 || bossSec == -1))
-            {
-                string[] sectionnames_loc =
-                {
-                    "Base",
-                    "Jutsu",
-                    "Ultimate Jutsu",
-                    "Expansion A",
-                    "Expansion B",
-                    "Expansion C",
-                    "Expansion D",
-                    "Expansion E",
-                    "Expansion G",
-                    "Expansion H",
-                    "Expansion I"
-                };
-                sectionnames = sectionnames_loc;
-            }
-            else {
-                string[] sectionnames_loc =
-                {
-                    "Expansion A",
-                    "Expansion B",
-                    "Expansion C",
-                    "Expansion D",
-                    "Expansion E",
-                    "Expansion G",
-                    "Expansion H",
-                    "Expansion I",
-                    "Expansion J",
-                    "Expansion K",
-                    "Expansion L"
-                };
-                sectionnames = sectionnames_loc;
-            }
-            for (int a = 0; a < verList.Count; a++)
-            {
-                listBox1.Items.Add(sectionnames[a]);
+                string sectionLabel = a < sectionnames.Length ? sectionnames[a] : ("Section " + a.ToString());
+                listBox1.Items.Add(sectionLabel);
 
                 byte[] actualSection = verSection[a];
-                int anmSectionCount = actualSection[0x30];
-                int start = 0x40;
-                int index = 0x40;
+                if (actualSection.Length < 0x44)
+                    continue;
+
+                int anmSectionCount = Main.b_ReadInt(actualSection, 0x34);
+                int start = 0x44;
+                int index = 0x44;
 
                 plAnmList.Add(new List<byte[]>());
                 movementList.Add(new List<List<byte[]>>()); //
@@ -445,6 +614,9 @@ namespace NSUNS4_Character_Manager.Tools
 
                 for (int x = 0; x < anmSectionCount; x++)
                 {
+                    if (start + 0xD4 > actualSection.Length)
+                        break;
+
                     // Add this pl_anm's header to plAnmList
                     List<byte> planmheader = new List<byte>();
                     for (int y = 0; y < 0xD4; y++)
@@ -468,6 +640,9 @@ namespace NSUNS4_Character_Manager.Tools
 
                         // Default movement section length is 0x40
                         int sectionLength = 0x40;
+
+                        if (index + 0x24 > actualSection.Length)
+                            break;
 
                         int function = actualSection[index + 0x22] * 0x1 + actualSection[index + 0x23] * 0x100;
                         
@@ -536,6 +711,9 @@ namespace NSUNS4_Character_Manager.Tools
                         // if (actualSection[index] != 0x0 && Char.IsUpper(act) && !Char.IsDigit(act)) sectionLength = 0x40;
 
                         //MessageBox.Show("Movement " + y.ToString() + " of ANM " + x.ToString() + " is " + sectionLength.ToString("X2") + " bytes long");
+                        if (index + sectionLength > actualSection.Length)
+                            break;
+
                         for (int z = 0; z < sectionLength; z++) movementsection.Add(actualSection[z + index]);
                         index = index + sectionLength;
 
@@ -721,11 +899,19 @@ namespace NSUNS4_Character_Manager.Tools
             string planm3 = Main.b_ReadString(actualSection, index);
             t_prevanm3.Text = planm3;
 
-            for(int x = 0; x < movementList[sectionindex][planm].Count; x++)
-            {
-                //int function = movementList[sectionindex][planm][x][0x22] * 0x1 + movementList[sectionindex][planm][x][0x22 + 1] * 0x100;
-                mov_list.Items.Add("Section " + x.ToString());
-            }
+            ReloadMovementList(sectionindex, planm);
+        }
+
+        private void ReloadMovementList(int sectionindex, int planm)
+        {
+            mov_list.Items.Clear();
+            if (sectionindex < 0 || planm < 0)
+                return;
+            if (sectionindex >= movementList.Count || planm >= movementList[sectionindex].Count)
+                return;
+
+            for (int x = 0; x < movementList[sectionindex][planm].Count; x++)
+                mov_list.Items.Add(FormatMovementListItem(movementList[sectionindex][planm][x]));
         }
 
         private void mov_list_SelectedIndexChanged(object sender, EventArgs e)
@@ -862,7 +1048,7 @@ namespace NSUNS4_Character_Manager.Tools
                 // Replace movement count
                 plAnmList[actualver][actualanm][0x50] = (byte)movementList[actualver][actualanm].Count;
 
-                mov_list.Items.Add("Section " + mov_list.Items.Count.ToString());
+                mov_list.Items.Add(FormatMovementListItem(newsec));
                 if (autosave.Checked == true)
                 {
                     AutoSave();
@@ -890,7 +1076,7 @@ namespace NSUNS4_Character_Manager.Tools
                 // Replace movement count
                 plAnmList[actualver][actualanm][0x50] = (byte)movementList[actualver][actualanm].Count;
 
-                mov_list.Items.Add("Section " + mov_list.Items.Count.ToString());
+                mov_list.Items.Add(FormatMovementListItem(newsec));
                 if (autosave.Checked == true)
                 {
                     AutoSave();
@@ -1664,13 +1850,148 @@ namespace NSUNS4_Character_Manager.Tools
             return newBytes;
         }
 
+        private byte[] BuildVerChunkData(int index)
+        {
+            byte[] output = new byte[0];
+            byte[] header = new byte[0x44];
+            header[0x04] = 0x76;
+            header[0x05] = 0x65;
+            header[0x06] = 0x72;
+            header[0x07] = 0x30;
+            header[0x08] = 0x2E;
+            header[0x09] = 0x30;
+            header[0x0A] = 0x30;
+            header[0x0B] = 0x30;
+            header = Main.b_ReplaceBytes(header, BitConverter.GetBytes(plAnmList[index].Count), 0x34);
+            output = Main.b_AddBytes(output, header);
+
+            for (int y = 0; y < plAnmList[index].Count; y++)
+            {
+                output = Main.b_AddBytes(output, plAnmList[index][y]);
+                for (int z = 0; z < movementList[index][y].Count; z++)
+                    output = Main.b_AddBytes(output, movementList[index][y][z]);
+            }
+
+            int dataSize = output.Length - 4;
+            byte[] sizeBytes = BitConverter.GetBytes(dataSize);
+            output[0] = sizeBytes[3];
+            output[1] = sizeBytes[2];
+            output[2] = sizeBytes[1];
+            output[3] = sizeBytes[0];
+
+            return output;
+        }
+
+        private byte[] BuildEffectChunkData()
+        {
+            byte[] effectSections = new byte[4];
+            for (int z = 0; z < effectSecCount; z++)
+            {
+                byte[] newEffectSection = new byte[0x81];
+                byte[] effectSectionName = new byte[0];
+                effectSectionName = Main.b_AddBytes(effectSectionName, Encoding.ASCII.GetBytes(effectSecName[z]));
+                newEffectSection = Main.b_ReplaceBytes(newEffectSection, effectSectionName, 0);
+
+                byte[] effectSectionSkillName = new byte[0];
+                effectSectionSkillName = Main.b_AddBytes(effectSectionSkillName, Encoding.ASCII.GetBytes(effectSecSkillName[z]));
+                newEffectSection = Main.b_ReplaceBytes(newEffectSection, effectSectionSkillName, 0x40);
+
+                byte[] effectSectionSkillEntry = new byte[0];
+                effectSectionSkillEntry = Main.b_AddBytes(effectSectionSkillEntry, Encoding.ASCII.GetBytes(effectSecSkillEntry[z]));
+                newEffectSection = Main.b_ReplaceBytes(newEffectSection, effectSectionSkillEntry, 0x60);
+
+                byte[] effectSectionSkillValue = new byte[1] { (byte)effectSecSkillValue[z] };
+                newEffectSection = Main.b_ReplaceBytes(newEffectSection, effectSectionSkillValue, 0x80);
+                effectSections = Main.b_AddBytes(effectSections, newEffectSection);
+            }
+
+            int dataSize = effectSections.Length - 4;
+            byte[] sizeBytes = BitConverter.GetBytes(dataSize);
+            effectSections[0] = sizeBytes[3];
+            effectSections[1] = sizeBytes[2];
+            effectSections[2] = sizeBytes[1];
+            effectSections[3] = sizeBytes[0];
+
+            return effectSections;
+        }
+
+        private byte[] BuildCollisionChunkData()
+        {
+            byte[] collisionSections = new byte[8];
+            collisionSections = Main.b_ReplaceBytes(collisionSections, BitConverter.GetBytes(collisionSecCount), 4);
+            for (int z = 0; z < collisionSecCount; z++)
+            {
+                byte[] newCollisionSection = new byte[0x5C];
+
+                newCollisionSection = Main.b_ReplaceBytes(newCollisionSection, BitConverter.GetBytes(collisionSecTypeValue[z]), 0x00);
+                newCollisionSection = Main.b_ReplaceBytes(newCollisionSection, BitConverter.GetBytes(collisionSecStateValue[z]), 0x04);
+                newCollisionSection = Main.b_ReplaceBytes(newCollisionSection, BitConverter.GetBytes(collisionSecEnablerBoneValue[z]), 0x08);
+                newCollisionSection = Main.b_ReplaceBytes(newCollisionSection, BitConverter.GetBytes(z + 1), 0x0C);
+
+                if (collisionSecEnablerBoneValue[z] == 0)
+                {
+                    byte[] collisionSectionHitbox = new byte[0];
+                    collisionSectionHitbox = Main.b_AddBytes(collisionSectionHitbox, Encoding.ASCII.GetBytes(collisionSecBoneName[z]));
+                    newCollisionSection = Main.b_ReplaceBytes(newCollisionSection, collisionSectionHitbox, 0x10);
+                }
+
+                byte[] collisionRadius = BitConverter.GetBytes(collisionSecRadiusValue[z]);
+                byte[] collisionYPos = BitConverter.GetBytes(collisionSecYPosValue[z]);
+                byte[] collisionZPos = BitConverter.GetBytes(collisionSecZPosValue[z]);
+                for (int k = 0; k < 4; k++)
+                {
+                    newCollisionSection = Main.b_ReplaceBytes(newCollisionSection, new byte[1] { collisionRadius[k] }, 0x50 + k);
+                    newCollisionSection = Main.b_ReplaceBytes(newCollisionSection, new byte[1] { collisionYPos[k] }, 0x54 + k);
+                    newCollisionSection = Main.b_ReplaceBytes(newCollisionSection, new byte[1] { collisionZPos[k] }, 0x58 + k);
+                }
+
+                collisionSections = Main.b_AddBytes(collisionSections, newCollisionSection);
+            }
+
+            int dataSize = collisionSections.Length - 4;
+            byte[] sizeBytes = BitConverter.GetBytes(dataSize);
+            collisionSections[0] = sizeBytes[3];
+            collisionSections[1] = sizeBytes[2];
+            collisionSections[2] = sizeBytes[1];
+            collisionSections[3] = sizeBytes[0];
+
+            return collisionSections;
+        }
+
+        private void SaveWithBackend(string outputPath)
+        {
+            string sourcePath = filePath;
+            using (XfbinParserBackend backend = new XfbinParserBackend(sourcePath))
+            {
+                for (int i = 0; i < verChunkNames.Count && i < plAnmList.Count && i < verChunkPaths.Count; i++)
+                {
+                    backend.UpsertBinaryChunk(verChunkNames[i], verChunkNames[i], verChunkPaths[i], BuildVerChunkData(i));
+                }
+
+                foreach (string removedChunkName in removedVerChunkNames.Distinct(StringComparer.OrdinalIgnoreCase).ToList())
+                    backend.DeleteBinaryChunk(removedChunkName);
+
+                if (!string.IsNullOrWhiteSpace(effectChunkName) && !string.IsNullOrWhiteSpace(effectChunkPath) && effectSecFound)
+                    backend.UpsertBinaryChunk(effectChunkName, effectChunkName, effectChunkPath, BuildEffectChunkData());
+
+                if (!string.IsNullOrWhiteSpace(collisionChunkName) && !string.IsNullOrWhiteSpace(collisionChunkPath) && collisionSecCount > 0)
+                    backend.UpsertBinaryChunk(collisionChunkName, collisionChunkName, collisionChunkPath, BuildCollisionChunkData());
+
+                backend.RepackTo(outputPath);
+            }
+
+            filePath = outputPath;
+            fileBytes = File.ReadAllBytes(outputPath);
+            removedVerChunkNames.Clear();
+        }
+
         private void saveToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (fileOpen)
             {
                 if (File.Exists(filePath + ".backup")) File.Delete(filePath + ".backup");
                 File.Copy(filePath, filePath + ".backup");
-                File.WriteAllBytes(filePath, GenerateFile());
+                SaveWithBackend(filePath);
                 MessageBox.Show("File saved to " + filePath);
             }
             else
@@ -1683,7 +2004,7 @@ namespace NSUNS4_Character_Manager.Tools
         {
             if (File.Exists(filePath + ".backup")) File.Delete(filePath + ".backup");
             File.Copy(filePath, filePath + ".backup");
-            File.WriteAllBytes(filePath, GenerateFile());
+            SaveWithBackend(filePath);
         }
         private void saveAsToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -1703,8 +2024,7 @@ namespace NSUNS4_Character_Manager.Tools
                     s.ShowDialog();
 
                 if (s.FileName != "") {
-                    filePath = s.FileName;
-                    File.WriteAllBytes(filePath, GenerateFile());
+                    SaveWithBackend(s.FileName);
                     if (basepath == "")
                         MessageBox.Show("File saved to " + filePath);
                 }
@@ -1831,12 +2151,21 @@ namespace NSUNS4_Character_Manager.Tools
             anmSection.Clear();
             verList.Clear();
             verLength.Clear();
+            verChunkNames.Clear();
+            verChunkPaths.Clear();
+            removedVerChunkNames.Clear();
             plAnmList.Clear();
             movementList.Clear();
+            if (prmSectionAddComboBox != null)
+                prmSectionAddComboBox.Items.Clear();
             effectSecName.Clear();
             effectSecSkillName.Clear();
             effectSecSkillEntry.Clear();
             effectSecSkillValue.Clear();
+            effectChunkName = "";
+            effectChunkPath = "";
+            collisionChunkName = "";
+            collisionChunkPath = "";
             collisionChanged = false;
             collisionSecTypeValue.Clear();
             collisionSecStateValue.Clear();
@@ -2023,6 +2352,41 @@ namespace NSUNS4_Character_Manager.Tools
             }
         }
 
+        private void movSortButton_Click(object sender, EventArgs e)
+        {
+            if (!fileOpen)
+            {
+                MessageBox.Show("Open prm file");
+                return;
+            }
+
+            int actualver = listBox1.SelectedIndex;
+            int actualanm = anm_list.SelectedIndex;
+            if (actualver == -1 || actualanm == -1)
+                return;
+
+            DialogResult result = MessageBox.Show(
+                "When sorting frame timings it can lead to unintended issues. Are you sure?",
+                "Sort movement entries",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
+
+            if (result != DialogResult.Yes)
+                return;
+
+            List<byte[]> sorted = movementList[actualver][actualanm]
+                .OrderBy(x => Main.b_ReadIntFromTwoBytes(x, 0x20))
+                .ToList();
+
+            movementList[actualver][actualanm] = sorted;
+            ReloadMovementList(actualver, actualanm);
+            if (mov_list.Items.Count > 0)
+                mov_list.SelectedIndex = 0;
+
+            if (autosave.Checked)
+                AutoSave();
+        }
+
         private void setCubemanToEveryANMToolStripMenuItem_Click(object sender, EventArgs e)
         {
             int ver = listBox1.SelectedIndex;
@@ -2052,6 +2416,16 @@ namespace NSUNS4_Character_Manager.Tools
         private void t_hiteffect_SelectedIndexChanged(object sender, EventArgs e)
         {
 
+        }
+
+        private void prmSectionAddButton_Click(object sender, EventArgs e)
+        {
+            AddPrmSection();
+        }
+
+        private void prmSectionDeleteButton_Click(object sender, EventArgs e)
+        {
+            DeletePrmSection();
         }
 
         private void t_function_SelectedIndexChanged(object sender, EventArgs e)
@@ -2169,11 +2543,26 @@ namespace NSUNS4_Character_Manager.Tools
         {
             if (effectSecFound)
             {
-                effectSecName.Add(t_skillSectionName.Text);
-                effectSecSkillName.Add(t_skillFileName.Text);
-                effectSecSkillEntry.Add(t_skillEntry.Text);
-                effectSecSkillValue.Add((int)t_skillValue.Value);
-                listBox2.Items.Add(t_skillSectionName.Text);
+                int insertIndex = effectSecName.Count;
+                if (effectSecName.Count > 0 && IsEffectTerminator(effectSecName.Count - 1))
+                    insertIndex = effectSecName.Count - 1;
+
+                effectSecName.Insert(insertIndex, t_skillSectionName.Text);
+                effectSecSkillName.Insert(insertIndex, t_skillFileName.Text);
+                effectSecSkillEntry.Insert(insertIndex, t_skillEntry.Text);
+                effectSecSkillValue.Insert(insertIndex, (int)t_skillValue.Value);
+                for (int i = 0; i < effectVisibleIndices.Count; i++)
+                {
+                    if (effectVisibleIndices[i] >= insertIndex)
+                        effectVisibleIndices[i]++;
+                }
+                int visibleInsertIndex = effectVisibleIndices.Count;
+                if (insertIndex < effectSecName.Count - 1 && effectSecName.Count > 0 && IsEffectTerminator(effectSecName.Count - 1))
+                    visibleInsertIndex = effectVisibleIndices.Count;
+                else
+                    visibleInsertIndex = effectVisibleIndices.Count;
+                effectVisibleIndices.Add(insertIndex);
+                listBox2.Items.Insert(listBox2.Items.Count, t_skillSectionName.Text);
                 listBox2.SelectedIndex = listBox2.Items.Count - 1;
                 effectSecCount++;
                 if (autosave.Checked == true)
@@ -2189,10 +2578,14 @@ namespace NSUNS4_Character_Manager.Tools
             {
                 if (listBox2.SelectedIndex != -1)
                 {
-                    effectSecName[listBox2.SelectedIndex] = t_skillSectionName.Text;
-                    effectSecSkillName[listBox2.SelectedIndex] = t_skillFileName.Text;
-                    effectSecSkillEntry[listBox2.SelectedIndex] = t_skillEntry.Text;
-                    effectSecSkillValue[listBox2.SelectedIndex] = (int)t_skillValue.Value;
+                    int actualIndex = GetEffectActualIndexFromVisibleIndex(listBox2.SelectedIndex);
+                    if (actualIndex == -1)
+                        return;
+
+                    effectSecName[actualIndex] = t_skillSectionName.Text;
+                    effectSecSkillName[actualIndex] = t_skillFileName.Text;
+                    effectSecSkillEntry[actualIndex] = t_skillEntry.Text;
+                    effectSecSkillValue[actualIndex] = (int)t_skillValue.Value;
                     listBox2.Items[listBox2.SelectedIndex] = t_skillSectionName.Text;
                     if (autosave.Checked == true)
                     {
@@ -2212,13 +2605,23 @@ namespace NSUNS4_Character_Manager.Tools
             {
                 if (listBox2.SelectedIndex != -1)
                 {
-                    int index = listBox2.SelectedIndex;
-                    effectSecName.RemoveAt(index);
-                    effectSecSkillName.RemoveAt(index);
-                    effectSecSkillEntry.RemoveAt(index);
-                    effectSecSkillValue.RemoveAt(index);
-                    listBox2.Items.RemoveAt(index);
-                    listBox2.SelectedIndex = index - 1;
+                    int visibleIndex = listBox2.SelectedIndex;
+                    int actualIndex = GetEffectActualIndexFromVisibleIndex(visibleIndex);
+                    if (actualIndex == -1)
+                        return;
+
+                    effectSecName.RemoveAt(actualIndex);
+                    effectSecSkillName.RemoveAt(actualIndex);
+                    effectSecSkillEntry.RemoveAt(actualIndex);
+                    effectSecSkillValue.RemoveAt(actualIndex);
+                    effectVisibleIndices.RemoveAt(visibleIndex);
+                    for (int i = 0; i < effectVisibleIndices.Count; i++)
+                    {
+                        if (effectVisibleIndices[i] > actualIndex)
+                            effectVisibleIndices[i]--;
+                    }
+                    listBox2.Items.RemoveAt(visibleIndex);
+                    listBox2.SelectedIndex = visibleIndex - 1;
                     effectSecCount--;
                     if (autosave.Checked == true)
                     {
@@ -2241,10 +2644,14 @@ namespace NSUNS4_Character_Manager.Tools
         {
             if (listBox2.SelectedIndex != -1)
             {
-                t_skillSectionName.Text = effectSecName[listBox2.SelectedIndex];
-                t_skillFileName.Text = effectSecSkillName[listBox2.SelectedIndex];
-                t_skillEntry.Text = effectSecSkillEntry[listBox2.SelectedIndex];
-                t_skillValue.Value = effectSecSkillValue[listBox2.SelectedIndex];
+                int actualIndex = GetEffectActualIndexFromVisibleIndex(listBox2.SelectedIndex);
+                if (actualIndex == -1)
+                    return;
+
+                t_skillSectionName.Text = effectSecName[actualIndex];
+                t_skillFileName.Text = effectSecSkillName[actualIndex];
+                t_skillEntry.Text = effectSecSkillEntry[actualIndex];
+                t_skillValue.Value = effectSecSkillValue[actualIndex];
             }
         }
 
@@ -2572,7 +2979,7 @@ namespace NSUNS4_Character_Manager.Tools
                             // Replace movement count
                             plAnmList[listBox1.SelectedIndex][anm_list.SelectedIndex][0x50] = (byte)movementList[listBox1.SelectedIndex][anm_list.SelectedIndex].Count;
 
-                            mov_list.Items.Add("Section " + mov_list.Items.Count.ToString());
+                            mov_list.Items.Add(FormatMovementListItem(newsec));
                             mov_list.SelectedIndex = -1;
                             mov_list.SelectedIndex = mov_list.Items.Count-1;
                         }

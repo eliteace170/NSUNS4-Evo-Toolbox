@@ -79,9 +79,67 @@ namespace NSUNS4_Character_Manager
             return result;
         }
 
+        public List<XfbinBinaryChunkItem> GetBinaryChunks()
+        {
+            List<XfbinBinaryChunkItem> result = new List<XfbinBinaryChunkItem>();
+            if (!Directory.Exists(WorkingDirectory))
+                return result;
+
+            foreach (string directory in Directory.GetDirectories(WorkingDirectory))
+            {
+                string pageJsonPath = Path.Combine(directory, "_page.json");
+                if (!File.Exists(pageJsonPath))
+                    continue;
+
+                XfbinParserPageDefinition definition = JsonConvert.DeserializeObject<XfbinParserPageDefinition>(File.ReadAllText(pageJsonPath));
+                if (definition == null || definition.Chunks == null)
+                    continue;
+
+                int pageIndex = ParseDirectoryIndex(Path.GetFileName(directory));
+                for (int i = 0; i < definition.Chunks.Count; i++)
+                {
+                    XfbinParserChunkEntry chunkEntry = definition.Chunks[i];
+                    if (chunkEntry == null || chunkEntry.Chunk == null)
+                        continue;
+                    if (!string.Equals(chunkEntry.Chunk.Type, BinaryChunkType, StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    string fileName = chunkEntry.FileName ?? string.Empty;
+                    string fullPath = Path.Combine(directory, fileName);
+                    result.Add(new XfbinBinaryChunkItem
+                    {
+                        PageIndex = pageIndex,
+                        ChunkIndex = i,
+                        DirectoryPath = directory,
+                        PageJsonPath = pageJsonPath,
+                        FileName = fileName,
+                        FilePath = fullPath,
+                        BinaryData = File.Exists(fullPath) ? File.ReadAllBytes(fullPath) : new byte[0],
+                        ChunkName = chunkEntry.Chunk.Name ?? string.Empty,
+                        ChunkPath = chunkEntry.Chunk.Path ?? string.Empty,
+                        ChunkType = chunkEntry.Chunk.Type ?? string.Empty
+                    });
+                }
+            }
+
+            result.Sort((left, right) =>
+            {
+                int compare = left.PageIndex.CompareTo(right.PageIndex);
+                if (compare != 0) return compare;
+                return left.ChunkIndex.CompareTo(right.ChunkIndex);
+            });
+            return result;
+        }
+
         public XfbinBinaryChunkPage FindBinaryChunkPage(string chunkName)
         {
             return GetBinaryChunkPages().FirstOrDefault(x =>
+                string.Equals(x.ChunkName, chunkName, StringComparison.OrdinalIgnoreCase));
+        }
+
+        public XfbinBinaryChunkItem FindBinaryChunkItem(string chunkName)
+        {
+            return GetBinaryChunks().FirstOrDefault(x =>
                 string.Equals(x.ChunkName, chunkName, StringComparison.OrdinalIgnoreCase));
         }
 
@@ -93,6 +151,107 @@ namespace NSUNS4_Character_Manager
                 throw new ArgumentException("Chunk path is required.", nameof(chunkPath));
             if (chunkData == null)
                 throw new ArgumentNullException(nameof(chunkData));
+
+            XfbinBinaryChunkItem existingChunk = null;
+            if (!string.IsNullOrWhiteSpace(oldChunkName))
+                existingChunk = FindBinaryChunkItem(oldChunkName);
+            if (existingChunk == null)
+                existingChunk = FindBinaryChunkItem(newChunkName);
+
+            if (existingChunk != null && File.Exists(existingChunk.PageJsonPath))
+            {
+                XfbinParserPageDefinition definition = JsonConvert.DeserializeObject<XfbinParserPageDefinition>(File.ReadAllText(existingChunk.PageJsonPath));
+                if (definition != null && definition.Chunks != null && definition.ChunkMaps != null)
+                {
+                    XfbinParserChunkEntry chunkEntry = definition.Chunks.FirstOrDefault(x =>
+                        x != null &&
+                        x.Chunk != null &&
+                        string.Equals(x.Chunk.Type, BinaryChunkType, StringComparison.OrdinalIgnoreCase) &&
+                        (string.Equals(x.Chunk.Name, oldChunkName, StringComparison.OrdinalIgnoreCase) ||
+                         string.Equals(x.Chunk.Name, newChunkName, StringComparison.OrdinalIgnoreCase)));
+
+                    XfbinParserChunkMap chunkMap = definition.ChunkMaps.FirstOrDefault(x =>
+                        x != null &&
+                        string.Equals(x.Type, BinaryChunkType, StringComparison.OrdinalIgnoreCase) &&
+                        (string.Equals(x.Name, oldChunkName, StringComparison.OrdinalIgnoreCase) ||
+                         string.Equals(x.Name, newChunkName, StringComparison.OrdinalIgnoreCase)));
+
+                    if (chunkEntry != null)
+                    {
+                        string extension = Path.GetExtension(chunkEntry.FileName ?? string.Empty);
+                        if (string.IsNullOrWhiteSpace(extension))
+                            extension = Path.GetExtension(chunkPath);
+                        if (string.IsNullOrWhiteSpace(extension))
+                            extension = ".binary";
+
+                        string newFileName = newChunkName + extension;
+                        string oldBinaryPath = Path.Combine(existingChunk.DirectoryPath, chunkEntry.FileName ?? string.Empty);
+                        string newBinaryPath = Path.Combine(existingChunk.DirectoryPath, newFileName);
+
+                        if (!string.Equals(oldBinaryPath, newBinaryPath, StringComparison.OrdinalIgnoreCase) && File.Exists(oldBinaryPath))
+                            File.Delete(oldBinaryPath);
+
+                        File.WriteAllBytes(newBinaryPath, chunkData);
+
+                        chunkEntry.FileName = newFileName;
+                        chunkEntry.Chunk.Name = newChunkName;
+                        chunkEntry.Chunk.Path = chunkPath;
+
+                        if (chunkMap != null)
+                        {
+                            chunkMap.Name = newChunkName;
+                            chunkMap.Path = chunkPath;
+                        }
+
+                        File.WriteAllText(existingChunk.PageJsonPath, JsonConvert.SerializeObject(definition, Formatting.Indented), Utf8NoBom);
+                        return;
+                    }
+                }
+            }
+
+            XfbinBinaryChunkItem containerChunk = FindBestBinaryChunkContainer(chunkPath);
+            if (containerChunk != null && File.Exists(containerChunk.PageJsonPath))
+            {
+                XfbinParserPageDefinition definition = JsonConvert.DeserializeObject<XfbinParserPageDefinition>(File.ReadAllText(containerChunk.PageJsonPath));
+                if (definition != null)
+                {
+                    if (definition.Chunks == null)
+                        definition.Chunks = new List<XfbinParserChunkEntry>();
+                    if (definition.ChunkMaps == null)
+                        definition.ChunkMaps = new List<XfbinParserChunkMap>();
+
+                    string extension = Path.GetExtension(chunkPath);
+                    if (string.IsNullOrWhiteSpace(extension))
+                        extension = ".binary";
+
+                    string fileName = newChunkName + extension;
+                    string containerBinaryFilePath = Path.Combine(containerChunk.DirectoryPath, fileName);
+                    File.WriteAllBytes(containerBinaryFilePath, chunkData);
+
+                    definition.ChunkMaps.Add(new XfbinParserChunkMap
+                    {
+                        Name = newChunkName,
+                        Type = BinaryChunkType,
+                        Path = chunkPath
+                    });
+
+                    definition.Chunks.Add(new XfbinParserChunkEntry
+                    {
+                        FileName = fileName,
+                        Version = 99,
+                        VersionAttribute = 37494,
+                        Chunk = new XfbinParserChunkMap
+                        {
+                            Name = newChunkName,
+                            Type = BinaryChunkType,
+                            Path = chunkPath
+                        }
+                    });
+
+                    File.WriteAllText(containerChunk.PageJsonPath, JsonConvert.SerializeObject(definition, Formatting.Indented), Utf8NoBom);
+                    return;
+                }
+            }
 
             XfbinBinaryChunkPage page = null;
             if (!string.IsNullOrWhiteSpace(oldChunkName))
@@ -131,10 +290,72 @@ namespace NSUNS4_Character_Manager
 
         public void DeleteBinaryChunk(string chunkName)
         {
-            XfbinBinaryChunkPage page = FindBinaryChunkPage(chunkName);
-            if (page == null || !Directory.Exists(page.DirectoryPath))
+            XfbinBinaryChunkItem chunk = FindBinaryChunkItem(chunkName);
+            if (chunk == null || !Directory.Exists(chunk.DirectoryPath))
                 return;
-            Directory.Delete(page.DirectoryPath, true);
+
+            XfbinParserPageDefinition definition = File.Exists(chunk.PageJsonPath)
+                ? JsonConvert.DeserializeObject<XfbinParserPageDefinition>(File.ReadAllText(chunk.PageJsonPath))
+                : null;
+
+            if (definition == null || definition.Chunks == null || definition.ChunkMaps == null)
+            {
+                Directory.Delete(chunk.DirectoryPath, true);
+                return;
+            }
+
+            definition.Chunks.RemoveAll(x =>
+                x != null &&
+                x.Chunk != null &&
+                string.Equals(x.Chunk.Type, BinaryChunkType, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(x.Chunk.Name, chunkName, StringComparison.OrdinalIgnoreCase));
+
+            definition.ChunkMaps.RemoveAll(x =>
+                x != null &&
+                string.Equals(x.Type, BinaryChunkType, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(x.Name, chunkName, StringComparison.OrdinalIgnoreCase));
+
+            if (File.Exists(chunk.FilePath))
+                File.Delete(chunk.FilePath);
+
+            bool hasBinaryChunks = definition.Chunks.Any(x =>
+                x != null &&
+                x.Chunk != null &&
+                string.Equals(x.Chunk.Type, BinaryChunkType, StringComparison.OrdinalIgnoreCase));
+
+            if (!hasBinaryChunks)
+            {
+                Directory.Delete(chunk.DirectoryPath, true);
+                return;
+            }
+
+            File.WriteAllText(chunk.PageJsonPath, JsonConvert.SerializeObject(definition, Formatting.Indented), Utf8NoBom);
+        }
+
+        private XfbinBinaryChunkItem FindBestBinaryChunkContainer(string chunkPath)
+        {
+            string targetDirectory = NormalizeChunkDirectory(chunkPath);
+            List<XfbinBinaryChunkItem> chunks = GetBinaryChunks();
+
+            XfbinBinaryChunkItem match = chunks.FirstOrDefault(x => NormalizeChunkDirectory(x.ChunkPath) == targetDirectory);
+            if (match != null)
+                return match;
+
+            return chunks
+                .GroupBy(x => x.PageJsonPath)
+                .OrderByDescending(x => x.Count())
+                .Select(x => x.First())
+                .FirstOrDefault();
+        }
+
+        private static string NormalizeChunkDirectory(string chunkPath)
+        {
+            if (string.IsNullOrWhiteSpace(chunkPath))
+                return string.Empty;
+
+            string normalized = chunkPath.Replace('\\', '/');
+            int lastSlash = normalized.LastIndexOf('/');
+            return lastSlash >= 0 ? normalized.Substring(0, lastSlash) : normalized;
         }
 
         public void RepackTo(string outputPath)
@@ -213,9 +434,25 @@ namespace NSUNS4_Character_Manager
             if (File.Exists(candidate))
                 return candidate;
 
-            candidate = Path.Combine(baseDirectory, "NSUNS4_Character_Manager", "xfbin_parser.exe");
+            candidate = Path.Combine(baseDirectory, "dependencies", "xfbin_parser.exe");
             if (File.Exists(candidate))
                 return candidate;
+
+            string baseParentDirectory = Directory.Exists(baseDirectory) ? Directory.GetParent(baseDirectory)?.FullName ?? string.Empty : string.Empty;
+            if (!string.IsNullOrWhiteSpace(baseParentDirectory))
+            {
+                candidate = Path.Combine(baseParentDirectory, "xfbin_parser.exe");
+                if (File.Exists(candidate))
+                    return candidate;
+
+                string baseGrandParentDirectory = Directory.Exists(baseParentDirectory) ? Directory.GetParent(baseParentDirectory)?.FullName ?? string.Empty : string.Empty;
+                if (!string.IsNullOrWhiteSpace(baseGrandParentDirectory))
+                {
+                    candidate = Path.Combine(baseGrandParentDirectory, "xfbin_parser.exe");
+                    if (File.Exists(candidate))
+                        return candidate;
+                }
+            }
 
             candidate = Path.Combine(Path.GetDirectoryName(SourceFilePath) ?? string.Empty, "xfbin_parser.exe");
             if (File.Exists(candidate))
@@ -236,6 +473,14 @@ namespace NSUNS4_Character_Manager
                 candidate = Path.Combine(currentDirectory, "xfbin_parser.exe");
                 if (File.Exists(candidate))
                     return candidate;
+
+                string currentParentDirectory = Directory.Exists(currentDirectory) ? Directory.GetParent(currentDirectory)?.FullName ?? string.Empty : string.Empty;
+                if (!string.IsNullOrWhiteSpace(currentParentDirectory))
+                {
+                    candidate = Path.Combine(currentParentDirectory, "xfbin_parser.exe");
+                    if (File.Exists(candidate))
+                        return candidate;
+                }
             }
 
             throw new FileNotFoundException("xfbin_parser.exe was not found next to the application or source files.");
@@ -288,6 +533,20 @@ namespace NSUNS4_Character_Manager
         public XfbinParserPageDefinition Definition;
     }
 
+    public sealed class XfbinBinaryChunkItem
+    {
+        public int PageIndex;
+        public int ChunkIndex;
+        public string DirectoryPath;
+        public string PageJsonPath;
+        public string FileName;
+        public string FilePath;
+        public byte[] BinaryData;
+        public string ChunkName;
+        public string ChunkPath;
+        public string ChunkType;
+    }
+
     public sealed class XfbinParserPageDefinition
     {
         [JsonProperty("Chunk Maps")]
@@ -304,6 +563,12 @@ namespace NSUNS4_Character_Manager
     {
         [JsonProperty("File Name")]
         public string FileName;
+
+        [JsonProperty("Version")]
+        public int Version;
+
+        [JsonProperty("Version Attribute")]
+        public int VersionAttribute;
 
         [JsonProperty("Chunk")]
         public XfbinParserChunkMap Chunk;

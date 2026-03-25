@@ -147,6 +147,10 @@
             this.button7 = new System.Windows.Forms.Button();
             this.button8 = new System.Windows.Forms.Button();
             this.button9 = new System.Windows.Forms.Button();
+            this.prmSectionAddButton = new System.Windows.Forms.Button();
+            this.prmSectionDeleteButton = new System.Windows.Forms.Button();
+            this.prmSectionAddComboBox = new System.Windows.Forms.ComboBox();
+            this.movSortButton = new System.Windows.Forms.Button();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.t_loadsection)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.t_direction)).BeginInit();
@@ -335,9 +339,9 @@
             // anm_list
             // 
             this.anm_list.FormattingEnabled = true;
-            this.anm_list.Location = new System.Drawing.Point(10, 140);
+            this.anm_list.Location = new System.Drawing.Point(9, 166);
             this.anm_list.Name = "anm_list";
-            this.anm_list.Size = new System.Drawing.Size(216, 472);
+            this.anm_list.Size = new System.Drawing.Size(217, 446);
             this.anm_list.TabIndex = 6;
             this.anm_list.SelectedIndexChanged += new System.EventHandler(this.anm_list_SelectedIndexChanged);
             // 
@@ -680,7 +684,7 @@
             // 
             // t_secdel
             // 
-            this.t_secdel.Location = new System.Drawing.Point(421, 667);
+            this.t_secdel.Location = new System.Drawing.Point(425, 668);
             this.t_secdel.Name = "t_secdel";
             this.t_secdel.Size = new System.Drawing.Size(111, 23);
             this.t_secdel.TabIndex = 43;
@@ -690,9 +694,9 @@
             // 
             // t_secdup
             // 
-            this.t_secdup.Location = new System.Drawing.Point(315, 667);
+            this.t_secdup.Location = new System.Drawing.Point(329, 669);
             this.t_secdup.Name = "t_secdup";
-            this.t_secdup.Size = new System.Drawing.Size(99, 23);
+            this.t_secdup.Size = new System.Drawing.Size(90, 23);
             this.t_secdup.TabIndex = 42;
             this.t_secdup.Text = "Duplicate section";
             this.t_secdup.UseVisualStyleBackColor = true;
@@ -700,9 +704,9 @@
             // 
             // t_secadd
             // 
-            this.t_secadd.Location = new System.Drawing.Point(230, 667);
+            this.t_secadd.Location = new System.Drawing.Point(230, 669);
             this.t_secadd.Name = "t_secadd";
-            this.t_secadd.Size = new System.Drawing.Size(80, 23);
+            this.t_secadd.Size = new System.Drawing.Size(93, 23);
             this.t_secadd.TabIndex = 41;
             this.t_secadd.Text = "Add section";
             this.t_secadd.UseVisualStyleBackColor = true;
@@ -975,7 +979,7 @@
             // 
             this.b_moveupmov.Location = new System.Drawing.Point(230, 640);
             this.b_moveupmov.Name = "b_moveupmov";
-            this.b_moveupmov.Size = new System.Drawing.Size(151, 23);
+            this.b_moveupmov.Size = new System.Drawing.Size(93, 23);
             this.b_moveupmov.TabIndex = 69;
             this.b_moveupmov.Text = "Move Up";
             this.b_moveupmov.UseVisualStyleBackColor = true;
@@ -983,9 +987,9 @@
             // 
             // b_movedownmov
             // 
-            this.b_movedownmov.Location = new System.Drawing.Point(387, 640);
+            this.b_movedownmov.Location = new System.Drawing.Point(329, 640);
             this.b_movedownmov.Name = "b_movedownmov";
-            this.b_movedownmov.Size = new System.Drawing.Size(145, 23);
+            this.b_movedownmov.Size = new System.Drawing.Size(91, 23);
             this.b_movedownmov.TabIndex = 70;
             this.b_movedownmov.Text = "Move Down";
             this.b_movedownmov.UseVisualStyleBackColor = true;
@@ -1347,7 +1351,7 @@
             this.button7.Font = new System.Drawing.Font("Segoe UI", 8.5F);
             this.button7.Location = new System.Drawing.Point(425, 697);
             this.button7.Name = "button7";
-            this.button7.Size = new System.Drawing.Size(106, 38);
+            this.button7.Size = new System.Drawing.Size(111, 38);
             this.button7.TabIndex = 110;
             this.button7.Text = "Replace from buffer";
             this.button7.UseVisualStyleBackColor = true;
@@ -1374,11 +1378,54 @@
             this.button9.UseVisualStyleBackColor = true;
             this.button9.Click += new System.EventHandler(this.button9_Click);
             // 
+            // prmSectionAddButton
+            // 
+            this.prmSectionAddButton.Location = new System.Drawing.Point(118, 136);
+            this.prmSectionAddButton.Name = "prmSectionAddButton";
+            this.prmSectionAddButton.Size = new System.Drawing.Size(50, 21);
+            this.prmSectionAddButton.TabIndex = 113;
+            this.prmSectionAddButton.Text = "Add section";
+            this.prmSectionAddButton.UseVisualStyleBackColor = true;
+            this.prmSectionAddButton.Click += new System.EventHandler(this.prmSectionAddButton_Click);
+            // 
+            // prmSectionDeleteButton
+            // 
+            this.prmSectionDeleteButton.Location = new System.Drawing.Point(174, 136);
+            this.prmSectionDeleteButton.Name = "prmSectionDeleteButton";
+            this.prmSectionDeleteButton.Size = new System.Drawing.Size(51, 21);
+            this.prmSectionDeleteButton.TabIndex = 114;
+            this.prmSectionDeleteButton.Text = "Delete section";
+            this.prmSectionDeleteButton.UseVisualStyleBackColor = true;
+            this.prmSectionDeleteButton.Click += new System.EventHandler(this.prmSectionDeleteButton_Click);
+            // 
+            // prmSectionAddComboBox
+            // 
+            this.prmSectionAddComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.prmSectionAddComboBox.FormattingEnabled = true;
+            this.prmSectionAddComboBox.Location = new System.Drawing.Point(9, 136);
+            this.prmSectionAddComboBox.Name = "prmSectionAddComboBox";
+            this.prmSectionAddComboBox.Size = new System.Drawing.Size(106, 21);
+            this.prmSectionAddComboBox.TabIndex = 112;
+            // 
+            // movSortButton
+            // 
+            this.movSortButton.Location = new System.Drawing.Point(426, 640);
+            this.movSortButton.Name = "movSortButton";
+            this.movSortButton.Size = new System.Drawing.Size(105, 23);
+            this.movSortButton.TabIndex = 71;
+            this.movSortButton.Text = "Sort";
+            this.movSortButton.UseVisualStyleBackColor = true;
+            this.movSortButton.Click += new System.EventHandler(this.movSortButton_Click);
+            // 
             // Tool_MovesetCoder
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1011, 738);
+            this.Controls.Add(this.movSortButton);
+            this.Controls.Add(this.prmSectionAddComboBox);
+            this.Controls.Add(this.prmSectionDeleteButton);
+            this.Controls.Add(this.prmSectionAddButton);
             this.Controls.Add(this.button9);
             this.Controls.Add(this.button7);
             this.Controls.Add(this.button8);
@@ -1638,6 +1685,10 @@
         private System.Windows.Forms.Button button7;
         private System.Windows.Forms.Button button8;
         private System.Windows.Forms.Button button9;
+        private System.Windows.Forms.Button prmSectionAddButton;
+        private System.Windows.Forms.Button prmSectionDeleteButton;
+        private System.Windows.Forms.ComboBox prmSectionAddComboBox;
+        private System.Windows.Forms.Button movSortButton;
         public System.Windows.Forms.ListBox listBox1;
     }
 }
