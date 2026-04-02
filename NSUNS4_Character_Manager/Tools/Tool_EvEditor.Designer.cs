@@ -104,9 +104,9 @@ namespace NSUNS4_Character_Manager
             this.mainTabControl = new System.Windows.Forms.TabControl();
             this.battleTabPage = new System.Windows.Forms.TabPage();
             this.battleListBox = new System.Windows.Forms.ListBox();
-            this.battlePrefixText = new System.Windows.Forms.TextBox();
             this.battleApplyPrefixButton = new System.Windows.Forms.Button();
             this.battleSearchText = new System.Windows.Forms.TextBox();
+            this.battlePrefixText = new System.Windows.Forms.TextBox();
             this.battleEditPanel = new System.Windows.Forms.Panel();
             this.battleLabelSoundPl = new System.Windows.Forms.Label();
             this.battleLabelPan = new System.Windows.Forms.Label();
@@ -159,14 +159,14 @@ namespace NSUNS4_Character_Manager
             this.ultimateDeleteChunkButton = new System.Windows.Forms.Button();
             this.ultimateChunkListBox = new System.Windows.Forms.ListBox();
             this.ultimateEntryListBox = new System.Windows.Forms.ListBox();
+            this.ultimateApplyPrefixButton = new System.Windows.Forms.Button();
+            this.ultimatePrefixText = new System.Windows.Forms.TextBox();
             this.ultimateAddEntryButton = new System.Windows.Forms.Button();
             this.ultimateDuplicateEntryButton = new System.Windows.Forms.Button();
             this.ultimateDeleteEntryButton = new System.Windows.Forms.Button();
             this.ultimateSaveSelectedButton = new System.Windows.Forms.Button();
             this.ultimateCopyButton = new System.Windows.Forms.Button();
             this.ultimatePasteButton = new System.Windows.Forms.Button();
-            this.ultimatePrefixText = new System.Windows.Forms.TextBox();
-            this.ultimateApplyPrefixButton = new System.Windows.Forms.Button();
             this.ultimateSearchText = new System.Windows.Forms.TextBox();
             this.ultimateSearchButton = new System.Windows.Forms.Button();
             this.ultimateEditPanel = new System.Windows.Forms.Panel();
@@ -232,7 +232,7 @@ namespace NSUNS4_Character_Manager
             this.infoToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(783, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(872, 24);
             this.menuStrip1.TabIndex = 1;
             // 
             // fileToolStripMenuItem
@@ -295,7 +295,7 @@ namespace NSUNS4_Character_Manager
             this.mainTabControl.Location = new System.Drawing.Point(12, 32);
             this.mainTabControl.Name = "mainTabControl";
             this.mainTabControl.SelectedIndex = 0;
-            this.mainTabControl.Size = new System.Drawing.Size(770, 717);
+            this.mainTabControl.Size = new System.Drawing.Size(864, 717);
             this.mainTabControl.TabIndex = 0;
             // 
             // battleTabPage
@@ -315,7 +315,7 @@ namespace NSUNS4_Character_Manager
             this.battleTabPage.Location = new System.Drawing.Point(4, 22);
             this.battleTabPage.Name = "battleTabPage";
             this.battleTabPage.Padding = new System.Windows.Forms.Padding(8);
-            this.battleTabPage.Size = new System.Drawing.Size(762, 691);
+            this.battleTabPage.Size = new System.Drawing.Size(856, 691);
             this.battleTabPage.TabIndex = 0;
             this.battleTabPage.Text = "Battle";
             // 
@@ -323,16 +323,9 @@ namespace NSUNS4_Character_Manager
             // 
             this.battleListBox.Location = new System.Drawing.Point(3, 40);
             this.battleListBox.Name = "battleListBox";
-            this.battleListBox.Size = new System.Drawing.Size(354, 537);
+            this.battleListBox.Size = new System.Drawing.Size(474, 563);
             this.battleListBox.TabIndex = 0;
             this.battleListBox.SelectedIndexChanged += new System.EventHandler(this.battleListBox_SelectedIndexChanged);
-            // 
-            // battlePrefixText
-            // 
-            this.battlePrefixText.Location = new System.Drawing.Point(3, 11);
-            this.battlePrefixText.Name = "battlePrefixText";
-            this.battlePrefixText.Size = new System.Drawing.Size(250, 23);
-            this.battlePrefixText.TabIndex = 1;
             // 
             // battleApplyPrefixButton
             // 
@@ -346,10 +339,17 @@ namespace NSUNS4_Character_Manager
             // 
             // battleSearchText
             // 
-            this.battleSearchText.Location = new System.Drawing.Point(3, 583);
+            this.battleSearchText.Location = new System.Drawing.Point(3, 612);
             this.battleSearchText.Name = "battleSearchText";
             this.battleSearchText.Size = new System.Drawing.Size(234, 23);
             this.battleSearchText.TabIndex = 3;
+            // 
+            // battlePrefixText
+            // 
+            this.battlePrefixText.Location = new System.Drawing.Point(3, 11);
+            this.battlePrefixText.Name = "battlePrefixText";
+            this.battlePrefixText.Size = new System.Drawing.Size(250, 23);
+            this.battlePrefixText.TabIndex = 1;
             // 
             // battleEditPanel
             // 
@@ -392,15 +392,15 @@ namespace NSUNS4_Character_Manager
             this.battleEditPanel.Controls.Add(this.battleLowPassValue);
             this.battleEditPanel.Controls.Add(this.battlePanValue);
             this.battleEditPanel.Controls.Add(this.battleVolumeValue);
-            this.battleEditPanel.Location = new System.Drawing.Point(363, 11);
+            this.battleEditPanel.Location = new System.Drawing.Point(483, 13);
             this.battleEditPanel.Name = "battleEditPanel";
-            this.battleEditPanel.Size = new System.Drawing.Size(385, 668);
+            this.battleEditPanel.Size = new System.Drawing.Size(371, 590);
             this.battleEditPanel.TabIndex = 7;
             // 
             // battleLabelSoundPl
             // 
             this.battleLabelSoundPl.AutoSize = true;
-            this.battleLabelSoundPl.Location = new System.Drawing.Point(4, 22);
+            this.battleLabelSoundPl.Location = new System.Drawing.Point(3, 14);
             this.battleLabelSoundPl.Name = "battleLabelSoundPl";
             this.battleLabelSoundPl.Size = new System.Drawing.Size(61, 15);
             this.battleLabelSoundPl.TabIndex = 0;
@@ -410,7 +410,7 @@ namespace NSUNS4_Character_Manager
             // battleLabelPan
             // 
             this.battleLabelPan.AutoSize = true;
-            this.battleLabelPan.Location = new System.Drawing.Point(4, 209);
+            this.battleLabelPan.Location = new System.Drawing.Point(3, 201);
             this.battleLabelPan.Name = "battleLabelPan";
             this.battleLabelPan.Size = new System.Drawing.Size(27, 15);
             this.battleLabelPan.TabIndex = 2;
@@ -418,7 +418,7 @@ namespace NSUNS4_Character_Manager
             // 
             // battleSoundDelayResetAnmValue
             // 
-            this.battleSoundDelayResetAnmValue.Location = new System.Drawing.Point(133, 526);
+            this.battleSoundDelayResetAnmValue.Location = new System.Drawing.Point(142, 518);
             this.battleSoundDelayResetAnmValue.Maximum = new decimal(new int[] {
             32767,
             0,
@@ -436,7 +436,7 @@ namespace NSUNS4_Character_Manager
             // battleLabelLocX
             // 
             this.battleLabelLocX.AutoSize = true;
-            this.battleLabelLocX.Location = new System.Drawing.Point(4, 383);
+            this.battleLabelLocX.Location = new System.Drawing.Point(3, 375);
             this.battleLabelLocX.Name = "battleLabelLocX";
             this.battleLabelLocX.Size = new System.Drawing.Size(63, 15);
             this.battleLabelLocX.TabIndex = 22;
@@ -444,7 +444,7 @@ namespace NSUNS4_Character_Manager
             // 
             // battleUnknownValue
             // 
-            this.battleUnknownValue.Location = new System.Drawing.Point(133, 497);
+            this.battleUnknownValue.Location = new System.Drawing.Point(142, 489);
             this.battleUnknownValue.Maximum = new decimal(new int[] {
             32767,
             0,
@@ -462,7 +462,7 @@ namespace NSUNS4_Character_Manager
             // battleLabelVolume
             // 
             this.battleLabelVolume.AutoSize = true;
-            this.battleLabelVolume.Location = new System.Drawing.Point(4, 238);
+            this.battleLabelVolume.Location = new System.Drawing.Point(3, 230);
             this.battleLabelVolume.Name = "battleLabelVolume";
             this.battleLabelVolume.Size = new System.Drawing.Size(47, 15);
             this.battleLabelVolume.TabIndex = 4;
@@ -470,7 +470,7 @@ namespace NSUNS4_Character_Manager
             // 
             // battleSoundDelayResetValue
             // 
-            this.battleSoundDelayResetValue.Location = new System.Drawing.Point(133, 468);
+            this.battleSoundDelayResetValue.Location = new System.Drawing.Point(142, 460);
             this.battleSoundDelayResetValue.Maximum = new decimal(new int[] {
             32767,
             0,
@@ -488,7 +488,7 @@ namespace NSUNS4_Character_Manager
             // battleLabelSoundXfbin
             // 
             this.battleLabelSoundXfbin.AutoSize = true;
-            this.battleLabelSoundXfbin.Location = new System.Drawing.Point(4, 61);
+            this.battleLabelSoundXfbin.Location = new System.Drawing.Point(3, 53);
             this.battleLabelSoundXfbin.Name = "battleLabelSoundXfbin";
             this.battleLabelSoundXfbin.Size = new System.Drawing.Size(62, 15);
             this.battleLabelSoundXfbin.TabIndex = 16;
@@ -497,7 +497,7 @@ namespace NSUNS4_Character_Manager
             // battleLabelSoundDelayResetAnm
             // 
             this.battleLabelSoundDelayResetAnm.AutoSize = true;
-            this.battleLabelSoundDelayResetAnm.Location = new System.Drawing.Point(4, 528);
+            this.battleLabelSoundDelayResetAnm.Location = new System.Drawing.Point(3, 520);
             this.battleLabelSoundDelayResetAnm.Name = "battleLabelSoundDelayResetAnm";
             this.battleLabelSoundDelayResetAnm.Size = new System.Drawing.Size(96, 15);
             this.battleLabelSoundDelayResetAnm.TabIndex = 32;
@@ -506,7 +506,7 @@ namespace NSUNS4_Character_Manager
             // battleLabelAnimationName
             // 
             this.battleLabelAnimationName.AutoSize = true;
-            this.battleLabelAnimationName.Location = new System.Drawing.Point(4, 88);
+            this.battleLabelAnimationName.Location = new System.Drawing.Point(3, 80);
             this.battleLabelAnimationName.Name = "battleLabelAnimationName";
             this.battleLabelAnimationName.Size = new System.Drawing.Size(63, 15);
             this.battleLabelAnimationName.TabIndex = 18;
@@ -515,7 +515,7 @@ namespace NSUNS4_Character_Manager
             // battleLabelUnknown
             // 
             this.battleLabelUnknown.AutoSize = true;
-            this.battleLabelUnknown.Location = new System.Drawing.Point(4, 499);
+            this.battleLabelUnknown.Location = new System.Drawing.Point(3, 491);
             this.battleLabelUnknown.Name = "battleLabelUnknown";
             this.battleLabelUnknown.Size = new System.Drawing.Size(58, 15);
             this.battleLabelUnknown.TabIndex = 30;
@@ -524,7 +524,7 @@ namespace NSUNS4_Character_Manager
             // battleLocZValue
             // 
             this.battleLocZValue.DecimalPlaces = 3;
-            this.battleLocZValue.Location = new System.Drawing.Point(133, 439);
+            this.battleLocZValue.Location = new System.Drawing.Point(142, 431);
             this.battleLocZValue.Maximum = new decimal(new int[] {
             100000,
             0,
@@ -542,7 +542,7 @@ namespace NSUNS4_Character_Manager
             // battleLabelSoundDelayReset
             // 
             this.battleLabelSoundDelayReset.AutoSize = true;
-            this.battleLabelSoundDelayReset.Location = new System.Drawing.Point(4, 470);
+            this.battleLabelSoundDelayReset.Location = new System.Drawing.Point(3, 462);
             this.battleLabelSoundDelayReset.Name = "battleLabelSoundDelayReset";
             this.battleLabelSoundDelayReset.Size = new System.Drawing.Size(103, 15);
             this.battleLabelSoundDelayReset.TabIndex = 28;
@@ -551,7 +551,7 @@ namespace NSUNS4_Character_Manager
             // battleLabelPitch
             // 
             this.battleLabelPitch.AutoSize = true;
-            this.battleLabelPitch.Location = new System.Drawing.Point(4, 267);
+            this.battleLabelPitch.Location = new System.Drawing.Point(3, 259);
             this.battleLabelPitch.Name = "battleLabelPitch";
             this.battleLabelPitch.Size = new System.Drawing.Size(34, 15);
             this.battleLabelPitch.TabIndex = 6;
@@ -560,7 +560,7 @@ namespace NSUNS4_Character_Manager
             // battleLocYValue
             // 
             this.battleLocYValue.DecimalPlaces = 3;
-            this.battleLocYValue.Location = new System.Drawing.Point(133, 410);
+            this.battleLocYValue.Location = new System.Drawing.Point(142, 402);
             this.battleLocYValue.Maximum = new decimal(new int[] {
             100000,
             0,
@@ -578,7 +578,7 @@ namespace NSUNS4_Character_Manager
             // battleLabelHitbox
             // 
             this.battleLabelHitbox.AutoSize = true;
-            this.battleLabelHitbox.Location = new System.Drawing.Point(4, 120);
+            this.battleLabelHitbox.Location = new System.Drawing.Point(3, 112);
             this.battleLabelHitbox.Name = "battleLabelHitbox";
             this.battleLabelHitbox.Size = new System.Drawing.Size(91, 15);
             this.battleLabelHitbox.TabIndex = 20;
@@ -588,7 +588,7 @@ namespace NSUNS4_Character_Manager
             // battleLocXValue
             // 
             this.battleLocXValue.DecimalPlaces = 3;
-            this.battleLocXValue.Location = new System.Drawing.Point(133, 381);
+            this.battleLocXValue.Location = new System.Drawing.Point(142, 373);
             this.battleLocXValue.Maximum = new decimal(new int[] {
             100000,
             0,
@@ -602,11 +602,12 @@ namespace NSUNS4_Character_Manager
             this.battleLocXValue.Name = "battleLocXValue";
             this.battleLocXValue.Size = new System.Drawing.Size(130, 23);
             this.battleLocXValue.TabIndex = 23;
+            this.battleLocXValue.ValueChanged += new System.EventHandler(this.battleLocXValue_ValueChanged);
             // 
             // battleLabelLoopFlag
             // 
             this.battleLabelLoopFlag.AutoSize = true;
-            this.battleLabelLoopFlag.Location = new System.Drawing.Point(4, 567);
+            this.battleLabelLoopFlag.Location = new System.Drawing.Point(3, 559);
             this.battleLabelLoopFlag.Name = "battleLabelLoopFlag";
             this.battleLabelLoopFlag.Size = new System.Drawing.Size(34, 15);
             this.battleLabelLoopFlag.TabIndex = 34;
@@ -615,7 +616,7 @@ namespace NSUNS4_Character_Manager
             // battleLabelPlAnm
             // 
             this.battleLabelPlAnm.AutoSize = true;
-            this.battleLabelPlAnm.Location = new System.Drawing.Point(4, 149);
+            this.battleLabelPlAnm.Location = new System.Drawing.Point(3, 141);
             this.battleLabelPlAnm.Name = "battleLabelPlAnm";
             this.battleLabelPlAnm.Size = new System.Drawing.Size(91, 15);
             this.battleLabelPlAnm.TabIndex = 36;
@@ -624,7 +625,7 @@ namespace NSUNS4_Character_Manager
             // battleLabelSoundDelay
             // 
             this.battleLabelSoundDelay.AutoSize = true;
-            this.battleLabelSoundDelay.Location = new System.Drawing.Point(3, 296);
+            this.battleLabelSoundDelay.Location = new System.Drawing.Point(2, 288);
             this.battleLabelSoundDelay.Name = "battleLabelSoundDelay";
             this.battleLabelSoundDelay.Size = new System.Drawing.Size(40, 15);
             this.battleLabelSoundDelay.TabIndex = 10;
@@ -633,16 +634,16 @@ namespace NSUNS4_Character_Manager
             // battleLabelEventType
             // 
             this.battleLabelEventType.AutoSize = true;
-            this.battleLabelEventType.Location = new System.Drawing.Point(3, 179);
+            this.battleLabelEventType.Location = new System.Drawing.Point(2, 171);
             this.battleLabelEventType.Name = "battleLabelEventType";
-            this.battleLabelEventType.Size = new System.Drawing.Size(64, 15);
+            this.battleLabelEventType.Size = new System.Drawing.Size(63, 15);
             this.battleLabelEventType.TabIndex = 8;
             this.battleLabelEventType.Text = "Event Type";
             // 
             // battleLabelLocY
             // 
             this.battleLabelLocY.AutoSize = true;
-            this.battleLabelLocY.Location = new System.Drawing.Point(4, 412);
+            this.battleLabelLocY.Location = new System.Drawing.Point(3, 404);
             this.battleLabelLocY.Name = "battleLabelLocY";
             this.battleLabelLocY.Size = new System.Drawing.Size(63, 15);
             this.battleLabelLocY.TabIndex = 24;
@@ -650,7 +651,7 @@ namespace NSUNS4_Character_Manager
             // 
             // battleSoundPlText
             // 
-            this.battleSoundPlText.Location = new System.Drawing.Point(100, 19);
+            this.battleSoundPlText.Location = new System.Drawing.Point(99, 11);
             this.battleSoundPlText.Name = "battleSoundPlText";
             this.battleSoundPlText.Size = new System.Drawing.Size(260, 23);
             this.battleSoundPlText.TabIndex = 1;
@@ -658,7 +659,7 @@ namespace NSUNS4_Character_Manager
             // battleLabelLocZ
             // 
             this.battleLabelLocZ.AutoSize = true;
-            this.battleLabelLocZ.Location = new System.Drawing.Point(4, 441);
+            this.battleLabelLocZ.Location = new System.Drawing.Point(3, 433);
             this.battleLabelLocZ.Name = "battleLabelLocZ";
             this.battleLabelLocZ.Size = new System.Drawing.Size(63, 15);
             this.battleLabelLocZ.TabIndex = 26;
@@ -667,22 +668,23 @@ namespace NSUNS4_Character_Manager
             // battleLabelHighPass
             // 
             this.battleLabelHighPass.AutoSize = true;
-            this.battleLabelHighPass.Location = new System.Drawing.Point(4, 325);
+            this.battleLabelHighPass.Location = new System.Drawing.Point(3, 317);
             this.battleLabelHighPass.Name = "battleLabelHighPass";
-            this.battleLabelHighPass.Size = new System.Drawing.Size(59, 15);
+            this.battleLabelHighPass.Size = new System.Drawing.Size(130, 15);
             this.battleLabelHighPass.TabIndex = 12;
-            this.battleLabelHighPass.Text = "High Pass";
+            this.battleLabelHighPass.Text = "High Pass (Deprecated)";
+            this.battleLabelHighPass.Click += new System.EventHandler(this.battleLabelHighPass_Click);
             // 
             // battleSoundXfbinText
             // 
-            this.battleSoundXfbinText.Location = new System.Drawing.Point(100, 53);
+            this.battleSoundXfbinText.Location = new System.Drawing.Point(99, 45);
             this.battleSoundXfbinText.Name = "battleSoundXfbinText";
             this.battleSoundXfbinText.Size = new System.Drawing.Size(260, 23);
             this.battleSoundXfbinText.TabIndex = 17;
             // 
             // battleAnimationNameText
             // 
-            this.battleAnimationNameText.Location = new System.Drawing.Point(100, 85);
+            this.battleAnimationNameText.Location = new System.Drawing.Point(99, 77);
             this.battleAnimationNameText.Name = "battleAnimationNameText";
             this.battleAnimationNameText.Size = new System.Drawing.Size(260, 23);
             this.battleAnimationNameText.TabIndex = 19;
@@ -690,15 +692,15 @@ namespace NSUNS4_Character_Manager
             // battleLabelLowPass
             // 
             this.battleLabelLowPass.AutoSize = true;
-            this.battleLabelLowPass.Location = new System.Drawing.Point(4, 354);
+            this.battleLabelLowPass.Location = new System.Drawing.Point(3, 346);
             this.battleLabelLowPass.Name = "battleLabelLowPass";
-            this.battleLabelLowPass.Size = new System.Drawing.Size(55, 15);
+            this.battleLabelLowPass.Size = new System.Drawing.Size(126, 15);
             this.battleLabelLowPass.TabIndex = 14;
-            this.battleLabelLowPass.Text = "Low Pass";
+            this.battleLabelLowPass.Text = "Low Pass (Deprecated)";
             // 
             // battleHitboxText
             // 
-            this.battleHitboxText.Location = new System.Drawing.Point(100, 117);
+            this.battleHitboxText.Location = new System.Drawing.Point(99, 109);
             this.battleHitboxText.Name = "battleHitboxText";
             this.battleHitboxText.Size = new System.Drawing.Size(260, 23);
             this.battleHitboxText.TabIndex = 21;
@@ -706,7 +708,7 @@ namespace NSUNS4_Character_Manager
             // 
             // battleLoopFlagValue
             // 
-            this.battleLoopFlagValue.Location = new System.Drawing.Point(133, 562);
+            this.battleLoopFlagValue.Location = new System.Drawing.Point(142, 554);
             this.battleLoopFlagValue.Name = "battleLoopFlagValue";
             this.battleLoopFlagValue.Size = new System.Drawing.Size(140, 24);
             this.battleLoopFlagValue.TabIndex = 35;
@@ -714,7 +716,7 @@ namespace NSUNS4_Character_Manager
             // 
             // battlePlAnmText
             // 
-            this.battlePlAnmText.Location = new System.Drawing.Point(100, 146);
+            this.battlePlAnmText.Location = new System.Drawing.Point(99, 138);
             this.battlePlAnmText.Name = "battlePlAnmText";
             this.battlePlAnmText.Size = new System.Drawing.Size(260, 23);
             this.battlePlAnmText.TabIndex = 37;
@@ -722,14 +724,14 @@ namespace NSUNS4_Character_Manager
             // battleEventTypeValue
             // 
             this.battleEventTypeValue.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.battleEventTypeValue.Location = new System.Drawing.Point(100, 179);
+            this.battleEventTypeValue.Location = new System.Drawing.Point(99, 171);
             this.battleEventTypeValue.Name = "battleEventTypeValue";
             this.battleEventTypeValue.Size = new System.Drawing.Size(260, 21);
             this.battleEventTypeValue.TabIndex = 9;
             // 
             // battleSoundDelayValue
             // 
-            this.battleSoundDelayValue.Location = new System.Drawing.Point(133, 294);
+            this.battleSoundDelayValue.Location = new System.Drawing.Point(142, 286);
             this.battleSoundDelayValue.Maximum = new decimal(new int[] {
             32767,
             0,
@@ -747,7 +749,7 @@ namespace NSUNS4_Character_Manager
             // battleHighPassValue
             // 
             this.battleHighPassValue.DecimalPlaces = 3;
-            this.battleHighPassValue.Location = new System.Drawing.Point(133, 323);
+            this.battleHighPassValue.Location = new System.Drawing.Point(142, 315);
             this.battleHighPassValue.Maximum = new decimal(new int[] {
             100000,
             0,
@@ -764,7 +766,7 @@ namespace NSUNS4_Character_Manager
             // 
             // battlePitchValue
             // 
-            this.battlePitchValue.Location = new System.Drawing.Point(133, 265);
+            this.battlePitchValue.Location = new System.Drawing.Point(142, 257);
             this.battlePitchValue.Maximum = new decimal(new int[] {
             32767,
             0,
@@ -782,7 +784,7 @@ namespace NSUNS4_Character_Manager
             // battleLowPassValue
             // 
             this.battleLowPassValue.DecimalPlaces = 3;
-            this.battleLowPassValue.Location = new System.Drawing.Point(133, 352);
+            this.battleLowPassValue.Location = new System.Drawing.Point(142, 344);
             this.battleLowPassValue.Maximum = new decimal(new int[] {
             100000,
             0,
@@ -799,7 +801,7 @@ namespace NSUNS4_Character_Manager
             // 
             // battlePanValue
             // 
-            this.battlePanValue.Location = new System.Drawing.Point(133, 207);
+            this.battlePanValue.Location = new System.Drawing.Point(142, 199);
             this.battlePanValue.Maximum = new decimal(new int[] {
             32767,
             0,
@@ -817,7 +819,7 @@ namespace NSUNS4_Character_Manager
             // battleVolumeValue
             // 
             this.battleVolumeValue.DecimalPlaces = 3;
-            this.battleVolumeValue.Location = new System.Drawing.Point(133, 236);
+            this.battleVolumeValue.Location = new System.Drawing.Point(142, 228);
             this.battleVolumeValue.Maximum = new decimal(new int[] {
             100000,
             0,
@@ -834,16 +836,16 @@ namespace NSUNS4_Character_Manager
             // 
             // battleSearchButton
             // 
-            this.battleSearchButton.Location = new System.Drawing.Point(243, 583);
+            this.battleSearchButton.Location = new System.Drawing.Point(243, 612);
             this.battleSearchButton.Name = "battleSearchButton";
-            this.battleSearchButton.Size = new System.Drawing.Size(114, 24);
+            this.battleSearchButton.Size = new System.Drawing.Size(114, 23);
             this.battleSearchButton.TabIndex = 2;
             this.battleSearchButton.Text = "Search";
             this.battleSearchButton.Click += new System.EventHandler(this.battleSearchButton_Click);
             // 
             // battleAddButton
             // 
-            this.battleAddButton.Location = new System.Drawing.Point(3, 612);
+            this.battleAddButton.Location = new System.Drawing.Point(3, 641);
             this.battleAddButton.Name = "battleAddButton";
             this.battleAddButton.Size = new System.Drawing.Size(114, 28);
             this.battleAddButton.TabIndex = 3;
@@ -852,7 +854,7 @@ namespace NSUNS4_Character_Manager
             // 
             // battleDuplicateButton
             // 
-            this.battleDuplicateButton.Location = new System.Drawing.Point(123, 612);
+            this.battleDuplicateButton.Location = new System.Drawing.Point(363, 609);
             this.battleDuplicateButton.Name = "battleDuplicateButton";
             this.battleDuplicateButton.Size = new System.Drawing.Size(114, 28);
             this.battleDuplicateButton.TabIndex = 4;
@@ -861,7 +863,7 @@ namespace NSUNS4_Character_Manager
             // 
             // battleDeleteButton
             // 
-            this.battleDeleteButton.Location = new System.Drawing.Point(123, 646);
+            this.battleDeleteButton.Location = new System.Drawing.Point(123, 641);
             this.battleDeleteButton.Name = "battleDeleteButton";
             this.battleDeleteButton.Size = new System.Drawing.Size(114, 28);
             this.battleDeleteButton.TabIndex = 7;
@@ -870,16 +872,16 @@ namespace NSUNS4_Character_Manager
             // 
             // battleSaveSelectedButton
             // 
-            this.battleSaveSelectedButton.Location = new System.Drawing.Point(3, 646);
+            this.battleSaveSelectedButton.Location = new System.Drawing.Point(483, 609);
             this.battleSaveSelectedButton.Name = "battleSaveSelectedButton";
-            this.battleSaveSelectedButton.Size = new System.Drawing.Size(114, 28);
+            this.battleSaveSelectedButton.Size = new System.Drawing.Size(371, 28);
             this.battleSaveSelectedButton.TabIndex = 8;
             this.battleSaveSelectedButton.Text = "Save";
             this.battleSaveSelectedButton.Click += new System.EventHandler(this.battleSaveSelectedButton_Click);
             // 
             // battleCopyButton
             // 
-            this.battleCopyButton.Location = new System.Drawing.Point(243, 612);
+            this.battleCopyButton.Location = new System.Drawing.Point(243, 641);
             this.battleCopyButton.Name = "battleCopyButton";
             this.battleCopyButton.Size = new System.Drawing.Size(114, 28);
             this.battleCopyButton.TabIndex = 5;
@@ -888,7 +890,7 @@ namespace NSUNS4_Character_Manager
             // 
             // battlePasteButton
             // 
-            this.battlePasteButton.Location = new System.Drawing.Point(243, 646);
+            this.battlePasteButton.Location = new System.Drawing.Point(363, 641);
             this.battlePasteButton.Name = "battlePasteButton";
             this.battlePasteButton.Size = new System.Drawing.Size(114, 28);
             this.battlePasteButton.TabIndex = 6;
@@ -916,7 +918,7 @@ namespace NSUNS4_Character_Manager
             this.ultimateTabPage.Location = new System.Drawing.Point(4, 22);
             this.ultimateTabPage.Name = "ultimateTabPage";
             this.ultimateTabPage.Padding = new System.Windows.Forms.Padding(8);
-            this.ultimateTabPage.Size = new System.Drawing.Size(762, 691);
+            this.ultimateTabPage.Size = new System.Drawing.Size(856, 691);
             this.ultimateTabPage.TabIndex = 1;
             this.ultimateTabPage.Text = "Ultimate";
             // 
@@ -953,7 +955,7 @@ namespace NSUNS4_Character_Manager
             // 
             this.ultimateChunkListBox.Location = new System.Drawing.Point(8, 69);
             this.ultimateChunkListBox.Name = "ultimateChunkListBox";
-            this.ultimateChunkListBox.Size = new System.Drawing.Size(260, 84);
+            this.ultimateChunkListBox.Size = new System.Drawing.Size(260, 82);
             this.ultimateChunkListBox.TabIndex = 3;
             this.ultimateChunkListBox.SelectedIndexChanged += new System.EventHandler(this.ultimateChunkListBox_SelectedIndexChanged);
             // 
@@ -964,6 +966,23 @@ namespace NSUNS4_Character_Manager
             this.ultimateEntryListBox.Size = new System.Drawing.Size(260, 420);
             this.ultimateEntryListBox.TabIndex = 4;
             this.ultimateEntryListBox.SelectedIndexChanged += new System.EventHandler(this.ultimateEntryListBox_SelectedIndexChanged);
+            // 
+            // ultimateApplyPrefixButton
+            // 
+            this.ultimateApplyPrefixButton.Location = new System.Drawing.Point(199, 11);
+            this.ultimateApplyPrefixButton.Name = "ultimateApplyPrefixButton";
+            this.ultimateApplyPrefixButton.Size = new System.Drawing.Size(69, 23);
+            this.ultimateApplyPrefixButton.TabIndex = 10;
+            this.ultimateApplyPrefixButton.Text = "Save Name";
+            this.ultimateApplyPrefixButton.UseVisualStyleBackColor = true;
+            this.ultimateApplyPrefixButton.Click += new System.EventHandler(this.ultimateApplyPrefixButton_Click);
+            // 
+            // ultimatePrefixText
+            // 
+            this.ultimatePrefixText.Location = new System.Drawing.Point(8, 11);
+            this.ultimatePrefixText.Name = "ultimatePrefixText";
+            this.ultimatePrefixText.Size = new System.Drawing.Size(185, 23);
+            this.ultimatePrefixText.TabIndex = 9;
             // 
             // ultimateAddEntryButton
             // 
@@ -1019,23 +1038,6 @@ namespace NSUNS4_Character_Manager
             this.ultimatePasteButton.Text = "Paste";
             this.ultimatePasteButton.Click += new System.EventHandler(this.ultimatePasteButton_Click);
             // 
-            // ultimatePrefixText
-            // 
-            this.ultimatePrefixText.Location = new System.Drawing.Point(8, 11);
-            this.ultimatePrefixText.Name = "ultimatePrefixText";
-            this.ultimatePrefixText.Size = new System.Drawing.Size(185, 23);
-            this.ultimatePrefixText.TabIndex = 9;
-            // 
-            // ultimateApplyPrefixButton
-            // 
-            this.ultimateApplyPrefixButton.Location = new System.Drawing.Point(199, 11);
-            this.ultimateApplyPrefixButton.Name = "ultimateApplyPrefixButton";
-            this.ultimateApplyPrefixButton.Size = new System.Drawing.Size(69, 23);
-            this.ultimateApplyPrefixButton.TabIndex = 10;
-            this.ultimateApplyPrefixButton.Text = "Save Name";
-            this.ultimateApplyPrefixButton.UseVisualStyleBackColor = true;
-            this.ultimateApplyPrefixButton.Click += new System.EventHandler(this.ultimateApplyPrefixButton_Click);
-            // 
             // ultimateSearchText
             // 
             this.ultimateSearchText.Location = new System.Drawing.Point(8, 583);
@@ -1081,7 +1083,7 @@ namespace NSUNS4_Character_Manager
             this.ultimateEditPanel.Controls.Add(this.ultimateFadeParamValue);
             this.ultimateEditPanel.Location = new System.Drawing.Point(274, 11);
             this.ultimateEditPanel.Name = "ultimateEditPanel";
-            this.ultimateEditPanel.Size = new System.Drawing.Size(485, 672);
+            this.ultimateEditPanel.Size = new System.Drawing.Size(571, 672);
             this.ultimateEditPanel.TabIndex = 11;
             this.ultimateEditPanel.Paint += new System.Windows.Forms.PaintEventHandler(this.ultimateEditPanel_Paint);
             // 
@@ -1126,7 +1128,7 @@ namespace NSUNS4_Character_Manager
             this.ultimateLabelEventType.AutoSize = true;
             this.ultimateLabelEventType.Location = new System.Drawing.Point(3, 144);
             this.ultimateLabelEventType.Name = "ultimateLabelEventType";
-            this.ultimateLabelEventType.Size = new System.Drawing.Size(64, 15);
+            this.ultimateLabelEventType.Size = new System.Drawing.Size(63, 15);
             this.ultimateLabelEventType.TabIndex = 8;
             this.ultimateLabelEventType.Text = "Event Type";
             // 
@@ -1162,7 +1164,7 @@ namespace NSUNS4_Character_Manager
             this.ultimateLabelIndex.AutoSize = true;
             this.ultimateLabelIndex.Location = new System.Drawing.Point(3, 272);
             this.ultimateLabelIndex.Name = "ultimateLabelIndex";
-            this.ultimateLabelIndex.Size = new System.Drawing.Size(35, 15);
+            this.ultimateLabelIndex.Size = new System.Drawing.Size(36, 15);
             this.ultimateLabelIndex.TabIndex = 16;
             this.ultimateLabelIndex.Text = "Index";
             // 
@@ -1389,7 +1391,7 @@ namespace NSUNS4_Character_Manager
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             this.AutoSize = true;
             this.AutoValidate = System.Windows.Forms.AutoValidate.EnableAllowFocusChange;
-            this.ClientSize = new System.Drawing.Size(783, 761);
+            this.ClientSize = new System.Drawing.Size(872, 761);
             this.Controls.Add(this.mainTabControl);
             this.Controls.Add(this.menuStrip1);
             this.Font = new System.Drawing.Font("Segoe UI", 8.5F);

@@ -168,6 +168,22 @@ namespace NSUNS4_Character_Manager
             Array.Copy(bytes, 0, target, offset, 4);
         }
 
+        private static short ReadInt16BE(byte[] bytes, int offset)
+        {
+            byte[] valueBytes = new byte[2];
+            Array.Copy(bytes, offset, valueBytes, 0, 2);
+            Array.Reverse(valueBytes);
+            return BitConverter.ToInt16(valueBytes, 0);
+        }
+
+        private static float ReadSingleBE(byte[] bytes, int offset)
+        {
+            byte[] valueBytes = new byte[4];
+            Array.Copy(bytes, offset, valueBytes, 0, 4);
+            Array.Reverse(valueBytes);
+            return BitConverter.ToSingle(valueBytes, 0);
+        }
+
         private static string ReadFixedString(byte[] bytes, int offset, int length)
         {
             string value = Encoding.ASCII.GetString(bytes, offset, length);
@@ -189,9 +205,23 @@ namespace NSUNS4_Character_Manager
             Array.Copy(BitConverter.GetBytes(value), 0, target, offset, 2);
         }
 
+        private static void WriteInt16BE(byte[] target, int offset, short value)
+        {
+            byte[] bytes = BitConverter.GetBytes(value);
+            Array.Reverse(bytes);
+            Array.Copy(bytes, 0, target, offset, 2);
+        }
+
         private static void WriteSingle(byte[] target, int offset, float value)
         {
             Array.Copy(BitConverter.GetBytes(value), 0, target, offset, 4);
+        }
+
+        private static void WriteSingleBE(byte[] target, int offset, float value)
+        {
+            byte[] bytes = BitConverter.GetBytes(value);
+            Array.Reverse(bytes);
+            Array.Copy(bytes, 0, target, offset, 4);
         }
 
         private bool IsBattleTabSelected() { return mainTabControl.SelectedTab == battleTabPage; }
@@ -389,13 +419,13 @@ namespace NSUNS4_Character_Manager
                     SoundXfbin = ReadFixedString(bytes, ptr + 54, StringLen),
                     AnimationName = ReadFixedString(bytes, ptr + 86, StringLen),
                     Hitbox = ReadFixedString(bytes, ptr + 118, StringLen),
-                    LocationX = BitConverter.ToSingle(bytes, ptr + 150),
-                    LocationY = BitConverter.ToSingle(bytes, ptr + 154),
-                    LocationZ = BitConverter.ToSingle(bytes, ptr + 158),
-                    SoundDelayReset = BitConverter.ToInt16(bytes, ptr + 162),
-                    Unknown = BitConverter.ToInt16(bytes, ptr + 164),
-                    SoundDelayResetAnm = BitConverter.ToInt16(bytes, ptr + 166),
-                    LoopFlag = BitConverter.ToInt16(bytes, ptr + 168) != 0,
+                    LocationX = ReadSingleBE(bytes, ptr + 150),
+                    LocationY = ReadSingleBE(bytes, ptr + 154),
+                    LocationZ = ReadSingleBE(bytes, ptr + 158),
+                    SoundDelayReset = ReadInt16BE(bytes, ptr + 162),
+                    Unknown = ReadInt16BE(bytes, ptr + 164),
+                    SoundDelayResetAnm = ReadInt16BE(bytes, ptr + 166),
+                    LoopFlag = ReadInt16BE(bytes, ptr + 168) != 0,
                     PL_ANM_String = ReadFixedString(bytes, ptr + 170, StringLen)
                 });
             }
@@ -425,13 +455,13 @@ namespace NSUNS4_Character_Manager
                     SoundXfbin = ReadFixedString(bytes, ptr + 54, StringLen),
                     AnimationName = ReadFixedString(bytes, ptr + 86, StringLen),
                     Hitbox = ReadFixedString(bytes, ptr + 118, StringLen),
-                    LocationX = BitConverter.ToSingle(bytes, ptr + 150),
-                    LocationY = BitConverter.ToSingle(bytes, ptr + 154),
-                    LocationZ = BitConverter.ToSingle(bytes, ptr + 158),
-                    SoundDelayReset = BitConverter.ToInt16(bytes, ptr + 162),
-                    Unknown = BitConverter.ToInt16(bytes, ptr + 164),
-                    SoundDelayResetAnm = BitConverter.ToInt16(bytes, ptr + 166),
-                    LoopFlag = BitConverter.ToInt16(bytes, ptr + 168) != 0,
+                    LocationX = ReadSingleBE(bytes, ptr + 150),
+                    LocationY = ReadSingleBE(bytes, ptr + 154),
+                    LocationZ = ReadSingleBE(bytes, ptr + 158),
+                    SoundDelayReset = ReadInt16BE(bytes, ptr + 162),
+                    Unknown = ReadInt16BE(bytes, ptr + 164),
+                    SoundDelayResetAnm = ReadInt16BE(bytes, ptr + 166),
+                    LoopFlag = ReadInt16BE(bytes, ptr + 168) != 0,
                     PL_ANM_String = ReadFixedString(bytes, ptr + 170, StringLen)
                 });
             }
@@ -651,12 +681,13 @@ namespace NSUNS4_Character_Manager
             if (chunk.Entries.Count > 0 && ultimateEntryListBox.SelectedIndex >= 0) LoadUltimateEntryToEditor(chunk.Entries[ultimateEntryListBox.SelectedIndex]);
         }
 
-        private static string BuildBattleListLabel(BattleEntry entry)
+        private string BuildBattleListLabel(BattleEntry entry)
         {
             string plAnm = string.IsNullOrWhiteSpace(entry.PL_ANM_String) ? "(none)" : entry.PL_ANM_String;
             string animationName = string.IsNullOrWhiteSpace(entry.AnimationName) ? "(none)" : entry.AnimationName;
             string soundName = string.IsNullOrWhiteSpace(entry.SoundPL) ? "(none)" : entry.SoundPL;
-            return plAnm + " | " + animationName + " | " + soundName;
+            string eventType = GetEventTypeDisplayName(entry.EventType);
+            return plAnm + " | " + animationName + " | " + soundName + " | " + eventType;
         }
 
         private static string BuildUltimateListLabel(UltimateEntry entry)
@@ -769,6 +800,16 @@ namespace NSUNS4_Character_Manager
                 }
             }
             comboBox.SelectedIndex = comboBox.Items.Count > 0 ? 0 : -1;
+        }
+
+        private string GetEventTypeDisplayName(float value)
+        {
+            foreach (EventTypeOption option in eventTypeOptions)
+            {
+                if (option != null && option.Value == value)
+                    return option.Name;
+            }
+            return value.ToString(System.Globalization.CultureInfo.InvariantCulture);
         }
 
         private float GetEventType(ComboBox comboBox)
@@ -1411,13 +1452,13 @@ namespace NSUNS4_Character_Manager
             WriteFixedString(target, offset + 54, StringLen, entry.SoundXfbin);
             WriteFixedString(target, offset + 86, StringLen, entry.AnimationName);
             WriteFixedString(target, offset + 118, StringLen, entry.Hitbox);
-            WriteSingle(target, offset + 150, entry.LocationX);
-            WriteSingle(target, offset + 154, entry.LocationY);
-            WriteSingle(target, offset + 158, entry.LocationZ);
-            WriteInt16(target, offset + 162, entry.SoundDelayReset);
-            WriteInt16(target, offset + 164, entry.Unknown);
-            WriteInt16(target, offset + 166, entry.SoundDelayResetAnm);
-            WriteInt16(target, offset + 168, (short)(entry.LoopFlag ? 1 : 0));
+            WriteSingleBE(target, offset + 150, entry.LocationX);
+            WriteSingleBE(target, offset + 154, entry.LocationY);
+            WriteSingleBE(target, offset + 158, entry.LocationZ);
+            WriteInt16BE(target, offset + 162, entry.SoundDelayReset);
+            WriteInt16BE(target, offset + 164, entry.Unknown);
+            WriteInt16BE(target, offset + 166, entry.SoundDelayResetAnm);
+            WriteInt16BE(target, offset + 168, (short)(entry.LoopFlag ? 1 : 0));
             WriteFixedString(target, offset + 170, StringLen, entry.PL_ANM_String);
         }
 
@@ -1517,7 +1558,17 @@ namespace NSUNS4_Character_Manager
 
         }
 
+        private void battleLocXValue_ValueChanged(object sender, EventArgs e)
+        {
+
+        }
+
         private void battleHitboxText_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void battleLabelHighPass_Click(object sender, EventArgs e)
         {
 
         }
