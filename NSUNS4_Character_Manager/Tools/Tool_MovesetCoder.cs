@@ -1335,6 +1335,9 @@ namespace NSUNS4_Character_Manager.Tools
                     movementList[ver][anm][ind][0x9C] = (byte)t_freeze.Value;
                     movementList[ver][anm][ind][0x9a] = (byte)t_unknown.Value;
                 }
+                ReloadMovementList(ver, anm);
+                if (ind >= 0 && ind < mov_list.Items.Count)
+                    mov_list.SelectedIndex = ind;
                 if (autosave.Checked == true)
                 {
                     AutoSave();

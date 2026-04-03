@@ -175,7 +175,7 @@
             // 
             // menuStrip1
             // 
-            this.menuStrip1.Font = new System.Drawing.Font("CC2 RocknRoll Latin DB", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.menuStrip1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fileToolStripMenuItem,
             this.toolsToolStripMenuItem,
@@ -235,7 +235,7 @@
             this.editCollisionOfPlayerToolStripMenuItem});
             this.toolsToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
-            this.toolsToolStripMenuItem.Size = new System.Drawing.Size(47, 20);
+            this.toolsToolStripMenuItem.Size = new System.Drawing.Size(46, 20);
             this.toolsToolStripMenuItem.Text = "Tools";
             // 
             // setCubemanToEveryANMToolStripMenuItem
@@ -374,7 +374,7 @@
             this.label4.AutoSize = true;
             this.label4.Location = new System.Drawing.Point(849, 389);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(59, 15);
+            this.label4.Size = new System.Drawing.Size(60, 15);
             this.label4.TabIndex = 9;
             this.label4.Text = "Hitbox ID:";
             // 
@@ -454,10 +454,10 @@
             // label7
             // 
             this.label7.AutoSize = true;
-            this.label7.Font = new System.Drawing.Font("CC2 RocknRoll Latin DB", 7.25F);
+            this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.25F);
             this.label7.Location = new System.Drawing.Point(230, 291);
             this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(113, 12);
+            this.label7.Size = new System.Drawing.Size(103, 13);
             this.label7.TabIndex = 19;
             this.label7.Text = "ID of file in prm_load";
             // 
@@ -476,7 +476,7 @@
             this.t_flag2.AutoSize = true;
             this.t_flag2.Location = new System.Drawing.Point(235, 360);
             this.t_flag2.Name = "t_flag2";
-            this.t_flag2.Size = new System.Drawing.Size(130, 19);
+            this.t_flag2.Size = new System.Drawing.Size(131, 19);
             this.t_flag2.TabIndex = 21;
             this.t_flag2.Text = "Fix backward facing";
             this.t_flag2.UseVisualStyleBackColor = true;
@@ -486,7 +486,7 @@
             this.t_flag3.AutoSize = true;
             this.t_flag3.Location = new System.Drawing.Point(362, 337);
             this.t_flag3.Name = "t_flag3";
-            this.t_flag3.Size = new System.Drawing.Size(173, 19);
+            this.t_flag3.Size = new System.Drawing.Size(174, 19);
             this.t_flag3.TabIndex = 22;
             this.t_flag3.Text = "No frame skip in next attack";
             this.t_flag3.UseVisualStyleBackColor = true;
@@ -496,7 +496,7 @@
             this.t_flag4.AutoSize = true;
             this.t_flag4.Location = new System.Drawing.Point(362, 360);
             this.t_flag4.Name = "t_flag4";
-            this.t_flag4.Size = new System.Drawing.Size(143, 19);
+            this.t_flag4.Size = new System.Drawing.Size(144, 19);
             this.t_flag4.TabIndex = 23;
             this.t_flag4.Text = "Animation position fix";
             this.t_flag4.UseVisualStyleBackColor = true;
@@ -514,9 +514,9 @@
             // t_distance
             // 
             this.t_distance.Enabled = false;
-            this.t_distance.Location = new System.Drawing.Point(624, 19);
+            this.t_distance.Location = new System.Drawing.Point(627, 19);
             this.t_distance.Name = "t_distance";
-            this.t_distance.Size = new System.Drawing.Size(379, 23);
+            this.t_distance.Size = new System.Drawing.Size(376, 23);
             this.t_distance.TabIndex = 26;
             this.t_distance.Visible = false;
             // 
@@ -546,7 +546,7 @@
             this.label10.AutoSize = true;
             this.label10.Location = new System.Drawing.Point(630, 251);
             this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(176, 15);
+            this.label10.Size = new System.Drawing.Size(175, 15);
             this.label10.TabIndex = 29;
             this.label10.Text = "Trigger state condition 1 (main):";
             // 
@@ -656,7 +656,7 @@
             this.label14.AutoSize = true;
             this.label14.Location = new System.Drawing.Point(628, 338);
             this.label14.Name = "label14";
-            this.label14.Size = new System.Drawing.Size(90, 15);
+            this.label14.Size = new System.Drawing.Size(91, 15);
             this.label14.TabIndex = 37;
             this.label14.Text = "Next press start:";
             // 
@@ -678,7 +678,7 @@
             this.label15.AutoSize = true;
             this.label15.Location = new System.Drawing.Point(825, 338);
             this.label15.Name = "label15";
-            this.label15.Size = new System.Drawing.Size(87, 15);
+            this.label15.Size = new System.Drawing.Size(88, 15);
             this.label15.TabIndex = 39;
             this.label15.Text = "Next press end:";
             // 
@@ -742,7 +742,7 @@
             this.label17.AutoSize = true;
             this.label17.Location = new System.Drawing.Point(444, 248);
             this.label17.Name = "label17";
-            this.label17.Size = new System.Drawing.Size(92, 15);
+            this.label17.Size = new System.Drawing.Size(93, 15);
             this.label17.TabIndex = 46;
             this.label17.Text = "Next PL_ANM 2:";
             // 
@@ -1190,7 +1190,7 @@
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(816, 48);
+            this.button2.Location = new System.Drawing.Point(814, 48);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(189, 30);
             this.button2.TabIndex = 94;
@@ -1202,7 +1202,7 @@
             // 
             this.button3.Location = new System.Drawing.Point(627, 84);
             this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(377, 30);
+            this.button3.Size = new System.Drawing.Size(376, 30);
             this.button3.TabIndex = 95;
             this.button3.Text = "Delete effect";
             this.button3.UseVisualStyleBackColor = true;
@@ -1257,7 +1257,7 @@
             this.cb_hexValue.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.cb_hexValue.Location = new System.Drawing.Point(235, 3);
             this.cb_hexValue.Name = "cb_hexValue";
-            this.cb_hexValue.Size = new System.Drawing.Size(82, 19);
+            this.cb_hexValue.Size = new System.Drawing.Size(83, 19);
             this.cb_hexValue.TabIndex = 100;
             this.cb_hexValue.Text = "Hex values";
             this.cb_hexValue.UseVisualStyleBackColor = true;
@@ -1309,7 +1309,7 @@
             this.label38.AutoSize = true;
             this.label38.Location = new System.Drawing.Point(843, 192);
             this.label38.Name = "label38";
-            this.label38.Size = new System.Drawing.Size(135, 30);
+            this.label38.Size = new System.Drawing.Size(134, 30);
             this.label38.TabIndex = 106;
             this.label38.Text = "Trigger state condition 2\r\n(secondary):";
             // 

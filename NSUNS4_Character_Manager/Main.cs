@@ -102,6 +102,7 @@ namespace NSUNS4_Character_Manager
         private Button button30;
         private Button button31;
         private Button button32;
+        private Button button33;
         private FlowLayoutPanel extraToolsPanel;
         private Button extraToolsButtonTemplate;
         private TabPage tabPage7;
@@ -1097,6 +1098,7 @@ namespace NSUNS4_Character_Manager
             this.linkLabel4 = new System.Windows.Forms.LinkLabel();
             this.label2 = new System.Windows.Forms.Label();
             this.linkLabel3 = new System.Windows.Forms.LinkLabel();
+            this.button33 = new System.Windows.Forms.Button();
             this.tabPage7 = new System.Windows.Forms.TabPage();
             this.extraToolsPanel = new System.Windows.Forms.FlowLayoutPanel();
             this.tabPage2 = new System.Windows.Forms.TabPage();
@@ -1232,20 +1234,20 @@ namespace NSUNS4_Character_Manager
             this.addNewCharacterToolStripMenuItem});
             this.toolsToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
-            this.toolsToolStripMenuItem.Size = new System.Drawing.Size(47, 20);
+            this.toolsToolStripMenuItem.Size = new System.Drawing.Size(46, 20);
             this.toolsToolStripMenuItem.Text = "Tools";
             // 
             // addCostumeToolStripMenuItem
             // 
             this.addCostumeToolStripMenuItem.Name = "addCostumeToolStripMenuItem";
-            this.addCostumeToolStripMenuItem.Size = new System.Drawing.Size(252, 22);
+            this.addCostumeToolStripMenuItem.Size = new System.Drawing.Size(253, 22);
             this.addCostumeToolStripMenuItem.Text = "Add new costume (Experimental)";
             this.addCostumeToolStripMenuItem.Click += new System.EventHandler(this.addCostumeToolStripMenuItem_Click);
             // 
             // addNewCharacterToolStripMenuItem
             // 
             this.addNewCharacterToolStripMenuItem.Name = "addNewCharacterToolStripMenuItem";
-            this.addNewCharacterToolStripMenuItem.Size = new System.Drawing.Size(252, 22);
+            this.addNewCharacterToolStripMenuItem.Size = new System.Drawing.Size(253, 22);
             this.addNewCharacterToolStripMenuItem.Text = "Add new character (Experimental)";
             this.addNewCharacterToolStripMenuItem.Click += new System.EventHandler(this.addNewCharacterToolStripMenuItem_Click);
             // 
@@ -1350,9 +1352,9 @@ namespace NSUNS4_Character_Manager
             // 
             // button18
             // 
-            this.button18.Location = new System.Drawing.Point(-4, 3);
+            this.button18.Location = new System.Drawing.Point(1, 3);
             this.button18.Name = "button18";
-            this.button18.Size = new System.Drawing.Size(301, 38);
+            this.button18.Size = new System.Drawing.Size(299, 38);
             this.button18.TabIndex = 23;
             this.button18.Text = "Sound editor [NUS3BANK]";
             this.button18.UseVisualStyleBackColor = true;
@@ -1403,7 +1405,7 @@ namespace NSUNS4_Character_Manager
             // 
             // button17
             // 
-            this.button17.Location = new System.Drawing.Point(301, 3);
+            this.button17.Location = new System.Drawing.Point(302, 3);
             this.button17.Name = "button17";
             this.button17.Size = new System.Drawing.Size(299, 38);
             this.button17.TabIndex = 29;
@@ -1637,6 +1639,7 @@ namespace NSUNS4_Character_Manager
             this.tabPage6.Controls.Add(this.linkLabel3);
             this.tabPage6.Controls.Add(this.button17);
             this.tabPage6.Controls.Add(this.button18);
+            this.tabPage6.Controls.Add(this.button33);
             this.tabPage6.Location = new System.Drawing.Point(4, 22);
             this.tabPage6.Name = "tabPage6";
             this.tabPage6.Size = new System.Drawing.Size(602, 507);
@@ -1649,7 +1652,7 @@ namespace NSUNS4_Character_Manager
             this.linkLabel12.AutoSize = true;
             this.linkLabel12.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.linkLabel12.LinkColor = System.Drawing.Color.Black;
-            this.linkLabel12.Location = new System.Drawing.Point(4, 109);
+            this.linkLabel12.Location = new System.Drawing.Point(4, 429);
             this.linkLabel12.Name = "linkLabel12";
             this.linkLabel12.Size = new System.Drawing.Size(231, 15);
             this.linkLabel12.TabIndex = 43;
@@ -1662,7 +1665,7 @@ namespace NSUNS4_Character_Manager
             this.linkLabel10.AutoSize = true;
             this.linkLabel10.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.linkLabel10.LinkColor = System.Drawing.Color.Black;
-            this.linkLabel10.Location = new System.Drawing.Point(3, 124);
+            this.linkLabel10.Location = new System.Drawing.Point(3, 444);
             this.linkLabel10.Name = "linkLabel10";
             this.linkLabel10.Size = new System.Drawing.Size(80, 15);
             this.linkLabel10.TabIndex = 41;
@@ -1675,7 +1678,7 @@ namespace NSUNS4_Character_Manager
             this.linkLabel8.AutoSize = true;
             this.linkLabel8.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.linkLabel8.LinkColor = System.Drawing.Color.Black;
-            this.linkLabel8.Location = new System.Drawing.Point(3, 169);
+            this.linkLabel8.Location = new System.Drawing.Point(3, 489);
             this.linkLabel8.Name = "linkLabel8";
             this.linkLabel8.Size = new System.Drawing.Size(70, 15);
             this.linkLabel8.TabIndex = 40;
@@ -1688,9 +1691,9 @@ namespace NSUNS4_Character_Manager
             this.linkLabel7.AutoSize = true;
             this.linkLabel7.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.linkLabel7.LinkColor = System.Drawing.Color.Black;
-            this.linkLabel7.Location = new System.Drawing.Point(4, 154);
+            this.linkLabel7.Location = new System.Drawing.Point(4, 474);
             this.linkLabel7.Name = "linkLabel7";
-            this.linkLabel7.Size = new System.Drawing.Size(84, 15);
+            this.linkLabel7.Size = new System.Drawing.Size(82, 15);
             this.linkLabel7.TabIndex = 39;
             this.linkLabel7.TabStop = true;
             this.linkLabel7.Text = "NUT Tools GUI";
@@ -1701,9 +1704,9 @@ namespace NSUNS4_Character_Manager
             this.linkLabel6.AutoSize = true;
             this.linkLabel6.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.linkLabel6.LinkColor = System.Drawing.Color.Black;
-            this.linkLabel6.Location = new System.Drawing.Point(4, 139);
+            this.linkLabel6.Location = new System.Drawing.Point(4, 459);
             this.linkLabel6.Name = "linkLabel6";
-            this.linkLabel6.Size = new System.Drawing.Size(62, 15);
+            this.linkLabel6.Size = new System.Drawing.Size(60, 15);
             this.linkLabel6.TabIndex = 38;
             this.linkLabel6.TabStop = true;
             this.linkLabel6.Text = "NUT Tools";
@@ -1714,9 +1717,9 @@ namespace NSUNS4_Character_Manager
             this.linkLabel5.AutoSize = true;
             this.linkLabel5.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.linkLabel5.LinkColor = System.Drawing.Color.Black;
-            this.linkLabel5.Location = new System.Drawing.Point(4, 78);
+            this.linkLabel5.Location = new System.Drawing.Point(4, 398);
             this.linkLabel5.Name = "linkLabel5";
-            this.linkLabel5.Size = new System.Drawing.Size(142, 15);
+            this.linkLabel5.Size = new System.Drawing.Size(141, 15);
             this.linkLabel5.TabIndex = 37;
             this.linkLabel5.TabStop = true;
             this.linkLabel5.Text = "010 Editor Xfbin Template";
@@ -1727,7 +1730,7 @@ namespace NSUNS4_Character_Manager
             this.linkLabel4.AutoSize = true;
             this.linkLabel4.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.linkLabel4.LinkColor = System.Drawing.Color.Black;
-            this.linkLabel4.Location = new System.Drawing.Point(4, 63);
+            this.linkLabel4.Location = new System.Drawing.Point(4, 383);
             this.linkLabel4.Name = "linkLabel4";
             this.linkLabel4.Size = new System.Drawing.Size(59, 15);
             this.linkLabel4.TabIndex = 36;
@@ -1739,7 +1742,7 @@ namespace NSUNS4_Character_Manager
             // 
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Segoe UI", 10.5F);
-            this.label2.Location = new System.Drawing.Point(3, 44);
+            this.label2.Location = new System.Drawing.Point(3, 364);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(135, 19);
             this.label2.TabIndex = 35;
@@ -1750,13 +1753,24 @@ namespace NSUNS4_Character_Manager
             this.linkLabel3.AutoSize = true;
             this.linkLabel3.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.linkLabel3.LinkColor = System.Drawing.Color.Black;
-            this.linkLabel3.Location = new System.Drawing.Point(4, 93);
+            this.linkLabel3.Location = new System.Drawing.Point(4, 413);
             this.linkLabel3.Name = "linkLabel3";
             this.linkLabel3.Size = new System.Drawing.Size(120, 15);
             this.linkLabel3.TabIndex = 34;
             this.linkLabel3.TabStop = true;
             this.linkLabel3.Text = "ACE Editor (acb/awb)";
             this.linkLabel3.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLabel3_LinkClicked);
+            // 
+            // button33
+            // 
+            this.button33.Font = new System.Drawing.Font("Segoe UI", 8.5F);
+            this.button33.Location = new System.Drawing.Point(302, 47);
+            this.button33.Name = "button33";
+            this.button33.Size = new System.Drawing.Size(299, 38);
+            this.button33.TabIndex = 37;
+            this.button33.Text = "Music Param Editor\r\n(musicParam.bin.xfbin)";
+            this.button33.UseVisualStyleBackColor = true;
+            this.button33.Click += new System.EventHandler(this.button33_Click);
             // 
             // tabPage7
             // 
@@ -1803,7 +1817,7 @@ namespace NSUNS4_Character_Manager
             this.label1.AutoSize = true;
             this.label1.Location = new System.Drawing.Point(0, 83);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(78, 15);
+            this.label1.Size = new System.Drawing.Size(79, 15);
             this.label1.TabIndex = 18;
             this.label1.Text = "Experimental:";
             // 
@@ -1874,7 +1888,7 @@ namespace NSUNS4_Character_Manager
             this.MaximizeBox = false;
             this.Name = "Main";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Naruto: Storm 4 Evo Toolbox v6.5.1 (Ace\'s build)";
+            this.Text = "Naruto: Storm 4 Evo Toolbox v6.5.3 (Ace\'s build)";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.Main_FormClosed);
             this.Load += new System.EventHandler(this.Main_Load);
             this.menuStrip1.ResumeLayout(false);
@@ -2318,6 +2332,12 @@ namespace NSUNS4_Character_Manager
         private void button32_Click(object sender, EventArgs e)
         {
             Tool_EvEditor t = new Tool_EvEditor();
+            t.Show();
+        }
+
+        private void button33_Click(object sender, EventArgs e)
+        {
+            Tool_MusicParamEditor t = new Tool_MusicParamEditor();
             t.Show();
         }
     }
