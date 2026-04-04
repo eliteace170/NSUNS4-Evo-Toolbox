@@ -226,6 +226,12 @@
     <Compile Include="NSUNS4_Character_Manager\Tools\Tool_conditionprmEditor.Designer.cs">
       <DependentUpon>Tool_conditionprmEditor.cs</DependentUpon>
     </Compile>
+    <Compile Include="NSUNS4_Character_Manager\Tools\Tool_CostumeBreakParamEditor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="NSUNS4_Character_Manager\Tools\Tool_CostumeBreakParamEditor.Designer.cs">
+      <DependentUpon>Tool_CostumeBreakParamEditor.cs</DependentUpon>
+    </Compile>
     <Compile Include="NSUNS4_Character_Manager\Tools\Tool_damageeffEditor.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -412,6 +418,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="NSUNS4_Character_Manager\Tools\Tool_conditionprmEditor.resx">
       <DependentUpon>Tool_conditionprmEditor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="NSUNS4_Character_Manager\Tools\Tool_CostumeBreakParamEditor.resx">
+      <DependentUpon>Tool_CostumeBreakParamEditor.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="NSUNS4_Character_Manager\Tools\Tool_damageeffEditor.resx">
       <DependentUpon>Tool_damageeffEditor.cs</DependentUpon>

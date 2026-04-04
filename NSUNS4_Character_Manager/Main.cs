@@ -103,6 +103,7 @@ namespace NSUNS4_Character_Manager
         private Button button31;
         private Button button32;
         private Button button33;
+        private Button button34;
         private FlowLayoutPanel extraToolsPanel;
         private Button extraToolsButtonTemplate;
         private TabPage tabPage7;
@@ -1099,6 +1100,7 @@ namespace NSUNS4_Character_Manager
             this.label2 = new System.Windows.Forms.Label();
             this.linkLabel3 = new System.Windows.Forms.LinkLabel();
             this.button33 = new System.Windows.Forms.Button();
+            this.button34 = new System.Windows.Forms.Button();
             this.tabPage7 = new System.Windows.Forms.TabPage();
             this.extraToolsPanel = new System.Windows.Forms.FlowLayoutPanel();
             this.tabPage2 = new System.Windows.Forms.TabPage();
@@ -1640,6 +1642,7 @@ namespace NSUNS4_Character_Manager
             this.tabPage6.Controls.Add(this.button17);
             this.tabPage6.Controls.Add(this.button18);
             this.tabPage6.Controls.Add(this.button33);
+            this.tabPage6.Controls.Add(this.button34);
             this.tabPage6.Location = new System.Drawing.Point(4, 22);
             this.tabPage6.Name = "tabPage6";
             this.tabPage6.Size = new System.Drawing.Size(602, 507);
@@ -1771,6 +1774,17 @@ namespace NSUNS4_Character_Manager
             this.button33.Text = "Music Param Editor\r\n(musicParam.bin.xfbin)";
             this.button33.UseVisualStyleBackColor = true;
             this.button33.Click += new System.EventHandler(this.button33_Click);
+            // 
+            // button34
+            // 
+            this.button34.Font = new System.Drawing.Font("Segoe UI", 8.5F);
+            this.button34.Location = new System.Drawing.Point(1, 47);
+            this.button34.Name = "button34";
+            this.button34.Size = new System.Drawing.Size(299, 38);
+            this.button34.TabIndex = 38;
+            this.button34.Text = "Costume Break Param Editor\r\n(costumeBreakParam.xfbin)";
+            this.button34.UseVisualStyleBackColor = true;
+            this.button34.Click += new System.EventHandler(this.button34_Click);
             // 
             // tabPage7
             // 
@@ -2338,6 +2352,12 @@ namespace NSUNS4_Character_Manager
         private void button33_Click(object sender, EventArgs e)
         {
             Tool_MusicParamEditor t = new Tool_MusicParamEditor();
+            t.Show();
+        }
+
+        private void button34_Click(object sender, EventArgs e)
+        {
+            Tool_CostumeBreakParamEditor t = new Tool_CostumeBreakParamEditor();
             t.Show();
         }
     }
