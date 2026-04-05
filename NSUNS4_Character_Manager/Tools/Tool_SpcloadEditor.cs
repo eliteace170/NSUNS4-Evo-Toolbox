@@ -25,8 +25,72 @@ namespace NSUNS4_Character_Manager
         public int entryCount = 0;
         public List<string> pathList = new List<string>();
         public List<string> nameList = new List<string>();
-        public List<byte> typeList = new List<byte>();
-        public List<byte[]> loadcondList = new List<byte[]>();
+        public List<int> typeList = new List<int>();
+        public List<int> costumeIndexList = new List<int>();
+        public List<int> loadcondList = new List<int>();
+
+        private const int LOAD_COMMON = 0x0001;
+        private const int LOAD_SUPPORT = 0x0002;
+        private const int LOAD_AWAKENING = 0x0004;
+        private const int LOAD_JUTSU1 = 0x0008;
+        private const int LOAD_JUTSU2 = 0x0010;
+        private const int LOAD_JUTSU3 = 0x0020;
+        private const int LOAD_JUTSU4 = 0x0040;
+        private const int LOAD_JUTSU5 = 0x0080;
+        private const int LOAD_ULTIMATE1 = 0x0100;
+        private const int LOAD_ULTIMATE2 = 0x0200;
+        private const int LOAD_ULTIMATE3 = 0x0400;
+        private const int LOAD_ULTIMATE4 = 0x0800;
+        private const int LOAD_JUTSU6 = 0x2000;
+        private const string ClipboardPrefix = "PRMLOAD_ENTRY_V1";
+        private bool syncingConditionControls = false;
+
+        private void UpdateConditionFlagsFromValue(int condition)
+        {
+            syncingConditionControls = true;
+            checkConditionCommon.Checked = (condition & LOAD_COMMON) != 0;
+            checkConditionSupport.Checked = (condition & LOAD_SUPPORT) != 0;
+            checkConditionAwakening.Checked = (condition & LOAD_AWAKENING) != 0;
+            checkConditionJutsu1.Checked = (condition & LOAD_JUTSU1) != 0;
+            checkConditionJutsu2.Checked = (condition & LOAD_JUTSU2) != 0;
+            checkConditionJutsu3.Checked = (condition & LOAD_JUTSU3) != 0;
+            checkConditionJutsu4.Checked = (condition & LOAD_JUTSU4) != 0;
+            checkConditionJutsu5.Checked = (condition & LOAD_JUTSU5) != 0;
+            checkConditionJutsu6.Checked = (condition & LOAD_JUTSU6) != 0;
+            checkConditionUltimate1.Checked = (condition & LOAD_ULTIMATE1) != 0;
+            checkConditionUltimate2.Checked = (condition & LOAD_ULTIMATE2) != 0;
+            checkConditionUltimate3.Checked = (condition & LOAD_ULTIMATE3) != 0;
+            checkConditionUltimate4.Checked = (condition & LOAD_ULTIMATE4) != 0;
+            syncingConditionControls = false;
+        }
+
+        private int BuildConditionValueFromFlags()
+        {
+            int condition = 0;
+            if (checkConditionCommon.Checked) condition |= LOAD_COMMON;
+            if (checkConditionSupport.Checked) condition |= LOAD_SUPPORT;
+            if (checkConditionAwakening.Checked) condition |= LOAD_AWAKENING;
+            if (checkConditionJutsu1.Checked) condition |= LOAD_JUTSU1;
+            if (checkConditionJutsu2.Checked) condition |= LOAD_JUTSU2;
+            if (checkConditionJutsu3.Checked) condition |= LOAD_JUTSU3;
+            if (checkConditionJutsu4.Checked) condition |= LOAD_JUTSU4;
+            if (checkConditionJutsu5.Checked) condition |= LOAD_JUTSU5;
+            if (checkConditionJutsu6.Checked) condition |= LOAD_JUTSU6;
+            if (checkConditionUltimate1.Checked) condition |= LOAD_ULTIMATE1;
+            if (checkConditionUltimate2.Checked) condition |= LOAD_ULTIMATE2;
+            if (checkConditionUltimate3.Checked) condition |= LOAD_ULTIMATE3;
+            if (checkConditionUltimate4.Checked) condition |= LOAD_ULTIMATE4;
+            return condition;
+        }
+
+        private void RefreshConditionValueFromFlags()
+        {
+            if (syncingConditionControls)
+                return;
+            syncingConditionControls = true;
+            numericUpDown1.Value = BuildConditionValueFromFlags();
+            syncingConditionControls = false;
+        }
 
         public void OpenFile(string basepath = "")
         {
@@ -58,13 +122,13 @@ namespace NSUNS4_Character_Manager
             textBox3.Text = prmName;
 
             // Get entry count
-            entryCount = fileBytes[fileSectionIndex + 0x1C];
+            entryCount = Main.b_ReadInt(fileBytes, fileSectionIndex + 0x1C);
 
             for(int x = 0; x < entryCount; x++)
             {
-                fileIndex = startIndex + (0x50 * x);
+                fileIndex = startIndex + 0x4 + (0x50 * x);
 
-                int strIndex = fileIndex + 0x8;
+                int strIndex = fileIndex + 0x4;
                 string path = Main.b_ReadString(fileBytes, strIndex);
                 pathList.Add(path);
 
@@ -75,10 +139,9 @@ namespace NSUNS4_Character_Manager
                 listBox1.Items.Add(path + "/" + name);
 
                 strIndex = strIndex + 0x20;
-                typeList.Add(fileBytes[strIndex]);
-
-                strIndex = strIndex + 0x8;
-                loadcondList.Add(new byte[] { fileBytes[strIndex], fileBytes[strIndex + 1] });
+                typeList.Add(Main.b_ReadInt(fileBytes, strIndex));
+                costumeIndexList.Add(Main.b_ReadInt(fileBytes, strIndex + 0x4));
+                loadcondList.Add(Main.b_ReadInt(fileBytes, strIndex + 0x8));
             }
 
             fileOpen = true;
@@ -94,6 +157,7 @@ namespace NSUNS4_Character_Manager
             pathList.Clear();
             nameList.Clear();
             typeList.Clear();
+            costumeIndexList.Clear();
             loadcondList.Clear();
 
             listBox1.SelectedIndex = -1;
@@ -103,6 +167,8 @@ namespace NSUNS4_Character_Manager
             textBox2.Clear();
             comboBox1.SelectedIndex = -1;
             numericUpDown1.Value = 0;
+            numericUpDown2.Value = -1;
+            UpdateConditionFlagsFromValue(0);
         }
 
         void SaveFile(string oldname = "")
@@ -200,12 +266,9 @@ namespace NSUNS4_Character_Manager
                 for (int y = 0; y < 0x20 - nameList[x].Length; y++) actualFile = Main.b_AddBytes(actualFile, new byte[] { 0 });
 
                 // Add type and loading state
-                actualFile = Main.b_AddBytes(actualFile, new byte[] { typeList[x] });
-                actualFile = Main.b_AddBytes(actualFile, new byte[] { 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF });
-                actualFile = Main.b_AddBytes(actualFile, loadcondList[x]);
-
-                // Add end of entry
-                actualFile = Main.b_AddBytes(actualFile, new byte[] { 0x0, 0x0 });
+                actualFile = Main.b_AddBytes(actualFile, BitConverter.GetBytes(typeList[x]));
+                actualFile = Main.b_AddBytes(actualFile, BitConverter.GetBytes(costumeIndexList[x]));
+                actualFile = Main.b_AddBytes(actualFile, BitConverter.GetBytes(loadcondList[x]));
             }
 
             // Add EOF
@@ -257,6 +320,8 @@ namespace NSUNS4_Character_Manager
                 textBox2.Text = "";
                 comboBox1.SelectedIndex = -1;
                 numericUpDown1.Value = 0;
+                numericUpDown2.Value = -1;
+                UpdateConditionFlagsFromValue(0);
             }
             else
             {
@@ -264,7 +329,9 @@ namespace NSUNS4_Character_Manager
                 textBox1.Text = pathList[x];
                 textBox2.Text = nameList[x];
                 comboBox1.SelectedIndex = typeList[x];
-                numericUpDown1.Value = (loadcondList[x][0] * 0x1) + (loadcondList[x][1] * 0x100);
+                numericUpDown2.Value = costumeIndexList[x];
+                numericUpDown1.Value = loadcondList[x];
+                UpdateConditionFlagsFromValue(loadcondList[x]);
             }
         }
 
@@ -276,7 +343,8 @@ namespace NSUNS4_Character_Manager
             pathList.Add("spc");
             nameList.Add("filename");
             typeList.Add(1);
-            loadcondList.Add(new byte[] { 3, 0 });
+            costumeIndexList.Add(-1);
+            loadcondList.Add(1);
             listBox1.Items.Add("spc/filename");
             listBox1.SelectedIndex = pathList.Count() - 1;
         }
@@ -290,6 +358,7 @@ namespace NSUNS4_Character_Manager
             pathList.RemoveAt(x);
             nameList.RemoveAt(x);
             typeList.RemoveAt(x);
+            costumeIndexList.RemoveAt(x);
             loadcondList.RemoveAt(x);
 
             if (x == listBox1.Items.Count - 1)
@@ -312,10 +381,10 @@ namespace NSUNS4_Character_Manager
             int x = listBox1.SelectedIndex;
             pathList[x] = textBox1.Text;
             nameList[x] = textBox2.Text;
-            typeList[x] = (byte)comboBox1.SelectedIndex;
-
-            byte[] loadcond = BitConverter.GetBytes((short)numericUpDown1.Value);
-            loadcondList[x] = loadcond;
+            typeList[x] = comboBox1.SelectedIndex;
+            costumeIndexList[x] = (int)numericUpDown2.Value;
+            loadcondList[x] = BuildConditionValueFromFlags();
+            numericUpDown1.Value = loadcondList[x];
             listBox1.Items[x] = textBox1.Text + "/" + textBox2.Text;
         }
 
@@ -325,6 +394,59 @@ namespace NSUNS4_Character_Manager
             if (fileOpen == false || textBox3.Text == "") return;
 
             prmName = textBox3.Text;
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            if (fileOpen == false || listBox1.SelectedIndex == -1) return;
+
+            int x = listBox1.SelectedIndex;
+            string[] payload =
+            {
+                ClipboardPrefix,
+                pathList[x] ?? "",
+                nameList[x] ?? "",
+                typeList[x].ToString(),
+                costumeIndexList[x].ToString(),
+                loadcondList[x].ToString()
+            };
+
+            Clipboard.SetText(string.Join("\n", payload));
+        }
+
+        private void button6_Click(object sender, EventArgs e)
+        {
+            if (fileOpen == false) return;
+            if (Clipboard.ContainsText() == false) return;
+
+            string[] payload = Clipboard.GetText()
+                .Replace("\r\n", "\n")
+                .Split(new[] { '\n' }, StringSplitOptions.None);
+
+            if (payload.Length < 6 || payload[0] != ClipboardPrefix)
+            {
+                MessageBox.Show("Clipboard does not contain a valid PRM load entry.");
+                return;
+            }
+
+            int typeValue;
+            int costumeValue;
+            int conditionValue;
+            if (!int.TryParse(payload[3], out typeValue) ||
+                !int.TryParse(payload[4], out costumeValue) ||
+                !int.TryParse(payload[5], out conditionValue))
+            {
+                MessageBox.Show("Clipboard does not contain a valid PRM load entry.");
+                return;
+            }
+
+            pathList.Add(payload[1]);
+            nameList.Add(payload[2]);
+            typeList.Add(typeValue);
+            costumeIndexList.Add(costumeValue);
+            loadcondList.Add(conditionValue);
+            listBox1.Items.Add(payload[1] + "/" + payload[2]);
+            listBox1.SelectedIndex = listBox1.Items.Count - 1;
         }
 
         private void saeToolStripMenuItem_Click(object sender, EventArgs e)
@@ -343,6 +465,18 @@ namespace NSUNS4_Character_Manager
 
         private void Tool_SpcloadEditor_Load(object sender, EventArgs e) {
 
+        }
+
+        private void numericUpDown1_ValueChanged(object sender, EventArgs e)
+        {
+            if (syncingConditionControls)
+                return;
+            UpdateConditionFlagsFromValue((int)numericUpDown1.Value);
+        }
+
+        private void ConditionCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            RefreshConditionValueFromFlags();
         }
     }
 }
