@@ -537,9 +537,10 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="extraTools\**\*.*">
+    <None Include="extraTools\**\*.*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+      <IsDataFile>true</IsDataFile>
+    </None>
   </ItemGroup>
   <Target Name="OrganizeDependencies" AfterTargets="Build">
     <MakeDir Directories="$(OutputPath)dependencies" />
