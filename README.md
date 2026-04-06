@@ -10,6 +10,7 @@ https://github.com/TheLeonX/NSUNS4-Toolbox
 ## Added Tools
 
 - **EV SFX Editor**
+- **MusicParam (deprecated)**
 - **UnlockEvoItemParam (Evo Specific) Editor**
 
 ## Notes

@@ -73,6 +73,18 @@ namespace NSUNS4_Character_Manager.Tools
         public List<long> collisionSecYPosValue = new List<long>();
         public List<long> collisionSecZPosValue = new List<long>();
         public List<string> collisionSecBoneName = new List<string>();
+        // PRM ETC Entry
+        public bool prmEtcChanged = false;
+        public int prmEtcSecLength = 0;
+        public int prmEtcSecCount = 0;
+        public List<int> prmEtcFrameActionUnlockValue = new List<int>();
+        public List<int> prmEtcActionLengthValue = new List<int>();
+        public List<int> prmEtcUnk1Value = new List<int>();
+        public List<float> prmEtcCircleVelocityValue = new List<float>();
+        public List<float> prmEtcUnk2Value = new List<float>();
+        public List<float> prmEtcCircleVelocityStrengthValue = new List<float>();
+        public List<int> prmEtcMovementFrequencyValue = new List<int>();
+        public List<float> prmEtcForwardVelocityValue = new List<float>();
 
         List<byte[]> verSection = new List<byte[]>();
         List<int> anmCount = new List<int>();
@@ -89,6 +101,8 @@ namespace NSUNS4_Character_Manager.Tools
         private string effectChunkPath = "";
         private string collisionChunkName = "";
         private string collisionChunkPath = "";
+        private string prmEtcChunkName = "";
+        private string prmEtcChunkPath = "";
 
         private static bool ChunkNameContains(XfbinBinaryChunkItem chunk, string value)
         {
@@ -379,10 +393,22 @@ namespace NSUNS4_Character_Manager.Tools
             collisionSecYPosValue.Clear();
             collisionSecZPosValue.Clear();
             collisionSecBoneName.Clear();
+            prmEtcSecLength = 0;
+            prmEtcSecCount = 0;
+            prmEtcFrameActionUnlockValue.Clear();
+            prmEtcActionLengthValue.Clear();
+            prmEtcUnk1Value.Clear();
+            prmEtcCircleVelocityValue.Clear();
+            prmEtcUnk2Value.Clear();
+            prmEtcCircleVelocityStrengthValue.Clear();
+            prmEtcMovementFrequencyValue.Clear();
+            prmEtcForwardVelocityValue.Clear();
             effectChunkName = "";
             effectChunkPath = "";
             collisionChunkName = "";
             collisionChunkPath = "";
+            prmEtcChunkName = "";
+            prmEtcChunkPath = "";
             listBox2.Items.Clear();
 
             XfbinBinaryChunkItem effectChunk = binaryChunks.FirstOrDefault(x => ChunkNameContains(x, "prm_sklslot"));
@@ -484,6 +510,44 @@ namespace NSUNS4_Character_Manager.Tools
                 }
                 editCollisionOfPlayerToolStripMenuItem.Enabled = true;
             }
+
+            editPrmEtcToolStripMenuItem.Enabled = false;
+            XfbinBinaryChunkItem prmEtcChunk = binaryChunks.FirstOrDefault(x => ChunkNameContains(x, "prm_etc"));
+            if (prmEtcChunk != null)
+            {
+                prmEtcChunkName = prmEtcChunk.ChunkName ?? "";
+                prmEtcChunkPath = prmEtcChunk.ChunkPath ?? "";
+                byte[] prmEtcBytes = prmEtcChunk.BinaryData ?? new byte[0];
+                if (prmEtcBytes.Length >= 4)
+                {
+                    prmEtcSecLength = Main.b_ReadIntRev(prmEtcBytes, 0);
+                    prmEtcSecCount = prmEtcSecLength / 0x20;
+                }
+                else
+                {
+                    prmEtcSecLength = 0;
+                    prmEtcSecCount = 0;
+                }
+
+                for (int z = 0; z < prmEtcSecCount; z++)
+                {
+                    int prmEtcIndex = 4 + (z * 0x20);
+                    if (prmEtcIndex + 0x1B >= prmEtcBytes.Length)
+                        break;
+
+                    prmEtcFrameActionUnlockValue.Add(BitConverter.ToUInt16(prmEtcBytes, prmEtcIndex + 0x00));
+                    prmEtcActionLengthValue.Add(BitConverter.ToUInt16(prmEtcBytes, prmEtcIndex + 0x02));
+                    prmEtcUnk1Value.Add(BitConverter.ToUInt16(prmEtcBytes, prmEtcIndex + 0x06));
+                    prmEtcCircleVelocityValue.Add(BitConverter.ToSingle(prmEtcBytes, prmEtcIndex + 0x08));
+                    prmEtcUnk2Value.Add(BitConverter.ToSingle(prmEtcBytes, prmEtcIndex + 0x0C));
+                    prmEtcCircleVelocityStrengthValue.Add(BitConverter.ToSingle(prmEtcBytes, prmEtcIndex + 0x10));
+                    prmEtcMovementFrequencyValue.Add(BitConverter.ToUInt16(prmEtcBytes, prmEtcIndex + 0x16));
+                    prmEtcForwardVelocityValue.Add(BitConverter.ToSingle(prmEtcBytes, prmEtcIndex + 0x18));
+                }
+
+                prmEtcSecCount = prmEtcFrameActionUnlockValue.Count;
+                editPrmEtcToolStripMenuItem.Enabled = true;
+            }
         }
 
         private int GetEffectActualIndexFromVisibleIndex(int visibleIndex)
@@ -516,6 +580,7 @@ namespace NSUNS4_Character_Manager.Tools
         public void OpenFile(string loadPath = "")
         {
             editCollisionOfPlayerToolStripMenuItem.Enabled = false;
+            editPrmEtcToolStripMenuItem.Enabled = false;
             if (loadPath == "")
             {
                 OpenFileDialog o = new OpenFileDialog();
@@ -1961,6 +2026,32 @@ namespace NSUNS4_Character_Manager.Tools
             return collisionSections;
         }
 
+        private byte[] BuildPrmEtcChunkData()
+        {
+            byte[] prmEtcSections = new byte[4];
+            for (int z = 0; z < prmEtcSecCount; z++)
+            {
+                byte[] newPrmEtcSection = new byte[0x20];
+                newPrmEtcSection = Main.b_ReplaceBytes(newPrmEtcSection, BitConverter.GetBytes((ushort)prmEtcFrameActionUnlockValue[z]), 0x00);
+                newPrmEtcSection = Main.b_ReplaceBytes(newPrmEtcSection, BitConverter.GetBytes((ushort)prmEtcActionLengthValue[z]), 0x02);
+                newPrmEtcSection = Main.b_ReplaceBytes(newPrmEtcSection, BitConverter.GetBytes((ushort)prmEtcUnk1Value[z]), 0x06);
+                newPrmEtcSection = Main.b_ReplaceBytes(newPrmEtcSection, BitConverter.GetBytes(prmEtcCircleVelocityValue[z]), 0x08);
+                newPrmEtcSection = Main.b_ReplaceBytes(newPrmEtcSection, BitConverter.GetBytes(prmEtcUnk2Value[z]), 0x0C);
+                newPrmEtcSection = Main.b_ReplaceBytes(newPrmEtcSection, BitConverter.GetBytes(prmEtcCircleVelocityStrengthValue[z]), 0x10);
+                newPrmEtcSection = Main.b_ReplaceBytes(newPrmEtcSection, BitConverter.GetBytes((ushort)prmEtcMovementFrequencyValue[z]), 0x16);
+                newPrmEtcSection = Main.b_ReplaceBytes(newPrmEtcSection, BitConverter.GetBytes(prmEtcForwardVelocityValue[z]), 0x18);
+                prmEtcSections = Main.b_AddBytes(prmEtcSections, newPrmEtcSection);
+            }
+
+            int dataSize = prmEtcSections.Length - 4;
+            byte[] sizeBytes = BitConverter.GetBytes(dataSize);
+            prmEtcSections[0] = sizeBytes[3];
+            prmEtcSections[1] = sizeBytes[2];
+            prmEtcSections[2] = sizeBytes[1];
+            prmEtcSections[3] = sizeBytes[0];
+            return prmEtcSections;
+        }
+
         private void SaveWithBackend(string outputPath)
         {
             string sourcePath = filePath;
@@ -1979,6 +2070,9 @@ namespace NSUNS4_Character_Manager.Tools
 
                 if (!string.IsNullOrWhiteSpace(collisionChunkName) && !string.IsNullOrWhiteSpace(collisionChunkPath) && collisionSecCount > 0)
                     backend.UpsertBinaryChunk(collisionChunkName, collisionChunkName, collisionChunkPath, BuildCollisionChunkData());
+
+                if (!string.IsNullOrWhiteSpace(prmEtcChunkName) && !string.IsNullOrWhiteSpace(prmEtcChunkPath) && (prmEtcSecCount > 0 || prmEtcChanged))
+                    backend.UpsertBinaryChunk(prmEtcChunkName, prmEtcChunkName, prmEtcChunkPath, BuildPrmEtcChunkData());
 
                 backend.RepackTo(outputPath);
             }
@@ -2177,6 +2271,20 @@ namespace NSUNS4_Character_Manager.Tools
             collisionSecYPosValue.Clear();
             collisionSecZPosValue.Clear();
             collisionSecBoneName.Clear();
+            prmEtcChunkName = "";
+            prmEtcChunkPath = "";
+            prmEtcChanged = false;
+            prmEtcSecLength = 0;
+            prmEtcSecCount = 0;
+            prmEtcFrameActionUnlockValue.Clear();
+            prmEtcActionLengthValue.Clear();
+            prmEtcUnk1Value.Clear();
+            prmEtcCircleVelocityValue.Clear();
+            prmEtcUnk2Value.Clear();
+            prmEtcCircleVelocityStrengthValue.Clear();
+            prmEtcMovementFrequencyValue.Clear();
+            prmEtcForwardVelocityValue.Clear();
+            editPrmEtcToolStripMenuItem.Enabled = false;
 
             t_planm.Text = "";
             t_anm.Text = "";
@@ -2712,6 +2820,34 @@ namespace NSUNS4_Character_Manager.Tools
         {
 
             Tool_playerCollisionEditor t = new Tool_playerCollisionEditor(this, collisionSecTypeValue, collisionSecStateValue, collisionSecEnablerBoneValue, collisionSecRadiusValue, collisionSecYPosValue, collisionSecZPosValue, collisionSecBoneName, collisionSecCount);
+            t.ShowDialog();
+        }
+
+        private void editPrmEtcToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (fileOpen)
+            {
+                OpenPrmEtcEditor();
+            }
+            else
+            {
+                MessageBox.Show("No file loaded...");
+            }
+        }
+
+        public void OpenPrmEtcEditor()
+        {
+            Tool_PRMEtcEditor t = new Tool_PRMEtcEditor(
+                this,
+                prmEtcFrameActionUnlockValue,
+                prmEtcActionLengthValue,
+                prmEtcUnk1Value,
+                prmEtcCircleVelocityValue,
+                prmEtcUnk2Value,
+                prmEtcCircleVelocityStrengthValue,
+                prmEtcMovementFrequencyValue,
+                prmEtcForwardVelocityValue,
+                prmEtcSecCount);
             t.ShowDialog();
         }
 

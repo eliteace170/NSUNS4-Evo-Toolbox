@@ -253,14 +253,11 @@
     <Compile Include="NSUNS4_Character_Manager\Tools\Tool_DuelPlayerParamEditor.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="NSUNS4_Character_Manager\Tools\Tool_DuelPlayerParamEditor.Designer.cs">
+      <DependentUpon>Tool_DuelPlayerParamEditor.cs</DependentUpon>
+    </Compile>
     <Compile Include="NSUNS4_Character_Manager\Tools\Tool_DuelPlayerParamEditor_Costumes.cs">
       <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="NSUNS4_Character_Manager\Tools\Tool_DuelPlayerParamEditor_settings.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="NSUNS4_Character_Manager\Tools\Tool_DuelPlayerParamEditor_settings.Designer.cs">
-      <DependentUpon>Tool_DuelPlayerParamEditor_settings.cs</DependentUpon>
     </Compile>
     <Compile Include="NSUNS4_Character_Manager\Tools\Tool_effectprmEditor.cs">
       <SubType>Form</SubType>
@@ -309,6 +306,12 @@
     </Compile>
     <Compile Include="NSUNS4_Character_Manager\Tools\Tool_playerCollisionEditor.Designer.cs">
       <DependentUpon>Tool_playerCollisionEditor.cs</DependentUpon>
+    </Compile>
+    <Compile Include="NSUNS4_Character_Manager\Tools\Tool_PRMEtcEditor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="NSUNS4_Character_Manager\Tools\Tool_PRMEtcEditor.Designer.cs">
+      <DependentUpon>Tool_PRMEtcEditor.cs</DependentUpon>
     </Compile>
     <Compile Include="NSUNS4_Character_Manager\Tools\Tool_PlayerSettingParamEditor.cs">
       <SubType>Form</SubType>
@@ -437,9 +440,6 @@
     <EmbeddedResource Include="NSUNS4_Character_Manager\Tools\Tool_DuelPlayerParamEditor_Costumes.resx">
       <DependentUpon>Tool_DuelPlayerParamEditor_Costumes.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="NSUNS4_Character_Manager\Tools\Tool_DuelPlayerParamEditor_settings.resx">
-      <DependentUpon>Tool_DuelPlayerParamEditor_settings.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="NSUNS4_Character_Manager\Tools\Tool_effectprmEditor.resx">
       <DependentUpon>Tool_effectprmEditor.cs</DependentUpon>
     </EmbeddedResource>
@@ -469,6 +469,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="NSUNS4_Character_Manager\Tools\Tool_PortPRM.resx">
       <DependentUpon>Tool_PortPRM.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="NSUNS4_Character_Manager\Tools\Tool_PRMEtcEditor.resx">
+      <DependentUpon>Tool_PRMEtcEditor.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="NSUNS4_Character_Manager\Tools\Tool_RosterEditor.resx">
       <DependentUpon>Tool_RosterEditor.cs</DependentUpon>

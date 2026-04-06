@@ -7,96 +7,88 @@ namespace NSUNS4_Character_Manager
 {
 	public class Tool_DuelPlayerParamEditor_Costumes : Form
 	{
-		public string[] str_list;
-
+		public string[] baseList;
+		public string[] awakeList;
 		public int str_index;
-
 		public Tool_DuelPlayerParamEditor tool;
 
-		public int mod;
-
 		private IContainer components = null;
+		private ListBox baseListBox;
+		private ListBox awakeListBox;
+		private Label baseLabel;
+		private Label awakeLabel;
+		private Label baseEditLabel;
+		private Label awakeEditLabel;
+		private TextBox baseTextBox;
+		private TextBox awakeTextBox;
+		private Button baseSubmitButton;
+		private Button awakeSubmitButton;
+		private Button applyButton;
 
-		private ListBox listBox1;
-
-		private Label label1;
-
-		private TextBox textBox1;
-
-		private Button button1;
-
-		private Button button2;
-
-		public Tool_DuelPlayerParamEditor_Costumes(string[] list, Tool_DuelPlayerParamEditor t, int Index, int Mode = -1)
+		public Tool_DuelPlayerParamEditor_Costumes(string[] baseCostumes, string[] awakeCostumes, Tool_DuelPlayerParamEditor t, int index)
 		{
 			InitializeComponent();
-			str_list = list;
-			str_index = Index;
+			baseList = baseCostumes ?? new string[20];
+			awakeList = awakeCostumes ?? new string[20];
 			tool = t;
-			mod = Mode;
-			if (Mode == 0)
+			str_index = index;
+			ReloadLists();
+		}
+
+		private void ReloadLists()
+		{
+			baseListBox.Items.Clear();
+			awakeListBox.Items.Clear();
+			for (int i = 0; i < 20; i++)
 			{
-				Text = "Edit awakening costume list";
-			}
-			for (int x = 0; x < 20; x++)
-			{
-				string a = "[null]";
-				if (str_list[x] != "")
-				{
-					a = str_list[x];
-				}
-				listBox1.Items.Add(x.ToString() + " - " + a);
+				baseListBox.Items.Add(i.ToString() + " - " + (string.IsNullOrEmpty(baseList[i]) ? "[null]" : baseList[i]));
+				awakeListBox.Items.Add(i.ToString() + " - " + (string.IsNullOrEmpty(awakeList[i]) ? "[null]" : awakeList[i]));
 			}
 		}
 
-		private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
+		private void baseListBox_SelectedIndexChanged(object sender, EventArgs e)
 		{
-			int x = listBox1.SelectedIndex;
-			if (x != -1)
-			{
-				textBox1.Text = str_list[x];
-			}
-			else
-			{
-				textBox1.Text = "";
-			}
+			int index = baseListBox.SelectedIndex;
+			baseTextBox.Text = index >= 0 ? baseList[index] : "";
 		}
 
-		private void button2_Click(object sender, EventArgs e)
+		private void awakeListBox_SelectedIndexChanged(object sender, EventArgs e)
 		{
-			int x = listBox1.SelectedIndex;
-			if (x != -1)
-			{
-				string a = textBox1.Text;
-				if (a != "")
-				{
-					str_list[x] = textBox1.Text;
-					listBox1.Items[x] = x.ToString() + " - " + textBox1.Text;
-				}
-				else
-				{
-					str_list[x] = "";
-					listBox1.Items[x] = x.ToString() + " - " + "[null]";
-				}
-			}
-			else
-			{
-				textBox1.Text = "";
-			}
+			int index = awakeListBox.SelectedIndex;
+			awakeTextBox.Text = index >= 0 ? awakeList[index] : "";
 		}
 
-		private void button1_Click(object sender, EventArgs e)
+		private void baseSubmitButton_Click(object sender, EventArgs e)
 		{
-			if (mod == -1)
+			int index = baseListBox.SelectedIndex;
+			if (index == -1)
 			{
-				tool.CostumeList[str_index] = str_list;
-				MessageBox.Show("Costume list saved correctly.");
+				baseTextBox.Text = "";
+				return;
 			}
-			else
+
+			baseList[index] = string.IsNullOrWhiteSpace(baseTextBox.Text) ? "" : baseTextBox.Text;
+			baseListBox.Items[index] = index.ToString() + " - " + (baseList[index] == "" ? "[null]" : baseList[index]);
+		}
+
+		private void awakeSubmitButton_Click(object sender, EventArgs e)
+		{
+			int index = awakeListBox.SelectedIndex;
+			if (index == -1)
 			{
-				tool.AwkCostumeList[str_index] = str_list;
-				MessageBox.Show("Awakening costume list saved correctly.");
+				awakeTextBox.Text = "";
+				return;
 			}
+
+			awakeList[index] = string.IsNullOrWhiteSpace(awakeTextBox.Text) ? "" : awakeTextBox.Text;
+			awakeListBox.Items[index] = index.ToString() + " - " + (awakeList[index] == "" ? "[null]" : awakeList[index]);
+		}
+
+		private void applyButton_Click(object sender, EventArgs e)
+		{
+			tool.UpdateCostumeEntry(str_index, baseList, false);
+			tool.UpdateCostumeEntry(str_index, awakeList, true);
+			MessageBox.Show("Costume lists saved correctly.");
 		}
 
 		protected override void Dispose(bool disposing)
@@ -110,83 +102,142 @@ namespace NSUNS4_Character_Manager
 
 		private void InitializeComponent()
 		{
-            this.listBox1 = new System.Windows.Forms.ListBox();
-            this.label1 = new System.Windows.Forms.Label();
-            this.textBox1 = new System.Windows.Forms.TextBox();
-            this.button1 = new System.Windows.Forms.Button();
-            this.button2 = new System.Windows.Forms.Button();
-            this.SuspendLayout();
-            // 
-            // listBox1
-            // 
-            this.listBox1.FormattingEnabled = true;
-            this.listBox1.Location = new System.Drawing.Point(13, 13);
-            this.listBox1.Name = "listBox1";
-            this.listBox1.Size = new System.Drawing.Size(464, 329);
-            this.listBox1.TabIndex = 0;
-            this.listBox1.SelectedIndexChanged += new System.EventHandler(this.listBox1_SelectedIndexChanged);
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(12, 354);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(60, 15);
-            this.label1.TabIndex = 1;
-            this.label1.Text = "Edit entry:";
-            // 
-            // textBox1
-            // 
-            this.textBox1.Location = new System.Drawing.Point(13, 371);
-            this.textBox1.MaxLength = 8;
-            this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(348, 23);
-            this.textBox1.TabIndex = 2;
-            // 
-            // button1
-            // 
-            this.button1.Location = new System.Drawing.Point(13, 397);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(464, 23);
-            this.button1.TabIndex = 3;
-            this.button1.Text = "Apply changes";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
-            // 
-            // button2
-            // 
-            this.button2.Location = new System.Drawing.Point(368, 370);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(109, 22);
-            this.button2.TabIndex = 4;
-            this.button2.Text = "Submit entry";
-            this.button2.UseVisualStyleBackColor = true;
-            this.button2.Click += new System.EventHandler(this.button2_Click);
-            // 
-            // Tool_DuelPlayerParamEditor_Costumes
-            // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(489, 432);
-            this.Controls.Add(this.button2);
-            this.Controls.Add(this.button1);
-            this.Controls.Add(this.textBox1);
-            this.Controls.Add(this.label1);
-            this.Controls.Add(this.listBox1);
-            this.Font = new System.Drawing.Font("Segoe UI", 8.5F);
-            this.MaximizeBox = false;
-            this.Name = "Tool_DuelPlayerParamEditor_Costumes";
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Edit costume list";
-            this.Load += new System.EventHandler(this.Tool_DuelPlayerParamEditor_Costumes_Load);
-            this.ResumeLayout(false);
-            this.PerformLayout();
-
+			this.baseListBox = new System.Windows.Forms.ListBox();
+			this.awakeListBox = new System.Windows.Forms.ListBox();
+			this.baseLabel = new System.Windows.Forms.Label();
+			this.awakeLabel = new System.Windows.Forms.Label();
+			this.baseEditLabel = new System.Windows.Forms.Label();
+			this.awakeEditLabel = new System.Windows.Forms.Label();
+			this.baseTextBox = new System.Windows.Forms.TextBox();
+			this.awakeTextBox = new System.Windows.Forms.TextBox();
+			this.baseSubmitButton = new System.Windows.Forms.Button();
+			this.awakeSubmitButton = new System.Windows.Forms.Button();
+			this.applyButton = new System.Windows.Forms.Button();
+			this.SuspendLayout();
+			// 
+			// baseListBox
+			// 
+			this.baseListBox.FormattingEnabled = true;
+			this.baseListBox.Location = new System.Drawing.Point(12, 31);
+			this.baseListBox.Name = "baseListBox";
+			this.baseListBox.Size = new System.Drawing.Size(300, 329);
+			this.baseListBox.TabIndex = 0;
+			this.baseListBox.SelectedIndexChanged += new System.EventHandler(this.baseListBox_SelectedIndexChanged);
+			// 
+			// awakeListBox
+			// 
+			this.awakeListBox.FormattingEnabled = true;
+			this.awakeListBox.Location = new System.Drawing.Point(326, 31);
+			this.awakeListBox.Name = "awakeListBox";
+			this.awakeListBox.Size = new System.Drawing.Size(300, 329);
+			this.awakeListBox.TabIndex = 1;
+			this.awakeListBox.SelectedIndexChanged += new System.EventHandler(this.awakeListBox_SelectedIndexChanged);
+			// 
+			// baseLabel
+			// 
+			this.baseLabel.AutoSize = true;
+			this.baseLabel.Location = new System.Drawing.Point(12, 10);
+			this.baseLabel.Name = "baseLabel";
+			this.baseLabel.Size = new System.Drawing.Size(79, 15);
+			this.baseLabel.TabIndex = 2;
+			this.baseLabel.Text = "Base costumes";
+			// 
+			// awakeLabel
+			// 
+			this.awakeLabel.AutoSize = true;
+			this.awakeLabel.Location = new System.Drawing.Point(323, 10);
+			this.awakeLabel.Name = "awakeLabel";
+			this.awakeLabel.Size = new System.Drawing.Size(93, 15);
+			this.awakeLabel.TabIndex = 3;
+			this.awakeLabel.Text = "Awake costumes";
+			// 
+			// baseEditLabel
+			// 
+			this.baseEditLabel.AutoSize = true;
+			this.baseEditLabel.Location = new System.Drawing.Point(12, 372);
+			this.baseEditLabel.Name = "baseEditLabel";
+			this.baseEditLabel.Size = new System.Drawing.Size(82, 15);
+			this.baseEditLabel.TabIndex = 4;
+			this.baseEditLabel.Text = "Edit base entry";
+			// 
+			// awakeEditLabel
+			// 
+			this.awakeEditLabel.AutoSize = true;
+			this.awakeEditLabel.Location = new System.Drawing.Point(323, 372);
+			this.awakeEditLabel.Name = "awakeEditLabel";
+			this.awakeEditLabel.Size = new System.Drawing.Size(96, 15);
+			this.awakeEditLabel.TabIndex = 5;
+			this.awakeEditLabel.Text = "Edit awake entry";
+			// 
+			// baseTextBox
+			// 
+			this.baseTextBox.Location = new System.Drawing.Point(12, 389);
+			this.baseTextBox.MaxLength = 8;
+			this.baseTextBox.Name = "baseTextBox";
+			this.baseTextBox.Size = new System.Drawing.Size(219, 23);
+			this.baseTextBox.TabIndex = 6;
+			// 
+			// awakeTextBox
+			// 
+			this.awakeTextBox.Location = new System.Drawing.Point(326, 389);
+			this.awakeTextBox.MaxLength = 8;
+			this.awakeTextBox.Name = "awakeTextBox";
+			this.awakeTextBox.Size = new System.Drawing.Size(219, 23);
+			this.awakeTextBox.TabIndex = 7;
+			// 
+			// baseSubmitButton
+			// 
+			this.baseSubmitButton.Location = new System.Drawing.Point(237, 389);
+			this.baseSubmitButton.Name = "baseSubmitButton";
+			this.baseSubmitButton.Size = new System.Drawing.Size(75, 23);
+			this.baseSubmitButton.TabIndex = 8;
+			this.baseSubmitButton.Text = "Submit";
+			this.baseSubmitButton.UseVisualStyleBackColor = true;
+			this.baseSubmitButton.Click += new System.EventHandler(this.baseSubmitButton_Click);
+			// 
+			// awakeSubmitButton
+			// 
+			this.awakeSubmitButton.Location = new System.Drawing.Point(551, 389);
+			this.awakeSubmitButton.Name = "awakeSubmitButton";
+			this.awakeSubmitButton.Size = new System.Drawing.Size(75, 23);
+			this.awakeSubmitButton.TabIndex = 9;
+			this.awakeSubmitButton.Text = "Submit";
+			this.awakeSubmitButton.UseVisualStyleBackColor = true;
+			this.awakeSubmitButton.Click += new System.EventHandler(this.awakeSubmitButton_Click);
+			// 
+			// applyButton
+			// 
+			this.applyButton.Location = new System.Drawing.Point(12, 423);
+			this.applyButton.Name = "applyButton";
+			this.applyButton.Size = new System.Drawing.Size(614, 28);
+			this.applyButton.TabIndex = 10;
+			this.applyButton.Text = "Apply changes";
+			this.applyButton.UseVisualStyleBackColor = true;
+			this.applyButton.Click += new System.EventHandler(this.applyButton_Click);
+			// 
+			// Tool_DuelPlayerParamEditor_Costumes
+			// 
+			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+			this.ClientSize = new System.Drawing.Size(640, 463);
+			this.Controls.Add(this.applyButton);
+			this.Controls.Add(this.awakeSubmitButton);
+			this.Controls.Add(this.baseSubmitButton);
+			this.Controls.Add(this.awakeTextBox);
+			this.Controls.Add(this.baseTextBox);
+			this.Controls.Add(this.awakeEditLabel);
+			this.Controls.Add(this.baseEditLabel);
+			this.Controls.Add(this.awakeLabel);
+			this.Controls.Add(this.baseLabel);
+			this.Controls.Add(this.awakeListBox);
+			this.Controls.Add(this.baseListBox);
+			this.Font = new System.Drawing.Font("Segoe UI", 8.5F);
+			this.MaximizeBox = false;
+			this.Name = "Tool_DuelPlayerParamEditor_Costumes";
+			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+			this.Text = "Edit costume lists";
+			this.ResumeLayout(false);
+			this.PerformLayout();
 		}
-
-        private void Tool_DuelPlayerParamEditor_Costumes_Load(object sender, EventArgs e)
-        {
-
-        }
-    }
+	}
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -45,7 +45,66 @@ namespace NSUNS4_Character_Manager.Tools
         public List<int> spl3_PriorList = new List<int>();
         public List<int> spl4_PriorList = new List<int>();
 
-        public List<byte[]> WeirdValuesList = new List<byte[]>();
+        public List<float[]> DamageMultiplierList = new List<float[]>();
+        public List<byte[]> UnusedByteList = new List<byte[]>();
+        public List<byte[]> WeirdValuesList
+        {
+            get
+            {
+                List<byte[]> values = new List<byte[]>();
+                int count = Math.Min(UnusedByteList.Count, DamageMultiplierList.Count);
+                for (int i = 0; i < count; i++)
+                {
+                    byte[] bytes = new byte[20];
+                    Buffer.BlockCopy(UnusedByteList[i], 0, bytes, 0, 4);
+                    Buffer.BlockCopy(GetDamageMultiplierBytes(DamageMultiplierList[i]), 0, bytes, 4, 16);
+                    values.Add(bytes);
+                }
+                return values;
+            }
+            set
+            {
+                UnusedByteList = new List<byte[]>();
+                DamageMultiplierList = new List<float[]>();
+                if (value == null)
+                {
+                    return;
+                }
+
+                for (int i = 0; i < value.Count; i++)
+                {
+                    byte[] source = value[i] ?? Array.Empty<byte>();
+                    byte[] unused = new byte[4];
+                    int unusedLength = Math.Min(4, source.Length);
+                    if (unusedLength > 0)
+                    {
+                        Buffer.BlockCopy(source, 0, unused, 0, unusedLength);
+                    }
+
+                    byte[] damageBytes = new byte[16];
+                    int damageLength = Math.Min(16, Math.Max(0, source.Length - 4));
+                    if (damageLength > 0)
+                    {
+                        Buffer.BlockCopy(source, 4, damageBytes, 0, damageLength);
+                    }
+
+                    float[] multipliers = new float[DamageMultiplierCount];
+                    for (int a = 0; a < DamageMultiplierCount; a++)
+                    {
+                        multipliers[a] = BitConverter.ToSingle(damageBytes, a * 4);
+                    }
+
+                    UnusedByteList.Add(unused);
+                    DamageMultiplierList.Add(multipliers);
+                }
+            }
+        }
+
+        private const int DamageMultiplierCount = 4;
+        private static readonly float[] DefaultDamageMultipliers = new float[]
+        {
+            30f, 30f, 30f, 30f
+        };
 
 
         private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
@@ -57,11 +116,199 @@ namespace NSUNS4_Character_Manager.Tools
 
         }
 
+
+        private void globalDamageMultiplierButton_Click(object sender, EventArgs e)
+        {
+            if (!FileOpen)
+            {
+                MessageBox.Show("No file loaded...");
+                return;
+            }
+
+            using (Form prompt = new Form())
+            {
+                prompt.Text = "Global Damage Multiplier";
+                prompt.FormBorderStyle = FormBorderStyle.FixedToolWindow;
+                prompt.StartPosition = FormStartPosition.CenterParent;
+                prompt.ClientSize = new Size(260, 92);
+                prompt.MaximizeBox = false;
+                prompt.MinimizeBox = false;
+
+                Label label = new Label();
+                label.AutoSize = true;
+                label.Location = new Point(12, 12);
+                label.Text = "Damage multiplier value";
+
+                NumericUpDown valueBox = new NumericUpDown();
+                valueBox.DecimalPlaces = 3;
+                valueBox.Maximum = 1000;
+                valueBox.Location = new Point(15, 34);
+                valueBox.Size = new Size(230, 23);
+                valueBox.Value = dmgMult1.Value;
+
+                Button applyButton = new Button();
+                applyButton.Text = "Apply";
+                applyButton.DialogResult = DialogResult.OK;
+                applyButton.Location = new Point(170, 62);
+                applyButton.Size = new Size(75, 23);
+
+                prompt.Controls.Add(label);
+                prompt.Controls.Add(valueBox);
+                prompt.Controls.Add(applyButton);
+                prompt.AcceptButton = applyButton;
+
+                if (prompt.ShowDialog(this) == DialogResult.OK)
+                {
+                    float value = (float)valueBox.Value;
+                    for (int i = 0; i < DamageMultiplierList.Count; i++)
+                    {
+                        DamageMultiplierList[i] = new float[] { value, value, value, value };
+                    }
+
+                    if (listBox1.SelectedIndex >= 0 && listBox1.SelectedIndex < DamageMultiplierList.Count)
+                    {
+                        SetDamageMultiplierControls(DamageMultiplierList[listBox1.SelectedIndex]);
+                    }
+
+                    MessageBox.Show("Global damage multiplier applied.");
+                }
+            }
+        }
+
+        private void globalChakraUsageButton_Click(object sender, EventArgs e)
+        {
+            if (!FileOpen)
+            {
+                MessageBox.Show("No file loaded...");
+                return;
+            }
+
+            using (Form prompt = new Form())
+            {
+                prompt.Text = "Global Chakra Usage";
+                prompt.FormBorderStyle = FormBorderStyle.FixedToolWindow;
+                prompt.StartPosition = FormStartPosition.CenterParent;
+                prompt.ClientSize = new Size(260, 92);
+                prompt.MaximizeBox = false;
+                prompt.MinimizeBox = false;
+
+                Label label = new Label();
+                label.AutoSize = true;
+                label.Location = new Point(12, 12);
+                label.Text = "Chakra usage value";
+
+                NumericUpDown valueBox = new NumericUpDown();
+                valueBox.DecimalPlaces = 3;
+                valueBox.Maximum = 1000;
+                valueBox.Location = new Point(15, 34);
+                valueBox.Size = new Size(230, 23);
+                valueBox.Value = ULT1_CUC_v.Value;
+
+                Button applyButton = new Button();
+                applyButton.Text = "Apply";
+                applyButton.DialogResult = DialogResult.OK;
+                applyButton.Location = new Point(170, 62);
+                applyButton.Size = new Size(75, 23);
+
+                prompt.Controls.Add(label);
+                prompt.Controls.Add(valueBox);
+                prompt.Controls.Add(applyButton);
+                prompt.AcceptButton = applyButton;
+
+                if (prompt.ShowDialog(this) == DialogResult.OK)
+                {
+                    float value = (float)valueBox.Value;
+                    byte[] valueBytes = BitConverter.GetBytes(value);
+                    for (int i = 0; i < EntryCount; i++)
+                    {
+                        spl1_chUsageCountValueListFloat[i] = value;
+                        spl2_chUsageCountValueListFloat[i] = value;
+                        spl3_chUsageCountValueListFloat[i] = value;
+                        spl4_chUsageCountValueListFloat[i] = value;
+                        spl1_chUsageCountValueList[i] = (byte[])valueBytes.Clone();
+                        spl2_chUsageCountValueList[i] = (byte[])valueBytes.Clone();
+                        spl3_chUsageCountValueList[i] = (byte[])valueBytes.Clone();
+                        spl4_chUsageCountValueList[i] = (byte[])valueBytes.Clone();
+                    }
+
+                    if (listBox1.SelectedIndex >= 0 && listBox1.SelectedIndex < EntryCount)
+                    {
+                        ULT1_CUC_v.Value = (decimal)value;
+                        ULT2_CUC_v.Value = (decimal)value;
+                        ULT3_CUC_v.Value = (decimal)value;
+                        ULT4_CUC_v.Value = (decimal)value;
+                    }
+
+                    MessageBox.Show("Global chakra usage applied.");
+                }
+            }
+        }
         private void Tool_SpSkillCustomizeParamEditor_Load(object sender, EventArgs e)
         {
             if (File.Exists(Main.spSkillCustomizePath)) {
                 OpenFile(Main.spSkillCustomizePath);
             }
+        }
+
+        private float[] ReadDamageMultipliers(byte[] fileBytes, long ptr)
+        {
+            float[] values = new float[DamageMultiplierCount];
+            for (int i = 0; i < DamageMultiplierCount; i++)
+            {
+                values[i] = Main.b_ReadFloat(fileBytes, (int)ptr + 24 + (i * 4));
+            }
+            return values;
+        }
+
+        private byte[] GetDamageMultiplierBytes(float[] values)
+        {
+            byte[] bytes = new byte[DamageMultiplierCount * 4];
+            for (int i = 0; i < DamageMultiplierCount; i++)
+            {
+                byte[] valueBytes = BitConverter.GetBytes(values[i]);
+                Buffer.BlockCopy(valueBytes, 0, bytes, i * 4, 4);
+            }
+            return bytes;
+        }
+
+        private void SetDamageMultiplierControls(float[] values)
+        {
+            float[] appliedValues = values != null && values.Length == DamageMultiplierCount ? values : DefaultDamageMultipliers.ToArray();
+            dmgMult1.Value = (decimal)appliedValues[0];
+            dmgMult2.Value = (decimal)appliedValues[1];
+            dmgMult3.Value = (decimal)appliedValues[2];
+            dmgMult4.Value = (decimal)appliedValues[3];
+        }
+
+        private float[] GetDamageMultiplierControls()
+        {
+            return new float[]
+            {
+                (float)dmgMult1.Value,
+                (float)dmgMult2.Value,
+                (float)dmgMult3.Value,
+                (float)dmgMult4.Value
+            };
+        }
+
+        private void SetUnusedByteControls(byte[] values)
+        {
+            byte[] appliedValues = values != null && values.Length == 4 ? values : new byte[4];
+            unusedByte1.Value = appliedValues[0];
+            unusedByte2.Value = appliedValues[1];
+            unusedByte3.Value = appliedValues[2];
+            unusedByte4.Value = appliedValues[3];
+        }
+
+        private byte[] GetUnusedByteControls()
+        {
+            return new byte[]
+            {
+                (byte)unusedByte1.Value,
+                (byte)unusedByte2.Value,
+                (byte)unusedByte3.Value,
+                (byte)unusedByte4.Value
+            };
         }
 
         private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
@@ -85,6 +332,8 @@ namespace NSUNS4_Character_Manager.Tools
                 Spl2_Name.Text = spl2_NameList[x];
                 Spl3_Name.Text = spl3_NameList[x];
                 Spl4_Name.Text = spl4_NameList[x];
+                SetUnusedByteControls(UnusedByteList[x]);
+                SetDamageMultiplierControls(DamageMultiplierList[x]);
             }
         }
 
@@ -161,6 +410,13 @@ namespace NSUNS4_Character_Manager.Tools
                 int spl2_prior = Main.b_ReadIntFromTwoBytes(FileBytes, (int)_ptr + 72);
                 int spl3_prior = Main.b_ReadIntFromTwoBytes(FileBytes, (int)_ptr + 88);
                 int spl4_prior = Main.b_ReadIntFromTwoBytes(FileBytes, (int)_ptr + 104);
+                byte[] unusedBytes = new byte[4]
+                {
+                    FileBytes[_ptr + 20],
+                    FileBytes[_ptr + 21],
+                    FileBytes[_ptr + 22],
+                    FileBytes[_ptr + 23]
+                };
 
                 string Spl1Name = "";
                 long _ptrSpl1Name3 = FileBytes[_ptr + 48] + FileBytes[_ptr + 49] * 256 + FileBytes[_ptr + 50] * 65536 + FileBytes[_ptr + 51] * 16777216;
@@ -222,38 +478,12 @@ namespace NSUNS4_Character_Manager.Tools
                         a2 = 20;
                     }
                 }
-                byte[] WeirdValues = new byte[24]
-                {
-                    FileBytes[_ptr + 20],
-                    FileBytes[_ptr + 21],
-                    FileBytes[_ptr + 22],
-                    FileBytes[_ptr + 23],
-                    FileBytes[_ptr + 24],
-                    FileBytes[_ptr + 25],
-                    FileBytes[_ptr + 26],
-                    FileBytes[_ptr + 27],
-                    FileBytes[_ptr + 28],
-                    FileBytes[_ptr + 29],
-                    FileBytes[_ptr + 30],
-                    FileBytes[_ptr + 31],
-                    FileBytes[_ptr + 32],
-                    FileBytes[_ptr + 33],
-                    FileBytes[_ptr + 34],
-                    FileBytes[_ptr + 35],
-                    FileBytes[_ptr + 36],
-                    FileBytes[_ptr + 37],
-                    FileBytes[_ptr + 38],
-                    FileBytes[_ptr + 39],
-                    FileBytes[_ptr + 40],
-                    FileBytes[_ptr + 41],
-                    FileBytes[_ptr + 42],
-                    FileBytes[_ptr + 43]
-                };
+                float[] damageMultipliers = ReadDamageMultipliers(FileBytes, _ptr);
                 CharacodeList.Add(Characode);
                 spl1_chUsageCountValueList.Add(spl1_chUsageCountValue);
                 spl2_chUsageCountValueList.Add(spl2_chUsageCountValue);
                 spl3_chUsageCountValueList.Add(spl3_chUsageCountValue);
-                spl4_chUsageCountValueList.Add(spl3_chUsageCountValue);
+                spl4_chUsageCountValueList.Add(spl4_chUsageCountValue);
                 spl1_chUsageCountValueListFloat.Add(spl1_chUsageCountValueFloat);
                 spl2_chUsageCountValueListFloat.Add(spl2_chUsageCountValueFloat);
                 spl3_chUsageCountValueListFloat.Add(spl3_chUsageCountValueFloat);
@@ -268,7 +498,8 @@ namespace NSUNS4_Character_Manager.Tools
                 spl3_NameList.Add(Spl3Name);
                 spl4_NameList.Add(Spl4Name);
 
-                WeirdValuesList.Add(WeirdValues);
+                UnusedByteList.Add(unusedBytes);
+                DamageMultiplierList.Add(damageMultipliers);
             }
             for (int x = 0; x < EntryCount; x++)
             {
@@ -318,7 +549,8 @@ namespace NSUNS4_Character_Manager.Tools
             spl2_PriorList = new List<int>();
             spl3_PriorList = new List<int>();
             spl4_PriorList = new List<int>();
-            WeirdValuesList = new List<byte[]>();
+            UnusedByteList = new List<byte[]>();
+            DamageMultiplierList = new List<float[]>();
             EntryCount = 0;
             listBox1.Items.Clear();
         }
@@ -363,7 +595,8 @@ namespace NSUNS4_Character_Manager.Tools
                 spl2_NameList.RemoveAt(Index);
                 spl3_NameList.RemoveAt(Index);
                 spl4_NameList.RemoveAt(Index);
-                WeirdValuesList.RemoveAt(Index);
+                UnusedByteList.RemoveAt(Index);
+                DamageMultiplierList.RemoveAt(Index);
                 listBox1.Items.RemoveAt(Index);
                 EntryCount--;
                 MessageBox.Show("Entry deleted");
@@ -407,10 +640,8 @@ namespace NSUNS4_Character_Manager.Tools
             string Spl2Name = Spl2_Name.Text;
             string Spl3Name = Spl3_Name.Text;
             string Spl4Name = Spl4_Name.Text;
-            byte[] WeirdValues = new byte[28]
-                {
-                    0x00,0x00,0x20,0x42,0x00,0x00,0x20,0x42,0x00,0x00,0xF0,0x41,0x00,0x00,0xF0,0x41,0x00,0x00,0xF0,0x41,0x00,0x00,0xF0,0x41,0x00,0x00,0xF0,0x41
-                };
+            byte[] unusedBytes = GetUnusedByteControls();
+            float[] damageMultipliers = GetDamageMultiplierControls();
             CharacodeList.Add(Characode);
             spl1_chUsageCountValueList.Add(spl1_chUsageCountValue);
             spl2_chUsageCountValueList.Add(spl2_chUsageCountValue);
@@ -420,11 +651,12 @@ namespace NSUNS4_Character_Manager.Tools
             spl2_chUsageCountValueListFloat.Add(spl2_chUsageCountValueFloat);
             spl3_chUsageCountValueListFloat.Add(spl3_chUsageCountValueFloat);
             spl4_chUsageCountValueListFloat.Add(spl4_chUsageCountValueFloat);
-            WeirdValuesList.Add(WeirdValues);
+            UnusedByteList.Add(unusedBytes);
+            DamageMultiplierList.Add(damageMultipliers);
             spl1_NameList.Add(Spl1Name);
             spl2_NameList.Add(Spl2Name);
             spl3_NameList.Add(Spl3Name);
-            spl4_NameList.Add(Spl3Name);
+            spl4_NameList.Add(Spl4Name);
             spl1_PriorList.Add(spl1_prior_v);
             spl2_PriorList.Add(spl2_prior_v);
             spl3_PriorList.Add(spl3_prior_v);
@@ -473,10 +705,8 @@ namespace NSUNS4_Character_Manager.Tools
                 string Spl2Name = Spl2_Name.Text;
                 string Spl3Name = Spl3_Name.Text;
                 string Spl4Name = Spl4_Name.Text;
-                byte[] WeirdValues = new byte[28]
-                {
-                    0x00,0x00,0x20,0x42,0x00,0x00,0x20,0x42,0x00,0x00,0xF0,0x41,0x00,0x00,0xF0,0x41,0x00,0x00,0xF0,0x41,0x00,0x00,0xF0,0x41,0x00,0x00,0xF0,0x41
-                };
+                byte[] unusedBytes = GetUnusedByteControls();
+                float[] damageMultipliers = GetDamageMultiplierControls();
 
                 CharacodeList[x] = Characode;
                 spl1_chUsageCountValueList[x] = spl1_chUsageCountValue;
@@ -495,7 +725,8 @@ namespace NSUNS4_Character_Manager.Tools
                 spl2_NameList[x] = Spl2Name;
                 spl3_NameList[x] = Spl3Name;
                 spl4_NameList[x] = Spl4Name;
-                WeirdValuesList[x] = WeirdValues;
+                UnusedByteList[x] = unusedBytes;
+                DamageMultiplierList[x] = damageMultipliers;
                 string NewItem = "Characode: " + CharacodeList[x][0].ToString("X2") + " " + CharacodeList[x][1].ToString("X2");
                 listBox1.Items[x] = NewItem;
                 MessageBox.Show("Entry Saved");
@@ -721,10 +952,15 @@ namespace NSUNS4_Character_Manager.Tools
                 {
                     file[320 + 112 * x2 + 16 + a8] = o_d[a8];
                 }
-                byte[] o_f = WeirdValuesList[x2];
+                byte[] o_e = UnusedByteList[x2];
+                for (int a8 = 0; a8 < o_e.Length; a8++)
+                {
+                    file[320 + 112 * x2 + 20 + a8] = o_e[a8];
+                }
+                byte[] o_f = GetDamageMultiplierBytes(DamageMultiplierList[x2]);
                 for (int a8 = 0; a8 < o_f.Length; a8++)
                 {
-                    file[320 + 112 * x2 + 20 + a8] = o_f[a8];
+                    file[320 + 112 * x2 + 24 + a8] = o_f[a8];
                 }
             }
             int FileSize3 = file.Count - 304;
@@ -818,5 +1054,12 @@ namespace NSUNS4_Character_Manager.Tools
         private void char02_ValueChanged(object sender, EventArgs e) {
 
         }
+
+        private void label18_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }
+
+

@@ -5,15 +5,91 @@ using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Windows.Forms;
 
 namespace NSUNS4_Character_Manager
 {
-	public class Tool_DuelPlayerParamEditor : Form
+	public partial class Tool_DuelPlayerParamEditor : Form
 	{
+		private enum DuelCopySettingsMode
+		{
+			ItemsOnly,
+			ConditionsOnly,
+			AllSettings,
+			ConditionsAndAllSettings,
+			Everything
+		}
+
+		public class DuelPlayerParamEntry
+		{
+			public string BinPath = "";
+			public string BinName = "";
+			public byte[] Data = new byte[760];
+			public string CharacterId = "";
+			public string MotionCode = "";
+			public string[] BaseCostumes = new string[20];
+			public string[] AwakeCostumes = new string[20];
+			public string DefaultAssist1 = "";
+			public string DefaultAssist2 = "";
+			public string AwakeAction = "";
+			public string[] Items = new string[4];
+			public byte[] ItemCounts = new byte[4];
+			public string Partner = "";
+			public byte[] SettingList = new byte[36];
+			public byte[] AwaSettingList = new byte[84];
+			public byte[] Setting2List = new byte[16];
+			public long EvoDup = 0;
+			public int AwaBodyPriority = 0;
+			public int DefaultAwaSkillIndex = -1;
+			public int ConditionFlag = 0;
+			public int EnableAwaSkill = 0;
+			public int CameraDistance = 0;
+			public int CameraUnknown1 = 0;
+			public int VictoryAngle = 0;
+			public int CameraUnknown2 = 0;
+			public int CameraUnknown3 = 0;
+			public int CameraUnknown4 = 0;
+
+			public DuelPlayerParamEntry Clone()
+			{
+				return new DuelPlayerParamEntry
+				{
+					BinPath = BinPath,
+					BinName = BinName,
+					Data = (byte[])Data.Clone(),
+					CharacterId = CharacterId,
+					MotionCode = MotionCode,
+					BaseCostumes = (string[])BaseCostumes.Clone(),
+					AwakeCostumes = (string[])AwakeCostumes.Clone(),
+					DefaultAssist1 = DefaultAssist1,
+					DefaultAssist2 = DefaultAssist2,
+					AwakeAction = AwakeAction,
+					Items = (string[])Items.Clone(),
+					ItemCounts = (byte[])ItemCounts.Clone(),
+					Partner = Partner,
+					SettingList = (byte[])SettingList.Clone(),
+					AwaSettingList = (byte[])AwaSettingList.Clone(),
+					Setting2List = (byte[])Setting2List.Clone(),
+					EvoDup = EvoDup,
+					AwaBodyPriority = AwaBodyPriority,
+					DefaultAwaSkillIndex = DefaultAwaSkillIndex,
+					ConditionFlag = ConditionFlag,
+					EnableAwaSkill = EnableAwaSkill,
+					CameraDistance = CameraDistance,
+					CameraUnknown1 = CameraUnknown1,
+					VictoryAngle = VictoryAngle,
+					CameraUnknown2 = CameraUnknown2,
+					CameraUnknown3 = CameraUnknown3,
+					CameraUnknown4 = CameraUnknown4
+				};
+			}
+		}
+
 		public bool FileOpen = false;
 		public string FilePath = "";
 		public int EntryCount = 0;
+		public List<DuelPlayerParamEntry> Entries = new List<DuelPlayerParamEntry>();
 		public List<string> BinPath = new List<string>();
 		public List<string> BinName = new List<string>();
 		public List<byte[]> Data = new List<byte[]>();
@@ -29,66 +105,711 @@ namespace NSUNS4_Character_Manager
 		public List<byte[]> SettingList = new List<byte[]>();
 		public List<byte[]> AwaSettingList = new List<byte[]>();
 		public List<byte[]> Setting2List = new List<byte[]>();
+		public List<long> EvoDupList = new List<long>();
+		public List<int> AwaBodyPriorityList = new List<int>();
+		public List<int> DefaultAwaSkillIndexList = new List<int>();
+		public List<int> ConditionFlagList = new List<int>();
 		public List<int> EnableAwaSkillList = new List<int>();
+		public List<int> CameraDistanceList = new List<int>();
+		public List<int> CameraUnknown1List = new List<int>();
 		public List<int> VictoryAngleList = new List<int>();
-		public List<int> VictoryPosList = new List<int>();
-		public List<int> VictoryUnknownList = new List<int>();
+		public List<int> CameraUnknown2List = new List<int>();
+		public List<int> CameraUnknown3List = new List<int>();
+		public List<int> CameraUnknown4List = new List<int>();
+		public List<int> VictoryPosList => CameraUnknown1List;
+		public List<int> VictoryUnknownList => CameraDistanceList;
+		private bool syncingConditionControls = false;
 
-		private IContainer components = null;
-		public ListBox listBox1;
-		private Button button1;
-		private Button button2;
-		private Button button3;
-		private MenuStrip menuStrip1;
-		private ToolStripMenuItem fileToolStripMenuItem;
-		private ToolStripMenuItem newToolStripMenuItem;
-		private ToolStripMenuItem openToolStripMenuItem;
-		private ToolStripMenuItem saveToolStripMenuItem;
-		private ToolStripMenuItem saveAsToolStripMenuItem;
-		private ToolStripMenuItem closeToolStripMenuItem;
-		private Label label1;
-		private TextBox w_characodeid;
-		private Button b_costumeids;
-		private Button b_awkcostumeids;
-		private TextBox w_awkaction;
-		private Label label2;
-		private TextBox w_defaultassist1;
-		private Label label3;
-		private TextBox w_defaultassist2;
-		private Label label4;
-		private TextBox w_item1;
-		private Label label5;
-		private Label label6;
-		private Label label7;
-		private Label label8;
-		private NumericUpDown w_itemc1;
-		private NumericUpDown w_itemc2;
-		private TextBox w_item2;
-		private NumericUpDown w_itemc3;
-		private TextBox w_item3;
-		private NumericUpDown w_itemc4;
-        private TextBox w_charaprmbas;
-        private Label label9;
-        private TextBox w_partner;
-        private Label label10;
-        private TextBox Search_TB;
-        private Button Search;
-        private Button button4;
-        private ToolStripMenuItem itemListToolStripMenuItem;
-        private Label label11;
-        private NumericUpDown v_enableAwaSkill;
-        private Label label12;
-        private NumericUpDown v_vic_cam_angle;
-        private Label label13;
-        private NumericUpDown v_vic_cam_pos;
-        private Label label14;
-        private NumericUpDown v_cam_unk;
-        private Label label15;
-        private TextBox w_item4;
 
 		public Tool_DuelPlayerParamEditor()
 		{
 			InitializeComponent();
+			InitializeConditionFlagList();
+			ResetInlineSettings();
+		}
+
+		private static int ReadUInt16(byte[] data, int offset)
+		{
+			return BitConverter.ToUInt16(data, offset);
+		}
+
+		private static string EncodeText(string value)
+		{
+			return Convert.ToBase64String(Encoding.UTF8.GetBytes(value ?? ""));
+		}
+
+		private static string EncodeBytes(byte[] value)
+		{
+			return Convert.ToBase64String(value ?? new byte[0]);
+		}
+
+		private static string DecodeText(string value)
+		{
+			return Encoding.UTF8.GetString(Convert.FromBase64String(value ?? ""));
+		}
+
+		private static byte[] DecodeBytes(string value)
+		{
+			return Convert.FromBase64String(value ?? "");
+		}
+
+		private static long CombineEvoDup(int lowPart, int highPart)
+		{
+			return ((long)(uint)highPart << 32) | (uint)lowPart;
+		}
+
+		private static int GetEvoDupLow(long evoDup)
+		{
+			return unchecked((int)(uint)(evoDup & 0xFFFFFFFFL));
+		}
+
+		private static int GetEvoDupHigh(long evoDup)
+		{
+			return unchecked((int)(uint)((evoDup >> 32) & 0xFFFFFFFFL));
+		}
+
+		private void SetNumericValue(NumericUpDown control, decimal value)
+		{
+			if (control == null)
+			{
+				return;
+			}
+
+			if (value < control.Minimum)
+			{
+				control.Value = control.Minimum;
+			}
+			else if (value > control.Maximum)
+			{
+				control.Value = control.Maximum;
+			}
+			else
+			{
+				control.Value = value;
+			}
+		}
+
+		private string GetEntryPrefixFromBinName(string binName)
+		{
+			if (string.IsNullOrWhiteSpace(binName))
+			{
+				return "";
+			}
+
+			return binName.EndsWith("prm_bas", StringComparison.OrdinalIgnoreCase) && binName.Length > 7
+				? binName.Substring(0, binName.Length - 7)
+				: binName;
+		}
+
+		private void RebuildEntriesFromLegacyLists()
+		{
+			Entries.Clear();
+			for (int i = 0; i < EntryCount; i++)
+			{
+				Entries.Add(new DuelPlayerParamEntry
+				{
+					BinPath = BinPath[i],
+					BinName = BinName[i],
+					Data = (byte[])Data[i].Clone(),
+					CharacterId = GetEntryPrefixFromBinName(BinName[i]),
+					MotionCode = CharaList[i],
+					BaseCostumes = (string[])CostumeList[i].Clone(),
+					AwakeCostumes = (string[])AwkCostumeList[i].Clone(),
+					DefaultAssist1 = DefaultAssist1[i],
+					DefaultAssist2 = DefaultAssist2[i],
+					AwakeAction = AwkAction[i],
+					Items = (string[])ItemList[i].Clone(),
+					ItemCounts = (byte[])ItemCount[i].Clone(),
+					Partner = Partner[i],
+					SettingList = (byte[])SettingList[i].Clone(),
+					AwaSettingList = (byte[])AwaSettingList[i].Clone(),
+					Setting2List = (byte[])Setting2List[i].Clone(),
+					EvoDup = EvoDupList[i],
+					AwaBodyPriority = AwaBodyPriorityList[i],
+					DefaultAwaSkillIndex = DefaultAwaSkillIndexList[i],
+					ConditionFlag = ConditionFlagList[i],
+					EnableAwaSkill = EnableAwaSkillList[i],
+					CameraDistance = CameraDistanceList[i],
+					CameraUnknown1 = CameraUnknown1List[i],
+					VictoryAngle = VictoryAngleList[i],
+					CameraUnknown2 = CameraUnknown2List[i],
+					CameraUnknown3 = CameraUnknown3List[i],
+					CameraUnknown4 = CameraUnknown4List[i]
+				});
+			}
+		}
+
+		private void RefreshLegacyListsFromEntries()
+		{
+			EntryCount = Entries.Count;
+			BinPath = Entries.Select(e => e.BinPath).ToList();
+			BinName = Entries.Select(e => e.BinName).ToList();
+			Data = Entries.Select(e => (byte[])e.Data.Clone()).ToList();
+			CharaList = Entries.Select(e => e.MotionCode).ToList();
+			CostumeList = Entries.Select(e => (string[])e.BaseCostumes.Clone()).ToList();
+			AwkCostumeList = Entries.Select(e => (string[])e.AwakeCostumes.Clone()).ToList();
+			DefaultAssist1 = Entries.Select(e => e.DefaultAssist1).ToList();
+			DefaultAssist2 = Entries.Select(e => e.DefaultAssist2).ToList();
+			AwkAction = Entries.Select(e => e.AwakeAction).ToList();
+			ItemList = Entries.Select(e => (string[])e.Items.Clone()).ToList();
+			ItemCount = Entries.Select(e => (byte[])e.ItemCounts.Clone()).ToList();
+			Partner = Entries.Select(e => e.Partner).ToList();
+			SettingList = Entries.Select(e => (byte[])e.SettingList.Clone()).ToList();
+			AwaSettingList = Entries.Select(e => (byte[])e.AwaSettingList.Clone()).ToList();
+			Setting2List = Entries.Select(e => (byte[])e.Setting2List.Clone()).ToList();
+			EvoDupList = Entries.Select(e => e.EvoDup).ToList();
+			AwaBodyPriorityList = Entries.Select(e => e.AwaBodyPriority).ToList();
+			DefaultAwaSkillIndexList = Entries.Select(e => e.DefaultAwaSkillIndex).ToList();
+			ConditionFlagList = Entries.Select(e => e.ConditionFlag).ToList();
+			EnableAwaSkillList = Entries.Select(e => e.EnableAwaSkill).ToList();
+			CameraDistanceList = Entries.Select(e => e.CameraDistance).ToList();
+			CameraUnknown1List = Entries.Select(e => e.CameraUnknown1).ToList();
+			VictoryAngleList = Entries.Select(e => e.VictoryAngle).ToList();
+			CameraUnknown2List = Entries.Select(e => e.CameraUnknown2).ToList();
+			CameraUnknown3List = Entries.Select(e => e.CameraUnknown3).ToList();
+			CameraUnknown4List = Entries.Select(e => e.CameraUnknown4).ToList();
+		}
+
+		private void RefreshEntryListBox()
+		{
+			int selectedIndex = listBox1.SelectedIndex;
+			listBox1.Items.Clear();
+			foreach (DuelPlayerParamEntry entry in Entries)
+			{
+				listBox1.Items.Add(entry.BinName);
+			}
+			if (selectedIndex >= 0 && selectedIndex < listBox1.Items.Count)
+			{
+				listBox1.SelectedIndex = selectedIndex;
+			}
+		}
+
+		private DuelPlayerParamEntry CreateDefaultEntry(string prefix)
+		{
+			if (string.IsNullOrWhiteSpace(prefix))
+			{
+				prefix = Entries.Count.ToString("X2") + "cd";
+			}
+
+			return new DuelPlayerParamEntry
+			{
+				BinPath = "Z:/param/player/Converter/bin/" + prefix + "prm_bas.bin",
+				BinName = prefix + "prm_bas",
+				CharacterId = prefix,
+				MotionCode = prefix,
+				Partner = "",
+				DefaultAssist1 = "",
+				DefaultAssist2 = "",
+				AwakeAction = "",
+				Items = new string[4],
+				ItemCounts = new byte[4],
+				SettingList = new byte[36],
+				Setting2List = new byte[16],
+				AwaSettingList = new byte[84],
+				EvoDup = 0,
+				AwaBodyPriority = 0,
+				DefaultAwaSkillIndex = -1,
+				EnableAwaSkill = 0,
+				CameraDistance = 45,
+				CameraUnknown1 = 40,
+				VictoryAngle = 150,
+				CameraUnknown2 = 0,
+				CameraUnknown3 = 0,
+				CameraUnknown4 = 0
+			};
+		}
+
+		private DuelPlayerParamEntry CreateEntryFromCurrentForm()
+		{
+			DuelPlayerParamEntry entry = listBox1.SelectedIndex >= 0 && listBox1.SelectedIndex < Entries.Count
+				? Entries[listBox1.SelectedIndex].Clone()
+				: CreateDefaultEntry(w_charaprmbas.Text);
+
+			entry.BinPath = "Z:/param/player/Converter/bin/" + w_charaprmbas.Text + "prm_bas.bin";
+			entry.BinName = w_charaprmbas.Text + "prm_bas";
+			entry.CharacterId = w_charaprmbas.Text;
+			entry.MotionCode = w_characodeid.Text;
+			entry.DefaultAssist1 = w_defaultassist1.Text;
+			entry.DefaultAssist2 = w_defaultassist2.Text;
+			entry.AwakeAction = w_awkaction.Text;
+			entry.Items = new string[4] { w_item1.Text, w_item2.Text, w_item3.Text, w_item4.Text };
+			entry.ItemCounts = new byte[4] { (byte)w_itemc1.Value, (byte)w_itemc2.Value, (byte)w_itemc3.Value, (byte)w_itemc4.Value };
+			entry.Partner = w_partner.Text;
+			entry.ConditionFlag = (int)v_enableAwaSkill.Value;
+			entry.EnableAwaSkill = (int)v_enableAwaSkill.Value;
+			ApplyInlineSettingsToEntry(entry);
+			return entry;
+		}
+
+		private void ApplyEntryToForm(DuelPlayerParamEntry entry)
+		{
+			w_charaprmbas.Text = !string.IsNullOrWhiteSpace(entry.CharacterId) ? entry.CharacterId : GetEntryPrefixFromBinName(entry.BinName);
+			w_characodeid.Text = entry.MotionCode;
+			w_defaultassist1.Text = entry.DefaultAssist1;
+			w_defaultassist2.Text = entry.DefaultAssist2;
+			w_awkaction.Text = entry.AwakeAction;
+			w_item1.Text = entry.Items[0];
+			SetNumericValue(w_itemc1, entry.ItemCounts[0]);
+			w_item2.Text = entry.Items[1];
+			SetNumericValue(w_itemc2, entry.ItemCounts[1]);
+			w_item3.Text = entry.Items[2];
+			SetNumericValue(w_itemc3, entry.ItemCounts[2]);
+			w_item4.Text = entry.Items[3];
+			SetNumericValue(w_itemc4, entry.ItemCounts[3]);
+			w_partner.Text = entry.Partner;
+			SetNumericValue(v_enableAwaSkill, (decimal)(uint)entry.ConditionFlag);
+			UpdateConditionFlagsFromValue(entry.ConditionFlag);
+			LoadInlineSettingsFromEntry(entry);
+		}
+
+		private string[] GetConditionFlagNames()
+		{
+			return new string[]
+			{
+                "ENABLE AWAKENING JUTSU",
+				"unknow 1",
+				"unknow 2",
+				"unknow 3",
+				"unknow 4",
+				"unknow 5",
+				"unknow 6",
+				"unknow 7",
+				"ENABLE GIANT AWAKENING COND",
+				"ENABLE PRIVATE CAMERA",
+				"ENABLE GIANT AWAKENING LAND SOUND",
+				"ENABLE AWAKENING HITMARK",
+                "unknow 8",
+				"unknow 9",
+				"unknow 10",
+				"unknow 11",
+				"unknow 12",
+				"unknow 13",
+				"ENABLE BASE GLOW",
+				"ENABLE AWAKE GLOW",
+				"ENABLE TELEPORT DASH",
+				"unknow 14",
+				"unknow 15",
+				"ENABLE AWAKENING MOVESET",
+				"unknow 16",
+				"unknow 17",
+				"unknow 18",
+				"ENABLE PUPPET COND",
+				"ENABLE PUPPET USER COND",
+				"unknow 19",
+				"unknow 20",
+				"unknow 21"
+            };
+		}
+
+		private void InitializeConditionFlagList()
+		{
+			checkedListConditionFlags.Items.Clear();
+			foreach (string flagName in GetConditionFlagNames())
+			{
+				checkedListConditionFlags.Items.Add(flagName);
+			}
+		}
+
+		private void LoadInlineSettingsFromEntry(DuelPlayerParamEntry entry)
+		{
+			byte[] setting1 = entry.SettingList ?? new byte[36];
+			byte[] setting2 = entry.Setting2List ?? new byte[16];
+			byte[] awake = entry.AwaSettingList ?? new byte[84];
+
+			SetNumericValue(setBaseMovement, (decimal)BitConverter.ToSingle(setting1, 0));
+			SetNumericValue(setBaseChakraDash, (decimal)BitConverter.ToSingle(setting1, 4));
+			SetNumericValue(setGuardPressure, (decimal)BitConverter.ToSingle(setting1, 8));
+			SetNumericValue(setAttack, (decimal)BitConverter.ToSingle(setting1, 16));
+			SetNumericValue(setDefense, (decimal)BitConverter.ToSingle(setting1, 20));
+			SetNumericValue(setAssistDamage, (decimal)BitConverter.ToSingle(setting1, 24));
+			SetNumericValue(setItemBuffDuration, (decimal)BitConverter.ToSingle(setting1, 28));
+			SetNumericValue(setChakraCharge, (decimal)BitConverter.ToSingle(setting1, 32));
+
+			SetNumericValue(setAwakeHpRequirement, (decimal)BitConverter.ToSingle(setting2, 0));
+			SetNumericValue(setBaseNinjaDash, setting2[4]);
+			SetNumericValue(setBaseAirDashDuration, setting2[6]);
+			SetNumericValue(setBaseGroundedChakraDashDuration, setting2[8]);
+
+			SetNumericValue(setAwakeMovement, (decimal)BitConverter.ToSingle(awake, 0));
+			SetNumericValue(setAwakeChakraDash, (decimal)BitConverter.ToSingle(awake, 4));
+			SetNumericValue(setAwakeNinjaDash, awake[8]);
+			SetNumericValue(setAwakeAirDashDuration, awake[10]);
+			SetNumericValue(setAwakeGroundedChakraDashDuration, awake[12]);
+			setEnableDashPriority.Checked = awake[60] != 0;
+			setAwakeningDebuff.Checked = awake[64] != 0;
+			SetNumericValue(setChakraCostAwakening, (decimal)BitConverter.ToSingle(awake, 68));
+			SetNumericValue(setChakraBlockRecovery, (decimal)BitConverter.ToSingle(awake, 76));
+			SetNumericValue(setAwakeningActionCharge, (decimal)BitConverter.ToSingle(awake, 80));
+
+			SetNumericValue(setEvo1, entry.EvoDup);
+			SetNumericValue(setAwaBodyPriority, entry.AwaBodyPriority);
+			SetNumericValue(setDefaultAwaSkillIndex, entry.DefaultAwaSkillIndex);
+			SetNumericValue(setCameraDistance, entry.CameraDistance);
+			SetNumericValue(setCameraUnknown1, entry.CameraUnknown1);
+			SetNumericValue(setVictoryCameraAngle, entry.VictoryAngle);
+			SetNumericValue(setCameraUnknown2, entry.CameraUnknown2);
+			SetNumericValue(setCameraUnknown3, entry.CameraUnknown3);
+			SetNumericValue(setCameraUnknown4, entry.CameraUnknown4);
+		}
+
+		private void ApplyInlineSettingsToEntry(DuelPlayerParamEntry entry)
+		{
+			byte[] setting1 = new byte[36];
+			byte[] setting2 = entry.Setting2List != null && entry.Setting2List.Length == 16 ? (byte[])entry.Setting2List.Clone() : new byte[16];
+			byte[] awake = entry.AwaSettingList != null && entry.AwaSettingList.Length == 84 ? (byte[])entry.AwaSettingList.Clone() : new byte[84];
+
+			Buffer.BlockCopy(BitConverter.GetBytes((float)setBaseMovement.Value), 0, setting1, 0, 4);
+			Buffer.BlockCopy(BitConverter.GetBytes((float)setBaseChakraDash.Value), 0, setting1, 4, 4);
+			Buffer.BlockCopy(BitConverter.GetBytes((float)setGuardPressure.Value), 0, setting1, 8, 4);
+			Buffer.BlockCopy(BitConverter.GetBytes((float)setAttack.Value), 0, setting1, 16, 4);
+			Buffer.BlockCopy(BitConverter.GetBytes((float)setDefense.Value), 0, setting1, 20, 4);
+			Buffer.BlockCopy(BitConverter.GetBytes((float)setAssistDamage.Value), 0, setting1, 24, 4);
+			Buffer.BlockCopy(BitConverter.GetBytes((float)setItemBuffDuration.Value), 0, setting1, 28, 4);
+			Buffer.BlockCopy(BitConverter.GetBytes((float)setChakraCharge.Value), 0, setting1, 32, 4);
+
+			Buffer.BlockCopy(BitConverter.GetBytes((float)setAwakeHpRequirement.Value), 0, setting2, 0, 4);
+			setting2[4] = (byte)setBaseNinjaDash.Value;
+			setting2[6] = (byte)setBaseAirDashDuration.Value;
+			setting2[8] = (byte)setBaseGroundedChakraDashDuration.Value;
+
+			Buffer.BlockCopy(BitConverter.GetBytes((float)setAwakeMovement.Value), 0, awake, 0, 4);
+			Buffer.BlockCopy(BitConverter.GetBytes((float)setAwakeChakraDash.Value), 0, awake, 4, 4);
+			awake[8] = (byte)setAwakeNinjaDash.Value;
+			awake[10] = (byte)setAwakeAirDashDuration.Value;
+			awake[12] = (byte)setAwakeGroundedChakraDashDuration.Value;
+			awake[60] = (byte)(setEnableDashPriority.Checked ? 1 : 0);
+			awake[64] = (byte)(setAwakeningDebuff.Checked ? 1 : 0);
+			Buffer.BlockCopy(BitConverter.GetBytes((float)setChakraCostAwakening.Value), 0, awake, 68, 4);
+			Buffer.BlockCopy(BitConverter.GetBytes((float)setChakraBlockRecovery.Value), 0, awake, 76, 4);
+			Buffer.BlockCopy(BitConverter.GetBytes((float)setAwakeningActionCharge.Value), 0, awake, 80, 4);
+
+			entry.SettingList = setting1;
+			entry.Setting2List = setting2;
+			entry.AwaSettingList = awake;
+			entry.EvoDup = (long)setEvo1.Value;
+			entry.AwaBodyPriority = (int)setAwaBodyPriority.Value;
+			entry.DefaultAwaSkillIndex = (int)setDefaultAwaSkillIndex.Value;
+			entry.CameraDistance = (int)setCameraDistance.Value;
+			entry.CameraUnknown1 = (int)setCameraUnknown1.Value;
+			entry.VictoryAngle = (int)setVictoryCameraAngle.Value;
+			entry.CameraUnknown2 = (int)setCameraUnknown2.Value;
+			entry.CameraUnknown3 = (int)setCameraUnknown3.Value;
+			entry.CameraUnknown4 = (int)setCameraUnknown4.Value;
+		}
+
+		private void ResetInlineSettings()
+		{
+			LoadInlineSettingsFromEntry(CreateDefaultEntry("1new"));
+		}
+
+		private void SortEntries()
+		{
+			if (Entries.Count == 0)
+			{
+				return;
+			}
+
+			DuelPlayerParamEntry selectedEntry = listBox1.SelectedIndex >= 0 && listBox1.SelectedIndex < Entries.Count
+				? Entries[listBox1.SelectedIndex]
+				: null;
+
+			Entries = Entries
+				.OrderBy(entry => entry.BinName, StringComparer.OrdinalIgnoreCase)
+				.ThenBy(entry => entry.MotionCode, StringComparer.OrdinalIgnoreCase)
+				.ToList();
+
+			RefreshLegacyListsFromEntries();
+			RefreshEntryListBox();
+
+			if (selectedEntry != null)
+			{
+				int newIndex = Entries.IndexOf(selectedEntry);
+				if (newIndex >= 0)
+				{
+					listBox1.SelectedIndex = newIndex;
+				}
+			}
+		}
+
+		private DuelCopySettingsMode? ShowCopySettingsDialog()
+		{
+			using (Form dialog = new Form())
+			using (Label promptLabel = new Label())
+			using (ListBox optionsList = new ListBox())
+			using (Button okButton = new Button())
+			using (Button cancelButton = new Button())
+			{
+				dialog.Text = "Copy settings";
+				dialog.FormBorderStyle = FormBorderStyle.FixedDialog;
+				dialog.StartPosition = FormStartPosition.CenterParent;
+				dialog.ClientSize = new Size(320, 245);
+				dialog.MaximizeBox = false;
+				dialog.MinimizeBox = false;
+				dialog.ShowInTaskbar = false;
+
+				promptLabel.AutoSize = false;
+				promptLabel.Location = new Point(12, 12);
+				promptLabel.Size = new Size(296, 36);
+				promptLabel.Text = "Choose which settings to copy to the clipboard.";
+
+				optionsList.Location = new Point(12, 52);
+				optionsList.Size = new Size(296, 123);
+				optionsList.Items.AddRange(new object[]
+				{
+					"1. Items only",
+					"2. Conditions list",
+					"3. Battle settings",
+                    "4. Conditions + Battle settings",
+					"5. Everything"
+				});
+				optionsList.SelectedIndex = 0;
+
+				okButton.Text = "Copy";
+				okButton.Location = new Point(152, 190);
+				okButton.Size = new Size(75, 25);
+				okButton.DialogResult = DialogResult.OK;
+
+				cancelButton.Text = "Cancel";
+				cancelButton.Location = new Point(233, 190);
+				cancelButton.Size = new Size(75, 25);
+				cancelButton.DialogResult = DialogResult.Cancel;
+
+				dialog.AcceptButton = okButton;
+				dialog.CancelButton = cancelButton;
+				dialog.Controls.Add(promptLabel);
+				dialog.Controls.Add(optionsList);
+				dialog.Controls.Add(okButton);
+				dialog.Controls.Add(cancelButton);
+
+				if (dialog.ShowDialog(this) != DialogResult.OK || optionsList.SelectedIndex < 0)
+				{
+					return null;
+				}
+
+				return (DuelCopySettingsMode)optionsList.SelectedIndex;
+			}
+		}
+
+		private string BuildCopySettingsPayload(DuelPlayerParamEntry entry, DuelCopySettingsMode mode)
+		{
+			List<string> lines = new List<string>
+			{
+				"NSUNS4_EVO_DUEL_SETTINGS",
+				"mode=" + mode.ToString()
+			};
+
+			if (mode == DuelCopySettingsMode.ItemsOnly || mode == DuelCopySettingsMode.Everything)
+			{
+				lines.Add("item0=" + EncodeText(entry.Items[0]));
+				lines.Add("item1=" + EncodeText(entry.Items[1]));
+				lines.Add("item2=" + EncodeText(entry.Items[2]));
+				lines.Add("item3=" + EncodeText(entry.Items[3]));
+				lines.Add("itemCounts=" + EncodeBytes(entry.ItemCounts));
+			}
+
+			if (mode == DuelCopySettingsMode.ConditionsOnly ||
+				mode == DuelCopySettingsMode.ConditionsAndAllSettings ||
+				mode == DuelCopySettingsMode.Everything)
+			{
+				lines.Add("conditionFlag=" + unchecked((uint)entry.ConditionFlag).ToString());
+				lines.Add("enableAwaSkill=" + entry.EnableAwaSkill.ToString());
+			}
+
+			if (mode == DuelCopySettingsMode.AllSettings ||
+				mode == DuelCopySettingsMode.ConditionsAndAllSettings ||
+				mode == DuelCopySettingsMode.Everything)
+			{
+				lines.Add("settingList=" + EncodeBytes(entry.SettingList));
+				lines.Add("setting2List=" + EncodeBytes(entry.Setting2List));
+				lines.Add("awaSettingList=" + EncodeBytes(entry.AwaSettingList));
+				lines.Add("evoDup=" + entry.EvoDup.ToString());
+				lines.Add("awaBodyPriority=" + entry.AwaBodyPriority.ToString());
+				lines.Add("defaultAwaSkillIndex=" + entry.DefaultAwaSkillIndex.ToString());
+				lines.Add("cameraDistance=" + entry.CameraDistance.ToString());
+				lines.Add("cameraUnknown1=" + entry.CameraUnknown1.ToString());
+				lines.Add("victoryAngle=" + entry.VictoryAngle.ToString());
+				lines.Add("cameraUnknown2=" + entry.CameraUnknown2.ToString());
+				lines.Add("cameraUnknown3=" + entry.CameraUnknown3.ToString());
+				lines.Add("cameraUnknown4=" + entry.CameraUnknown4.ToString());
+			}
+
+			if (mode == DuelCopySettingsMode.Everything)
+			{
+				lines.Add("defaultAssist1=" + EncodeText(entry.DefaultAssist1));
+				lines.Add("defaultAssist2=" + EncodeText(entry.DefaultAssist2));
+				lines.Add("awakeAction=" + EncodeText(entry.AwakeAction));
+				lines.Add("partner=" + EncodeText(entry.Partner));
+			}
+
+			return string.Join(Environment.NewLine, lines);
+		}
+
+		private void CopySelectedSettings()
+		{
+			int index = listBox1.SelectedIndex;
+			if (index < 0 || index >= Entries.Count)
+			{
+				MessageBox.Show("No entry selected...");
+				return;
+			}
+
+			DuelCopySettingsMode? mode = ShowCopySettingsDialog();
+			if (!mode.HasValue)
+			{
+				return;
+			}
+
+			Clipboard.SetText(BuildCopySettingsPayload(Entries[index], mode.Value));
+			MessageBox.Show("Selected settings copied to clipboard.");
+		}
+
+		private Dictionary<string, string> ParseCopySettingsPayload(string payload)
+		{
+			if (string.IsNullOrWhiteSpace(payload))
+			{
+				return null;
+			}
+
+			string[] lines = payload.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+			if (lines.Length == 0 || lines[0] != "NSUNS4_EVO_DUEL_SETTINGS")
+			{
+				return null;
+			}
+
+			Dictionary<string, string> values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+			for (int i = 1; i < lines.Length; i++)
+			{
+				int separator = lines[i].IndexOf('=');
+				if (separator <= 0)
+				{
+					continue;
+				}
+
+				string key = lines[i].Substring(0, separator);
+				string value = lines[i].Substring(separator + 1);
+				values[key] = value;
+			}
+
+			return values;
+		}
+
+		private void PasteSelectedSettings()
+		{
+			int index = listBox1.SelectedIndex;
+			if (index < 0 || index >= Entries.Count)
+			{
+				MessageBox.Show("No entry selected...");
+				return;
+			}
+
+			if (!Clipboard.ContainsText())
+			{
+				MessageBox.Show("Clipboard does not contain copied Duel settings.");
+				return;
+			}
+
+			Dictionary<string, string> payload = ParseCopySettingsPayload(Clipboard.GetText());
+			if (payload == null)
+			{
+				MessageBox.Show("Clipboard does not contain a valid Duel settings payload.");
+				return;
+			}
+
+			DuelPlayerParamEntry entry = Entries[index].Clone();
+
+			if (payload.ContainsKey("item0")) entry.Items[0] = DecodeText(payload["item0"]);
+			if (payload.ContainsKey("item1")) entry.Items[1] = DecodeText(payload["item1"]);
+			if (payload.ContainsKey("item2")) entry.Items[2] = DecodeText(payload["item2"]);
+			if (payload.ContainsKey("item3")) entry.Items[3] = DecodeText(payload["item3"]);
+			if (payload.ContainsKey("itemCounts")) entry.ItemCounts = DecodeBytes(payload["itemCounts"]);
+
+			if (payload.ContainsKey("conditionFlag")) entry.ConditionFlag = unchecked((int)uint.Parse(payload["conditionFlag"]));
+			if (payload.ContainsKey("enableAwaSkill")) entry.EnableAwaSkill = int.Parse(payload["enableAwaSkill"]);
+
+			if (payload.ContainsKey("settingList")) entry.SettingList = DecodeBytes(payload["settingList"]);
+			if (payload.ContainsKey("setting2List")) entry.Setting2List = DecodeBytes(payload["setting2List"]);
+			if (payload.ContainsKey("awaSettingList")) entry.AwaSettingList = DecodeBytes(payload["awaSettingList"]);
+			if (payload.ContainsKey("evoDup")) entry.EvoDup = long.Parse(payload["evoDup"]);
+			if (payload.ContainsKey("awaBodyPriority")) entry.AwaBodyPriority = int.Parse(payload["awaBodyPriority"]);
+			if (payload.ContainsKey("defaultAwaSkillIndex")) entry.DefaultAwaSkillIndex = int.Parse(payload["defaultAwaSkillIndex"]);
+			if (payload.ContainsKey("cameraDistance")) entry.CameraDistance = int.Parse(payload["cameraDistance"]);
+			if (payload.ContainsKey("cameraUnknown1")) entry.CameraUnknown1 = int.Parse(payload["cameraUnknown1"]);
+			if (payload.ContainsKey("victoryAngle")) entry.VictoryAngle = int.Parse(payload["victoryAngle"]);
+			if (payload.ContainsKey("cameraUnknown2")) entry.CameraUnknown2 = int.Parse(payload["cameraUnknown2"]);
+			if (payload.ContainsKey("cameraUnknown3")) entry.CameraUnknown3 = int.Parse(payload["cameraUnknown3"]);
+			if (payload.ContainsKey("cameraUnknown4")) entry.CameraUnknown4 = int.Parse(payload["cameraUnknown4"]);
+
+			if (payload.ContainsKey("defaultAssist1")) entry.DefaultAssist1 = DecodeText(payload["defaultAssist1"]);
+			if (payload.ContainsKey("defaultAssist2")) entry.DefaultAssist2 = DecodeText(payload["defaultAssist2"]);
+			if (payload.ContainsKey("awakeAction")) entry.AwakeAction = DecodeText(payload["awakeAction"]);
+			if (payload.ContainsKey("partner")) entry.Partner = DecodeText(payload["partner"]);
+
+			ApplyEntryToForm(entry);
+			MessageBox.Show("Settings pasted into the form. Press Save selected entry to apply them.");
+		}
+
+		private void UpdateConditionFlagsFromValue(int condition)
+		{
+			syncingConditionControls = true;
+			for (int i = 0; i < checkedListConditionFlags.Items.Count; i++)
+			{
+				bool isChecked = ((uint)condition & (1u << i)) != 0;
+				checkedListConditionFlags.SetItemChecked(i, isChecked);
+			}
+			syncingConditionControls = false;
+		}
+
+		private int BuildConditionValueFromFlags()
+		{
+			uint value = 0;
+			for (int i = 0; i < checkedListConditionFlags.Items.Count; i++)
+			{
+				if (checkedListConditionFlags.GetItemChecked(i))
+				{
+					value |= (1u << i);
+				}
+			}
+			return unchecked((int)value);
+		}
+
+		public void UpdateCostumeEntry(int index, string[] costumes, bool awakening)
+		{
+			if (index < 0 || index >= Entries.Count)
+			{
+				return;
+			}
+
+			if (awakening)
+			{
+				Entries[index].AwakeCostumes = (string[])costumes.Clone();
+			}
+			else
+			{
+				Entries[index].BaseCostumes = (string[])costumes.Clone();
+			}
+
+			RefreshLegacyListsFromEntries();
+		}
+
+		public void UpdateSettingsEntry(int index, byte[] setting1, byte[] setting2, byte[] awakeSetting, int awaBodyPriority, int defaultAwaSkillIndex, int cameraDistance, int cameraUnknown1, int victoryCameraAngle, int cameraUnknown2, int cameraUnknown3, int cameraUnknown4)
+		{
+			if (index < 0 || index >= Entries.Count)
+			{
+				return;
+			}
+
+			Entries[index].SettingList = (byte[])setting1.Clone();
+			Entries[index].Setting2List = (byte[])setting2.Clone();
+			Entries[index].AwaSettingList = (byte[])awakeSetting.Clone();
+			Entries[index].AwaBodyPriority = awaBodyPriority;
+			Entries[index].DefaultAwaSkillIndex = defaultAwaSkillIndex;
+			Entries[index].CameraDistance = cameraDistance;
+			Entries[index].CameraUnknown1 = cameraUnknown1;
+			Entries[index].VictoryAngle = victoryCameraAngle;
+			Entries[index].CameraUnknown2 = cameraUnknown2;
+			Entries[index].CameraUnknown3 = cameraUnknown3;
+			Entries[index].CameraUnknown4 = cameraUnknown4;
+			RefreshLegacyListsFromEntries();
 		}
 
 		public void NewFile()
@@ -110,10 +831,17 @@ namespace NSUNS4_Character_Manager
             Partner.Clear();
 			SettingList.Clear();
 			Setting2List.Clear();
+			EvoDupList.Clear();
+			AwaBodyPriorityList.Clear();
+			DefaultAwaSkillIndexList.Clear();
+			ConditionFlagList.Clear();
 			EnableAwaSkillList.Clear();
+			CameraDistanceList.Clear();
+			CameraUnknown1List.Clear();
 			VictoryAngleList.Clear();
-			VictoryPosList.Clear();
-			VictoryUnknownList.Clear();
+			CameraUnknown2List.Clear();
+			CameraUnknown3List.Clear();
+			CameraUnknown4List.Clear();
 			AwaSettingList.Clear();
 			listBox1.ClearSelected();
 			listBox1.Items.Clear();
@@ -912,7 +1640,13 @@ namespace NSUNS4_Character_Manager
 			}
 			ItemCount.Add(itemc);
             Partner.Add("");
-            listBox1.Items.Add(BinName[0]);
+			ConditionFlagList.Add(0);
+			RebuildEntriesFromLegacyLists();
+			RefreshEntryListBox();
+			if (listBox1.Items.Count > 0)
+			{
+				listBox1.SelectedIndex = 0;
+			}
 		}
 
 		public void OpenFile(string basepath = "")
@@ -1029,10 +1763,17 @@ namespace NSUNS4_Character_Manager
 				}
 				SettingList.Add(Main.b_ReadByteArray(FileBytes, _ptr + 448, 36));
 				Setting2List.Add(Main.b_ReadByteArray(FileBytes, _ptr + 500, 16));
+				EvoDupList.Add(CombineEvoDup(Main.b_ReadInt(FileBytes, _ptr + 0x154), Main.b_ReadInt(FileBytes, _ptr + 0x158)));
+				AwaBodyPriorityList.Add(Main.b_ReadIntRev(FileBytes, _ptr + 0x160));
+				DefaultAwaSkillIndexList.Add(Main.b_ReadIntRev(FileBytes, _ptr + 0x164));
+				ConditionFlagList.Add(Main.b_ReadIntRev(FileBytes, _ptr + 0x150));
 				EnableAwaSkillList.Add(FileBytes[_ptr + 0x153]);
-				VictoryAngleList.Add(FileBytes[_ptr + 0x1B8]);
-				VictoryPosList.Add(FileBytes[_ptr + 0x1B6]);
-				VictoryUnknownList.Add(FileBytes[_ptr + 0x1B4]);
+				CameraDistanceList.Add(ReadUInt16(FileBytes, _ptr + 0x1B4));
+				CameraUnknown1List.Add(ReadUInt16(FileBytes, _ptr + 0x1B6));
+				VictoryAngleList.Add(ReadUInt16(FileBytes, _ptr + 0x1B8));
+				CameraUnknown2List.Add(ReadUInt16(FileBytes, _ptr + 0x1BA));
+				CameraUnknown3List.Add(ReadUInt16(FileBytes, _ptr + 0x1BC));
+				CameraUnknown4List.Add(ReadUInt16(FileBytes, _ptr + 0x1BE));
 
 				AwaSettingList.Add(Main.b_ReadByteArray(FileBytes, _ptr + 644, 84));
 				string partner = Main.b_ReadString(FileBytes, _ptr + 328);
@@ -1045,9 +1786,10 @@ namespace NSUNS4_Character_Manager
 				ItemList.Add(itemlist);
 				ItemCount.Add(itemcount);
                 Partner.Add(partner);
-                listBox1.Items.Add(BinName[x]);
 			}
 			Index3++;
+			RebuildEntriesFromLegacyLists();
+			RefreshEntryListBox();
 		}
 
 		public void SaveFile()
@@ -1095,6 +1837,7 @@ namespace NSUNS4_Character_Manager
 			{
 				FilePath = s.FileName;
 			}
+			RefreshLegacyListsFromEntries();
 			File.WriteAllBytes(FilePath, ConvertToFile());
 			if (basepath == "")
 				MessageBox.Show("File saved to " + FilePath + ".");
@@ -1109,862 +1852,26 @@ namespace NSUNS4_Character_Manager
 
 		public void AddEntry()
 		{
-			int actualEntry = EntryCount;
-			EntryCount++;
-			BinPath.Add("Z:/param/player/Converter/bin/" + w_charaprmbas.Text + "prm_bas.bin");
-			BinName.Add(w_charaprmbas.Text + "prm_bas");
-			if (listBox1.SelectedIndex != -1)
-			{
-				Data.Add(Data[listBox1.SelectedIndex]);
-			}
-			else
-			{
-				Data.Add(new byte[760]
-				{
-					50,
-					110,
-					114,
-					116,
-					0,
-					0,
-					0,
-					0,
-					50,
-					110,
-					114,
-					116,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					100,
-					110,
-					114,
-					107,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					100,
-					110,
-					114,
-					100,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					50,
-					110,
-					114,
-					113,
-					0,
-					0,
-					0,
-					0,
-					50,
-					110,
-					114,
-					113,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					50,
-					110,
-					114,
-					113,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					50,
-					110,
-					114,
-					113,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					168,
-					192,
-					1,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					45,
-					1,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					255,
-					0,
-					0,
-					0,
-					0,
-					50,
-					115,
-					107,
-					114,
-					0,
-					0,
-					0,
-					0,
-					50,
-					107,
-					107,
-					115,
-					0,
-					0,
-					0,
-					0,
-					160,
-					0,
-					148,
-					0,
-					148,
-					0,
-					40,
-					0,
-					45,
-					0,
-					110,
-					0,
-					0,
-					0,
-					0,
-					66,
-					0,
-					0,
-					200,
-					66,
-					0,
-					0,
-					128,
-					63,
-					0,
-					0,
-					128,
-					63,
-					0,
-					0,
-					128,
-					63,
-					0,
-					0,
-					128,
-					63,
-					0,
-					0,
-					128,
-					63,
-					0,
-					0,
-					128,
-					63,
-					0,
-					0,
-					128,
-					63,
-					65,
-					87,
-					65,
-					75,
-					69,
-					95,
-					50,
-					78,
-					82,
-					71,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					32,
-					66,
-					70,
-					0,
-					14,
-					0,
-					25,
-					0,
-					15,
-					0,
-					0,
-					0,
-					0,
-					63,
-					66,
-					65,
-					84,
-					84,
-					76,
-					69,
-					95,
-					73,
-					84,
-					69,
-					77,
-					49,
-					53,
-					48,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					2,
-					0,
-					66,
-					65,
-					84,
-					84,
-					76,
-					69,
-					95,
-					73,
-					84,
-					69,
-					77,
-					57,
-					48,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					2,
-					0,
-					66,
-					65,
-					84,
-					84,
-					76,
-					69,
-					95,
-					73,
-					84,
-					69,
-					77,
-					57,
-					57,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					2,
-					0,
-					66,
-					65,
-					84,
-					84,
-					76,
-					69,
-					95,
-					73,
-					84,
-					69,
-					77,
-					49,
-					52,
-					52,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					2,
-					0,
-					0,
-					0,
-					0,
-					66,
-					0,
-					0,
-					200,
-					66,
-					70,
-					0,
-					14,
-					0,
-					25,
-					0,
-					15,
-					0,
-					0,
-					0,
-					0,
-					63,
-					0,
-					0,
-					0,
-					63,
-					0,
-					0,
-					64,
-					63,
-					102,
-					102,
-					230,
-					63,
-					0,
-					0,
-					160,
-					64,
-					0,
-					0,
-					0,
-					64,
-					0,
-					0,
-					128,
-					63,
-					0,
-					0,
-					128,
-					63,
-					0,
-					0,
-					112,
-					65,
-					0,
-					0,
-					0,
-					64,
-					0,
-					0,
-					0,
-					0,
-					1,
-					0,
-					0,
-					0,
-					1,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					205,
-					204,
-					204,
-					61,
-					205,
-					204,
-					204,
-					61,
-					154,
-					153,
-					153,
-					62,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0,
-					0
-				});
-			}
-			CharaList.Add(w_characodeid.Text);
-
-			string[] costumes = new string[20];
-			for (int x = 0; x < 20; x++)
-			{
-                costumes[x] = CostumeList[listBox1.SelectedIndex][x];
-			}
-			CostumeList.Add(costumes);
-
-			string[] awkcostumes = new string[20];
-			for (int x = 0; x < 20; x++)
-			{
-                awkcostumes[x] = AwkCostumeList[listBox1.SelectedIndex][x];
-			}
-			AwkCostumeList.Add(awkcostumes);
-
-			DefaultAssist1.Add(w_defaultassist1.Text);
-			DefaultAssist2.Add(w_defaultassist2.Text);
-			AwkAction.Add(w_awkaction.Text);
-			ItemList.Add(new string[4]
-			{
-				w_item1.Text,
-				w_item2.Text,
-				w_item3.Text,
-				w_item4.Text
-			});
-			ItemCount.Add(new byte[4]
-			{
-				(byte)w_itemc1.Value,
-				(byte)w_itemc2.Value,
-				(byte)w_itemc3.Value,
-				(byte)w_itemc4.Value
-			});
-			byte[] add_setting1List = SettingList[listBox1.SelectedIndex];
-			byte[] add_setting2List = Setting2List[listBox1.SelectedIndex];
-			byte[] add_settingAwaList = AwaSettingList[listBox1.SelectedIndex];
-			int add_EnableAwaSkill = EnableAwaSkillList[listBox1.SelectedIndex];
-
-			int add_VictoryAngle = VictoryAngleList[listBox1.SelectedIndex];
-			int add_VictoryPos = VictoryPosList[listBox1.SelectedIndex];
-			int add_VictoryUnknown = VictoryUnknownList[listBox1.SelectedIndex];
-			VictoryAngleList.Add(add_VictoryAngle);
-			VictoryPosList.Add(add_VictoryPos);
-			VictoryUnknownList.Add(add_VictoryUnknown);
-			SettingList.Add(add_setting1List);
-			Setting2List.Add(add_setting2List);
-			EnableAwaSkillList.Add(add_EnableAwaSkill);
-			AwaSettingList.Add(add_settingAwaList);
-			Partner.Add(w_partner.Text);
-			listBox1.Items.Add(BinName[actualEntry]);
-			listBox1.SelectedIndex = actualEntry;
+			Entries.Add(CreateEntryFromCurrentForm());
+			RefreshLegacyListsFromEntries();
+			RefreshEntryListBox();
+			listBox1.SelectedIndex = Entries.Count - 1;
 		}
 
 		public void RemoveEntry()
 		{
-			if (listBox1.Items.Count > 1)
+			if (Entries.Count > 1)
 			{
 				int x = listBox1.SelectedIndex;
 				if (x != -1)
 				{
-					if (listBox1.SelectedIndex > 0)
+					Entries.RemoveAt(x);
+					RefreshLegacyListsFromEntries();
+					RefreshEntryListBox();
+					if (Entries.Count > 0)
 					{
-						listBox1.SelectedIndex--;
+						listBox1.SelectedIndex = Math.Max(0, x - 1);
 					}
-					else
-					{
-						listBox1.ClearSelected();
-					}
-					EntryCount--;
-					BinPath.RemoveAt(x);
-					BinName.RemoveAt(x);
-					Data.RemoveAt(x);
-					CharaList.RemoveAt(x);
-					CostumeList.RemoveAt(x);
-					AwkCostumeList.RemoveAt(x);
-					DefaultAssist1.RemoveAt(x);
-					DefaultAssist2.RemoveAt(x);
-					AwkAction.RemoveAt(x);
-					ItemList.RemoveAt(x);
-					ItemCount.RemoveAt(x);
-                    Partner.RemoveAt(x);
-                    listBox1.Items.RemoveAt(x);
 				}
 				else
 				{
@@ -1982,33 +1889,9 @@ namespace NSUNS4_Character_Manager
 			int x = listBox1.SelectedIndex;
 			if (x != -1)
 			{
-				BinPath[x] = "Z:/param/player/Converter/bin/" + w_charaprmbas.Text + "prm_bas.bin";
-				BinName[x] = w_charaprmbas.Text + "prm_bas";
-				CharaList[x] = w_characodeid.Text;
-				DefaultAssist1[x] = w_defaultassist1.Text;
-				DefaultAssist2[x] = w_defaultassist2.Text;
-				AwkAction[x] = w_awkaction.Text;
-
-				EnableAwaSkillList[x] = (int)v_enableAwaSkill.Value;
-				VictoryAngleList[x] = (int)v_vic_cam_angle.Value;
-				VictoryPosList[x] = (int)v_vic_cam_pos.Value;
-				VictoryUnknownList[x] = (int)v_cam_unk.Value;
-				ItemList[x] = new string[4]
-				{
-					w_item1.Text,
-					w_item2.Text,
-					w_item3.Text,
-					w_item4.Text
-				};
-				ItemCount[x] = new byte[4]
-				{
-					(byte)w_itemc1.Value,
-					(byte)w_itemc2.Value,
-					(byte)w_itemc3.Value,
-					(byte)w_itemc4.Value
-				};
-                Partner[x] = w_partner.Text;
-                listBox1.Items[x] = BinName[x];
+				Entries[x] = CreateEntryFromCurrentForm();
+				RefreshLegacyListsFromEntries();
+                listBox1.Items[x] = Entries[x].BinName;
 			}
 			else
 			{
@@ -2438,10 +2321,17 @@ namespace NSUNS4_Character_Manager
 					fileBytes36 = Main.b_ReplaceString(fileBytes36, AwkCostumeList[x][i], _ptr + 168 + 8 * i, 8);
 				}
 
-				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, new byte[1] { (byte)EnableAwaSkillList[x] }, _ptr + 0x153);
-				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, new byte[1] { (byte)VictoryUnknownList[x] }, _ptr + 0x1B4);
-				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, new byte[1] { (byte)VictoryPosList[x] }, _ptr + 0x1B6);
-				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, new byte[1] { (byte)VictoryAngleList[x] }, _ptr + 0x1B8);
+				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(ConditionFlagList[x]), _ptr + 0x150, 1);
+				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(GetEvoDupLow(EvoDupList[x])), _ptr + 0x154, 1);
+				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(GetEvoDupHigh(EvoDupList[x])), _ptr + 0x158, 1);
+				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(AwaBodyPriorityList[x]), _ptr + 0x160, 1);
+				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(DefaultAwaSkillIndexList[x]), _ptr + 0x164, 1);
+				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes((short)CameraDistanceList[x]), _ptr + 0x1B4, 1);
+				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes((short)CameraUnknown1List[x]), _ptr + 0x1B6, 1);
+				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes((short)VictoryAngleList[x]), _ptr + 0x1B8, 1);
+				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes((short)CameraUnknown2List[x]), _ptr + 0x1BA, 1);
+				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes((short)CameraUnknown3List[x]), _ptr + 0x1BC, 1);
+				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes((short)CameraUnknown4List[x]), _ptr + 0x1BE, 1);
 				fileBytes36 = Main.b_ReplaceString(fileBytes36, DefaultAssist1[x], _ptr + 420, 8);
 				fileBytes36 = Main.b_ReplaceString(fileBytes36, DefaultAssist2[x], _ptr + 428, 8);
 				fileBytes36 = Main.b_ReplaceString(fileBytes36, AwkAction[x], _ptr + 484, 16);
@@ -2597,7 +2487,7 @@ namespace NSUNS4_Character_Manager
 			int x = listBox1.SelectedIndex;
 			if (x != -1)
 			{
-				Tool_DuelPlayerParamEditor_Costumes t = new Tool_DuelPlayerParamEditor_Costumes(CostumeList[x].ToArray(), this, x);
+				Tool_DuelPlayerParamEditor_Costumes t = new Tool_DuelPlayerParamEditor_Costumes(CostumeList[x].ToArray(), AwkCostumeList[x].ToArray(), this, x);
 				t.ShowDialog();
 			}
 			else
@@ -2608,16 +2498,22 @@ namespace NSUNS4_Character_Manager
 
 		private void b_awkcostumeids_Click(object sender, EventArgs e)
 		{
-			int x = listBox1.SelectedIndex;
-			if (x != -1)
-			{
-				Tool_DuelPlayerParamEditor_Costumes t = new Tool_DuelPlayerParamEditor_Costumes(AwkCostumeList[x].ToArray(), this, x, 0);
-				t.ShowDialog();
-			}
-			else
-			{
-				MessageBox.Show("No entry selected...");
-			}
+			b_costumeids_Click(sender, e);
+		}
+
+		private void sortToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			SortEntries();
+		}
+
+		private void copySettingsButton_Click(object sender, EventArgs e)
+		{
+			CopySelectedSettings();
+		}
+
+		private void pasteSettingsButton_Click(object sender, EventArgs e)
+		{
+			PasteSelectedSettings();
 		}
 
 		private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
@@ -2625,25 +2521,7 @@ namespace NSUNS4_Character_Manager
 			int x = listBox1.SelectedIndex;
 			if (x != -1)
 			{
-                w_charaprmbas.Text = BinName[x].Substring(0, BinName[x].Length - 7);
-                w_characodeid.Text = CharaList[x];
-				w_defaultassist1.Text = DefaultAssist1[x];
-				w_defaultassist2.Text = DefaultAssist2[x];
-				w_awkaction.Text = AwkAction[x];
-				w_item1.Text = ItemList[x][0];
-				w_itemc1.Value = ItemCount[x][0];
-				w_item2.Text = ItemList[x][1];
-				w_itemc2.Value = ItemCount[x][1];
-				w_item3.Text = ItemList[x][2];
-				w_itemc3.Value = ItemCount[x][2];
-				w_item4.Text = ItemList[x][3];
-				w_itemc4.Value = ItemCount[x][3];
-                w_partner.Text = Partner[x];
-				v_enableAwaSkill.Value = EnableAwaSkillList[x];
-				v_vic_cam_angle.Value = VictoryAngleList[x];
-				v_vic_cam_pos.Value = VictoryPosList[x];
-				v_cam_unk.Value = VictoryUnknownList[x];
-
+				ApplyEntryToForm(Entries[x]);
 			}
 			else
 			{
@@ -2653,19 +2531,44 @@ namespace NSUNS4_Character_Manager
 				w_defaultassist2.Text = "";
 				w_awkaction.Text = "";
 				w_item1.Text = "";
-				w_itemc1.Value = 0m;
 				w_item2.Text = "";
-				w_itemc2.Value = 0m;
 				w_item3.Text = "";
-				w_itemc3.Value = 0m;
 				w_item4.Text = "";
-				w_itemc4.Value = 0m;
-                w_partner.Text = "";
+				w_itemc1.Value = 0;
+				w_itemc2.Value = 0;
+				w_itemc3.Value = 0;
+				w_itemc4.Value = 0;
+				w_partner.Text = "";
+				UpdateConditionFlagsFromValue(0);
 				v_enableAwaSkill.Value = 0;
-				v_vic_cam_angle.Value = 0;
-				v_vic_cam_pos.Value = 0;
-				v_cam_unk.Value = 0;
+				ResetInlineSettings();
 			}
+		}
+
+		private void v_enableAwaSkill_ValueChanged(object sender, EventArgs e)
+		{
+			if (syncingConditionControls)
+			{
+				return;
+			}
+
+			uint rawValue = decimal.ToUInt32(v_enableAwaSkill.Value);
+			UpdateConditionFlagsFromValue(unchecked((int)rawValue));
+		}
+
+		private void checkedListConditionFlags_ItemCheck(object sender, ItemCheckEventArgs e)
+		{
+			if (syncingConditionControls)
+			{
+				return;
+			}
+
+			BeginInvoke((MethodInvoker)delegate
+			{
+				syncingConditionControls = true;
+				v_enableAwaSkill.Value = (decimal)(uint)BuildConditionValueFromFlags();
+				syncingConditionControls = false;
+			});
 		}
 
 		private void exitToolStripMenuItem_Click(object sender, EventArgs e)
@@ -2681,614 +2584,6 @@ namespace NSUNS4_Character_Manager
 			base.Dispose(disposing);
 		}
 
-		private void InitializeComponent()
-		{
-            this.listBox1 = new System.Windows.Forms.ListBox();
-            this.button1 = new System.Windows.Forms.Button();
-            this.button2 = new System.Windows.Forms.Button();
-            this.button3 = new System.Windows.Forms.Button();
-            this.menuStrip1 = new System.Windows.Forms.MenuStrip();
-            this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.newToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.openToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.saveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.saveAsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.closeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.itemListToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.label1 = new System.Windows.Forms.Label();
-            this.w_characodeid = new System.Windows.Forms.TextBox();
-            this.b_costumeids = new System.Windows.Forms.Button();
-            this.b_awkcostumeids = new System.Windows.Forms.Button();
-            this.w_awkaction = new System.Windows.Forms.TextBox();
-            this.label2 = new System.Windows.Forms.Label();
-            this.w_defaultassist1 = new System.Windows.Forms.TextBox();
-            this.label3 = new System.Windows.Forms.Label();
-            this.w_defaultassist2 = new System.Windows.Forms.TextBox();
-            this.label4 = new System.Windows.Forms.Label();
-            this.w_item1 = new System.Windows.Forms.TextBox();
-            this.label5 = new System.Windows.Forms.Label();
-            this.label6 = new System.Windows.Forms.Label();
-            this.label7 = new System.Windows.Forms.Label();
-            this.label8 = new System.Windows.Forms.Label();
-            this.w_itemc1 = new System.Windows.Forms.NumericUpDown();
-            this.w_itemc2 = new System.Windows.Forms.NumericUpDown();
-            this.w_item2 = new System.Windows.Forms.TextBox();
-            this.w_itemc3 = new System.Windows.Forms.NumericUpDown();
-            this.w_item3 = new System.Windows.Forms.TextBox();
-            this.w_itemc4 = new System.Windows.Forms.NumericUpDown();
-            this.w_item4 = new System.Windows.Forms.TextBox();
-            this.w_charaprmbas = new System.Windows.Forms.TextBox();
-            this.label9 = new System.Windows.Forms.Label();
-            this.w_partner = new System.Windows.Forms.TextBox();
-            this.label10 = new System.Windows.Forms.Label();
-            this.Search_TB = new System.Windows.Forms.TextBox();
-            this.Search = new System.Windows.Forms.Button();
-            this.button4 = new System.Windows.Forms.Button();
-            this.label11 = new System.Windows.Forms.Label();
-            this.v_enableAwaSkill = new System.Windows.Forms.NumericUpDown();
-            this.label12 = new System.Windows.Forms.Label();
-            this.v_vic_cam_angle = new System.Windows.Forms.NumericUpDown();
-            this.label13 = new System.Windows.Forms.Label();
-            this.v_vic_cam_pos = new System.Windows.Forms.NumericUpDown();
-            this.label14 = new System.Windows.Forms.Label();
-            this.v_cam_unk = new System.Windows.Forms.NumericUpDown();
-            this.label15 = new System.Windows.Forms.Label();
-            this.menuStrip1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.w_itemc1)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.w_itemc2)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.w_itemc3)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.w_itemc4)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.v_enableAwaSkill)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.v_vic_cam_angle)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.v_vic_cam_pos)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.v_cam_unk)).BeginInit();
-            this.SuspendLayout();
-            // 
-            // listBox1
-            // 
-            this.listBox1.Font = new System.Drawing.Font("Segoe UI", 9.5F);
-            this.listBox1.FormattingEnabled = true;
-            this.listBox1.ItemHeight = 17;
-            this.listBox1.Location = new System.Drawing.Point(13, 39);
-            this.listBox1.Name = "listBox1";
-            this.listBox1.Size = new System.Drawing.Size(293, 497);
-            this.listBox1.TabIndex = 0;
-            this.listBox1.SelectedIndexChanged += new System.EventHandler(this.listBox1_SelectedIndexChanged);
-            // 
-            // button1
-            // 
-            this.button1.Location = new System.Drawing.Point(309, 578);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(352, 23);
-            this.button1.TabIndex = 1;
-            this.button1.Text = "Add new entry with this data (using the selected entry as a base)";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
-            // 
-            // button2
-            // 
-            this.button2.Location = new System.Drawing.Point(309, 548);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(352, 23);
-            this.button2.TabIndex = 2;
-            this.button2.Text = "Save selected entry";
-            this.button2.UseVisualStyleBackColor = true;
-            this.button2.Click += new System.EventHandler(this.button2_Click);
-            // 
-            // button3
-            // 
-            this.button3.Location = new System.Drawing.Point(13, 548);
-            this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(293, 23);
-            this.button3.TabIndex = 3;
-            this.button3.Text = "Remove selected entry";
-            this.button3.UseVisualStyleBackColor = true;
-            this.button3.Click += new System.EventHandler(this.button3_Click);
-            // 
-            // menuStrip1
-            // 
-            this.menuStrip1.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.fileToolStripMenuItem,
-            this.itemListToolStripMenuItem});
-            this.menuStrip1.Location = new System.Drawing.Point(0, 0);
-            this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(669, 24);
-            this.menuStrip1.TabIndex = 4;
-            this.menuStrip1.Text = "menuStrip1";
-            // 
-            // fileToolStripMenuItem
-            // 
-            this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.newToolStripMenuItem,
-            this.openToolStripMenuItem,
-            this.saveToolStripMenuItem,
-            this.saveAsToolStripMenuItem,
-            this.closeToolStripMenuItem});
-            this.fileToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
-            this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
-            this.fileToolStripMenuItem.Text = "File";
-            // 
-            // newToolStripMenuItem
-            // 
-            this.newToolStripMenuItem.Name = "newToolStripMenuItem";
-            this.newToolStripMenuItem.Size = new System.Drawing.Size(124, 22);
-            this.newToolStripMenuItem.Text = "New";
-            this.newToolStripMenuItem.Click += new System.EventHandler(this.newToolStripMenuItem_Click);
-            // 
-            // openToolStripMenuItem
-            // 
-            this.openToolStripMenuItem.Name = "openToolStripMenuItem";
-            this.openToolStripMenuItem.Size = new System.Drawing.Size(124, 22);
-            this.openToolStripMenuItem.Text = "Open";
-            this.openToolStripMenuItem.Click += new System.EventHandler(this.openToolStripMenuItem_Click);
-            // 
-            // saveToolStripMenuItem
-            // 
-            this.saveToolStripMenuItem.Name = "saveToolStripMenuItem";
-            this.saveToolStripMenuItem.Size = new System.Drawing.Size(124, 22);
-            this.saveToolStripMenuItem.Text = "Save";
-            this.saveToolStripMenuItem.Click += new System.EventHandler(this.saveToolStripMenuItem_Click);
-            // 
-            // saveAsToolStripMenuItem
-            // 
-            this.saveAsToolStripMenuItem.Name = "saveAsToolStripMenuItem";
-            this.saveAsToolStripMenuItem.Size = new System.Drawing.Size(124, 22);
-            this.saveAsToolStripMenuItem.Text = "Save As...";
-            this.saveAsToolStripMenuItem.Click += new System.EventHandler(this.saveAsToolStripMenuItem_Click);
-            // 
-            // closeToolStripMenuItem
-            // 
-            this.closeToolStripMenuItem.Name = "closeToolStripMenuItem";
-            this.closeToolStripMenuItem.Size = new System.Drawing.Size(124, 22);
-            this.closeToolStripMenuItem.Text = "Close File";
-            this.closeToolStripMenuItem.Click += new System.EventHandler(this.closeToolStripMenuItem_Click);
-            // 
-            // itemListToolStripMenuItem
-            // 
-            this.itemListToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.itemListToolStripMenuItem.Name = "itemListToolStripMenuItem";
-            this.itemListToolStripMenuItem.Size = new System.Drawing.Size(61, 20);
-            this.itemListToolStripMenuItem.Text = "Item list";
-            this.itemListToolStripMenuItem.Click += new System.EventHandler(this.itemListToolStripMenuItem_Click);
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(313, 75);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(78, 15);
-            this.label1.TabIndex = 5;
-            this.label1.Text = "Characode ID";
-            // 
-            // w_characodeid
-            // 
-            this.w_characodeid.Location = new System.Drawing.Point(312, 91);
-            this.w_characodeid.MaxLength = 8;
-            this.w_characodeid.Name = "w_characodeid";
-            this.w_characodeid.Size = new System.Drawing.Size(353, 23);
-            this.w_characodeid.TabIndex = 6;
-            // 
-            // b_costumeids
-            // 
-            this.b_costumeids.Location = new System.Drawing.Point(312, 118);
-            this.b_costumeids.Name = "b_costumeids";
-            this.b_costumeids.Size = new System.Drawing.Size(353, 23);
-            this.b_costumeids.TabIndex = 7;
-            this.b_costumeids.Text = "Edit costume ids";
-            this.b_costumeids.UseVisualStyleBackColor = true;
-            this.b_costumeids.Click += new System.EventHandler(this.b_costumeids_Click);
-            // 
-            // b_awkcostumeids
-            // 
-            this.b_awkcostumeids.Location = new System.Drawing.Point(312, 147);
-            this.b_awkcostumeids.Name = "b_awkcostumeids";
-            this.b_awkcostumeids.Size = new System.Drawing.Size(353, 23);
-            this.b_awkcostumeids.TabIndex = 8;
-            this.b_awkcostumeids.Text = "Edit awakening costume ids";
-            this.b_awkcostumeids.UseVisualStyleBackColor = true;
-            this.b_awkcostumeids.Click += new System.EventHandler(this.b_awkcostumeids_Click);
-            // 
-            // w_awkaction
-            // 
-            this.w_awkaction.Location = new System.Drawing.Point(312, 199);
-            this.w_awkaction.MaxLength = 15;
-            this.w_awkaction.Name = "w_awkaction";
-            this.w_awkaction.Size = new System.Drawing.Size(353, 23);
-            this.w_awkaction.TabIndex = 10;
-            // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(313, 183);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(277, 15);
-            this.label2.TabIndex = 9;
-            this.label2.Text = "Awakening action (optional, from conditionparam)";
-            // 
-            // w_defaultassist1
-            // 
-            this.w_defaultassist1.Location = new System.Drawing.Point(313, 329);
-            this.w_defaultassist1.MaxLength = 8;
-            this.w_defaultassist1.Name = "w_defaultassist1";
-            this.w_defaultassist1.Size = new System.Drawing.Size(120, 23);
-            this.w_defaultassist1.TabIndex = 13;
-            // 
-            // label3
-            // 
-            this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(312, 313);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(88, 15);
-            this.label3.TabIndex = 12;
-            this.label3.Text = "Default assist 1:";
-            // 
-            // w_defaultassist2
-            // 
-            this.w_defaultassist2.Location = new System.Drawing.Point(437, 329);
-            this.w_defaultassist2.MaxLength = 8;
-            this.w_defaultassist2.Name = "w_defaultassist2";
-            this.w_defaultassist2.Size = new System.Drawing.Size(110, 23);
-            this.w_defaultassist2.TabIndex = 15;
-            // 
-            // label4
-            // 
-            this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(436, 313);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(88, 15);
-            this.label4.TabIndex = 14;
-            this.label4.Text = "Default assist 2:";
-            // 
-            // w_item1
-            // 
-            this.w_item1.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.w_item1.Location = new System.Drawing.Point(313, 246);
-            this.w_item1.MaxLength = 15;
-            this.w_item1.Name = "w_item1";
-            this.w_item1.Size = new System.Drawing.Size(128, 23);
-            this.w_item1.TabIndex = 17;
-            // 
-            // label5
-            // 
-            this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(313, 229);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(40, 15);
-            this.label5.TabIndex = 16;
-            this.label5.Text = "Item 1";
-            // 
-            // label6
-            // 
-            this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(498, 229);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(40, 15);
-            this.label6.TabIndex = 18;
-            this.label6.Text = "Item 2";
-            // 
-            // label7
-            // 
-            this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(498, 271);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(40, 15);
-            this.label7.TabIndex = 22;
-            this.label7.Text = "Item 4";
-            // 
-            // label8
-            // 
-            this.label8.AutoSize = true;
-            this.label8.Location = new System.Drawing.Point(312, 270);
-            this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(40, 15);
-            this.label8.TabIndex = 20;
-            this.label8.Text = "Item 3";
-            // 
-            // w_itemc1
-            // 
-            this.w_itemc1.Location = new System.Drawing.Point(447, 246);
-            this.w_itemc1.Maximum = new decimal(new int[] {
-            9,
-            0,
-            0,
-            0});
-            this.w_itemc1.Name = "w_itemc1";
-            this.w_itemc1.Size = new System.Drawing.Size(48, 23);
-            this.w_itemc1.TabIndex = 24;
-            // 
-            // w_itemc2
-            // 
-            this.w_itemc2.Location = new System.Drawing.Point(615, 246);
-            this.w_itemc2.Maximum = new decimal(new int[] {
-            9,
-            0,
-            0,
-            0});
-            this.w_itemc2.Name = "w_itemc2";
-            this.w_itemc2.Size = new System.Drawing.Size(48, 23);
-            this.w_itemc2.TabIndex = 26;
-            // 
-            // w_item2
-            // 
-            this.w_item2.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.w_item2.Location = new System.Drawing.Point(501, 246);
-            this.w_item2.MaxLength = 15;
-            this.w_item2.Name = "w_item2";
-            this.w_item2.Size = new System.Drawing.Size(107, 23);
-            this.w_item2.TabIndex = 25;
-            // 
-            // w_itemc3
-            // 
-            this.w_itemc3.Location = new System.Drawing.Point(447, 287);
-            this.w_itemc3.Maximum = new decimal(new int[] {
-            9,
-            0,
-            0,
-            0});
-            this.w_itemc3.Name = "w_itemc3";
-            this.w_itemc3.Size = new System.Drawing.Size(48, 23);
-            this.w_itemc3.TabIndex = 28;
-            // 
-            // w_item3
-            // 
-            this.w_item3.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.w_item3.Location = new System.Drawing.Point(313, 287);
-            this.w_item3.MaxLength = 15;
-            this.w_item3.Name = "w_item3";
-            this.w_item3.Size = new System.Drawing.Size(128, 23);
-            this.w_item3.TabIndex = 27;
-            // 
-            // w_itemc4
-            // 
-            this.w_itemc4.Location = new System.Drawing.Point(615, 287);
-            this.w_itemc4.Maximum = new decimal(new int[] {
-            9,
-            0,
-            0,
-            0});
-            this.w_itemc4.Name = "w_itemc4";
-            this.w_itemc4.Size = new System.Drawing.Size(48, 23);
-            this.w_itemc4.TabIndex = 30;
-            // 
-            // w_item4
-            // 
-            this.w_item4.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.w_item4.Location = new System.Drawing.Point(501, 287);
-            this.w_item4.MaxLength = 15;
-            this.w_item4.Name = "w_item4";
-            this.w_item4.Size = new System.Drawing.Size(107, 23);
-            this.w_item4.TabIndex = 29;
-            // 
-            // w_charaprmbas
-            // 
-            this.w_charaprmbas.Location = new System.Drawing.Point(312, 50);
-            this.w_charaprmbas.MaxLength = 8;
-            this.w_charaprmbas.Name = "w_charaprmbas";
-            this.w_charaprmbas.Size = new System.Drawing.Size(353, 23);
-            this.w_charaprmbas.TabIndex = 32;
-            // 
-            // label9
-            // 
-            this.label9.AutoSize = true;
-            this.label9.Location = new System.Drawing.Point(313, 34);
-            this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(133, 15);
-            this.label9.TabIndex = 31;
-            this.label9.Text = "Character ID for prmbas";
-            // 
-            // w_partner
-            // 
-            this.w_partner.Location = new System.Drawing.Point(552, 329);
-            this.w_partner.MaxLength = 8;
-            this.w_partner.Name = "w_partner";
-            this.w_partner.Size = new System.Drawing.Size(107, 23);
-            this.w_partner.TabIndex = 34;
-            // 
-            // label10
-            // 
-            this.label10.AutoSize = true;
-            this.label10.Location = new System.Drawing.Point(551, 313);
-            this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(48, 15);
-            this.label10.TabIndex = 33;
-            this.label10.Text = "Partner:";
-            // 
-            // Search_TB
-            // 
-            this.Search_TB.Location = new System.Drawing.Point(13, 577);
-            this.Search_TB.MaxLength = 15;
-            this.Search_TB.Name = "Search_TB";
-            this.Search_TB.Size = new System.Drawing.Size(172, 23);
-            this.Search_TB.TabIndex = 36;
-            this.Search_TB.TextChanged += new System.EventHandler(this.Search_TB_TextChanged);
-            // 
-            // Search
-            // 
-            this.Search.Location = new System.Drawing.Point(189, 577);
-            this.Search.Name = "Search";
-            this.Search.Size = new System.Drawing.Size(117, 23);
-            this.Search.TabIndex = 35;
-            this.Search.Text = "Search Character ID";
-            this.Search.UseVisualStyleBackColor = true;
-            this.Search.Click += new System.EventHandler(this.Search_Click);
-            // 
-            // button4
-            // 
-            this.button4.Font = new System.Drawing.Font("Segoe UI", 15.5F);
-            this.button4.Location = new System.Drawing.Point(309, 455);
-            this.button4.Name = "button4";
-            this.button4.Size = new System.Drawing.Size(352, 81);
-            this.button4.TabIndex = 37;
-            this.button4.Text = "Value Settings";
-            this.button4.UseVisualStyleBackColor = true;
-            this.button4.Click += new System.EventHandler(this.button4_Click);
-            // 
-            // label11
-            // 
-            this.label11.AutoSize = true;
-            this.label11.Location = new System.Drawing.Point(313, 355);
-            this.label11.Name = "label11";
-            this.label11.Size = new System.Drawing.Size(128, 15);
-            this.label11.TabIndex = 38;
-            this.label11.Text = "Enable awakening skill:";
-            // 
-            // v_enableAwaSkill
-            // 
-            this.v_enableAwaSkill.Hexadecimal = true;
-            this.v_enableAwaSkill.Location = new System.Drawing.Point(313, 370);
-            this.v_enableAwaSkill.Maximum = new decimal(new int[] {
-            255,
-            0,
-            0,
-            0});
-            this.v_enableAwaSkill.Name = "v_enableAwaSkill";
-            this.v_enableAwaSkill.Size = new System.Drawing.Size(118, 23);
-            this.v_enableAwaSkill.TabIndex = 39;
-            // 
-            // label12
-            // 
-            this.label12.AutoSize = true;
-            this.label12.Location = new System.Drawing.Point(436, 372);
-            this.label12.Name = "label12";
-            this.label12.Size = new System.Drawing.Size(153, 15);
-            this.label12.TabIndex = 40;
-            this.label12.Text = "(00 - disabled, 01+ enabled)";
-            // 
-            // v_vic_cam_angle
-            // 
-            this.v_vic_cam_angle.Location = new System.Drawing.Point(312, 416);
-            this.v_vic_cam_angle.Maximum = new decimal(new int[] {
-            255,
-            0,
-            0,
-            0});
-            this.v_vic_cam_angle.Name = "v_vic_cam_angle";
-            this.v_vic_cam_angle.Size = new System.Drawing.Size(118, 23);
-            this.v_vic_cam_angle.TabIndex = 42;
-            // 
-            // label13
-            // 
-            this.label13.AutoSize = true;
-            this.label13.Location = new System.Drawing.Point(312, 401);
-            this.label13.Name = "label13";
-            this.label13.Size = new System.Drawing.Size(121, 15);
-            this.label13.TabIndex = 41;
-            this.label13.Text = "Victory camera angle:";
-            // 
-            // v_vic_cam_pos
-            // 
-            this.v_vic_cam_pos.Location = new System.Drawing.Point(435, 416);
-            this.v_vic_cam_pos.Maximum = new decimal(new int[] {
-            255,
-            0,
-            0,
-            0});
-            this.v_vic_cam_pos.Name = "v_vic_cam_pos";
-            this.v_vic_cam_pos.Size = new System.Drawing.Size(118, 23);
-            this.v_vic_cam_pos.TabIndex = 44;
-            // 
-            // label14
-            // 
-            this.label14.AutoSize = true;
-            this.label14.Location = new System.Drawing.Point(435, 401);
-            this.label14.Name = "label14";
-            this.label14.Size = new System.Drawing.Size(129, 15);
-            this.label14.TabIndex = 43;
-            this.label14.Text = "Victory camera pos (Y):";
-            // 
-            // v_cam_unk
-            // 
-            this.v_cam_unk.Location = new System.Drawing.Point(559, 416);
-            this.v_cam_unk.Maximum = new decimal(new int[] {
-            255,
-            0,
-            0,
-            0});
-            this.v_cam_unk.Name = "v_cam_unk";
-            this.v_cam_unk.Size = new System.Drawing.Size(102, 23);
-            this.v_cam_unk.TabIndex = 46;
-            // 
-            // label15
-            // 
-            this.label15.AutoSize = true;
-            this.label15.Location = new System.Drawing.Point(559, 401);
-            this.label15.Name = "label15";
-            this.label15.Size = new System.Drawing.Size(92, 15);
-            this.label15.TabIndex = 45;
-            this.label15.Text = "Unknown value:";
-            // 
-            // Tool_DuelPlayerParamEditor
-            // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(669, 610);
-            this.Controls.Add(this.v_cam_unk);
-            this.Controls.Add(this.label15);
-            this.Controls.Add(this.v_vic_cam_pos);
-            this.Controls.Add(this.label14);
-            this.Controls.Add(this.v_vic_cam_angle);
-            this.Controls.Add(this.label13);
-            this.Controls.Add(this.label12);
-            this.Controls.Add(this.v_enableAwaSkill);
-            this.Controls.Add(this.label11);
-            this.Controls.Add(this.button4);
-            this.Controls.Add(this.Search_TB);
-            this.Controls.Add(this.Search);
-            this.Controls.Add(this.w_partner);
-            this.Controls.Add(this.label10);
-            this.Controls.Add(this.w_charaprmbas);
-            this.Controls.Add(this.label9);
-            this.Controls.Add(this.w_itemc4);
-            this.Controls.Add(this.w_item4);
-            this.Controls.Add(this.w_itemc3);
-            this.Controls.Add(this.w_item3);
-            this.Controls.Add(this.w_itemc2);
-            this.Controls.Add(this.w_item2);
-            this.Controls.Add(this.w_itemc1);
-            this.Controls.Add(this.label7);
-            this.Controls.Add(this.label8);
-            this.Controls.Add(this.label6);
-            this.Controls.Add(this.w_item1);
-            this.Controls.Add(this.label5);
-            this.Controls.Add(this.w_defaultassist2);
-            this.Controls.Add(this.label4);
-            this.Controls.Add(this.w_defaultassist1);
-            this.Controls.Add(this.label3);
-            this.Controls.Add(this.w_awkaction);
-            this.Controls.Add(this.label2);
-            this.Controls.Add(this.b_awkcostumeids);
-            this.Controls.Add(this.b_costumeids);
-            this.Controls.Add(this.w_characodeid);
-            this.Controls.Add(this.label1);
-            this.Controls.Add(this.button3);
-            this.Controls.Add(this.button2);
-            this.Controls.Add(this.button1);
-            this.Controls.Add(this.listBox1);
-            this.Controls.Add(this.menuStrip1);
-            this.Font = new System.Drawing.Font("Segoe UI", 8.5F);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
-            this.MainMenuStrip = this.menuStrip1;
-            this.MaximizeBox = false;
-            this.Name = "Tool_DuelPlayerParamEditor";
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Duel Player Param Editor";
-            this.Load += new System.EventHandler(this.Tool_DuelPlayerParamEditor_Load);
-            this.menuStrip1.ResumeLayout(false);
-            this.menuStrip1.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.w_itemc1)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.w_itemc2)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.w_itemc3)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.w_itemc4)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.v_enableAwaSkill)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.v_vic_cam_angle)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.v_vic_cam_pos)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.v_cam_unk)).EndInit();
-            this.ResumeLayout(false);
-            this.PerformLayout();
-
-		}
 
         private void Tool_DuelPlayerParamEditor_Load(object sender, EventArgs e)
         {
@@ -3303,15 +2598,16 @@ namespace NSUNS4_Character_Manager
 			{
 				if (Search_TB.Text != "")
 				{
-					if (Main.SearchStringIndex(BinName, Search_TB.Text, EntryCount, listBox1.SelectedIndex) != -1)
+					List<string> names = Entries.Select(entry => entry.BinName).ToList();
+					if (Main.SearchStringIndex(names, Search_TB.Text, names.Count, listBox1.SelectedIndex) != -1)
 					{
-						listBox1.SelectedIndex = Main.SearchStringIndex(BinName, Search_TB.Text, EntryCount, listBox1.SelectedIndex);
+						listBox1.SelectedIndex = Main.SearchStringIndex(names, Search_TB.Text, names.Count, listBox1.SelectedIndex);
 					}
 					else
 					{
-						if (Main.SearchStringIndex(BinName, Search_TB.Text, EntryCount, 0) != -1)
+						if (Main.SearchStringIndex(names, Search_TB.Text, names.Count, 0) != -1)
 						{
-							listBox1.SelectedIndex = Main.SearchStringIndex(BinName, Search_TB.Text, EntryCount, -1);
+							listBox1.SelectedIndex = Main.SearchStringIndex(names, Search_TB.Text, names.Count, -1);
 						}
 						else
 						{
@@ -3334,25 +2630,41 @@ namespace NSUNS4_Character_Manager
         {
 
         }
-
-        private void button4_Click(object sender, EventArgs e)
-        {
-			int x = listBox1.SelectedIndex;
-			if (x != -1)
-			{
-				Tool_DuelPlayerParamEditor_settings s = new Tool_DuelPlayerParamEditor_settings(SettingList[x], Setting2List[x], AwaSettingList[x], BinName[x], this, x);
-				s.ShowDialog();
-			}
-			else
-			{
-				MessageBox.Show("No entry selected...");
-			}
-		}
-
         private void itemListToolStripMenuItem_Click(object sender, EventArgs e)
         {
 			Tool_DSP_ItemList s = new Tool_DSP_ItemList();
 			s.Show();
 		}
+
+        private void groupConditionFlags_Enter(object sender, EventArgs e)
+        {
+
+        }
+
+        private void checkedListConditionFlags_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void Tool_DuelPlayerParamEditor_Load_1(object sender, EventArgs e)
+        {
+
+        }
+
+        private void settingsTitleLabel_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void w_itemc3_ValueChanged(object sender, EventArgs e)
+        {
+
+        }
     }
 }
+
+
+
+
+
+

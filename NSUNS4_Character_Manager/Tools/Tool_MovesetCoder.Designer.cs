@@ -39,6 +39,7 @@
             this.setCubemanOffInAllPlanmToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.pRMPortToolToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.editCollisionOfPlayerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.editPrmEtcToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.listOfAllSectionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.infoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -232,7 +233,8 @@
             this.setCubemanToEveryANMToolStripMenuItem,
             this.setCubemanOffInAllPlanmToolStripMenuItem,
             this.pRMPortToolToolStripMenuItem,
-            this.editCollisionOfPlayerToolStripMenuItem});
+            this.editCollisionOfPlayerToolStripMenuItem,
+            this.editPrmEtcToolStripMenuItem});
             this.toolsToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
             this.toolsToolStripMenuItem.Size = new System.Drawing.Size(46, 20);
@@ -266,6 +268,14 @@
             this.editCollisionOfPlayerToolStripMenuItem.Size = new System.Drawing.Size(333, 22);
             this.editCollisionOfPlayerToolStripMenuItem.Text = "Edit collision of player";
             this.editCollisionOfPlayerToolStripMenuItem.Click += new System.EventHandler(this.editCollisionOfPlayerToolStripMenuItem_Click);
+            // 
+            // editPrmEtcToolStripMenuItem
+            // 
+            this.editPrmEtcToolStripMenuItem.Enabled = false;
+            this.editPrmEtcToolStripMenuItem.Name = "editPrmEtcToolStripMenuItem";
+            this.editPrmEtcToolStripMenuItem.Size = new System.Drawing.Size(333, 22);
+            this.editPrmEtcToolStripMenuItem.Text = "Edit prm_etc movement";
+            this.editPrmEtcToolStripMenuItem.Click += new System.EventHandler(this.editPrmEtcToolStripMenuItem_Click);
             // 
             // helpToolStripMenuItem
             // 
@@ -1670,6 +1680,7 @@
         private System.Windows.Forms.Label label35;
         private System.Windows.Forms.CheckBox cb_hexValue;
         private System.Windows.Forms.ToolStripMenuItem editCollisionOfPlayerToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem editPrmEtcToolStripMenuItem;
         private System.Windows.Forms.Button button4;
         private System.Windows.Forms.ToolStripMenuItem pRMPortToolToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem listOfAllSectionsToolStripMenuItem;

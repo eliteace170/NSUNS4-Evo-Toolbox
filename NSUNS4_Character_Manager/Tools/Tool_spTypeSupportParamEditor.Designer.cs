@@ -75,6 +75,10 @@ namespace NSUNS4_Character_Manager.Tools {
             this.numericUpDown12 = new System.Windows.Forms.NumericUpDown();
             this.label16 = new System.Windows.Forms.Label();
             this.checkBox8 = new System.Windows.Forms.CheckBox();
+            this.checkBox9 = new System.Windows.Forms.CheckBox();
+            this.checkBox10 = new System.Windows.Forms.CheckBox();
+            this.checkBox11 = new System.Windows.Forms.CheckBox();
+            this.checkBox12 = new System.Windows.Forms.CheckBox();
             this.textBox5 = new System.Windows.Forms.TextBox();
             this.button5 = new System.Windows.Forms.Button();
             this.numericUpDown13 = new System.Windows.Forms.NumericUpDown();
@@ -113,7 +117,7 @@ namespace NSUNS4_Character_Manager.Tools {
             this.fileToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(570, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(569, 24);
             this.menuStrip1.TabIndex = 1;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -190,13 +194,18 @@ namespace NSUNS4_Character_Manager.Tools {
             // 
             this.comboBox1.FormattingEnabled = true;
             this.comboBox1.Items.AddRange(new object[] {
-            "Only Normal Mode",
-            "Only Awakening Mode",
+            "Base",
+            "True Awakening",
+            "Base and True Awakening",
+            "Instant Awakening",
+            "Base and Instant Awakening",
+            "Instant Awakening and True Awakening",
             "All modes"});
             this.comboBox1.Location = new System.Drawing.Point(228, 55);
             this.comboBox1.Name = "comboBox1";
             this.comboBox1.Size = new System.Drawing.Size(336, 21);
             this.comboBox1.TabIndex = 7;
+            this.comboBox1.SelectedIndexChanged += new System.EventHandler(this.comboBox1_SelectedIndexChanged);
             // 
             // comboBox2
             // 
@@ -208,6 +217,7 @@ namespace NSUNS4_Character_Manager.Tools {
             this.comboBox2.Name = "comboBox2";
             this.comboBox2.Size = new System.Drawing.Size(336, 21);
             this.comboBox2.TabIndex = 8;
+            this.comboBox2.SelectedIndexChanged += new System.EventHandler(this.comboBox2_SelectedIndexChanged);
             // 
             // textBox2
             // 
@@ -219,7 +229,7 @@ namespace NSUNS4_Character_Manager.Tools {
             // checkBox1
             // 
             this.checkBox1.AutoSize = true;
-            this.checkBox1.Location = new System.Drawing.Point(479, 128);
+            this.checkBox1.Location = new System.Drawing.Point(391, 150);
             this.checkBox1.Name = "checkBox1";
             this.checkBox1.Size = new System.Drawing.Size(85, 17);
             this.checkBox1.TabIndex = 10;
@@ -238,7 +248,7 @@ namespace NSUNS4_Character_Manager.Tools {
             // numericUpDown1
             // 
             this.numericUpDown1.Hexadecimal = true;
-            this.numericUpDown1.Location = new System.Drawing.Point(295, 125);
+            this.numericUpDown1.Location = new System.Drawing.Point(310, 128);
             this.numericUpDown1.Maximum = new decimal(new int[] {
             65535,
             0,
@@ -258,9 +268,9 @@ namespace NSUNS4_Character_Manager.Tools {
             this.checkBox2.AutoSize = true;
             this.checkBox2.Location = new System.Drawing.Point(391, 127);
             this.checkBox2.Name = "checkBox2";
-            this.checkBox2.Size = new System.Drawing.Size(72, 17);
+            this.checkBox2.Size = new System.Drawing.Size(112, 17);
             this.checkBox2.TabIndex = 13;
-            this.checkBox2.Text = "Unknown";
+            this.checkBox2.Text = "Enable on Ground";
             this.checkBox2.UseVisualStyleBackColor = true;
             // 
             // label2
@@ -268,23 +278,23 @@ namespace NSUNS4_Character_Manager.Tools {
             this.label2.AutoSize = true;
             this.label2.Location = new System.Drawing.Point(227, 128);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(62, 13);
+            this.label2.Size = new System.Drawing.Size(77, 13);
             this.label2.TabIndex = 14;
-            this.label2.Text = "Unknown 1";
+            this.label2.Text = "Costume Index";
             // 
             // label3
             // 
             this.label3.AutoSize = true;
             this.label3.Location = new System.Drawing.Point(227, 150);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(62, 13);
+            this.label3.Size = new System.Drawing.Size(53, 13);
             this.label3.TabIndex = 16;
-            this.label3.Text = "Unknown 2";
+            this.label3.Text = "Unused 1";
             // 
             // numericUpDown2
             // 
             this.numericUpDown2.Hexadecimal = true;
-            this.numericUpDown2.Location = new System.Drawing.Point(295, 147);
+            this.numericUpDown2.Location = new System.Drawing.Point(310, 150);
             this.numericUpDown2.Maximum = new decimal(new int[] {
             65535,
             0,
@@ -304,14 +314,14 @@ namespace NSUNS4_Character_Manager.Tools {
             this.label4.AutoSize = true;
             this.label4.Location = new System.Drawing.Point(227, 171);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(62, 13);
+            this.label4.Size = new System.Drawing.Size(53, 13);
             this.label4.TabIndex = 18;
-            this.label4.Text = "Unknown 3";
+            this.label4.Text = "Unused 2";
             // 
             // numericUpDown3
             // 
             this.numericUpDown3.Hexadecimal = true;
-            this.numericUpDown3.Location = new System.Drawing.Point(295, 168);
+            this.numericUpDown3.Location = new System.Drawing.Point(310, 171);
             this.numericUpDown3.Maximum = new decimal(new int[] {
             65535,
             0,
@@ -331,14 +341,14 @@ namespace NSUNS4_Character_Manager.Tools {
             this.label5.AutoSize = true;
             this.label5.Location = new System.Drawing.Point(227, 262);
             this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(62, 13);
+            this.label5.Size = new System.Drawing.Size(53, 13);
             this.label5.TabIndex = 28;
-            this.label5.Text = "Unknown 3";
+            this.label5.Text = "Unused 2";
             // 
             // numericUpDown4
             // 
             this.numericUpDown4.Hexadecimal = true;
-            this.numericUpDown4.Location = new System.Drawing.Point(295, 259);
+            this.numericUpDown4.Location = new System.Drawing.Point(306, 262);
             this.numericUpDown4.Maximum = new decimal(new int[] {
             65535,
             0,
@@ -358,14 +368,14 @@ namespace NSUNS4_Character_Manager.Tools {
             this.label6.AutoSize = true;
             this.label6.Location = new System.Drawing.Point(227, 241);
             this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(62, 13);
+            this.label6.Size = new System.Drawing.Size(53, 13);
             this.label6.TabIndex = 26;
-            this.label6.Text = "Unknown 2";
+            this.label6.Text = "Unused 1";
             // 
             // numericUpDown5
             // 
             this.numericUpDown5.Hexadecimal = true;
-            this.numericUpDown5.Location = new System.Drawing.Point(295, 238);
+            this.numericUpDown5.Location = new System.Drawing.Point(306, 241);
             this.numericUpDown5.Maximum = new decimal(new int[] {
             65535,
             0,
@@ -385,24 +395,24 @@ namespace NSUNS4_Character_Manager.Tools {
             this.label7.AutoSize = true;
             this.label7.Location = new System.Drawing.Point(227, 219);
             this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(62, 13);
+            this.label7.Size = new System.Drawing.Size(77, 13);
             this.label7.TabIndex = 24;
-            this.label7.Text = "Unknown 1";
+            this.label7.Text = "Costume Index";
             // 
             // checkBox3
             // 
             this.checkBox3.AutoSize = true;
             this.checkBox3.Location = new System.Drawing.Point(391, 218);
             this.checkBox3.Name = "checkBox3";
-            this.checkBox3.Size = new System.Drawing.Size(72, 17);
+            this.checkBox3.Size = new System.Drawing.Size(112, 17);
             this.checkBox3.TabIndex = 23;
-            this.checkBox3.Text = "Unknown";
+            this.checkBox3.Text = "Enable on Ground";
             this.checkBox3.UseVisualStyleBackColor = true;
             // 
             // numericUpDown6
             // 
             this.numericUpDown6.Hexadecimal = true;
-            this.numericUpDown6.Location = new System.Drawing.Point(295, 216);
+            this.numericUpDown6.Location = new System.Drawing.Point(306, 219);
             this.numericUpDown6.Maximum = new decimal(new int[] {
             65535,
             0,
@@ -429,7 +439,7 @@ namespace NSUNS4_Character_Manager.Tools {
             // checkBox4
             // 
             this.checkBox4.AutoSize = true;
-            this.checkBox4.Location = new System.Drawing.Point(479, 219);
+            this.checkBox4.Location = new System.Drawing.Point(391, 242);
             this.checkBox4.Name = "checkBox4";
             this.checkBox4.Size = new System.Drawing.Size(85, 17);
             this.checkBox4.TabIndex = 20;
@@ -448,14 +458,14 @@ namespace NSUNS4_Character_Manager.Tools {
             this.label9.AutoSize = true;
             this.label9.Location = new System.Drawing.Point(227, 356);
             this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(62, 13);
+            this.label9.Size = new System.Drawing.Size(53, 13);
             this.label9.TabIndex = 38;
-            this.label9.Text = "Unknown 3";
+            this.label9.Text = "Unused 2";
             // 
             // numericUpDown7
             // 
             this.numericUpDown7.Hexadecimal = true;
-            this.numericUpDown7.Location = new System.Drawing.Point(295, 353);
+            this.numericUpDown7.Location = new System.Drawing.Point(305, 356);
             this.numericUpDown7.Maximum = new decimal(new int[] {
             65535,
             0,
@@ -475,14 +485,14 @@ namespace NSUNS4_Character_Manager.Tools {
             this.label10.AutoSize = true;
             this.label10.Location = new System.Drawing.Point(227, 335);
             this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(62, 13);
+            this.label10.Size = new System.Drawing.Size(53, 13);
             this.label10.TabIndex = 36;
-            this.label10.Text = "Unknown 2";
+            this.label10.Text = "Unused 1";
             // 
             // numericUpDown8
             // 
             this.numericUpDown8.Hexadecimal = true;
-            this.numericUpDown8.Location = new System.Drawing.Point(295, 332);
+            this.numericUpDown8.Location = new System.Drawing.Point(305, 335);
             this.numericUpDown8.Maximum = new decimal(new int[] {
             65535,
             0,
@@ -502,24 +512,24 @@ namespace NSUNS4_Character_Manager.Tools {
             this.label11.AutoSize = true;
             this.label11.Location = new System.Drawing.Point(227, 313);
             this.label11.Name = "label11";
-            this.label11.Size = new System.Drawing.Size(62, 13);
+            this.label11.Size = new System.Drawing.Size(77, 13);
             this.label11.TabIndex = 34;
-            this.label11.Text = "Unknown 1";
+            this.label11.Text = "Costume Index";
             // 
             // checkBox5
             // 
             this.checkBox5.AutoSize = true;
-            this.checkBox5.Location = new System.Drawing.Point(391, 312);
+            this.checkBox5.Location = new System.Drawing.Point(391, 313);
             this.checkBox5.Name = "checkBox5";
-            this.checkBox5.Size = new System.Drawing.Size(72, 17);
+            this.checkBox5.Size = new System.Drawing.Size(112, 17);
             this.checkBox5.TabIndex = 33;
-            this.checkBox5.Text = "Unknown";
+            this.checkBox5.Text = "Enable on Ground";
             this.checkBox5.UseVisualStyleBackColor = true;
             // 
             // numericUpDown9
             // 
             this.numericUpDown9.Hexadecimal = true;
-            this.numericUpDown9.Location = new System.Drawing.Point(295, 310);
+            this.numericUpDown9.Location = new System.Drawing.Point(305, 313);
             this.numericUpDown9.Maximum = new decimal(new int[] {
             65535,
             0,
@@ -546,7 +556,7 @@ namespace NSUNS4_Character_Manager.Tools {
             // checkBox6
             // 
             this.checkBox6.AutoSize = true;
-            this.checkBox6.Location = new System.Drawing.Point(479, 313);
+            this.checkBox6.Location = new System.Drawing.Point(391, 335);
             this.checkBox6.Name = "checkBox6";
             this.checkBox6.Size = new System.Drawing.Size(85, 17);
             this.checkBox6.TabIndex = 30;
@@ -565,14 +575,14 @@ namespace NSUNS4_Character_Manager.Tools {
             this.label13.AutoSize = true;
             this.label13.Location = new System.Drawing.Point(227, 449);
             this.label13.Name = "label13";
-            this.label13.Size = new System.Drawing.Size(62, 13);
+            this.label13.Size = new System.Drawing.Size(53, 13);
             this.label13.TabIndex = 48;
-            this.label13.Text = "Unknown 3";
+            this.label13.Text = "Unused 2";
             // 
             // numericUpDown10
             // 
             this.numericUpDown10.Hexadecimal = true;
-            this.numericUpDown10.Location = new System.Drawing.Point(295, 446);
+            this.numericUpDown10.Location = new System.Drawing.Point(306, 447);
             this.numericUpDown10.Maximum = new decimal(new int[] {
             65535,
             0,
@@ -592,14 +602,14 @@ namespace NSUNS4_Character_Manager.Tools {
             this.label14.AutoSize = true;
             this.label14.Location = new System.Drawing.Point(227, 428);
             this.label14.Name = "label14";
-            this.label14.Size = new System.Drawing.Size(62, 13);
+            this.label14.Size = new System.Drawing.Size(53, 13);
             this.label14.TabIndex = 46;
-            this.label14.Text = "Unknown 2";
+            this.label14.Text = "Unused 1";
             // 
             // numericUpDown11
             // 
             this.numericUpDown11.Hexadecimal = true;
-            this.numericUpDown11.Location = new System.Drawing.Point(295, 425);
+            this.numericUpDown11.Location = new System.Drawing.Point(306, 426);
             this.numericUpDown11.Maximum = new decimal(new int[] {
             65535,
             0,
@@ -619,24 +629,24 @@ namespace NSUNS4_Character_Manager.Tools {
             this.label15.AutoSize = true;
             this.label15.Location = new System.Drawing.Point(227, 406);
             this.label15.Name = "label15";
-            this.label15.Size = new System.Drawing.Size(62, 13);
+            this.label15.Size = new System.Drawing.Size(77, 13);
             this.label15.TabIndex = 44;
-            this.label15.Text = "Unknown 1";
+            this.label15.Text = "Costume Index";
             // 
             // checkBox7
             // 
             this.checkBox7.AutoSize = true;
             this.checkBox7.Location = new System.Drawing.Point(391, 405);
             this.checkBox7.Name = "checkBox7";
-            this.checkBox7.Size = new System.Drawing.Size(72, 17);
+            this.checkBox7.Size = new System.Drawing.Size(112, 17);
             this.checkBox7.TabIndex = 43;
-            this.checkBox7.Text = "Unknown";
+            this.checkBox7.Text = "Enable on Ground";
             this.checkBox7.UseVisualStyleBackColor = true;
             // 
             // numericUpDown12
             // 
             this.numericUpDown12.Hexadecimal = true;
-            this.numericUpDown12.Location = new System.Drawing.Point(295, 403);
+            this.numericUpDown12.Location = new System.Drawing.Point(306, 404);
             this.numericUpDown12.Maximum = new decimal(new int[] {
             65535,
             0,
@@ -663,12 +673,52 @@ namespace NSUNS4_Character_Manager.Tools {
             // checkBox8
             // 
             this.checkBox8.AutoSize = true;
-            this.checkBox8.Location = new System.Drawing.Point(479, 406);
+            this.checkBox8.Location = new System.Drawing.Point(391, 425);
             this.checkBox8.Name = "checkBox8";
             this.checkBox8.Size = new System.Drawing.Size(85, 17);
             this.checkBox8.TabIndex = 40;
             this.checkBox8.Text = "Enable in Air";
             this.checkBox8.UseVisualStyleBackColor = true;
+            // 
+            // checkBox9
+            // 
+            this.checkBox9.AutoSize = true;
+            this.checkBox9.Location = new System.Drawing.Point(391, 172);
+            this.checkBox9.Name = "checkBox9";
+            this.checkBox9.Size = new System.Drawing.Size(144, 17);
+            this.checkBox9.TabIndex = 54;
+            this.checkBox9.Text = "Enable Special Condition";
+            this.checkBox9.UseVisualStyleBackColor = true;
+            // 
+            // checkBox10
+            // 
+            this.checkBox10.AutoSize = true;
+            this.checkBox10.Location = new System.Drawing.Point(391, 264);
+            this.checkBox10.Name = "checkBox10";
+            this.checkBox10.Size = new System.Drawing.Size(144, 17);
+            this.checkBox10.TabIndex = 55;
+            this.checkBox10.Text = "Enable Special Condition";
+            this.checkBox10.UseVisualStyleBackColor = true;
+            // 
+            // checkBox11
+            // 
+            this.checkBox11.AutoSize = true;
+            this.checkBox11.Location = new System.Drawing.Point(391, 352);
+            this.checkBox11.Name = "checkBox11";
+            this.checkBox11.Size = new System.Drawing.Size(144, 17);
+            this.checkBox11.TabIndex = 56;
+            this.checkBox11.Text = "Enable Special Condition";
+            this.checkBox11.UseVisualStyleBackColor = true;
+            // 
+            // checkBox12
+            // 
+            this.checkBox12.AutoSize = true;
+            this.checkBox12.Location = new System.Drawing.Point(391, 446);
+            this.checkBox12.Name = "checkBox12";
+            this.checkBox12.Size = new System.Drawing.Size(144, 17);
+            this.checkBox12.TabIndex = 57;
+            this.checkBox12.Text = "Enable Special Condition";
+            this.checkBox12.UseVisualStyleBackColor = true;
             // 
             // textBox5
             // 
@@ -735,7 +785,11 @@ namespace NSUNS4_Character_Manager.Tools {
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(570, 519);
+            this.ClientSize = new System.Drawing.Size(569, 519);
+            this.Controls.Add(this.checkBox12);
+            this.Controls.Add(this.checkBox11);
+            this.Controls.Add(this.checkBox10);
+            this.Controls.Add(this.checkBox9);
             this.Controls.Add(this.label18);
             this.Controls.Add(this.numericUpDown14);
             this.Controls.Add(this.label17);
@@ -869,6 +923,10 @@ namespace NSUNS4_Character_Manager.Tools {
         private System.Windows.Forms.NumericUpDown numericUpDown12;
         private System.Windows.Forms.Label label16;
         private System.Windows.Forms.CheckBox checkBox8;
+        private System.Windows.Forms.CheckBox checkBox9;
+        private System.Windows.Forms.CheckBox checkBox10;
+        private System.Windows.Forms.CheckBox checkBox11;
+        private System.Windows.Forms.CheckBox checkBox12;
         private System.Windows.Forms.TextBox textBox5;
         private System.Windows.Forms.Button button5;
         private System.Windows.Forms.NumericUpDown numericUpDown13;
