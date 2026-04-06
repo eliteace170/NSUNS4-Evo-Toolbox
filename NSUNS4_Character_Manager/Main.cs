@@ -1236,20 +1236,20 @@ namespace NSUNS4_Character_Manager
             this.addNewCharacterToolStripMenuItem});
             this.toolsToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
-            this.toolsToolStripMenuItem.Size = new System.Drawing.Size(46, 20);
+            this.toolsToolStripMenuItem.Size = new System.Drawing.Size(47, 20);
             this.toolsToolStripMenuItem.Text = "Tools";
             // 
             // addCostumeToolStripMenuItem
             // 
             this.addCostumeToolStripMenuItem.Name = "addCostumeToolStripMenuItem";
-            this.addCostumeToolStripMenuItem.Size = new System.Drawing.Size(253, 22);
+            this.addCostumeToolStripMenuItem.Size = new System.Drawing.Size(252, 22);
             this.addCostumeToolStripMenuItem.Text = "Add new costume (Experimental)";
             this.addCostumeToolStripMenuItem.Click += new System.EventHandler(this.addCostumeToolStripMenuItem_Click);
             // 
             // addNewCharacterToolStripMenuItem
             // 
             this.addNewCharacterToolStripMenuItem.Name = "addNewCharacterToolStripMenuItem";
-            this.addNewCharacterToolStripMenuItem.Size = new System.Drawing.Size(253, 22);
+            this.addNewCharacterToolStripMenuItem.Size = new System.Drawing.Size(252, 22);
             this.addNewCharacterToolStripMenuItem.Text = "Add new character (Experimental)";
             this.addNewCharacterToolStripMenuItem.Click += new System.EventHandler(this.addNewCharacterToolStripMenuItem_Click);
             // 
@@ -1696,7 +1696,7 @@ namespace NSUNS4_Character_Manager
             this.linkLabel7.LinkColor = System.Drawing.Color.Black;
             this.linkLabel7.Location = new System.Drawing.Point(4, 474);
             this.linkLabel7.Name = "linkLabel7";
-            this.linkLabel7.Size = new System.Drawing.Size(82, 15);
+            this.linkLabel7.Size = new System.Drawing.Size(84, 15);
             this.linkLabel7.TabIndex = 39;
             this.linkLabel7.TabStop = true;
             this.linkLabel7.Text = "NUT Tools GUI";
@@ -1709,7 +1709,7 @@ namespace NSUNS4_Character_Manager
             this.linkLabel6.LinkColor = System.Drawing.Color.Black;
             this.linkLabel6.Location = new System.Drawing.Point(4, 459);
             this.linkLabel6.Name = "linkLabel6";
-            this.linkLabel6.Size = new System.Drawing.Size(60, 15);
+            this.linkLabel6.Size = new System.Drawing.Size(62, 15);
             this.linkLabel6.TabIndex = 38;
             this.linkLabel6.TabStop = true;
             this.linkLabel6.Text = "NUT Tools";
@@ -1722,7 +1722,7 @@ namespace NSUNS4_Character_Manager
             this.linkLabel5.LinkColor = System.Drawing.Color.Black;
             this.linkLabel5.Location = new System.Drawing.Point(4, 398);
             this.linkLabel5.Name = "linkLabel5";
-            this.linkLabel5.Size = new System.Drawing.Size(141, 15);
+            this.linkLabel5.Size = new System.Drawing.Size(142, 15);
             this.linkLabel5.TabIndex = 37;
             this.linkLabel5.TabStop = true;
             this.linkLabel5.Text = "010 Editor Xfbin Template";
@@ -1831,7 +1831,7 @@ namespace NSUNS4_Character_Manager
             this.label1.AutoSize = true;
             this.label1.Location = new System.Drawing.Point(0, 83);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(79, 15);
+            this.label1.Size = new System.Drawing.Size(78, 15);
             this.label1.TabIndex = 18;
             this.label1.Text = "Experimental:";
             // 
@@ -1902,7 +1902,7 @@ namespace NSUNS4_Character_Manager
             this.MaximizeBox = false;
             this.Name = "Main";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Naruto: Storm 4 Evo Toolbox v6.5.3 (Ace\'s build)";
+            this.Text = "Naruto: Storm 4 Evo Toolbox v6.5.8 (Ace\'s build)";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.Main_FormClosed);
             this.Load += new System.EventHandler(this.Main_Load);
             this.menuStrip1.ResumeLayout(false);
