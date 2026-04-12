@@ -35,6 +35,9 @@
             this.button1 = new System.Windows.Forms.Button();
             this.awaModel = new System.Windows.Forms.TextBox();
             this.label3 = new System.Windows.Forms.Label();
+            this.unlockNotification = new System.Windows.Forms.CheckBox();
+            this.label7 = new System.Windows.Forms.Label();
+            this.unlockMessage = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
             // label1
@@ -64,7 +67,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(13, 58);
+            this.label2.Location = new System.Drawing.Point(13, 57);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(79, 15);
             this.label2.TabIndex = 2;
@@ -72,10 +75,10 @@
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(10, 148);
+            this.button1.Location = new System.Drawing.Point(10, 217);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(232, 34);
-            this.button1.TabIndex = 4;
+            this.button1.TabIndex = 11;
             this.button1.Text = "Add costume";
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click);
@@ -91,17 +94,49 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(10, 102);
+            this.label3.Location = new System.Drawing.Point(13, 101);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(141, 15);
             this.label3.TabIndex = 5;
             this.label3.Text = "Awakening model to use:";
             // 
+            // unlockNotification
+            // 
+            this.unlockNotification.AutoSize = true;
+            this.unlockNotification.Location = new System.Drawing.Point(16, 192);
+            this.unlockNotification.Name = "unlockNotification";
+            this.unlockNotification.Size = new System.Drawing.Size(89, 19);
+            this.unlockNotification.TabIndex = 9;
+            this.unlockNotification.Text = "Notification";
+            this.unlockNotification.UseVisualStyleBackColor = true;
+            this.unlockNotification.CheckedChanged += new System.EventHandler(this.unlockNotification_CheckedChanged);
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(13, 145);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(93, 15);
+            this.label7.TabIndex = 10;
+            this.label7.Text = "Costume Name:";
+            this.label7.Click += new System.EventHandler(this.label7_Click);
+            // 
+            // unlockMessage
+            // 
+            this.unlockMessage.Location = new System.Drawing.Point(10, 163);
+            this.unlockMessage.MaxLength = 16;
+            this.unlockMessage.Name = "unlockMessage";
+            this.unlockMessage.Size = new System.Drawing.Size(229, 23);
+            this.unlockMessage.TabIndex = 11;
+            // 
             // Tool_AddCostume
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(254, 192);
+            this.ClientSize = new System.Drawing.Size(254, 258);
+            this.Controls.Add(this.unlockMessage);
+            this.Controls.Add(this.label7);
+            this.Controls.Add(this.unlockNotification);
             this.Controls.Add(this.awaModel);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.button1);
@@ -129,5 +164,8 @@
         public System.Windows.Forms.Button button1;
         public System.Windows.Forms.TextBox awaModel;
         public System.Windows.Forms.Label label3;
+        public System.Windows.Forms.CheckBox unlockNotification;
+        public System.Windows.Forms.Label label7;
+        public System.Windows.Forms.TextBox unlockMessage;
     }
 }

@@ -670,7 +670,7 @@ namespace NSUNS4_Character_Manager.Functions {
                                         else {
                                             UnlockCharaTotalOriginalFile.OpenFile(originalUnlockCharaTotalPath);
                                         }
-                                        UnlockCharaTotalOriginalFile.AddID_Importer(new_presetID, 1);
+                                        UnlockCharaTotalOriginalFile.AddImportEntry(new_presetID, 1);
                                         if (!Directory.Exists(Main.datawin32Path + "\\duel\\WIN64")) {
                                             Directory.CreateDirectory(Main.datawin32Path + "\\duel\\WIN64");
                                         }
@@ -711,7 +711,7 @@ namespace NSUNS4_Character_Manager.Functions {
                                     else {
                                         UnlockCharaTotalOriginalFile.OpenFile(originalUnlockCharaTotalPath);
                                     }
-                                    UnlockCharaTotalOriginalFile.AddID_Importer(new_presetID, 1);
+                                    UnlockCharaTotalOriginalFile.AddImportEntry(new_presetID, 1);
                                     if (!Directory.Exists(Main.datawin32Path + "\\duel\\WIN64")) {
                                         Directory.CreateDirectory(Main.datawin32Path + "\\duel\\WIN64");
                                     }

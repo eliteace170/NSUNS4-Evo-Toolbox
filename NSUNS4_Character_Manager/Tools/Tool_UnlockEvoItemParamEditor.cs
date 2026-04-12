@@ -48,7 +48,7 @@ namespace NSUNS4_Character_Manager
         private Label label3;
         private Label label4;
         private Label label5;
-        private NumericUpDown dlcID;
+        private ComboBox dlcID;
         private ComboBox unlockType;
         private NumericUpDown costumeID;
         private NumericUpDown version;
@@ -69,6 +69,17 @@ namespace NSUNS4_Character_Manager
             }
         }
 
+        private class DlcOption
+        {
+            public byte Value { get; set; }
+            public string Name { get; set; }
+
+            public override string ToString()
+            {
+                return Name;
+            }
+        }
+
         private readonly Dictionary<byte, string> unlockTypeLookup = new Dictionary<byte, string>
         {
             { 0x15, "Money" },
@@ -77,9 +88,26 @@ namespace NSUNS4_Character_Manager
             { 0x20, "Team Ultimate Jutsu" }
         };
 
+        private readonly Dictionary<byte, string> dlcLookup = new Dictionary<byte, string>
+        {
+            { 0x00, "Pre Order" },
+            { 0x01, "The Last" },
+            { 0x02, "Story" },
+            { 0x03, "unknow" },
+            { 0x04, "Traditional Festival Costume" },
+            { 0x05, "Shikamaru's Tale" },
+            { 0x06, "Gaara's Tale" },
+            { 0x07, "The Sound Four" },
+            { 0x08, "Season Pass Bonus" },
+            { 0x09, "Road to Boruto" },
+            { 0x0A, "Next Generation" },
+            { 0xFF, "FF - Reset/Lock" }
+        };
+
         public Tool_UnlockEvoItemParamEditor()
         {
             InitializeComponent();
+            InitializeDlcItems();
             InitializeUnlockTypeItems();
             UpdateSortMenuStates(sortPresetToolStripMenuItem);
             UpdateDisplayMenuStates(displayHexToolStripMenuItem);
@@ -113,6 +141,7 @@ namespace NSUNS4_Character_Manager
 
         public void OpenFile(string basepath = "")
         {
+            InitializeDlcItems();
             InitializeUnlockTypeItems();
 
             if (FileOpen)
@@ -191,7 +220,7 @@ namespace NSUNS4_Character_Manager
         private byte[] BuildEntryFromInputs()
         {
             byte[] entry = new byte[EntrySize];
-            entry[0] = (checkResetLock.Checked ? (byte)0xFF : (byte)dlcID.Value);
+            entry[0] = checkResetLock.Checked ? (byte)0xFF : GetDlcValue();
             entry[1] = GetUnlockTypeValue();
             byte[] costume = BitConverter.GetBytes((short)costumeID.Value);
             entry[2] = costume[0];
@@ -221,7 +250,7 @@ namespace NSUNS4_Character_Manager
             }
 
             byte[] selected = EntryList[ListBox1.SelectedIndex];
-            dlcID.Value = selected[0];
+            SetDlcValue(selected[0]);
             SetUnlockTypeValue(selected[1]);
             costumeID.Value = Main.b_byteArrayToIntTwoBytes(new byte[] { selected[2], selected[3] });
             version.Value = BitConverter.ToInt32(selected, 4);
@@ -236,6 +265,7 @@ namespace NSUNS4_Character_Manager
             checkNortification.Checked = BitConverter.ToInt32(selected, 4) == -1;
             checkResetLock.CheckedChanged += checkResetLock_CheckedChanged;
             checkNortification.CheckedChanged += checkNortification_CheckedChanged;
+            dlcID.Enabled = !checkResetLock.Checked;
         }
 
         private string UpdateListItem(int index, byte[] entry)
@@ -290,6 +320,57 @@ namespace NSUNS4_Character_Manager
             {
                 unlockType.SelectedIndex = 0;
             }
+        }
+
+        private void InitializeDlcItems()
+        {
+            dlcID.Items.Clear();
+            foreach (KeyValuePair<byte, string> pair in dlcLookup)
+            {
+                dlcID.Items.Add(new DlcOption
+                {
+                    Value = pair.Key,
+                    Name = pair.Value
+                });
+            }
+
+            if (dlcID.Items.Count > 0)
+            {
+                dlcID.SelectedIndex = 0;
+            }
+        }
+
+        private DlcOption GetDlcOption(byte value)
+        {
+            foreach (DlcOption option in dlcID.Items)
+            {
+                if (option.Value == value)
+                    return option;
+            }
+
+            DlcOption fallback = new DlcOption
+            {
+                Value = value,
+                Name = value == 0xFF ? "FF - Reset/Lock" : $"0x{value:X2} - Unknown"
+            };
+
+            dlcID.Items.Add(fallback);
+            return fallback;
+        }
+
+        private void SetDlcValue(byte value)
+        {
+            dlcID.SelectedItem = GetDlcOption(value);
+        }
+
+        private byte GetDlcValue()
+        {
+            if (dlcID.SelectedItem is DlcOption selectedOption)
+            {
+                return selectedOption.Value;
+            }
+
+            return 0;
         }
 
         private UnlockTypeOption GetUnlockTypeOption(byte value)
@@ -657,7 +738,6 @@ namespace NSUNS4_Character_Manager
             }
 
             displayAsHex = asHex;
-            dlcID.Hexadecimal = displayAsHex;
             costumeID.Hexadecimal = displayAsHex;
             version.Hexadecimal = displayAsHex;
             UpdateDisplayMenuStates(displayAsHex ? displayHexToolStripMenuItem : displayDecToolStripMenuItem);
@@ -713,7 +793,16 @@ namespace NSUNS4_Character_Manager
         private void checkResetLock_CheckedChanged(object sender, EventArgs e)
         {
             if (checkResetLock.Checked)
-                dlcID.Value = 0xFF;
+            {
+                SetDlcValue(0xFF);
+                dlcID.Enabled = false;
+            }
+            else
+            {
+                dlcID.Enabled = true;
+                if (dlcID.SelectedIndex < 0 && dlcID.Items.Count > 0)
+                    dlcID.SelectedIndex = 0;
+            }
         }
 
         private void checkNortification_CheckedChanged(object sender, EventArgs e)
@@ -732,13 +821,13 @@ namespace NSUNS4_Character_Manager
             this.saveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saveAsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.closeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.displayToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.displayHexToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.displayDecToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.sortToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.sortPresetToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.sortDLCToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.sortRyoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.displayToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.displayHexToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.displayDecToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.buttonAdd = new System.Windows.Forms.Button();
             this.buttonCopy = new System.Windows.Forms.Button();
             this.buttonDelete = new System.Windows.Forms.Button();
@@ -748,7 +837,7 @@ namespace NSUNS4_Character_Manager
             this.label3 = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
-            this.dlcID = new System.Windows.Forms.NumericUpDown();
+            this.dlcID = new System.Windows.Forms.ComboBox();
             this.unlockType = new System.Windows.Forms.ComboBox();
             this.costumeID = new System.Windows.Forms.NumericUpDown();
             this.version = new System.Windows.Forms.NumericUpDown();
@@ -757,7 +846,6 @@ namespace NSUNS4_Character_Manager
             this.messageName = new System.Windows.Forms.TextBox();
             this.checkToolTip = new System.Windows.Forms.ToolTip(this.components);
             this.menuStrip1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.dlcID)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.costumeID)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.version)).BeginInit();
             this.SuspendLayout();
@@ -823,29 +911,6 @@ namespace NSUNS4_Character_Manager
             this.closeToolStripMenuItem.Text = "Close File";
             this.closeToolStripMenuItem.Click += new System.EventHandler(this.closeToolStripMenuItem_Click);
             // 
-            // displayToolStripMenuItem
-            // 
-            this.displayToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.displayHexToolStripMenuItem,
-            this.displayDecToolStripMenuItem});
-            this.displayToolStripMenuItem.Name = "displayToolStripMenuItem";
-            this.displayToolStripMenuItem.Size = new System.Drawing.Size(57, 20);
-            this.displayToolStripMenuItem.Text = "Display";
-            // 
-            // displayHexToolStripMenuItem
-            // 
-            this.displayHexToolStripMenuItem.Name = "displayHexToolStripMenuItem";
-            this.displayHexToolStripMenuItem.Size = new System.Drawing.Size(96, 22);
-            this.displayHexToolStripMenuItem.Text = "HEX";
-            this.displayHexToolStripMenuItem.Click += new System.EventHandler(this.displayHexToolStripMenuItem_Click);
-            // 
-            // displayDecToolStripMenuItem
-            // 
-            this.displayDecToolStripMenuItem.Name = "displayDecToolStripMenuItem";
-            this.displayDecToolStripMenuItem.Size = new System.Drawing.Size(96, 22);
-            this.displayDecToolStripMenuItem.Text = "DEC";
-            this.displayDecToolStripMenuItem.Click += new System.EventHandler(this.displayDecToolStripMenuItem_Click);
-            // 
             // sortToolStripMenuItem
             // 
             this.sortToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -877,9 +942,32 @@ namespace NSUNS4_Character_Manager
             this.sortRyoToolStripMenuItem.Text = "Ryo";
             this.sortRyoToolStripMenuItem.Click += new System.EventHandler(this.sortRyoToolStripMenuItem_Click);
             // 
+            // displayToolStripMenuItem
+            // 
+            this.displayToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.displayHexToolStripMenuItem,
+            this.displayDecToolStripMenuItem});
+            this.displayToolStripMenuItem.Name = "displayToolStripMenuItem";
+            this.displayToolStripMenuItem.Size = new System.Drawing.Size(57, 20);
+            this.displayToolStripMenuItem.Text = "Display";
+            // 
+            // displayHexToolStripMenuItem
+            // 
+            this.displayHexToolStripMenuItem.Name = "displayHexToolStripMenuItem";
+            this.displayHexToolStripMenuItem.Size = new System.Drawing.Size(96, 22);
+            this.displayHexToolStripMenuItem.Text = "HEX";
+            this.displayHexToolStripMenuItem.Click += new System.EventHandler(this.displayHexToolStripMenuItem_Click);
+            // 
+            // displayDecToolStripMenuItem
+            // 
+            this.displayDecToolStripMenuItem.Name = "displayDecToolStripMenuItem";
+            this.displayDecToolStripMenuItem.Size = new System.Drawing.Size(96, 22);
+            this.displayDecToolStripMenuItem.Text = "DEC";
+            this.displayDecToolStripMenuItem.Click += new System.EventHandler(this.displayDecToolStripMenuItem_Click);
+            // 
             // buttonAdd
             // 
-            this.buttonAdd.Location = new System.Drawing.Point(439, 288);
+            this.buttonAdd.Location = new System.Drawing.Point(438, 288);
             this.buttonAdd.Name = "buttonAdd";
             this.buttonAdd.Size = new System.Drawing.Size(145, 23);
             this.buttonAdd.TabIndex = 4;
@@ -889,7 +977,7 @@ namespace NSUNS4_Character_Manager
             // 
             // buttonCopy
             // 
-            this.buttonCopy.Location = new System.Drawing.Point(439, 317);
+            this.buttonCopy.Location = new System.Drawing.Point(438, 317);
             this.buttonCopy.Name = "buttonCopy";
             this.buttonCopy.Size = new System.Drawing.Size(145, 23);
             this.buttonCopy.TabIndex = 5;
@@ -919,15 +1007,15 @@ namespace NSUNS4_Character_Manager
             // 
             // label1
             // 
-            this.label1.Location = new System.Drawing.Point(436, 145);
+            this.label1.Location = new System.Drawing.Point(439, 167);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(300, 16);
+            this.label1.Size = new System.Drawing.Size(31, 15);
             this.label1.TabIndex = 9;
             this.label1.Text = "DLC";
             // 
             // label2
             // 
-            this.label2.Location = new System.Drawing.Point(436, 57);
+            this.label2.Location = new System.Drawing.Point(435, 79);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(79, 16);
             this.label2.TabIndex = 7;
@@ -935,18 +1023,18 @@ namespace NSUNS4_Character_Manager
             // 
             // label3
             // 
-            this.label3.Location = new System.Drawing.Point(440, 33);
+            this.label3.Location = new System.Drawing.Point(439, 33);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(52, 16);
+            this.label3.Size = new System.Drawing.Size(45, 16);
             this.label3.TabIndex = 5;
             this.label3.Text = "Preset:";
             this.label3.Click += new System.EventHandler(this.label3_Click);
             // 
             // label4
             // 
-            this.label4.Location = new System.Drawing.Point(436, 100);
+            this.label4.Location = new System.Drawing.Point(436, 121);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(300, 16);
+            this.label4.Size = new System.Drawing.Size(35, 21);
             this.label4.TabIndex = 3;
             this.label4.Text = "Ryo";
             this.label4.Click += new System.EventHandler(this.label4_Click);
@@ -961,42 +1049,41 @@ namespace NSUNS4_Character_Manager
             // 
             // dlcID
             // 
-            this.dlcID.Hexadecimal = true;
-            this.dlcID.Location = new System.Drawing.Point(439, 164);
-            this.dlcID.Maximum = new decimal(new int[] {
-            255,
-            0,
-            0,
-            0});
+            this.dlcID.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.dlcID.ForeColor = System.Drawing.SystemColors.WindowText;
+            this.dlcID.FormattingEnabled = true;
+            this.dlcID.Location = new System.Drawing.Point(476, 164);
             this.dlcID.Name = "dlcID";
-            this.dlcID.Size = new System.Drawing.Size(267, 23);
+            this.dlcID.Size = new System.Drawing.Size(264, 21);
             this.dlcID.TabIndex = 8;
+            this.dlcID.SelectedIndexChanged += new System.EventHandler(this.dlcID_SelectedIndexChanged);
             // 
             // unlockType
             // 
             this.unlockType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.unlockType.Location = new System.Drawing.Point(439, 76);
+            this.unlockType.Location = new System.Drawing.Point(512, 76);
             this.unlockType.Name = "unlockType";
-            this.unlockType.Size = new System.Drawing.Size(253, 21);
+            this.unlockType.Size = new System.Drawing.Size(228, 21);
             this.unlockType.TabIndex = 6;
+            this.unlockType.SelectedIndexChanged += new System.EventHandler(this.unlockType_SelectedIndexChanged);
             // 
             // costumeID
             // 
             this.costumeID.Hexadecimal = true;
-            this.costumeID.Location = new System.Drawing.Point(498, 31);
+            this.costumeID.Location = new System.Drawing.Point(512, 31);
             this.costumeID.Maximum = new decimal(new int[] {
             65535,
             0,
             0,
             0});
             this.costumeID.Name = "costumeID";
-            this.costumeID.Size = new System.Drawing.Size(242, 23);
+            this.costumeID.Size = new System.Drawing.Size(228, 23);
             this.costumeID.TabIndex = 4;
             // 
             // version
             // 
             this.version.Hexadecimal = true;
-            this.version.Location = new System.Drawing.Point(439, 119);
+            this.version.Location = new System.Drawing.Point(476, 119);
             this.version.Maximum = new decimal(new int[] {
             2147483647,
             0,
@@ -1008,8 +1095,9 @@ namespace NSUNS4_Character_Manager
             0,
             -2147483648});
             this.version.Name = "version";
-            this.version.Size = new System.Drawing.Size(253, 23);
+            this.version.Size = new System.Drawing.Size(264, 23);
             this.version.TabIndex = 2;
+            this.version.ValueChanged += new System.EventHandler(this.version_ValueChanged);
             // 
             // checkResetLock
             // 
@@ -1077,7 +1165,6 @@ namespace NSUNS4_Character_Manager
             this.Load += new System.EventHandler(this.Tool_UnlockEvoItemParamEditor_Load);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.dlcID)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.costumeID)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.version)).EndInit();
             this.ResumeLayout(false);
@@ -1090,8 +1177,8 @@ namespace NSUNS4_Character_Manager
             if (File.Exists(Main.unlockEvoItemParamPath))
             {
                 displayAsHex = true;
+                InitializeDlcItems();
                 InitializeUnlockTypeItems();
-                dlcID.Hexadecimal = true;
                 costumeID.Hexadecimal = true;
                 version.Hexadecimal = true;
                 UpdateDisplayMenuStates(displayHexToolStripMenuItem);
@@ -1119,6 +1206,21 @@ namespace NSUNS4_Character_Manager
         }
 
         private void label4_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void unlockType_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void dlcID_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void version_ValueChanged(object sender, EventArgs e)
         {
 
         }

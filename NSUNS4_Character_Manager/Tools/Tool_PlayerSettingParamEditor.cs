@@ -35,6 +35,11 @@ namespace NSUNS4_Character_Manager
 		private ToolStripMenuItem saveToolStripMenuItem;
 		private ToolStripMenuItem saveAsToolStripMenuItem;
 		private ToolStripMenuItem closeToolStripMenuItem;
+		private ToolStripMenuItem sortToolStripMenuItem;
+		private ToolStripMenuItem sortPresetToolStripMenuItem;
+		private ToolStripMenuItem displayToolStripMenuItem;
+		private ToolStripMenuItem displayHexToolStripMenuItem;
+		private ToolStripMenuItem displayDecToolStripMenuItem;
 		private Button AddButton;
 		private Button RemoveButton;
 		private Label label1;
@@ -60,10 +65,13 @@ namespace NSUNS4_Character_Manager
         private TextBox Search_TB;
         private Button Search;
         private Label label10;
+        private bool displayAsHex = true;
 
 		public Tool_PlayerSettingParamEditor()
 		{
 			InitializeComponent();
+            UpdateSortMenuStates(sortPresetToolStripMenuItem);
+            ApplyDisplayMode(true);
 		}
 
 		public void ClearFile()
@@ -206,8 +214,7 @@ namespace NSUNS4_Character_Manager
 			}
 			for (int x = 0; x < EntryCount; x++)
 			{
-				string NewItem = "Preset: " + PresetList[x][0].ToString("X2") + " " + PresetList[x][1].ToString("X2") + ", Characode: " + CharacodeList[x][0].ToString("X2") + " " + CharacodeList[x][1].ToString("X2") + ", Name: " + CharacterList[x];
-				ListBox1.Items.Add(NewItem);
+				ListBox1.Items.Add(BuildListEntryText(x));
 			}
 		}
 
@@ -248,8 +255,7 @@ namespace NSUNS4_Character_Manager
 			OptValueE.Add(OptE);
 
 			int x = EntryCount;
-			string NewItem = "Preset: " + PresetList[x][0].ToString("X2") + " " + PresetList[x][1].ToString("X2") + ", Characode: " + CharacodeList[x][0].ToString("X2") + " " + CharacodeList[x][1].ToString("X2") + ", Name: " + CharacterList[x];
-			ListBox1.Items.Add(NewItem);
+			ListBox1.Items.Add(BuildListEntryText(x));
 			EntryCount++;
 			ListBox1.SelectedIndex = ListBox1.Items.Count - 1;
             if (this.Visible) MessageBox.Show("Entry added.");
@@ -315,8 +321,7 @@ namespace NSUNS4_Character_Manager
 				OptValueD[x] = OptD;
 				OptValueE[x] = OptE;
 
-				string NewItem = "Preset: " + PresetList[x][0].ToString("X2") + " " + PresetList[x][1].ToString("X2") + ", Characode: " + CharacodeList[x][0].ToString("X2") + " " + CharacodeList[x][1].ToString("X2") + ", Name: " + CharacterList[x];
-				ListBox1.Items[x] = NewItem;
+				ListBox1.Items[x] = BuildListEntryText(x);
 				MessageBox.Show("Entry saved.");
 			}
 			else
@@ -867,7 +872,7 @@ namespace NSUNS4_Character_Manager
 			}
 		}
 
-		public void SaveFileAs(string basepath = "")
+        public void SaveFileAs(string basepath = "")
 		{
 			SaveFileDialog s = new SaveFileDialog();
 			{
@@ -898,6 +903,148 @@ namespace NSUNS4_Character_Manager
 			if (basepath == "")
 				MessageBox.Show("File saved to " + FilePath + ".");
 		}
+
+        private string BuildListEntryText(int index)
+        {
+            return "Preset: " + FormatShortValue(PresetList[index]) + ", Characode: " + FormatShortValue(CharacodeList[index]) + ", Name: " + CharacterList[index];
+        }
+
+        private string FormatShortValue(byte[] value)
+        {
+            int actualValue = Main.b_byteArrayToInt(value);
+            if (displayAsHex)
+            {
+                return value[0].ToString("X2") + " " + value[1].ToString("X2");
+            }
+
+            return actualValue.ToString();
+        }
+
+        private void RefreshListDisplay()
+        {
+            int selectedIndex = ListBox1.SelectedIndex;
+            ListBox1.Items.Clear();
+            for (int i = 0; i < EntryCount; i++)
+            {
+                ListBox1.Items.Add(BuildListEntryText(i));
+            }
+
+            if (selectedIndex >= 0 && selectedIndex < ListBox1.Items.Count)
+            {
+                ListBox1.SelectedIndex = selectedIndex;
+            }
+            else if (ListBox1.Items.Count > 0)
+            {
+                ListBox1.SelectedIndex = 0;
+            }
+        }
+
+        private void SortByPresetId()
+        {
+            if (!FileOpen || EntryCount <= 1)
+            {
+                return;
+            }
+
+            int selectedPresetId = -1;
+            if (ListBox1.SelectedIndex >= 0 && ListBox1.SelectedIndex < EntryCount)
+            {
+                selectedPresetId = Main.b_byteArrayToInt(PresetList[ListBox1.SelectedIndex]);
+            }
+
+            List<int> order = new List<int>();
+            for (int i = 0; i < EntryCount; i++)
+            {
+                order.Add(i);
+            }
+
+            order.Sort((a, b) => Main.b_byteArrayToInt(PresetList[a]).CompareTo(Main.b_byteArrayToInt(PresetList[b])));
+
+            List<byte[]> sortedPresetList = new List<byte[]>();
+            List<byte[]> sortedCharacodeList = new List<byte[]>();
+            List<int> sortedOptValueA = new List<int>();
+            List<string> sortedCharacterList = new List<string>();
+            List<int> sortedOptValueB = new List<int>();
+            List<int> sortedOptValueC = new List<int>();
+            List<string> sortedCChaAList = new List<string>();
+            List<string> sortedCChaBList = new List<string>();
+            List<int> sortedOptValueD = new List<int>();
+            List<int> sortedOptValueE = new List<int>();
+
+            for (int i = 0; i < order.Count; i++)
+            {
+                int index = order[i];
+                sortedPresetList.Add(PresetList[index]);
+                sortedCharacodeList.Add(CharacodeList[index]);
+                sortedOptValueA.Add(OptValueA[index]);
+                sortedCharacterList.Add(CharacterList[index]);
+                sortedOptValueB.Add(OptValueB[index]);
+                sortedOptValueC.Add(OptValueC[index]);
+                sortedCChaAList.Add(c_cha_a_List[index]);
+                sortedCChaBList.Add(c_cha_b_List[index]);
+                sortedOptValueD.Add(OptValueD[index]);
+                sortedOptValueE.Add(OptValueE[index]);
+            }
+
+            PresetList = sortedPresetList;
+            CharacodeList = sortedCharacodeList;
+            OptValueA = sortedOptValueA;
+            CharacterList = sortedCharacterList;
+            OptValueB = sortedOptValueB;
+            OptValueC = sortedOptValueC;
+            c_cha_a_List = sortedCChaAList;
+            c_cha_b_List = sortedCChaBList;
+            OptValueD = sortedOptValueD;
+            OptValueE = sortedOptValueE;
+
+            RefreshListDisplay();
+            if (selectedPresetId != -1)
+            {
+                for (int i = 0; i < EntryCount; i++)
+                {
+                    if (Main.b_byteArrayToInt(PresetList[i]) == selectedPresetId)
+                    {
+                        ListBox1.SelectedIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            UpdateSortMenuStates(sortPresetToolStripMenuItem);
+        }
+
+        private void ApplyDisplayMode(bool asHex)
+        {
+            displayAsHex = asHex;
+            pid0.Hexadecimal = asHex;
+            cid0.Hexadecimal = asHex;
+            opta.Hexadecimal = asHex;
+            optb.Hexadecimal = asHex;
+            optc.Hexadecimal = asHex;
+            optd.Hexadecimal = asHex;
+            opte.Hexadecimal = asHex;
+            UpdateDisplayMenuStates(asHex ? displayHexToolStripMenuItem : displayDecToolStripMenuItem);
+            RefreshListDisplay();
+        }
+
+        private void UpdateSortMenuStates(ToolStripMenuItem selectedItem)
+        {
+            sortPresetToolStripMenuItem.Checked = false;
+            if (selectedItem != null)
+            {
+                selectedItem.Checked = true;
+            }
+        }
+
+        private void UpdateDisplayMenuStates(ToolStripMenuItem selectedItem)
+        {
+            displayHexToolStripMenuItem.Checked = false;
+            displayDecToolStripMenuItem.Checked = false;
+            if (selectedItem != null)
+            {
+                selectedItem.Checked = true;
+            }
+        }
 
 		private void ListBox1_SelectedIndexChanged(object sender, EventArgs e)
 		{
@@ -993,6 +1140,21 @@ namespace NSUNS4_Character_Manager
 			}
 		}
 
+        private void sortPresetToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SortByPresetId();
+        }
+
+        private void displayHexToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ApplyDisplayMode(true);
+        }
+
+        private void displayDecToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ApplyDisplayMode(false);
+        }
+
 		private void AddButton_Click(object sender, EventArgs e)
 		{
 			if (FileOpen)
@@ -1048,6 +1210,11 @@ namespace NSUNS4_Character_Manager
             this.saveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saveAsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.closeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.sortToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.sortPresetToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.displayToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.displayHexToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.displayDecToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.AddButton = new System.Windows.Forms.Button();
             this.RemoveButton = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
@@ -1098,7 +1265,9 @@ namespace NSUNS4_Character_Manager
             // 
             this.menuStrip1.Font = new System.Drawing.Font("CC2 RocknRoll Latin DB", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.fileToolStripMenuItem});
+            this.fileToolStripMenuItem,
+            this.sortToolStripMenuItem,
+            this.displayToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
             this.menuStrip1.Size = new System.Drawing.Size(593, 24);
@@ -1153,6 +1322,46 @@ namespace NSUNS4_Character_Manager
             this.closeToolStripMenuItem.Size = new System.Drawing.Size(124, 22);
             this.closeToolStripMenuItem.Text = "Close File";
             this.closeToolStripMenuItem.Click += new System.EventHandler(this.closeToolStripMenuItem_Click);
+            // 
+            // sortToolStripMenuItem
+            // 
+            this.sortToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.sortPresetToolStripMenuItem});
+            this.sortToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.sortToolStripMenuItem.Name = "sortToolStripMenuItem";
+            this.sortToolStripMenuItem.Size = new System.Drawing.Size(40, 20);
+            this.sortToolStripMenuItem.Text = "Sort";
+            // 
+            // sortPresetToolStripMenuItem
+            // 
+            this.sortPresetToolStripMenuItem.Name = "sortPresetToolStripMenuItem";
+            this.sortPresetToolStripMenuItem.Size = new System.Drawing.Size(120, 22);
+            this.sortPresetToolStripMenuItem.Text = "Preset ID";
+            this.sortPresetToolStripMenuItem.Click += new System.EventHandler(this.sortPresetToolStripMenuItem_Click);
+            // 
+            // displayToolStripMenuItem
+            // 
+            this.displayToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.displayHexToolStripMenuItem,
+            this.displayDecToolStripMenuItem});
+            this.displayToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.displayToolStripMenuItem.Name = "displayToolStripMenuItem";
+            this.displayToolStripMenuItem.Size = new System.Drawing.Size(57, 20);
+            this.displayToolStripMenuItem.Text = "Display";
+            // 
+            // displayHexToolStripMenuItem
+            // 
+            this.displayHexToolStripMenuItem.Name = "displayHexToolStripMenuItem";
+            this.displayHexToolStripMenuItem.Size = new System.Drawing.Size(94, 22);
+            this.displayHexToolStripMenuItem.Text = "Hex";
+            this.displayHexToolStripMenuItem.Click += new System.EventHandler(this.displayHexToolStripMenuItem_Click);
+            // 
+            // displayDecToolStripMenuItem
+            // 
+            this.displayDecToolStripMenuItem.Name = "displayDecToolStripMenuItem";
+            this.displayDecToolStripMenuItem.Size = new System.Drawing.Size(94, 22);
+            this.displayDecToolStripMenuItem.Text = "Dec";
+            this.displayDecToolStripMenuItem.Click += new System.EventHandler(this.displayDecToolStripMenuItem_Click);
             // 
             // AddButton
             // 
@@ -1235,6 +1444,7 @@ namespace NSUNS4_Character_Manager
             this.cname.Name = "cname";
             this.cname.Size = new System.Drawing.Size(199, 23);
             this.cname.TabIndex = 11;
+            this.cname.TextChanged += new System.EventHandler(this.cname_TextChanged);
             // 
             // cchaa
             // 
@@ -1249,9 +1459,9 @@ namespace NSUNS4_Character_Manager
             this.label4.AutoSize = true;
             this.label4.Location = new System.Drawing.Point(387, 313);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(176, 15);
+            this.label4.Size = new System.Drawing.Size(93, 15);
             this.label4.TabIndex = 12;
-            this.label4.Text = "Identifier A for c_cha (Optional!)";
+            this.label4.Text = "Character Name";
             // 
             // cchab
             // 
@@ -1260,15 +1470,17 @@ namespace NSUNS4_Character_Manager
             this.cchab.Name = "cchab";
             this.cchab.Size = new System.Drawing.Size(201, 23);
             this.cchab.TabIndex = 15;
+            this.cchab.TextChanged += new System.EventHandler(this.cchab_TextChanged);
             // 
             // label5
             // 
             this.label5.AutoSize = true;
             this.label5.Location = new System.Drawing.Point(387, 362);
             this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(175, 15);
+            this.label5.Size = new System.Drawing.Size(134, 15);
             this.label5.TabIndex = 14;
-            this.label5.Text = "Identifier B for c_cha (Optional!)";
+            this.label5.Text = "Costume Specific Name";
+            this.label5.Click += new System.EventHandler(this.label5_Click);
             // 
             // SaveButton
             // 
@@ -1378,6 +1590,7 @@ namespace NSUNS4_Character_Manager
             this.opte.Name = "opte";
             this.opte.Size = new System.Drawing.Size(199, 23);
             this.opte.TabIndex = 26;
+            this.opte.ValueChanged += new System.EventHandler(this.opte_ValueChanged);
             // 
             // label9
             // 
@@ -1536,5 +1749,25 @@ namespace NSUNS4_Character_Manager
 				OpenFile(Main.pspPath);
 			}
 		}
+
+        private void cname_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void opte_ValueChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void cchab_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label5_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }

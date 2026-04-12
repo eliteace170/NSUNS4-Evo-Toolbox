@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Globalization;
 
 namespace NSUNS4_Character_Manager
 {
@@ -19,6 +20,22 @@ namespace NSUNS4_Character_Manager
             mf = m;
         }
 
+        private static bool HasNumericSuffix(string value)
+        {
+            if (string.IsNullOrEmpty(value) || value.Length < 2) return false;
+            return int.TryParse(value.Substring(value.Length - 2, 2), NumberStyles.None, CultureInfo.InvariantCulture, out _);
+        }
+
+        private static string GetCharacterPrefix(string value)
+        {
+            if (HasNumericSuffix(value))
+            {
+                return value.Substring(0, value.Length - 2);
+            }
+
+            return value;
+        }
+
         private void button1_Click(object sender, EventArgs e)
         {
             string character = w_chara.Text;
@@ -27,6 +44,7 @@ namespace NSUNS4_Character_Manager
             int page = (int)w_page.Value;
             int pos = (int)w_pos.Value;
             int charaindex = -1;
+            string characterPrefix = GetCharacterPrefix(character);
 
             // Check if characode already exists
             Tool_CharacodeEditor cc = new Tool_CharacodeEditor();
@@ -93,10 +111,22 @@ namespace NSUNS4_Character_Manager
             for (int x = 0; x < psp.EntryCount; x++)
             {
                 string thischaracter = psp.CharacterList[x];
-                if (basechar == thischaracter.Substring(0, basechar.Length))
+                if (string.Equals(basechar, thischaracter, StringComparison.Ordinal))
                 {
                     pspIndex = x;
-                    x = psp.EntryCount;
+                    break;
+                }
+            }
+            if (pspIndex == -1)
+            {
+                for (int x = 0; x < psp.EntryCount; x++)
+                {
+                    string thischaracter = psp.CharacterList[x];
+                    if (thischaracter.Length >= basechar.Length && thischaracter.StartsWith(basechar, StringComparison.Ordinal))
+                    {
+                        pspIndex = x;
+                        break;
+                    }
                 }
             }
             if (pspIndex == -1)
@@ -110,24 +140,42 @@ namespace NSUNS4_Character_Manager
             psp.AddID();
             pspIndex = psp.ListBox1.Items.Count - 1;
 
+            // Keep new presets above the current max preset id instead of backfilling gaps.
+            int newPresetId = 0;
+            for (int x = 0; x < psp.EntryCount - 1; x++)
+            {
+                int presetId = Main.b_byteArrayToInt(psp.PresetList[x]);
+                if (presetId > newPresetId) newPresetId = presetId;
+            }
+            newPresetId++;
+            while (psp.PresetList.Take(psp.EntryCount - 1).Any(preset => Main.b_byteArrayToInt(preset) == newPresetId))
+            {
+                newPresetId++;
+            }
+            psp.PresetList[pspIndex] = BitConverter.GetBytes(newPresetId);
+
             // Set a new name (this will find an unused number, like 3obt00, 3obt01, 3obt02, until a number is not used)
-            int maxNum = 0;
+            int maxNum = -1;
             for (int x = 0; x < psp.EntryCount; x++)
             {
-                if (psp.CharacterList[x].Substring(0, character.Length) == character)
+                string pspCharacter = psp.CharacterList[x];
+                if (pspCharacter.Length == characterPrefix.Length + 2 && pspCharacter.StartsWith(characterPrefix, StringComparison.Ordinal))
                 {
-                    int actualNum = int.Parse(psp.CharacterList[x].Substring(psp.CharacterList[x].Length - 2, 2));
-                    if (actualNum > maxNum) maxNum = actualNum;
+                    string suffix = pspCharacter.Substring(pspCharacter.Length - 2, 2);
+                    if (int.TryParse(suffix, NumberStyles.None, CultureInfo.InvariantCulture, out int actualNum) && actualNum > maxNum)
+                    {
+                        maxNum = actualNum;
+                    }
                 }
             }
-            string characterPspName = character;
+            string characterPspName = characterPrefix;
             maxNum = maxNum + 1;
 
-            if (maxNum < 0xF) characterPspName += "0" + maxNum.ToString("X2");
-            else characterPspName += maxNum.ToString("X2");
+            characterPspName += maxNum.ToString("D2");
 
             psp.CharacterList[pspIndex] = characterPspName;
             psp.OptValueA[pspIndex] = 0;
+            psp.OptValueE[pspIndex] = -1;
             psp.CharacodeList[pspIndex] = BitConverter.GetBytes(charaindex);
 
             // Open roster tool
@@ -138,10 +186,23 @@ namespace NSUNS4_Character_Manager
             int rosterId = -1;
             for (int x = 0; x < csp.EntryCount; x++)
             {
-                if (basechar == csp.CharacterList[x].Substring(0, basechar.Length))
+                string rosterCharacter = csp.CharacterList[x];
+                if (string.Equals(basechar, rosterCharacter, StringComparison.Ordinal))
                 {
                     rosterId = x;
-                    x = csp.EntryCount;
+                    break;
+                }
+            }
+            if (rosterId == -1)
+            {
+                for (int x = 0; x < csp.EntryCount; x++)
+                {
+                    string rosterCharacter = csp.CharacterList[x];
+                    if (rosterCharacter.Length >= basechar.Length && rosterCharacter.StartsWith(basechar, StringComparison.Ordinal))
+                    {
+                        rosterId = x;
+                        break;
+                    }
                 }
             }
             if (rosterId == -1)

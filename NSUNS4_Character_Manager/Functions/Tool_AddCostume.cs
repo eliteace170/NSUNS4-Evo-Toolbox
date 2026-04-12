@@ -3,10 +3,13 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Globalization;
+using NSUNS4_Character_Manager.Tools;
 
 namespace NSUNS4_Character_Manager
 {
@@ -21,11 +24,95 @@ namespace NSUNS4_Character_Manager
         }
         public int iconID = 0;
         public int iconID_cost = 0;
+
+        private static bool HasNumericSuffix(string value)
+        {
+            if (string.IsNullOrEmpty(value) || value.Length < 2) return false;
+            return int.TryParse(value.Substring(value.Length - 2, 2), NumberStyles.None, CultureInfo.InvariantCulture, out _);
+        }
+
+        private static string GetCharacterPrefix(string value)
+        {
+            if (HasNumericSuffix(value))
+            {
+                return value.Substring(0, value.Length - 2);
+            }
+
+            return value;
+        }
+
+        private static string ReadUnlockMessage(byte[] entry)
+        {
+            byte[] msg = Main.b_ReadByteArray(entry, 8, 16);
+            int terminator = Array.IndexOf(msg, (byte)0);
+            if (terminator >= 0)
+            {
+                Array.Resize(ref msg, terminator);
+            }
+
+            return Encoding.ASCII.GetString(msg).Trim();
+        }
+
+        private static byte[] BuildUnlockEntry(int presetId, byte dlcId, int versionValue, bool disableNotification, string messageId)
+        {
+            byte[] entry = new byte[0x18];
+            entry[0] = dlcId;
+            entry[1] = 0x19;
+
+            byte[] presetBytes = BitConverter.GetBytes((short)presetId);
+            entry[2] = presetBytes[0];
+            entry[3] = presetBytes[1];
+
+            byte[] versionBytes = disableNotification ? BitConverter.GetBytes(-1) : BitConverter.GetBytes(versionValue);
+            entry[4] = versionBytes[0];
+            entry[5] = versionBytes[1];
+            entry[6] = versionBytes[2];
+            entry[7] = versionBytes[3];
+
+            byte[] messageBytes = Encoding.ASCII.GetBytes(messageId ?? "");
+            for (int i = 0; i < messageBytes.Length && i < 16; i++)
+            {
+                entry[8 + i] = messageBytes[i];
+            }
+
+            return entry;
+        }
+
+        private static int GetCharacterSlotNumber(string value, string prefix)
+        {
+            if (string.IsNullOrEmpty(value) || string.IsNullOrEmpty(prefix)) return int.MaxValue;
+            if (value.Length != prefix.Length + 2 || !value.StartsWith(prefix, StringComparison.Ordinal)) return int.MaxValue;
+
+            if (int.TryParse(value.Substring(value.Length - 2, 2), NumberStyles.None, CultureInfo.InvariantCulture, out int slot))
+            {
+                return slot;
+            }
+
+            return int.MaxValue;
+        }
+
+        private static string GetFirstNonEmptyValue(IList<string> values)
+        {
+            if (values == null) return "";
+
+            for (int i = 0; i < values.Count; i++)
+            {
+                if (!string.IsNullOrWhiteSpace(values[i]))
+                {
+                    return values[i];
+                }
+            }
+
+            return "";
+        }
+
         public int AddCostume()
         {
             string character = w_base.Text;
             string model = w_model.Text;
             string awamodel = awaModel.Text;
+            string characterPrefix = GetCharacterPrefix(character);
+            string customDisplayName = unlockMessage.Text.Trim();
 
             // Open DPP
             Tool_DuelPlayerParamEditor dpp = new Tool_DuelPlayerParamEditor();
@@ -46,6 +133,11 @@ namespace NSUNS4_Character_Manager
             {
                 if(this.Visible) MessageBox.Show("Base character not found in duelPlayerParam.");
                 return 1;
+            }
+
+            if (string.IsNullOrWhiteSpace(awamodel))
+            {
+                awamodel = GetFirstNonEmptyValue(dpp.AwkCostumeList[dppIndex]);
             }
 
             // Find null costume and add ours
@@ -76,10 +168,22 @@ namespace NSUNS4_Character_Manager
             for (int x = 0; x < psp.EntryCount; x++)
             {
                 string thischaracter = psp.CharacterList[x];
-                if (character == thischaracter.Substring(0, character.Length))
+                if (string.Equals(thischaracter, character, StringComparison.Ordinal))
                 {
                     pspIndex = x;
-                    x = psp.EntryCount;
+                    break;
+                }
+            }
+            if (pspIndex == -1)
+            {
+                for (int x = 0; x < psp.EntryCount; x++)
+                {
+                    string thischaracter = psp.CharacterList[x];
+                    if (thischaracter.Length >= character.Length && thischaracter.StartsWith(character, StringComparison.Ordinal))
+                    {
+                        pspIndex = x;
+                        break;
+                    }
                 }
             }
             if (pspIndex == -1)
@@ -88,29 +192,109 @@ namespace NSUNS4_Character_Manager
                 return 3;
             }
 
+            int basePresetId = Main.b_byteArrayToInt(psp.PresetList[pspIndex]);
+            int defaultNameIndex = -1;
+            int defaultNameSlot = int.MaxValue;
+            for (int x = 0; x < psp.EntryCount; x++)
+            {
+                int slotNumber = GetCharacterSlotNumber(psp.CharacterList[x], characterPrefix);
+                if (slotNumber < defaultNameSlot)
+                {
+                    defaultNameSlot = slotNumber;
+                    defaultNameIndex = x;
+                }
+            }
+            if (defaultNameIndex == -1)
+            {
+                defaultNameIndex = pspIndex;
+            }
+
+            string resolvedDisplayName = customDisplayName;
+            if (string.IsNullOrWhiteSpace(resolvedDisplayName))
+            {
+                resolvedDisplayName = psp.c_cha_b_List[defaultNameIndex];
+            }
+            if (string.IsNullOrWhiteSpace(resolvedDisplayName))
+            {
+                resolvedDisplayName = character;
+            }
+
             // Create psp entry for our costume
             psp.ListBox1.SelectedIndex = pspIndex;
             psp.AddID();
             pspIndex = psp.ListBox1.Items.Count - 1;
 
+            // Keep new presets above the current max preset id instead of backfilling gaps.
+            int newPresetId = 0;
+            for (int x = 0; x < psp.EntryCount - 1; x++)
+            {
+                int presetId = Main.b_byteArrayToInt(psp.PresetList[x]);
+                if (presetId > newPresetId) newPresetId = presetId;
+            }
+            newPresetId++;
+            while (psp.PresetList.Take(psp.EntryCount - 1).Any(preset => Main.b_byteArrayToInt(preset) == newPresetId))
+            {
+                newPresetId++;
+            }
+            psp.PresetList[pspIndex] = BitConverter.GetBytes(newPresetId);
+
             // Set a new name (this will find an unused number, like 3obt00, 3obt01, 3obt02, until a number is not used)
             int maxNum = 0;
             for (int x = 0; x < psp.EntryCount; x++)
             {
-                if (psp.CharacterList[x].Substring(0, character.Length) == character)
+                string pspCharacter = psp.CharacterList[x];
+                if (pspCharacter.Length == characterPrefix.Length + 2 && pspCharacter.StartsWith(characterPrefix, StringComparison.Ordinal))
                 {
-                    int actualNum = int.Parse(psp.CharacterList[x].Substring(psp.CharacterList[x].Length - 2, 2));
-                    if (actualNum > maxNum) maxNum = actualNum;
+                    string suffix = pspCharacter.Substring(pspCharacter.Length - 2, 2);
+                    if (int.TryParse(suffix, NumberStyles.None, CultureInfo.InvariantCulture, out int actualNum) && actualNum > maxNum)
+                    {
+                        maxNum = actualNum;
+                    }
                 }
             }
-            string characterPspName = character;
+            string characterPspName = characterPrefix;
             maxNum = maxNum + 1;
 
-            if (maxNum < 0xF) characterPspName += "0" + maxNum.ToString("X2");
-            else characterPspName += maxNum.ToString("X2");
+            characterPspName += maxNum.ToString("D2");
 
             psp.CharacterList[pspIndex] = characterPspName;
             psp.OptValueA[pspIndex] = dpp_costId;
+            psp.OptValueE[pspIndex] = basePresetId;
+            psp.c_cha_b_List[pspIndex] = resolvedDisplayName;
+
+            // Open unlock evo item tool
+            Tool_UnlockEvoItemParamEditor unlock = new Tool_UnlockEvoItemParamEditor();
+            unlock.OpenFile(Main.unlockEvoItemParamPath);
+            if (!unlock.FileOpen || string.IsNullOrWhiteSpace(unlock.FilePath) || !File.Exists(unlock.FilePath))
+            {
+                if (this.Visible) MessageBox.Show("UnlockEvoItemParam file not found.");
+                return 6;
+            }
+
+            byte unlockDlcId = 0;
+            int unlockVersionValue = 0;
+            bool unlockBaseEntryFound = false;
+            for (int x = 0; x < unlock.EntryList.Count; x++)
+            {
+                byte[] entry = unlock.EntryList[x];
+                if (entry.Length >= 0x18 &&
+                    entry[1] == 0x19 &&
+                    Main.b_byteArrayToIntTwoBytes(new byte[] { entry[2], entry[3] }) == basePresetId)
+                {
+                    unlockDlcId = entry[0];
+                    unlockVersionValue = BitConverter.ToInt32(entry, 4);
+                    unlockBaseEntryFound = true;
+                    break;
+                }
+            }
+
+            unlock.EntryList.Add(BuildUnlockEntry(
+                newPresetId,
+                unlockBaseEntryFound ? unlockDlcId : (byte)0,
+                unlockBaseEntryFound ? unlockVersionValue : 0,
+                unlockNotification.Checked,
+                resolvedDisplayName));
+            unlock.EntryCount = unlock.EntryList.Count;
 
             // Open roster tool
             Tool_RosterEditor csp = new Tool_RosterEditor();
@@ -120,10 +304,23 @@ namespace NSUNS4_Character_Manager
             int rosterId = -1;
             for (int x = 0; x < csp.EntryCount; x++)
             {
-                if (character == csp.CharacterList[x].Substring(0, character.Length))
+                string rosterCharacter = csp.CharacterList[x];
+                if (string.Equals(rosterCharacter, character, StringComparison.Ordinal))
                 {
                     rosterId = x;
-                    x = csp.EntryCount;
+                    break;
+                }
+            }
+            if (rosterId == -1)
+            {
+                for (int x = 0; x < csp.EntryCount; x++)
+                {
+                    string rosterCharacter = csp.CharacterList[x];
+                    if (rosterCharacter.Length >= character.Length && rosterCharacter.StartsWith(character, StringComparison.Ordinal))
+                    {
+                        rosterId = x;
+                        break;
+                    }
                 }
             }
             if (rosterId == -1)
@@ -173,6 +370,11 @@ namespace NSUNS4_Character_Manager
                     break;
                 }
             }
+            if (iconID == 0)
+            {
+                if (this.Visible) MessageBox.Show("Base character not found in characode.");
+                return 5;
+            }
             // Open player_icon tool
             Tools.Tool_IconEditor icon = new Tools.Tool_IconEditor();
             icon.OpenFile(Main.iconPath);
@@ -181,6 +383,12 @@ namespace NSUNS4_Character_Manager
             // Save files
             dpp.SaveFile();
             psp.SaveFile();
+            if (File.Exists(unlock.FilePath + ".backup"))
+            {
+                File.Delete(unlock.FilePath + ".backup");
+            }
+            File.Copy(unlock.FilePath, unlock.FilePath + ".backup");
+            File.WriteAllBytes(unlock.FilePath, unlock.ConvertToFile());
             csp.SaveFile();
             icon.SaveFile();
             if (this.Visible) MessageBox.Show("Added costume of base character " + character + " with model " + model +
@@ -196,6 +404,16 @@ namespace NSUNS4_Character_Manager
         }
 
         private void Tool_AddCostume_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label7_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void unlockNotification_CheckedChanged(object sender, EventArgs e)
         {
 
         }

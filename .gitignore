@@ -6,6 +6,7 @@
 /lib/
 /xfbinFiles/
 /01 editor templates/
+/.dotnet/
 
 
 *.user

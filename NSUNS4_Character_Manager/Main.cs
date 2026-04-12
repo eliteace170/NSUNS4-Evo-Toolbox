@@ -232,7 +232,7 @@ namespace NSUNS4_Character_Manager
         // Add costume
         private void addCostumeToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (dppPath == "[null]" || pspPath == "[null]" || cspPath == "[null]" || iconPath == "[null]" || chaPath == "[null]")
+            if (dppPath == "[null]" || pspPath == "[null]" || cspPath == "[null]" || iconPath == "[null]" || chaPath == "[null]" || unlockEvoItemParamPath == "[null]")
             {
                 MessageBox.Show("Please select your default path to data_win32 to use this function.");
                 return;
@@ -2003,6 +2003,12 @@ namespace NSUNS4_Character_Manager
                     break;
                 case 4:
                     MessageBox.Show("Error importing " + filepath + ": base character " + basechar + " not found in characterSelectParam.");
+                    break;
+                case 5:
+                    MessageBox.Show("Error importing " + filepath + ": base character " + basechar + " not found in characode.");
+                    break;
+                case 6:
+                    MessageBox.Show("Error importing " + filepath + ": UnlockEvoItemParam file was not found.");
                     break;
             }
         }

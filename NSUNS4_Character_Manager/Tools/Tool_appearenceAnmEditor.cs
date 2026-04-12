@@ -40,7 +40,91 @@ namespace NSUNS4_Character_Manager.Tools
 		public Tool_appearenceAnmEditor()
         {
             InitializeComponent();
+			sortToolStripButton.Enabled = false;
         }
+
+		private string BuildListItem(int index)
+		{
+			string typeLabel = TypeSectionList[index] ? "Material" : "Mesh";
+			return "Characode: " + CharacodeList[index][0].ToString("X2") + " " + CharacodeList[index][1].ToString("X2") + ", Mesh/Material: " + MeshList[index] + ", Type: " + typeLabel;
+		}
+
+		private void RefreshEntryList(int selectedIndex = -1)
+		{
+			listBox1.Items.Clear();
+			sortToolStripButton.Enabled = false;
+			for (int x = 0; x < EntryCount; x++)
+			{
+				listBox1.Items.Add(BuildListItem(x));
+			}
+
+			if (EntryCount <= 0)
+			{
+				return;
+			}
+
+			sortToolStripButton.Enabled = true;
+
+			if (selectedIndex < 0 || selectedIndex >= EntryCount)
+			{
+				selectedIndex = 0;
+			}
+
+			listBox1.SelectedIndex = selectedIndex;
+		}
+
+		private void ReorderList<T>(List<T> list, List<int> order)
+		{
+			List<T> reordered = new List<T>(order.Count);
+			for (int i = 0; i < order.Count; i++)
+			{
+				reordered.Add(list[order[i]]);
+			}
+
+			list.Clear();
+			list.AddRange(reordered);
+		}
+
+		private void SortEntriesByCharacode()
+		{
+			if (!FileOpen || EntryCount <= 1)
+			{
+				return;
+			}
+
+			int selectedIndex = listBox1.SelectedIndex;
+			List<int> order = new List<int>();
+			for (int i = 0; i < EntryCount; i++)
+			{
+				order.Add(i);
+			}
+
+			order.Sort((left, right) =>
+			{
+				int leftCode = Main.b_byteArrayToInt(CharacodeList[left]);
+				int rightCode = Main.b_byteArrayToInt(CharacodeList[right]);
+				return leftCode.CompareTo(rightCode);
+			});
+
+			int newSelectedIndex = selectedIndex >= 0 ? order.IndexOf(selectedIndex) : -1;
+
+			ReorderList(CharacodeList, order);
+			ReorderList(MeshList, order);
+			ReorderList(SlotList, order);
+			ReorderList(TypeSectionList, order);
+			ReorderList(EnableDisableList, order);
+			ReorderList(NormalStateList, order);
+			ReorderList(AwakeningStateList, order);
+			ReorderList(ReverseSectionList, order);
+			ReorderList(EnableDisableCutNCList, order);
+			ReorderList(EnableDisableUltList, order);
+			ReorderList(EnableDisableWinList, order);
+			ReorderList(EnableDisableArmorBreakList, order);
+			ReorderList(TimingAwakeList, order);
+			ReorderList(TransparenceList, order);
+
+			RefreshEntryList(newSelectedIndex);
+		}
 
 		public void CloseFile()
 		{
@@ -142,6 +226,7 @@ namespace NSUNS4_Character_Manager.Tools
 			FilePath = o.FileName;
 
 			FileBytes = File.ReadAllBytes(FilePath);
+			sortToolStripButton.Enabled = true;
 			EntryCount = FileBytes[292] + FileBytes[293] * 0x100 + FileBytes[294] * 0x10000 + FileBytes[295] * 0x1000000;
 			for (int x2 = 0; x2 < EntryCount; x2++)
 			{
@@ -200,19 +285,7 @@ namespace NSUNS4_Character_Manager.Tools
 				TimingAwakeList.Add(Timing);
 				TransparenceList.Add(Transparence);
 			}
-			for (int x = 0; x < EntryCount; x++)
-			{
-				string NewItem = "";
-				if (TypeSectionList[x])
-                {
-					NewItem = "Characode: " + CharacodeList[x][0].ToString("X2") + " " + CharacodeList[x][1].ToString("X2") + ", Mesh/Material: " + MeshList[x] + ", Type: Material";
-				}
-				else
-                {
-					NewItem = "Characode: " + CharacodeList[x][0].ToString("X2") + " " + CharacodeList[x][1].ToString("X2") + ", Mesh/Material: " + MeshList[x] + ", Type: Mesh";
-				}
-				listBox1.Items.Add(NewItem);
-			}
+			RefreshEntryList();
 		}
 
         private void Tool_appearenceAnmEditor_Load(object sender, EventArgs e)
@@ -355,16 +428,7 @@ namespace NSUNS4_Character_Manager.Tools
 					EnableDisableArmorBreakList[i] = ArmorBreak_v.Checked;
 					TimingAwakeList[i] = (int)Timing_v.Value;
 					TransparenceList[i] = (float)Transparence_v.Value;
-					string NewItem = "";
-					if (Type_cb.SelectedIndex == 1)
-					{
-						NewItem = "Characode: " + Characode_new[0].ToString("X2") + " " + Characode_new[1].ToString("X2") + ", Mesh/Material: " + MeshName_tb.Text + ", Type: Material";
-					}
-					else if (Type_cb.SelectedIndex == 0)
-					{
-						NewItem = "Characode: " + Characode_new[0].ToString("X2") + " " + Characode_new[1].ToString("X2") + ", Mesh/Material: " + MeshName_tb.Text + ", Type: Mesh";
-					}
-					listBox1.Items[i] = NewItem;
+					listBox1.Items[i] = BuildListItem(i);
 					MessageBox.Show("Entry saved.");
 				}
 				else
@@ -412,16 +476,7 @@ namespace NSUNS4_Character_Manager.Tools
 					EnableDisableArmorBreakList.Add(ArmorBreak_v.Checked);
 					TimingAwakeList.Add((int)Timing_v.Value);
 					TransparenceList.Add((float)Transparence_v.Value);
-					string NewItem = "";
-					if (Type_cb.SelectedIndex == 1)
-					{
-						NewItem = "Characode: " + Characode_new[0].ToString("X2") + " " + Characode_new[1].ToString("X2") + ", Mesh/Material: " + MeshName_tb.Text + ", Type: Material";
-					}
-					else if (Type_cb.SelectedIndex == 0)
-					{
-						NewItem = "Characode: " + Characode_new[0].ToString("X2") + " " + Characode_new[1].ToString("X2") + ", Mesh/Material: " + MeshName_tb.Text + ", Type: Mesh";
-					}
-					listBox1.Items.Add(NewItem);
+					listBox1.Items.Add(BuildListItem(EntryCount));
 					EntryCount++;
 					listBox1.SelectedIndex = listBox1.Items.Count - 1;
 					MessageBox.Show("Entry added.");
@@ -809,9 +864,14 @@ namespace NSUNS4_Character_Manager.Tools
 			}
 		}
 
-        private void checkBox25_CheckedChanged(object sender, EventArgs e)
+		private void checkBox25_CheckedChanged(object sender, EventArgs e)
         {
 
         }
+
+		private void sortToolStripButton_Click(object sender, EventArgs e)
+		{
+			SortEntriesByCharacode();
+		}
     }
 }

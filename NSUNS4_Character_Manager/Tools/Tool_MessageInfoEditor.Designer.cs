@@ -342,7 +342,7 @@
             this.fileToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(975, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(1221, 24);
             this.menuStrip1.TabIndex = 27;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -391,7 +391,7 @@
             this.JPN_Extra_textbox.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.25F);
             this.JPN_Extra_textbox.Location = new System.Drawing.Point(827, 359);
             this.JPN_Extra_textbox.Name = "JPN_Extra_textbox";
-            this.JPN_Extra_textbox.Size = new System.Drawing.Size(136, 23);
+            this.JPN_Extra_textbox.Size = new System.Drawing.Size(382, 23);
             this.JPN_Extra_textbox.TabIndex = 41;
             // 
             // SPA_Extra_textbox
@@ -399,7 +399,7 @@
             this.SPA_Extra_textbox.Enabled = false;
             this.SPA_Extra_textbox.Location = new System.Drawing.Point(827, 333);
             this.SPA_Extra_textbox.Name = "SPA_Extra_textbox";
-            this.SPA_Extra_textbox.Size = new System.Drawing.Size(136, 20);
+            this.SPA_Extra_textbox.Size = new System.Drawing.Size(382, 20);
             this.SPA_Extra_textbox.TabIndex = 40;
             // 
             // RUS_Extra_textbox
@@ -407,7 +407,7 @@
             this.RUS_Extra_textbox.Enabled = false;
             this.RUS_Extra_textbox.Location = new System.Drawing.Point(827, 307);
             this.RUS_Extra_textbox.Name = "RUS_Extra_textbox";
-            this.RUS_Extra_textbox.Size = new System.Drawing.Size(136, 20);
+            this.RUS_Extra_textbox.Size = new System.Drawing.Size(382, 20);
             this.RUS_Extra_textbox.TabIndex = 39;
             // 
             // POR_Extra_textbox
@@ -415,7 +415,7 @@
             this.POR_Extra_textbox.Enabled = false;
             this.POR_Extra_textbox.Location = new System.Drawing.Point(827, 281);
             this.POR_Extra_textbox.Name = "POR_Extra_textbox";
-            this.POR_Extra_textbox.Size = new System.Drawing.Size(136, 20);
+            this.POR_Extra_textbox.Size = new System.Drawing.Size(382, 20);
             this.POR_Extra_textbox.TabIndex = 38;
             // 
             // POL_Extra_textbox
@@ -423,7 +423,7 @@
             this.POL_Extra_textbox.Enabled = false;
             this.POL_Extra_textbox.Location = new System.Drawing.Point(827, 255);
             this.POL_Extra_textbox.Name = "POL_Extra_textbox";
-            this.POL_Extra_textbox.Size = new System.Drawing.Size(136, 20);
+            this.POL_Extra_textbox.Size = new System.Drawing.Size(382, 20);
             this.POL_Extra_textbox.TabIndex = 37;
             // 
             // KOKR_Extra_textbox
@@ -431,7 +431,7 @@
             this.KOKR_Extra_textbox.Enabled = false;
             this.KOKR_Extra_textbox.Location = new System.Drawing.Point(827, 229);
             this.KOKR_Extra_textbox.Name = "KOKR_Extra_textbox";
-            this.KOKR_Extra_textbox.Size = new System.Drawing.Size(136, 20);
+            this.KOKR_Extra_textbox.Size = new System.Drawing.Size(382, 20);
             this.KOKR_Extra_textbox.TabIndex = 36;
             // 
             // ITA_Extra_textbox
@@ -439,7 +439,7 @@
             this.ITA_Extra_textbox.Enabled = false;
             this.ITA_Extra_textbox.Location = new System.Drawing.Point(827, 203);
             this.ITA_Extra_textbox.Name = "ITA_Extra_textbox";
-            this.ITA_Extra_textbox.Size = new System.Drawing.Size(136, 20);
+            this.ITA_Extra_textbox.Size = new System.Drawing.Size(382, 20);
             this.ITA_Extra_textbox.TabIndex = 35;
             // 
             // GER_Extra_textbox
@@ -447,7 +447,7 @@
             this.GER_Extra_textbox.Enabled = false;
             this.GER_Extra_textbox.Location = new System.Drawing.Point(827, 177);
             this.GER_Extra_textbox.Name = "GER_Extra_textbox";
-            this.GER_Extra_textbox.Size = new System.Drawing.Size(136, 20);
+            this.GER_Extra_textbox.Size = new System.Drawing.Size(382, 20);
             this.GER_Extra_textbox.TabIndex = 34;
             // 
             // FRE_Extra_textbox
@@ -455,7 +455,7 @@
             this.FRE_Extra_textbox.Enabled = false;
             this.FRE_Extra_textbox.Location = new System.Drawing.Point(827, 151);
             this.FRE_Extra_textbox.Name = "FRE_Extra_textbox";
-            this.FRE_Extra_textbox.Size = new System.Drawing.Size(136, 20);
+            this.FRE_Extra_textbox.Size = new System.Drawing.Size(382, 20);
             this.FRE_Extra_textbox.TabIndex = 33;
             // 
             // ESMX_Extra_textbox
@@ -463,7 +463,7 @@
             this.ESMX_Extra_textbox.Enabled = false;
             this.ESMX_Extra_textbox.Location = new System.Drawing.Point(827, 125);
             this.ESMX_Extra_textbox.Name = "ESMX_Extra_textbox";
-            this.ESMX_Extra_textbox.Size = new System.Drawing.Size(136, 20);
+            this.ESMX_Extra_textbox.Size = new System.Drawing.Size(382, 20);
             this.ESMX_Extra_textbox.TabIndex = 32;
             // 
             // ENG_Extra_textbox
@@ -471,7 +471,7 @@
             this.ENG_Extra_textbox.Enabled = false;
             this.ENG_Extra_textbox.Location = new System.Drawing.Point(827, 99);
             this.ENG_Extra_textbox.Name = "ENG_Extra_textbox";
-            this.ENG_Extra_textbox.Size = new System.Drawing.Size(136, 20);
+            this.ENG_Extra_textbox.Size = new System.Drawing.Size(382, 20);
             this.ENG_Extra_textbox.TabIndex = 31;
             // 
             // CHI_Extra_textbox
@@ -480,7 +480,7 @@
             this.CHI_Extra_textbox.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.25F);
             this.CHI_Extra_textbox.Location = new System.Drawing.Point(827, 70);
             this.CHI_Extra_textbox.Name = "CHI_Extra_textbox";
-            this.CHI_Extra_textbox.Size = new System.Drawing.Size(136, 23);
+            this.CHI_Extra_textbox.Size = new System.Drawing.Size(382, 23);
             this.CHI_Extra_textbox.TabIndex = 30;
             // 
             // ARAE_Extra_textbox
@@ -490,7 +490,7 @@
             this.ARAE_Extra_textbox.Location = new System.Drawing.Point(827, 41);
             this.ARAE_Extra_textbox.Name = "ARAE_Extra_textbox";
             this.ARAE_Extra_textbox.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-            this.ARAE_Extra_textbox.Size = new System.Drawing.Size(136, 23);
+            this.ARAE_Extra_textbox.Size = new System.Drawing.Size(382, 23);
             this.ARAE_Extra_textbox.TabIndex = 29;
             // 
             // label15
@@ -610,7 +610,7 @@
             // 
             this.button2.Location = new System.Drawing.Point(730, 473);
             this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(233, 23);
+            this.button2.Size = new System.Drawing.Size(479, 23);
             this.button2.TabIndex = 54;
             this.button2.Text = "Save changes";
             this.button2.UseVisualStyleBackColor = true;
@@ -639,7 +639,7 @@
             // checkBox1
             // 
             this.checkBox1.AutoSize = true;
-            this.checkBox1.Location = new System.Drawing.Point(847, 450);
+            this.checkBox1.Location = new System.Drawing.Point(730, 446);
             this.checkBox1.Name = "checkBox1";
             this.checkBox1.Size = new System.Drawing.Size(116, 17);
             this.checkBox1.TabIndex = 57;
@@ -649,7 +649,7 @@
             // label21
             // 
             this.label21.AutoSize = true;
-            this.label21.Location = new System.Drawing.Point(727, 398);
+            this.label21.Location = new System.Drawing.Point(727, 417);
             this.label21.Name = "label21";
             this.label21.Size = new System.Drawing.Size(151, 13);
             this.label21.TabIndex = 59;
@@ -659,7 +659,7 @@
             // 
             // textBox3
             // 
-            this.textBox3.Location = new System.Drawing.Point(730, 414);
+            this.textBox3.Location = new System.Drawing.Point(884, 414);
             this.textBox3.MaxLength = 256;
             this.textBox3.Name = "textBox3";
             this.textBox3.Size = new System.Drawing.Size(233, 20);
@@ -732,7 +732,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(975, 505);
+            this.ClientSize = new System.Drawing.Size(1221, 505);
             this.Controls.Add(this.checkBox2);
             this.Controls.Add(this.comboBox2);
             this.Controls.Add(this.button5);

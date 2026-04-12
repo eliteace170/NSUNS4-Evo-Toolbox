@@ -2648,7 +2648,10 @@ namespace NSUNS4_Character_Manager
 
         private void Tool_DuelPlayerParamEditor_Load_1(object sender, EventArgs e)
         {
-
+			if (File.Exists(Main.dppPath))
+			{
+				OpenFile(Main.dppPath);
+			}
         }
 
         private void settingsTitleLabel_Click(object sender, EventArgs e)

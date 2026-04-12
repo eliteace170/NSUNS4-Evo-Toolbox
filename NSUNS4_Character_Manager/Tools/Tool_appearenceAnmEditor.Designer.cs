@@ -35,6 +35,7 @@ namespace NSUNS4_Character_Manager.Tools
             this.saveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saveAsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.closeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.sortToolStripButton = new System.Windows.Forms.ToolStripButton();
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.MeshName_tb = new System.Windows.Forms.TextBox();
@@ -106,7 +107,8 @@ namespace NSUNS4_Character_Manager.Tools
             // menuStrip1
             // 
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.fileToolStripMenuItem});
+            this.fileToolStripMenuItem,
+            this.sortToolStripButton});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
             this.menuStrip1.Padding = new System.Windows.Forms.Padding(5, 2, 0, 2);
@@ -152,6 +154,14 @@ namespace NSUNS4_Character_Manager.Tools
             this.closeToolStripMenuItem.Size = new System.Drawing.Size(112, 22);
             this.closeToolStripMenuItem.Text = "Close";
             this.closeToolStripMenuItem.Click += new System.EventHandler(this.closeToolStripMenuItem_Click);
+            // 
+            // sortToolStripButton
+            // 
+            this.sortToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.sortToolStripButton.Name = "sortToolStripButton";
+            this.sortToolStripButton.Size = new System.Drawing.Size(31, 20);
+            this.sortToolStripButton.Text = "Sort";
+            this.sortToolStripButton.Click += new System.EventHandler(this.sortToolStripButton_Click);
             // 
             // label1
             // 
@@ -762,6 +772,7 @@ namespace NSUNS4_Character_Manager.Tools
         private System.Windows.Forms.ToolStripMenuItem saveToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem saveAsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem closeToolStripMenuItem;
+        private System.Windows.Forms.ToolStripButton sortToolStripButton;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.TextBox MeshName_tb;
