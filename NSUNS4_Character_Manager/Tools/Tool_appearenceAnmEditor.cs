@@ -36,6 +36,7 @@ namespace NSUNS4_Character_Manager.Tools
 		public List<int> TimingAwakeList = new List<int>();
 		public List<float> TransparenceList = new List<float>();
 		public int EntryCount = 0;
+		private bool isUpdatingSelection = false;
 
 		public Tool_appearenceAnmEditor()
         {
@@ -150,7 +151,127 @@ namespace NSUNS4_Character_Manager.Tools
 			EnableDisableArmorBreakList = new List<bool>();
 			TimingAwakeList = new List<int>();
 			TransparenceList = new List<float>();
+			isUpdatingSelection = false;
 			listBox1.Items.Clear();
+		}
+
+		private bool HasValidEntryIndex(int index)
+		{
+			return FileOpen && index >= 0 && index < EntryCount;
+		}
+
+		private void SaveEntryFromUi(int index)
+		{
+			if (!HasValidEntryIndex(index))
+			{
+				return;
+			}
+
+			CharacodeList[index] = BitConverter.GetBytes((int)Characode_v1.Value);
+			MeshList[index] = MeshName_tb.Text;
+			SlotList[index] = new List<bool>(20)
+			{
+				Slot_1_cb.Checked,
+				Slot_2_cb.Checked,
+				Slot_3_cb.Checked,
+				Slot_4_cb.Checked,
+				Slot_5_cb.Checked,
+				Slot_6_cb.Checked,
+				Slot_7_cb.Checked,
+				Slot_8_cb.Checked,
+				Slot_9_cb.Checked,
+				Slot_10_cb.Checked,
+				Slot_11_cb.Checked,
+				Slot_12_cb.Checked,
+				Slot_13_cb.Checked,
+				Slot_14_cb.Checked,
+				Slot_15_cb.Checked,
+				Slot_16_cb.Checked,
+				Slot_17_cb.Checked,
+				Slot_18_cb.Checked,
+				Slot_19_cb.Checked,
+				Slot_20_cb.Checked
+			};
+
+			bool isMaterial = Type_cb.SelectedIndex == 1;
+			TypeSectionList[index] = isMaterial;
+			EnableDisableList[index] = checkBox23.Checked;
+			AwakeningStateList[index] = ComposeAwakeningStateFlagsForCurrentSelection(AwakeningStateList[index]);
+			ReverseSectionList[index] = Reverse_v.Checked;
+			EnableDisableCutNCList[index] = CutNC_v.Checked;
+			EnableDisableUltList[index] = Ult_v.Checked;
+			EnableDisableWinList[index] = Win_v.Checked;
+			EnableDisableArmorBreakList[index] = ArmorBreak_v.Checked;
+			TimingAwakeList[index] = (int)Timing_v.Value;
+			TransparenceList[index] = isMaterial ? (float)Transparence_v.Value : 0f;
+
+			if (index < listBox1.Items.Count)
+			{
+				listBox1.Items[index] = BuildListItem(index);
+			}
+		}
+
+		private void SaveSelectedEntryFromUi()
+		{
+			SaveEntryFromUi(listBox1.SelectedIndex);
+		}
+
+		private void LoadEntryToUi(int index)
+		{
+			if (!HasValidEntryIndex(index))
+			{
+				return;
+			}
+
+			isUpdatingSelection = true;
+			try
+			{
+				Characode_v1.Value = Main.b_byteArrayToInt(CharacodeList[index]);
+				MeshName_tb.Text = MeshList[index];
+				if (TypeSectionList[index] == false)
+                {
+					Type_cb.SelectedIndex = 0;
+					Transparence_v.Enabled = false;
+				}
+				else
+                {
+					Type_cb.SelectedIndex = 1;
+					Transparence_v.Enabled = true;
+				}
+				Transparence_v.Value = (decimal)TransparenceList[index];
+				Slot_1_cb.Checked = SlotList[index][0];
+				Slot_2_cb.Checked = SlotList[index][1];
+				Slot_3_cb.Checked = SlotList[index][2];
+				Slot_4_cb.Checked = SlotList[index][3];
+				Slot_5_cb.Checked = SlotList[index][4];
+				Slot_6_cb.Checked = SlotList[index][5];
+				Slot_7_cb.Checked = SlotList[index][6];
+				Slot_8_cb.Checked = SlotList[index][7];
+				Slot_9_cb.Checked = SlotList[index][8];
+				Slot_10_cb.Checked = SlotList[index][9];
+				Slot_11_cb.Checked = SlotList[index][10];
+				Slot_12_cb.Checked = SlotList[index][11];
+				Slot_13_cb.Checked = SlotList[index][12];
+				Slot_14_cb.Checked = SlotList[index][13];
+				Slot_15_cb.Checked = SlotList[index][14];
+				Slot_16_cb.Checked = SlotList[index][15];
+				Slot_17_cb.Checked = SlotList[index][16];
+				Slot_18_cb.Checked = SlotList[index][17];
+				Slot_19_cb.Checked = SlotList[index][18];
+				Slot_20_cb.Checked = SlotList[index][19];
+				checkBox23.Checked = EnableDisableList[index];
+ 				SetAwakeningStateFromFlags(AwakeningStateList[index]);
+				Timing_v.Value = TimingAwakeList[index];
+				Reverse_v.Checked = ReverseSectionList[index];
+				CutNC_v.Checked = EnableDisableCutNCList[index];
+				Ult_v.Checked = EnableDisableUltList[index];
+				Win_v.Checked = EnableDisableWinList[index];
+				ArmorBreak_v.Checked = EnableDisableArmorBreakList[index];
+			}
+			finally
+			{
+				isUpdatingSelection = false;
+			}
 		}
 		private byte GetAwakeningStateFlagsFromUi()
 		{
@@ -307,68 +428,41 @@ namespace NSUNS4_Character_Manager.Tools
 
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
+			if (isUpdatingSelection)
+			{
+				return;
+			}
+
 			int x = listBox1.SelectedIndex;
+			if (!HasValidEntryIndex(x))
+			{
+				return;
+			}
+
 			if (Type_cb.SelectedIndex == 0)
             {
 				Transparence_v.Enabled = false;
 				Transparence_v.Value = 0;
-				TransparenceList[x] = 0;
 			}
 			else if (Type_cb.SelectedIndex == 1)
             {
 				Transparence_v.Enabled = true;
-				Transparence_v.Value = 1;
-				TransparenceList[x] = 1;
+				if (Transparence_v.Value == 0)
+				{
+					Transparence_v.Value = 1;
+				}
 			}
         }
 
         private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
 			int x = listBox1.SelectedIndex;
-			if (x > -1 && x < listBox1.Items.Count)
+			if (isUpdatingSelection)
 			{
-				Characode_v1.Value = Main.b_byteArrayToInt(CharacodeList[x]);
-				MeshName_tb.Text = MeshList[x];
-				if (TypeSectionList[x] == false)
-                {
-					Type_cb.SelectedIndex = 0;
-					Transparence_v.Enabled = false;
-				}
-				else
-                {
-					Type_cb.SelectedIndex = 1;
-					Transparence_v.Enabled = true;
-				}
-				Transparence_v.Value = (decimal)TransparenceList[x];
-				Slot_1_cb.Checked = SlotList[x][0];
-				Slot_2_cb.Checked = SlotList[x][1];
-				Slot_3_cb.Checked = SlotList[x][2];
-				Slot_4_cb.Checked = SlotList[x][3];
-				Slot_5_cb.Checked = SlotList[x][4];
-				Slot_6_cb.Checked = SlotList[x][5];
-				Slot_7_cb.Checked = SlotList[x][6];
-				Slot_8_cb.Checked = SlotList[x][7];
-				Slot_9_cb.Checked = SlotList[x][8];
-				Slot_10_cb.Checked = SlotList[x][9];
-				Slot_11_cb.Checked = SlotList[x][10];
-				Slot_12_cb.Checked = SlotList[x][11];
-				Slot_13_cb.Checked = SlotList[x][12];
-				Slot_14_cb.Checked = SlotList[x][13];
-				Slot_15_cb.Checked = SlotList[x][14];
-				Slot_16_cb.Checked = SlotList[x][15];
-				Slot_17_cb.Checked = SlotList[x][16];
-				Slot_18_cb.Checked = SlotList[x][17];
-				Slot_19_cb.Checked = SlotList[x][18];
-				Slot_20_cb.Checked = SlotList[x][19];
-				checkBox23.Checked = EnableDisableList[x];
- 				SetAwakeningStateFromFlags(AwakeningStateList[x]);
-				Timing_v.Value = TimingAwakeList[x];
-				Reverse_v.Checked = ReverseSectionList[x];
-				CutNC_v.Checked = EnableDisableCutNCList[x];
-				Ult_v.Checked = EnableDisableUltList[x];
-				Win_v.Checked = EnableDisableWinList[x];
-				ArmorBreak_v.Checked = EnableDisableArmorBreakList[x];
+				return;
 			}
+
+			LoadEntryToUi(x);
 		}
 
         private void numericUpDown2_ValueChanged(object sender, EventArgs e)
@@ -382,53 +476,7 @@ namespace NSUNS4_Character_Manager.Tools
 			{
 				if (listBox1.SelectedIndex != -1)
 				{
-					int i = listBox1.SelectedIndex;
-					byte[] Characode_new = BitConverter.GetBytes((int)Characode_v1.Value);
-					bool[] Slot_new = new bool[20];
-					Slot_new[0] = Slot_1_cb.Checked;
-					Slot_new[1] = Slot_2_cb.Checked;
-					Slot_new[2] = Slot_3_cb.Checked;
-					Slot_new[3] = Slot_4_cb.Checked;
-					Slot_new[4] = Slot_5_cb.Checked;
-					Slot_new[5] = Slot_6_cb.Checked;
-					Slot_new[6] = Slot_7_cb.Checked;
-					Slot_new[7] = Slot_8_cb.Checked;
-					Slot_new[8] = Slot_9_cb.Checked;
-					Slot_new[9] = Slot_10_cb.Checked;
-					Slot_new[10] = Slot_11_cb.Checked;
-					Slot_new[11] = Slot_12_cb.Checked;
-					Slot_new[12] = Slot_13_cb.Checked;
-					Slot_new[13] = Slot_14_cb.Checked;
-					Slot_new[14] = Slot_15_cb.Checked;
-					Slot_new[15] = Slot_16_cb.Checked;
-					Slot_new[16] = Slot_17_cb.Checked;
-					Slot_new[17] = Slot_18_cb.Checked;
-					Slot_new[18] = Slot_19_cb.Checked;
-					Slot_new[19] = Slot_20_cb.Checked;
-					List<bool> Slot_newList = new List<bool>();
-					for (int x = 0; x < 20; x++)
-					{
-						Slot_newList.Add(Slot_new[x]);
-					}
-					CharacodeList[i] = Characode_new;
-					MeshList[i] = MeshName_tb.Text;
-					SlotList[i] = Slot_newList;
-					bool normalState = NormalStateList[i];
-					if (Type_cb.SelectedIndex == 0)
-						TypeSectionList[i] = false;
-					else
-						TypeSectionList[i] = true;
-					EnableDisableList[i] = checkBox23.Checked;
-					NormalStateList[i] = normalState;
-					AwakeningStateList[i] = ComposeAwakeningStateFlagsForCurrentSelection(AwakeningStateList[i]);
-					ReverseSectionList[i] = Reverse_v.Checked;
-					EnableDisableCutNCList[i] = CutNC_v.Checked;
-					EnableDisableUltList[i] = Ult_v.Checked;
-					EnableDisableWinList[i] = Win_v.Checked;
-					EnableDisableArmorBreakList[i] = ArmorBreak_v.Checked;
-					TimingAwakeList[i] = (int)Timing_v.Value;
-					TransparenceList[i] = (float)Transparence_v.Value;
-					listBox1.Items[i] = BuildListItem(i);
+					SaveSelectedEntryFromUi();
 					MessageBox.Show("Entry saved.");
 				}
 				else
