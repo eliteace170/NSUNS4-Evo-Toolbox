@@ -104,6 +104,7 @@ namespace NSUNS4_Character_Manager
         private Button button32;
         private Button button33;
         private Button button34;
+        private Button button35;
         private FlowLayoutPanel extraToolsPanel;
         private Button extraToolsButtonTemplate;
         private TabPage tabPage7;
@@ -1101,6 +1102,7 @@ namespace NSUNS4_Character_Manager
             this.linkLabel3 = new System.Windows.Forms.LinkLabel();
             this.button33 = new System.Windows.Forms.Button();
             this.button34 = new System.Windows.Forms.Button();
+            this.button35 = new System.Windows.Forms.Button();
             this.tabPage7 = new System.Windows.Forms.TabPage();
             this.extraToolsPanel = new System.Windows.Forms.FlowLayoutPanel();
             this.tabPage2 = new System.Windows.Forms.TabPage();
@@ -1236,20 +1238,20 @@ namespace NSUNS4_Character_Manager
             this.addNewCharacterToolStripMenuItem});
             this.toolsToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
-            this.toolsToolStripMenuItem.Size = new System.Drawing.Size(47, 20);
+            this.toolsToolStripMenuItem.Size = new System.Drawing.Size(46, 20);
             this.toolsToolStripMenuItem.Text = "Tools";
             // 
             // addCostumeToolStripMenuItem
             // 
             this.addCostumeToolStripMenuItem.Name = "addCostumeToolStripMenuItem";
-            this.addCostumeToolStripMenuItem.Size = new System.Drawing.Size(252, 22);
+            this.addCostumeToolStripMenuItem.Size = new System.Drawing.Size(253, 22);
             this.addCostumeToolStripMenuItem.Text = "Add new costume (Experimental)";
             this.addCostumeToolStripMenuItem.Click += new System.EventHandler(this.addCostumeToolStripMenuItem_Click);
             // 
             // addNewCharacterToolStripMenuItem
             // 
             this.addNewCharacterToolStripMenuItem.Name = "addNewCharacterToolStripMenuItem";
-            this.addNewCharacterToolStripMenuItem.Size = new System.Drawing.Size(252, 22);
+            this.addNewCharacterToolStripMenuItem.Size = new System.Drawing.Size(253, 22);
             this.addNewCharacterToolStripMenuItem.Text = "Add new character (Experimental)";
             this.addNewCharacterToolStripMenuItem.Click += new System.EventHandler(this.addNewCharacterToolStripMenuItem_Click);
             // 
@@ -1526,7 +1528,7 @@ namespace NSUNS4_Character_Manager
             this.button31.Name = "button31";
             this.button31.Size = new System.Drawing.Size(299, 38);
             this.button31.TabIndex = 35;
-            this.button31.Text = "Unlock Evo ItemParam Editor\r\n(UnlockEvoItemParam.xfbin)";
+            this.button31.Text = "EvoUnlockItemParam Editor";
             this.button31.UseVisualStyleBackColor = true;
             this.button31.Click += new System.EventHandler(this.button31_Click);
             // 
@@ -1643,6 +1645,7 @@ namespace NSUNS4_Character_Manager
             this.tabPage6.Controls.Add(this.button18);
             this.tabPage6.Controls.Add(this.button33);
             this.tabPage6.Controls.Add(this.button34);
+            this.tabPage6.Controls.Add(this.button35);
             this.tabPage6.Location = new System.Drawing.Point(4, 22);
             this.tabPage6.Name = "tabPage6";
             this.tabPage6.Size = new System.Drawing.Size(602, 507);
@@ -1696,7 +1699,7 @@ namespace NSUNS4_Character_Manager
             this.linkLabel7.LinkColor = System.Drawing.Color.Black;
             this.linkLabel7.Location = new System.Drawing.Point(4, 474);
             this.linkLabel7.Name = "linkLabel7";
-            this.linkLabel7.Size = new System.Drawing.Size(84, 15);
+            this.linkLabel7.Size = new System.Drawing.Size(82, 15);
             this.linkLabel7.TabIndex = 39;
             this.linkLabel7.TabStop = true;
             this.linkLabel7.Text = "NUT Tools GUI";
@@ -1709,7 +1712,7 @@ namespace NSUNS4_Character_Manager
             this.linkLabel6.LinkColor = System.Drawing.Color.Black;
             this.linkLabel6.Location = new System.Drawing.Point(4, 459);
             this.linkLabel6.Name = "linkLabel6";
-            this.linkLabel6.Size = new System.Drawing.Size(62, 15);
+            this.linkLabel6.Size = new System.Drawing.Size(60, 15);
             this.linkLabel6.TabIndex = 38;
             this.linkLabel6.TabStop = true;
             this.linkLabel6.Text = "NUT Tools";
@@ -1722,7 +1725,7 @@ namespace NSUNS4_Character_Manager
             this.linkLabel5.LinkColor = System.Drawing.Color.Black;
             this.linkLabel5.Location = new System.Drawing.Point(4, 398);
             this.linkLabel5.Name = "linkLabel5";
-            this.linkLabel5.Size = new System.Drawing.Size(142, 15);
+            this.linkLabel5.Size = new System.Drawing.Size(141, 15);
             this.linkLabel5.TabIndex = 37;
             this.linkLabel5.TabStop = true;
             this.linkLabel5.Text = "010 Editor Xfbin Template";
@@ -1786,6 +1789,17 @@ namespace NSUNS4_Character_Manager
             this.button34.UseVisualStyleBackColor = true;
             this.button34.Click += new System.EventHandler(this.button34_Click);
             // 
+            // button35
+            // 
+            this.button35.Font = new System.Drawing.Font("Segoe UI", 8.5F);
+            this.button35.Location = new System.Drawing.Point(1, 91);
+            this.button35.Name = "button35";
+            this.button35.Size = new System.Drawing.Size(299, 38);
+            this.button35.TabIndex = 39;
+            this.button35.Text = "Particle Chunk Editor\r\n(TrailParticle.xfbin / nuccChunkParticle)";
+            this.button35.UseVisualStyleBackColor = true;
+            this.button35.Click += new System.EventHandler(this.button35_Click);
+            // 
             // tabPage7
             // 
             this.tabPage7.Controls.Add(this.extraToolsPanel);
@@ -1831,7 +1845,7 @@ namespace NSUNS4_Character_Manager
             this.label1.AutoSize = true;
             this.label1.Location = new System.Drawing.Point(0, 83);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(78, 15);
+            this.label1.Size = new System.Drawing.Size(79, 15);
             this.label1.TabIndex = 18;
             this.label1.Text = "Experimental:";
             // 
@@ -2008,7 +2022,7 @@ namespace NSUNS4_Character_Manager
                     MessageBox.Show("Error importing " + filepath + ": base character " + basechar + " not found in characode.");
                     break;
                 case 6:
-                    MessageBox.Show("Error importing " + filepath + ": UnlockEvoItemParam file was not found.");
+                    MessageBox.Show("Error importing " + filepath + ": EvoUnlockItemParam file was not found.");
                     break;
             }
         }
@@ -2211,7 +2225,7 @@ namespace NSUNS4_Character_Manager
             conditionprmPath = datawin32Path + "\\spc\\conditionprm.bin.xfbin";
             damageprmPath = datawin32Path + "\\spc\\damageprm.bin.xfbin";
             spTypeSupportParamPath = datawin32Path + "\\spc\\WIN64\\spTypeSupportParam.xfbin";
-            unlockEvoItemParamPath = datawin32Path + "\\spc\\WIN64\\UnlockEvoItemParam.xfbin";
+            unlockEvoItemParamPath = datawin32Path + "\\spc\\WIN64\\EvoUnlockItemParam.xfbin";
 
             SaveConfig();
         }
@@ -2238,7 +2252,7 @@ namespace NSUNS4_Character_Manager
                 damageprmPath = datawin32Path + "\\spc\\damageprm.bin.xfbin";
                 messageInfoPath = datawin32Path + "\\message";
                 spTypeSupportParamPath = datawin32Path + "\\spc\\WIN64\\spTypeSupportParam.xfbin";
-                unlockEvoItemParamPath = datawin32Path + "\\spc\\WIN64\\UnlockEvoItemParam.xfbin";
+                unlockEvoItemParamPath = datawin32Path + "\\spc\\WIN64\\EvoUnlockItemParam.xfbin";
             }
                 
             else {
@@ -2345,7 +2359,7 @@ namespace NSUNS4_Character_Manager
 
         private void button31_Click(object sender, EventArgs e)
         {
-            Tool_UnlockEvoItemParamEditor t = new Tool_UnlockEvoItemParamEditor();
+            Tool_EvoUnlockItemParamEditor t = new Tool_EvoUnlockItemParamEditor();
             t.Show();
         }
 
@@ -2364,6 +2378,12 @@ namespace NSUNS4_Character_Manager
         private void button34_Click(object sender, EventArgs e)
         {
             Tool_CostumeBreakParamEditor t = new Tool_CostumeBreakParamEditor();
+            t.Show();
+        }
+
+        private void button35_Click(object sender, EventArgs e)
+        {
+            Tool_ParticleEditor t = new Tool_ParticleEditor();
             t.Show();
         }
     }

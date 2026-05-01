@@ -665,7 +665,7 @@ namespace NSUNS4_Character_Manager
             // v_enableAwaSkill
             // 
             this.v_enableAwaSkill.Hexadecimal = true;
-            this.v_enableAwaSkill.Location = new System.Drawing.Point(220, 14);
+            this.v_enableAwaSkill.Location = new System.Drawing.Point(216, 14);
             this.v_enableAwaSkill.Maximum = new decimal(new int[] {
             -1,
             0,

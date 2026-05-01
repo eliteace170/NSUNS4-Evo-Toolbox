@@ -133,6 +133,26 @@ namespace NSUNS4_Character_Manager
 			return BitConverter.ToUInt16(data, offset);
 		}
 
+		private static int SwapInt32Endian(int value)
+		{
+			uint raw = unchecked((uint)value);
+			uint swapped = (raw >> 24)
+				| ((raw >> 8) & 0x0000FF00u)
+				| ((raw << 8) & 0x00FF0000u)
+				| (raw << 24);
+			return unchecked((int)swapped);
+		}
+
+		private static int GetConditionDisplayValue(int storedConditionFlag)
+		{
+			return SwapInt32Endian(storedConditionFlag);
+		}
+
+		private static int GetStoredConditionValue(int displayedConditionFlag)
+		{
+			return SwapInt32Endian(displayedConditionFlag);
+		}
+
 		private static string EncodeText(string value)
 		{
 			return Convert.ToBase64String(Encoding.UTF8.GetBytes(value ?? ""));
@@ -335,8 +355,10 @@ namespace NSUNS4_Character_Manager
 			entry.Items = new string[4] { w_item1.Text, w_item2.Text, w_item3.Text, w_item4.Text };
 			entry.ItemCounts = new byte[4] { (byte)w_itemc1.Value, (byte)w_itemc2.Value, (byte)w_itemc3.Value, (byte)w_itemc4.Value };
 			entry.Partner = w_partner.Text;
-			entry.ConditionFlag = (int)v_enableAwaSkill.Value;
-			entry.EnableAwaSkill = (int)v_enableAwaSkill.Value;
+			int displayedConditionFlag = unchecked((int)decimal.ToUInt32(v_enableAwaSkill.Value));
+			int storedConditionFlag = GetStoredConditionValue(displayedConditionFlag);
+			entry.ConditionFlag = storedConditionFlag;
+			entry.EnableAwaSkill = storedConditionFlag & 0xFF;
 			ApplyInlineSettingsToEntry(entry);
 			return entry;
 		}
@@ -357,48 +379,68 @@ namespace NSUNS4_Character_Manager
 			w_item4.Text = entry.Items[3];
 			SetNumericValue(w_itemc4, entry.ItemCounts[3]);
 			w_partner.Text = entry.Partner;
-			SetNumericValue(v_enableAwaSkill, (decimal)(uint)entry.ConditionFlag);
-			UpdateConditionFlagsFromValue(entry.ConditionFlag);
+			int displayedConditionFlag = GetConditionDisplayValue(entry.ConditionFlag);
+			SetNumericValue(v_enableAwaSkill, (decimal)(uint)displayedConditionFlag);
+			UpdateConditionFlagsFromValue(displayedConditionFlag);
 			LoadInlineSettingsFromEntry(entry);
 		}
 
 		private string[] GetConditionFlagNames()
 		{
-			return new string[]
+			string[] storedBitOrderNames = new string[]
 			{
                 "ENABLE AWAKENING JUTSU",
-				"unknow 1",
-				"unknow 2",
-				"unknow 3",
-				"unknow 4",
-				"unknow 5",
-				"unknow 6",
-				"unknow 7",
+				"",
+				"",
+				"",
+				"",
+				"",
+				"",
+				"",
 				"ENABLE GIANT AWAKENING COND",
 				"ENABLE PRIVATE CAMERA",
 				"ENABLE GIANT AWAKENING LAND SOUND",
 				"ENABLE AWAKENING HITMARK",
-                "unknow 8",
-				"unknow 9",
-				"unknow 10",
-				"unknow 11",
-				"unknow 12",
-				"unknow 13",
+                "",
+				"",
+				"",
+				"",
+				"",
+				"",
 				"ENABLE BASE GLOW",
 				"ENABLE AWAKE GLOW",
 				"ENABLE TELEPORT DASH",
-				"unknow 14",
-				"unknow 15",
+				"",
+				"",
 				"ENABLE AWAKENING MOVESET",
-				"unknow 16",
-				"unknow 17",
-				"unknow 18",
+				"",
+				"",
+				"",
 				"ENABLE PUPPET COND",
 				"ENABLE PUPPET USER COND",
-				"unknow 19",
-				"unknow 20",
-				"unknow 21"
+				"",
+				"",
+				""
             };
+
+			List<string> displayOrderNames = new List<string>(storedBitOrderNames.Length);
+			for (int byteIndex = 3; byteIndex >= 0; byteIndex--)
+			{
+				for (int bitInByte = 0; bitInByte < 8; bitInByte++)
+				{
+					displayOrderNames.Add(storedBitOrderNames[byteIndex * 8 + bitInByte]);
+				}
+			}
+
+			for (int i = 0; i < displayOrderNames.Count; i++)
+			{
+				if (string.IsNullOrWhiteSpace(displayOrderNames[i]))
+				{
+					displayOrderNames[i] = "unknow " + (i + 1).ToString();
+				}
+			}
+
+			return displayOrderNames.ToArray();
 		}
 
 		private void InitializeConditionFlagList()
@@ -454,7 +496,7 @@ namespace NSUNS4_Character_Manager
 
 		private void ApplyInlineSettingsToEntry(DuelPlayerParamEntry entry)
 		{
-			byte[] setting1 = new byte[36];
+			byte[] setting1 = entry.SettingList != null && entry.SettingList.Length == 36 ? (byte[])entry.SettingList.Clone() : new byte[36];
 			byte[] setting2 = entry.Setting2List != null && entry.Setting2List.Length == 16 ? (byte[])entry.Setting2List.Clone() : new byte[16];
 			byte[] awake = entry.AwaSettingList != null && entry.AwaSettingList.Length == 84 ? (byte[])entry.AwaSettingList.Clone() : new byte[84];
 
@@ -1764,8 +1806,8 @@ namespace NSUNS4_Character_Manager
 				SettingList.Add(Main.b_ReadByteArray(FileBytes, _ptr + 448, 36));
 				Setting2List.Add(Main.b_ReadByteArray(FileBytes, _ptr + 500, 16));
 				EvoDupList.Add(CombineEvoDup(Main.b_ReadInt(FileBytes, _ptr + 0x154), Main.b_ReadInt(FileBytes, _ptr + 0x158)));
-				AwaBodyPriorityList.Add(Main.b_ReadIntRev(FileBytes, _ptr + 0x160));
-				DefaultAwaSkillIndexList.Add(Main.b_ReadIntRev(FileBytes, _ptr + 0x164));
+				AwaBodyPriorityList.Add(Main.b_ReadInt(FileBytes, _ptr + 0x160));
+				DefaultAwaSkillIndexList.Add(Main.b_ReadInt(FileBytes, _ptr + 0x164));
 				ConditionFlagList.Add(Main.b_ReadIntRev(FileBytes, _ptr + 0x150));
 				EnableAwaSkillList.Add(FileBytes[_ptr + 0x153]);
 				CameraDistanceList.Add(ReadUInt16(FileBytes, _ptr + 0x1B4));
@@ -2322,16 +2364,16 @@ namespace NSUNS4_Character_Manager
 				}
 
 				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(ConditionFlagList[x]), _ptr + 0x150, 1);
-				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(GetEvoDupLow(EvoDupList[x])), _ptr + 0x154, 1);
-				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(GetEvoDupHigh(EvoDupList[x])), _ptr + 0x158, 1);
-				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(AwaBodyPriorityList[x]), _ptr + 0x160, 1);
-				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(DefaultAwaSkillIndexList[x]), _ptr + 0x164, 1);
-				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes((short)CameraDistanceList[x]), _ptr + 0x1B4, 1);
-				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes((short)CameraUnknown1List[x]), _ptr + 0x1B6, 1);
-				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes((short)VictoryAngleList[x]), _ptr + 0x1B8, 1);
-				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes((short)CameraUnknown2List[x]), _ptr + 0x1BA, 1);
-				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes((short)CameraUnknown3List[x]), _ptr + 0x1BC, 1);
-				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes((short)CameraUnknown4List[x]), _ptr + 0x1BE, 1);
+				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(GetEvoDupLow(EvoDupList[x])), _ptr + 0x154);
+				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(GetEvoDupHigh(EvoDupList[x])), _ptr + 0x158);
+				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(AwaBodyPriorityList[x]), _ptr + 0x160);
+				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(DefaultAwaSkillIndexList[x]), _ptr + 0x164);
+				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes((short)CameraDistanceList[x]), _ptr + 0x1B4);
+				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes((short)CameraUnknown1List[x]), _ptr + 0x1B6);
+				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes((short)VictoryAngleList[x]), _ptr + 0x1B8);
+				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes((short)CameraUnknown2List[x]), _ptr + 0x1BA);
+				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes((short)CameraUnknown3List[x]), _ptr + 0x1BC);
+				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes((short)CameraUnknown4List[x]), _ptr + 0x1BE);
 				fileBytes36 = Main.b_ReplaceString(fileBytes36, DefaultAssist1[x], _ptr + 420, 8);
 				fileBytes36 = Main.b_ReplaceString(fileBytes36, DefaultAssist2[x], _ptr + 428, 8);
 				fileBytes36 = Main.b_ReplaceString(fileBytes36, AwkAction[x], _ptr + 484, 16);

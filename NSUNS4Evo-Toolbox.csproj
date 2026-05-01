@@ -301,6 +301,19 @@
     <Compile Include="NSUNS4_Character_Manager\Tools\Tool_OugiFinishParamEditor.Designer.cs">
       <DependentUpon>Tool_OugiFinishParamEditor.cs</DependentUpon>
     </Compile>
+    <Compile Include="NSUNS4_Character_Manager\Tools\ParticleChunkCodec.cs" />
+    <Compile Include="NSUNS4_Character_Manager\Tools\Tool_ParticleEditor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="NSUNS4_Character_Manager\Tools\Tool_ParticleEditor.Designer.cs">
+      <DependentUpon>Tool_ParticleEditor.cs</DependentUpon>
+    </Compile>
+    <Compile Include="NSUNS4_Character_Manager\Tools\Tool_ParticleChunkReferenceEditor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="NSUNS4_Character_Manager\Tools\Tool_ParticleChunkReferenceEditor.Designer.cs">
+      <DependentUpon>Tool_ParticleChunkReferenceEditor.cs</DependentUpon>
+    </Compile>
     <Compile Include="NSUNS4_Character_Manager\Tools\Tool_playerCollisionEditor.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -355,7 +368,7 @@
     <Compile Include="NSUNS4_Character_Manager\Tools\Tool_UnlockCharaTotalEditor.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="NSUNS4_Character_Manager\Tools\Tool_UnlockEvoItemParamEditor.cs">
+    <Compile Include="NSUNS4_Character_Manager\Tools\Tool_EvoUnlockItemParamEditor.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="XfbinParser.cs" />
@@ -461,6 +474,12 @@
     <EmbeddedResource Include="NSUNS4_Character_Manager\Tools\Tool_OugiFinishParamEditor.resx">
       <DependentUpon>Tool_OugiFinishParamEditor.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="NSUNS4_Character_Manager\Tools\Tool_ParticleEditor.resx">
+      <DependentUpon>Tool_ParticleEditor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="NSUNS4_Character_Manager\Tools\Tool_ParticleChunkReferenceEditor.resx">
+      <DependentUpon>Tool_ParticleChunkReferenceEditor.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="NSUNS4_Character_Manager\Tools\Tool_playerCollisionEditor.resx">
       <DependentUpon>Tool_playerCollisionEditor.cs</DependentUpon>
     </EmbeddedResource>
@@ -494,8 +513,8 @@
     <EmbeddedResource Include="NSUNS4_Character_Manager\Tools\Tool_UnlockCharaTotalEditor.resx">
       <DependentUpon>Tool_UnlockCharaTotalEditor.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="NSUNS4_Character_Manager\Tools\Tool_UnlockEvoItemParamEditor.resx">
-      <DependentUpon>Tool_UnlockEvoItemParamEditor.cs</DependentUpon>
+    <EmbeddedResource Include="NSUNS4_Character_Manager\Tools\Tool_EvoUnlockItemParamEditor.resx">
+      <DependentUpon>Tool_EvoUnlockItemParamEditor.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

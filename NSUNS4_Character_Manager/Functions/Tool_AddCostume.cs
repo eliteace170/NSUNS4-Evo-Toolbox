@@ -263,11 +263,11 @@ namespace NSUNS4_Character_Manager
             psp.c_cha_b_List[pspIndex] = resolvedDisplayName;
 
             // Open unlock evo item tool
-            Tool_UnlockEvoItemParamEditor unlock = new Tool_UnlockEvoItemParamEditor();
+            Tool_EvoUnlockItemParamEditor unlock = new Tool_EvoUnlockItemParamEditor();
             unlock.OpenFile(Main.unlockEvoItemParamPath);
             if (!unlock.FileOpen || string.IsNullOrWhiteSpace(unlock.FilePath) || !File.Exists(unlock.FilePath))
             {
-                if (this.Visible) MessageBox.Show("UnlockEvoItemParam file not found.");
+                if (this.Visible) MessageBox.Show("EvoUnlockItemParam file not found.");
                 return 6;
             }
 

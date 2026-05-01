@@ -8,7 +8,7 @@ using System.Windows.Forms;
 
 namespace NSUNS4_Character_Manager
 {
-    public class Tool_UnlockEvoItemParamEditor : Form
+    public class Tool_EvoUnlockItemParamEditor : Form
     {
         private const int FileSectionHeaderSize = 0x20;
         private const int FileSectionCountOffset = 0x1C;
@@ -104,7 +104,7 @@ namespace NSUNS4_Character_Manager
             { 0xFF, "FF - Reset/Lock" }
         };
 
-        public Tool_UnlockEvoItemParamEditor()
+        public Tool_EvoUnlockItemParamEditor()
         {
             InitializeComponent();
             InitializeDlcItems();
@@ -1132,7 +1132,7 @@ namespace NSUNS4_Character_Manager
             this.messageName.Size = new System.Drawing.Size(300, 23);
             this.messageName.TabIndex = 0;
             // 
-            // Tool_UnlockEvoItemParamEditor
+            // Tool_EvoUnlockItemParamEditor
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -1159,10 +1159,10 @@ namespace NSUNS4_Character_Manager
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
             this.MainMenuStrip = this.menuStrip1;
             this.MaximizeBox = false;
-            this.Name = "Tool_UnlockEvoItemParamEditor";
+            this.Name = "Tool_EvoUnlockItemParamEditor";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Unlock Evo Item Param Editor";
-            this.Load += new System.EventHandler(this.Tool_UnlockEvoItemParamEditor_Load);
+            this.Text = "Evo Unlock  Item Param Editor";
+            this.Load += new System.EventHandler(this.Tool_EvoUnlockItemParamEditor_Load);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.costumeID)).EndInit();
@@ -1172,7 +1172,7 @@ namespace NSUNS4_Character_Manager
 
         }
 
-        private void Tool_UnlockEvoItemParamEditor_Load(object sender, EventArgs e)
+        private void Tool_EvoUnlockItemParamEditor_Load(object sender, EventArgs e)
         {
             if (File.Exists(Main.unlockEvoItemParamPath))
             {
