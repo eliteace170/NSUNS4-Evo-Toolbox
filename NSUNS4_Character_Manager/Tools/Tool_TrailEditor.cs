@@ -11,6 +11,7 @@ namespace NSUNS4_Character_Manager
 {
     public partial class Tool_TrailEditor : Form
     {
+        private const string ClipboardPrefix = "NS4_TRAIL_EDITOR_ENTRY:";
         private const string TrailChunkType = "nuccChunkTrail";
         private const int HeaderCount = 5;
         private const int HeaderSize = 8;
@@ -19,32 +20,6 @@ namespace NSUNS4_Character_Manager
         private const int PositionSize = 0x30;
         private const int ForceFieldSize = 0x3C;
         private const int NodeBaseSize = 0x14;
-
-        private MenuStrip menuStrip1;
-        private ToolStripMenuItem fileToolStripMenuItem;
-        private ToolStripMenuItem openToolStripMenuItem;
-        private ToolStripMenuItem saveToolStripMenuItem;
-        private ToolStripMenuItem saveAsToolStripMenuItem;
-        private ToolStripMenuItem closeToolStripMenuItem;
-        private Panel detailsPanel;
-        private ComboBox chunkComboBox;
-        private TextBox chunkNameTextBox;
-        private TextBox chunkPathTextBox;
-        private TabControl tabControl1;
-        private ListBox managersListBox;
-        private ListBox resourcesListBox;
-        private ListBox positionsListBox;
-        private ListBox forceFieldsListBox;
-        private ListBox mapIdsListBox;
-        private ListBox nodesListBox;
-        private ListBox framesListBox;
-        private PropertyGrid managersPropertyGrid;
-        private PropertyGrid resourcesPropertyGrid;
-        private PropertyGrid positionsPropertyGrid;
-        private PropertyGrid forceFieldsPropertyGrid;
-        private PropertyGrid mapIdsPropertyGrid;
-        private PropertyGrid nodesPropertyGrid;
-        private PropertyGrid framesPropertyGrid;
 
         private XfbinParserBackend backend;
         private TrailFileState fileState;
@@ -115,6 +90,31 @@ namespace NSUNS4_Character_Manager
             get { return this.framesListBox.SelectedItem as TrailFrameEntry; }
         }
 
+        private TrailManagerEntry CurrentManager
+        {
+            get { return this.managersListBox.SelectedItem as TrailManagerEntry; }
+        }
+
+        private TrailResourceEntry CurrentResource
+        {
+            get { return this.resourcesListBox.SelectedItem as TrailResourceEntry; }
+        }
+
+        private TrailPositionEntry CurrentPosition
+        {
+            get { return this.positionsListBox.SelectedItem as TrailPositionEntry; }
+        }
+
+        private TrailForceFieldEntry CurrentForceField
+        {
+            get { return this.forceFieldsListBox.SelectedItem as TrailForceFieldEntry; }
+        }
+
+        private TrailMapEntry CurrentMapEntry
+        {
+            get { return this.mapIdsListBox.SelectedItem as TrailMapEntry; }
+        }
+
         private sealed class TrailFileState
         {
             public string FilePath;
@@ -134,6 +134,12 @@ namespace NSUNS4_Character_Manager
             public List<TrailPositionEntry> Positions = new List<TrailPositionEntry>();
             public List<TrailForceFieldEntry> ForceFields = new List<TrailForceFieldEntry>();
             public List<TrailNodeEntry> Nodes = new List<TrailNodeEntry>();
+        }
+
+        private sealed class TrailClipboardPayload
+        {
+            public string EntryType;
+            public string Json;
         }
 
         public sealed class TrailMapEntry
@@ -353,8 +359,10 @@ namespace NSUNS4_Character_Manager
             foreach (TrailChunkState chunk in fileState.Chunks)
             {
                 byte[] data = BuildChunkData(chunk);
-                backend.UpsertChunk(TrailChunkType, chunk.OriginalChunkName, chunk.ChunkName, chunk.ChunkPath, data, ".trail");
-                backend.SaveChunkPageDefinition(TrailChunkType, chunk.ChunkName, BuildPageDefinition(chunk));
+                int version = chunk.SourcePage != null ? chunk.SourcePage.Version : 99;
+                int versionAttribute = chunk.SourcePage != null ? chunk.SourcePage.VersionAttribute : 37494;
+                backend.UpsertChunk(chunk.OriginalChunkName, chunk.ChunkName, TrailChunkType, chunk.ChunkPath, ".trail", data, version, versionAttribute);
+                backend.SetChunkPageChunkMaps(chunk.ChunkName, TrailChunkType, BuildReferenceChunkMaps(chunk));
                 chunk.OriginalChunkName = chunk.ChunkName;
             }
 
@@ -859,6 +867,28 @@ namespace NSUNS4_Character_Manager
             return definition;
         }
 
+        private static List<XfbinParserChunkMap> BuildReferenceChunkMaps(TrailChunkState chunk)
+        {
+            if (chunk == null)
+                return new List<XfbinParserChunkMap>();
+
+            return chunk.MapEntries
+                .Where(x =>
+                    x != null &&
+                    !string.Equals(x.Type, "nuccChunkNull", StringComparison.OrdinalIgnoreCase) &&
+                    !string.Equals(x.Type, "nuccChunkPage", StringComparison.OrdinalIgnoreCase) &&
+                    !string.Equals(x.Type, "nuccChunkIndex", StringComparison.OrdinalIgnoreCase) &&
+                    !(string.Equals(x.Type, TrailChunkType, StringComparison.OrdinalIgnoreCase) &&
+                      string.Equals(x.Name, chunk.ChunkName, StringComparison.OrdinalIgnoreCase)))
+                .Select(x => new XfbinParserChunkMap
+                {
+                    Name = x.Name ?? string.Empty,
+                    Type = x.Type ?? string.Empty,
+                    Path = x.Path ?? string.Empty
+                })
+                .ToList();
+        }
+
         private static XfbinParserChunkEntry CloneChunkEntry(XfbinParserChunkEntry value)
         {
             return new XfbinParserChunkEntry
@@ -1020,7 +1050,15 @@ namespace NSUNS4_Character_Manager
 
         private string GetChunkDisplay(TrailChunkState chunk)
         {
-            return string.Format("{0} [{1}]", chunk.ChunkName, chunk.ChunkPath);
+            return string.Format(
+                "{0} | {1} | M:{2} R:{3} P:{4} F:{5} N:{6}",
+                chunk.ChunkName,
+                chunk.ChunkPath,
+                chunk.Managers.Count,
+                chunk.Resources.Count,
+                chunk.Positions.Count,
+                chunk.ForceFields.Count,
+                chunk.Nodes.Count);
         }
 
         private string GetMapDisplay(TrailChunkState chunk, int index)
@@ -1040,17 +1078,28 @@ namespace NSUNS4_Character_Manager
             if (chunk == null || index >= chunk.Managers.Count)
                 return string.Format("{0}: <invalid>", index);
             TrailManagerEntry manager = chunk.Managers[index];
-            return string.Format("{0}: Trail {1} -> {2}", index, manager.EntryIndex, GetMapDisplay(chunk, manager.AnimationChunkMapId));
+            return string.Format("Trail Entry {0} | Animation {1}", manager.EntryIndex, GetMapDisplay(chunk, manager.AnimationChunkMapId));
+        }
+
+        private string GetTrailEntryDisplay(TrailChunkState chunk, int trailEntryIndex)
+        {
+            if (trailEntryIndex < 0)
+                return "Unlinked trail";
+
+            TrailManagerEntry manager = chunk != null ? chunk.Managers.FirstOrDefault(x => x.EntryIndex == trailEntryIndex) : null;
+            return manager != null
+                ? string.Format("Trail Entry {0}", manager.EntryIndex)
+                : string.Format("Unlinked trail ({0})", trailEntryIndex);
         }
 
         private void chunkComboBox_Format(object sender, ListControlConvertEventArgs e) { e.Value = e.ListItem is TrailChunkState ? GetChunkDisplay((TrailChunkState)e.ListItem) : string.Empty; }
         private void managersListBox_Format(object sender, ListControlConvertEventArgs e) { e.Value = e.ListItem is TrailManagerEntry ? GetManagerDisplay(CurrentChunk, CurrentChunk.Managers.IndexOf((TrailManagerEntry)e.ListItem)) : string.Empty; }
-        private void resourcesListBox_Format(object sender, ListControlConvertEventArgs e) { e.Value = e.ListItem is TrailResourceEntry ? string.Format("#{0}: {1}", CurrentChunk.Resources.IndexOf((TrailResourceEntry)e.ListItem), GetMapDisplay(CurrentChunk, ((TrailResourceEntry)e.ListItem).EffectChunkMapId)) : string.Empty; }
-        private void positionsListBox_Format(object sender, ListControlConvertEventArgs e) { e.Value = e.ListItem is TrailPositionEntry ? string.Format("#{0}: Coord {1}", CurrentChunk.Positions.IndexOf((TrailPositionEntry)e.ListItem), GetMapDisplay(CurrentChunk, ((TrailPositionEntry)e.ListItem).CoordChunkMapId)) : string.Empty; }
-        private void forceFieldsListBox_Format(object sender, ListControlConvertEventArgs e) { e.Value = e.ListItem is TrailForceFieldEntry ? string.Format("#{0}: Trail {1}", CurrentChunk.ForceFields.IndexOf((TrailForceFieldEntry)e.ListItem), ((TrailForceFieldEntry)e.ListItem).TrailEntryIndex) : string.Empty; }
+        private void resourcesListBox_Format(object sender, ListControlConvertEventArgs e) { e.Value = e.ListItem is TrailResourceEntry ? string.Format("{0} | Effect {1}", GetTrailEntryDisplay(CurrentChunk, ((TrailResourceEntry)e.ListItem).TrailEntryIndex), GetMapDisplay(CurrentChunk, ((TrailResourceEntry)e.ListItem).EffectChunkMapId)) : string.Empty; }
+        private void positionsListBox_Format(object sender, ListControlConvertEventArgs e) { e.Value = e.ListItem is TrailPositionEntry ? string.Format("{0} | Coord {1}", GetTrailEntryDisplay(CurrentChunk, ((TrailPositionEntry)e.ListItem).TrailEntryIndex), GetMapDisplay(CurrentChunk, ((TrailPositionEntry)e.ListItem).CoordChunkMapId)) : string.Empty; }
+        private void forceFieldsListBox_Format(object sender, ListControlConvertEventArgs e) { e.Value = e.ListItem is TrailForceFieldEntry ? string.Format("{0} | Force Field", GetTrailEntryDisplay(CurrentChunk, ((TrailForceFieldEntry)e.ListItem).TrailEntryIndex)) : string.Empty; }
         private void mapIdsListBox_Format(object sender, ListControlConvertEventArgs e) { e.Value = e.ListItem is TrailMapEntry ? GetMapDisplay(CurrentChunk, CurrentChunk.MapEntries.IndexOf((TrailMapEntry)e.ListItem)) : string.Empty; }
-        private void nodesListBox_Format(object sender, ListControlConvertEventArgs e) { e.Value = e.ListItem is TrailNodeEntry ? string.Format("#{0}: Trail {1} ({2} frames)", CurrentChunk.Nodes.IndexOf((TrailNodeEntry)e.ListItem), ((TrailNodeEntry)e.ListItem).TrailEntryIndex, ((TrailNodeEntry)e.ListItem).Frames.Count) : string.Empty; }
-        private void framesListBox_Format(object sender, ListControlConvertEventArgs e) { e.Value = e.ListItem is TrailFrameEntry ? string.Format("#{0}: Flag {1} @ {2:0.00}", CurrentNode != null ? CurrentNode.Frames.IndexOf((TrailFrameEntry)e.ListItem) : -1, ((TrailFrameEntry)e.ListItem).Flag, ((TrailFrameEntry)e.ListItem).Frame) : string.Empty; }
+        private void nodesListBox_Format(object sender, ListControlConvertEventArgs e) { e.Value = e.ListItem is TrailNodeEntry ? string.Format("{0} | {1} frames", GetTrailEntryDisplay(CurrentChunk, ((TrailNodeEntry)e.ListItem).TrailEntryIndex), ((TrailNodeEntry)e.ListItem).Frames.Count) : string.Empty; }
+        private void framesListBox_Format(object sender, ListControlConvertEventArgs e) { e.Value = e.ListItem is TrailFrameEntry ? string.Format("Frame {0} | Flag {1} | Time {2:0.00}", CurrentNode != null ? CurrentNode.Frames.IndexOf((TrailFrameEntry)e.ListItem) : -1, ((TrailFrameEntry)e.ListItem).Flag, ((TrailFrameEntry)e.ListItem).Frame) : string.Empty; }
 
         private void managersListBox_SelectedIndexChanged(object sender, EventArgs e) { this.managersPropertyGrid.SelectedObject = CurrentChunk != null && this.managersListBox.SelectedItem is TrailManagerEntry ? new TrailManagerViewModel(this, CurrentChunk, (TrailManagerEntry)this.managersListBox.SelectedItem) : null; }
         private void resourcesListBox_SelectedIndexChanged(object sender, EventArgs e) { this.resourcesPropertyGrid.SelectedObject = CurrentChunk != null && this.resourcesListBox.SelectedItem is TrailResourceEntry ? new TrailResourceViewModel(this, CurrentChunk, (TrailResourceEntry)this.resourcesListBox.SelectedItem) : null; }
@@ -1068,51 +1117,22 @@ namespace NSUNS4_Character_Manager
         private void nodesPropertyGrid_PropertyValueChanged(object sender, PropertyValueChangedEventArgs e) { }
         private void framesPropertyGrid_PropertyValueChanged(object sender, PropertyValueChangedEventArgs e) { }
 
-        private void AddManagerButton_Click(object sender, EventArgs e)
-        {
-            if (CurrentChunk == null) return;
-            TrailManagerEntry entry = new TrailManagerEntry();
-            CurrentChunk.Managers.Add(entry);
-            RefreshCurrentChunk();
-            this.managersListBox.SelectedItem = entry;
-        }
+        private void AddManagerButton_Click(object sender, EventArgs e) { AddListEntry(CurrentChunk != null ? CurrentChunk.Managers : null, new TrailManagerEntry(), this.managersListBox); }
 
-        private void DuplicateManagerButton_Click(object sender, EventArgs e)
-        {
-            if (CurrentChunk == null || !(this.managersListBox.SelectedItem is TrailManagerEntry)) return;
-            TrailManagerEntry clone = ((TrailManagerEntry)this.managersListBox.SelectedItem).Clone();
-            int index = CurrentChunk.Managers.IndexOf((TrailManagerEntry)this.managersListBox.SelectedItem) + 1;
-            CurrentChunk.Managers.Insert(index, clone);
-            RefreshCurrentChunk();
-            this.managersListBox.SelectedItem = clone;
-        }
+        private void DuplicateManagerButton_Click(object sender, EventArgs e) { DuplicateListEntry(CurrentChunk != null ? CurrentChunk.Managers : null, CurrentManager, x => x.Clone(), this.managersListBox); }
 
         private void DeleteManagerButton_Click(object sender, EventArgs e)
         {
-            if (CurrentChunk == null || !(this.managersListBox.SelectedItem is TrailManagerEntry)) return;
+            if (CurrentChunk == null || CurrentManager == null) return;
             int index = this.managersListBox.SelectedIndex;
             CurrentChunk.Managers.RemoveAt(index);
             RemapTrailEntryReferences(index, -1);
             RefreshCurrentChunk();
         }
 
-        private void AddResourceButton_Click(object sender, EventArgs e)
-        {
-            if (CurrentChunk == null) return;
-            TrailResourceEntry entry = new TrailResourceEntry();
-            CurrentChunk.Resources.Add(entry);
-            RefreshCurrentChunk();
-            this.resourcesListBox.SelectedItem = entry;
-        }
+        private void AddResourceButton_Click(object sender, EventArgs e) { AddListEntry(CurrentChunk != null ? CurrentChunk.Resources : null, new TrailResourceEntry(), this.resourcesListBox); }
 
-        private void DuplicateResourceButton_Click(object sender, EventArgs e)
-        {
-            if (CurrentChunk == null || !(this.resourcesListBox.SelectedItem is TrailResourceEntry)) return;
-            TrailResourceEntry clone = ((TrailResourceEntry)this.resourcesListBox.SelectedItem).Clone();
-            CurrentChunk.Resources.Insert(this.resourcesListBox.SelectedIndex + 1, clone);
-            RefreshCurrentChunk();
-            this.resourcesListBox.SelectedItem = clone;
-        }
+        private void DuplicateResourceButton_Click(object sender, EventArgs e) { DuplicateListEntry(CurrentChunk != null ? CurrentChunk.Resources : null, CurrentResource, x => x.Clone(), this.resourcesListBox); }
 
         private void DeleteResourceButton_Click(object sender, EventArgs e)
         {
@@ -1121,23 +1141,9 @@ namespace NSUNS4_Character_Manager
             RefreshCurrentChunk();
         }
 
-        private void AddPositionButton_Click(object sender, EventArgs e)
-        {
-            if (CurrentChunk == null) return;
-            TrailPositionEntry entry = new TrailPositionEntry();
-            CurrentChunk.Positions.Add(entry);
-            RefreshCurrentChunk();
-            this.positionsListBox.SelectedItem = entry;
-        }
+        private void AddPositionButton_Click(object sender, EventArgs e) { AddListEntry(CurrentChunk != null ? CurrentChunk.Positions : null, new TrailPositionEntry(), this.positionsListBox); }
 
-        private void DuplicatePositionButton_Click(object sender, EventArgs e)
-        {
-            if (CurrentChunk == null || !(this.positionsListBox.SelectedItem is TrailPositionEntry)) return;
-            TrailPositionEntry clone = ((TrailPositionEntry)this.positionsListBox.SelectedItem).Clone();
-            CurrentChunk.Positions.Insert(this.positionsListBox.SelectedIndex + 1, clone);
-            RefreshCurrentChunk();
-            this.positionsListBox.SelectedItem = clone;
-        }
+        private void DuplicatePositionButton_Click(object sender, EventArgs e) { DuplicateListEntry(CurrentChunk != null ? CurrentChunk.Positions : null, CurrentPosition, x => x.Clone(), this.positionsListBox); }
 
         private void DeletePositionButton_Click(object sender, EventArgs e)
         {
@@ -1146,23 +1152,9 @@ namespace NSUNS4_Character_Manager
             RefreshCurrentChunk();
         }
 
-        private void AddForceFieldButton_Click(object sender, EventArgs e)
-        {
-            if (CurrentChunk == null) return;
-            TrailForceFieldEntry entry = new TrailForceFieldEntry();
-            CurrentChunk.ForceFields.Add(entry);
-            RefreshCurrentChunk();
-            this.forceFieldsListBox.SelectedItem = entry;
-        }
+        private void AddForceFieldButton_Click(object sender, EventArgs e) { AddListEntry(CurrentChunk != null ? CurrentChunk.ForceFields : null, new TrailForceFieldEntry(), this.forceFieldsListBox); }
 
-        private void DuplicateForceFieldButton_Click(object sender, EventArgs e)
-        {
-            if (CurrentChunk == null || !(this.forceFieldsListBox.SelectedItem is TrailForceFieldEntry)) return;
-            TrailForceFieldEntry clone = ((TrailForceFieldEntry)this.forceFieldsListBox.SelectedItem).Clone();
-            CurrentChunk.ForceFields.Insert(this.forceFieldsListBox.SelectedIndex + 1, clone);
-            RefreshCurrentChunk();
-            this.forceFieldsListBox.SelectedItem = clone;
-        }
+        private void DuplicateForceFieldButton_Click(object sender, EventArgs e) { DuplicateListEntry(CurrentChunk != null ? CurrentChunk.ForceFields : null, CurrentForceField, x => x.Clone(), this.forceFieldsListBox); }
 
         private void DeleteForceFieldButton_Click(object sender, EventArgs e)
         {
@@ -1171,21 +1163,14 @@ namespace NSUNS4_Character_Manager
             RefreshCurrentChunk();
         }
 
-        private void AddMapButton_Click(object sender, EventArgs e)
-        {
-            if (CurrentChunk == null) return;
-            TrailMapEntry entry = new TrailMapEntry { Name = "NewMap", Type = "nuccChunkCoord", Path = string.Empty };
-            CurrentChunk.MapEntries.Add(entry);
-            RefreshCurrentChunk();
-            this.mapIdsListBox.SelectedItem = entry;
-        }
+        private void AddMapButton_Click(object sender, EventArgs e) { AddListEntry(CurrentChunk != null ? CurrentChunk.MapEntries : null, new TrailMapEntry { Name = "NewMap", Type = "nuccChunkCoord", Path = string.Empty }, this.mapIdsListBox); }
 
         private void DuplicateMapButton_Click(object sender, EventArgs e)
         {
-            if (CurrentChunk == null || !(this.mapIdsListBox.SelectedItem is TrailMapEntry)) return;
+            if (CurrentChunk == null || CurrentMapEntry == null) return;
             int sourceIndex = this.mapIdsListBox.SelectedIndex;
             int newIndex = sourceIndex + 1;
-            TrailMapEntry clone = ((TrailMapEntry)this.mapIdsListBox.SelectedItem).Clone();
+            TrailMapEntry clone = CurrentMapEntry.Clone();
             CurrentChunk.MapEntries.Insert(newIndex, clone);
             ShiftMapReferences(newIndex, 1);
             RefreshCurrentChunk();
@@ -1201,23 +1186,9 @@ namespace NSUNS4_Character_Manager
             RefreshCurrentChunk();
         }
 
-        private void AddNodeButton_Click(object sender, EventArgs e)
-        {
-            if (CurrentChunk == null) return;
-            TrailNodeEntry entry = new TrailNodeEntry();
-            CurrentChunk.Nodes.Add(entry);
-            RefreshCurrentChunk();
-            this.nodesListBox.SelectedItem = entry;
-        }
+        private void AddNodeButton_Click(object sender, EventArgs e) { AddListEntry(CurrentChunk != null ? CurrentChunk.Nodes : null, new TrailNodeEntry(), this.nodesListBox); }
 
-        private void DuplicateNodeButton_Click(object sender, EventArgs e)
-        {
-            if (CurrentChunk == null || !(this.nodesListBox.SelectedItem is TrailNodeEntry)) return;
-            TrailNodeEntry clone = ((TrailNodeEntry)this.nodesListBox.SelectedItem).Clone();
-            CurrentChunk.Nodes.Insert(this.nodesListBox.SelectedIndex + 1, clone);
-            RefreshCurrentChunk();
-            this.nodesListBox.SelectedItem = clone;
-        }
+        private void DuplicateNodeButton_Click(object sender, EventArgs e) { DuplicateListEntry(CurrentChunk != null ? CurrentChunk.Nodes : null, CurrentNode, x => x.Clone(), this.nodesListBox); }
 
         private void DeleteNodeButton_Click(object sender, EventArgs e)
         {
@@ -1251,6 +1222,108 @@ namespace NSUNS4_Character_Manager
         {
             if (CurrentNode == null || this.framesListBox.SelectedIndex < 0) return;
             CurrentNode.Frames.RemoveAt(this.framesListBox.SelectedIndex);
+            RefreshFrames();
+            RefreshAllDisplays();
+        }
+
+        private void CopyManagerButton_Click(object sender, EventArgs e) { CopyClipboardEntry(CurrentManager, "manager"); }
+        private void PasteManagerButton_Click(object sender, EventArgs e) { PasteClipboardEntry(CurrentChunk != null ? CurrentChunk.Managers : null, this.managersListBox, "manager", entry => entry.EntryIndex = GetNextTrailEntryIndex()); }
+        private void CopyResourceButton_Click(object sender, EventArgs e) { CopyClipboardEntry(CurrentResource, "resource"); }
+        private void PasteResourceButton_Click(object sender, EventArgs e) { PasteClipboardEntry(CurrentChunk != null ? CurrentChunk.Resources : null, this.resourcesListBox, "resource"); }
+        private void CopyPositionButton_Click(object sender, EventArgs e) { CopyClipboardEntry(CurrentPosition, "position"); }
+        private void PastePositionButton_Click(object sender, EventArgs e) { PasteClipboardEntry(CurrentChunk != null ? CurrentChunk.Positions : null, this.positionsListBox, "position"); }
+        private void CopyForceFieldButton_Click(object sender, EventArgs e) { CopyClipboardEntry(CurrentForceField, "forcefield"); }
+        private void PasteForceFieldButton_Click(object sender, EventArgs e) { PasteClipboardEntry(CurrentChunk != null ? CurrentChunk.ForceFields : null, this.forceFieldsListBox, "forcefield"); }
+        private void CopyMapButton_Click(object sender, EventArgs e) { CopyClipboardEntry(CurrentMapEntry, "map"); }
+        private void PasteMapButton_Click(object sender, EventArgs e) { PasteClipboardEntry(CurrentChunk != null ? CurrentChunk.MapEntries : null, this.mapIdsListBox, "map"); }
+        private void CopyNodeButton_Click(object sender, EventArgs e) { CopyClipboardEntry(CurrentNode, "node"); }
+        private void PasteNodeButton_Click(object sender, EventArgs e) { PasteClipboardEntry(CurrentChunk != null ? CurrentChunk.Nodes : null, this.nodesListBox, "node"); }
+        private void CopyFrameButton_Click(object sender, EventArgs e) { CopyClipboardEntry(CurrentFrame, "frame"); }
+        private void PasteFrameButton_Click(object sender, EventArgs e) { PasteClipboardEntry(CurrentNode != null ? CurrentNode.Frames : null, this.framesListBox, "frame", null, RefreshFramesAndDisplays); }
+
+        private void AddListEntry<T>(List<T> list, T entry, ListBox listBox) where T : class
+        {
+            if (list == null || entry == null)
+                return;
+
+            list.Add(entry);
+            RefreshCurrentChunk();
+            listBox.SelectedItem = entry;
+        }
+
+        private void DuplicateListEntry<T>(List<T> list, T selected, Func<T, T> clone, ListBox listBox) where T : class
+        {
+            if (list == null || selected == null)
+                return;
+
+            T cloneEntry = clone(selected);
+            list.Insert(listBox.SelectedIndex + 1, cloneEntry);
+            RefreshCurrentChunk();
+            listBox.SelectedItem = cloneEntry;
+        }
+
+        private void CopyClipboardEntry<T>(T entry, string entryType) where T : class
+        {
+            if (entry == null)
+                return;
+
+            TrailClipboardPayload payload = new TrailClipboardPayload
+            {
+                EntryType = entryType,
+                Json = JsonConvert.SerializeObject(entry)
+            };
+
+            Clipboard.SetText(ClipboardPrefix + JsonConvert.SerializeObject(payload));
+        }
+
+        private void PasteClipboardEntry<T>(List<T> list, ListBox listBox, string entryType, Action<T> prepare = null, Action refresh = null) where T : class
+        {
+            if (list == null || !TryReadClipboardEntry(entryType, out T entry))
+                return;
+
+            if (prepare != null)
+                prepare(entry);
+
+            list.Add(entry);
+            if (refresh != null)
+            {
+                refresh();
+                listBox.SelectedItem = entry;
+                return;
+            }
+
+            RefreshCurrentChunk();
+            listBox.SelectedItem = entry;
+        }
+
+        private bool TryReadClipboardEntry<T>(string entryType, out T entry) where T : class
+        {
+            entry = null;
+            if (!Clipboard.ContainsText())
+                return false;
+
+            string text = Clipboard.GetText();
+            if (string.IsNullOrWhiteSpace(text) || !text.StartsWith(ClipboardPrefix, StringComparison.Ordinal))
+                return false;
+
+            TrailClipboardPayload payload = JsonConvert.DeserializeObject<TrailClipboardPayload>(text.Substring(ClipboardPrefix.Length));
+            if (payload == null || !string.Equals(payload.EntryType, entryType, StringComparison.OrdinalIgnoreCase) || string.IsNullOrWhiteSpace(payload.Json))
+                return false;
+
+            entry = JsonConvert.DeserializeObject<T>(payload.Json);
+            return entry != null;
+        }
+
+        private int GetNextTrailEntryIndex()
+        {
+            if (CurrentChunk == null || CurrentChunk.Managers.Count == 0)
+                return 0;
+
+            return CurrentChunk.Managers.Max(x => x.EntryIndex) + 1;
+        }
+
+        private void RefreshFramesAndDisplays()
+        {
             RefreshFrames();
             RefreshAllDisplays();
         }
@@ -1573,6 +1646,36 @@ namespace NSUNS4_Character_Manager
             writer.Write(bytes[2]);
             writer.Write(bytes[1]);
             writer.Write(bytes[0]);
+        }
+
+        private void managersPropertyGrid_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void resourcesListBox_SelectedIndexChanged_1(object sender, EventArgs e)
+        {
+
+        }
+
+        private void managersSplitContainer_Panel2_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void managersSplitContainer_Panel1_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void resourcesSplitContainer_Panel1_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void positionsSplitContainer_Panel2_Paint(object sender, PaintEventArgs e)
+        {
+
         }
     }
 }

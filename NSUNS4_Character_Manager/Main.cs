@@ -105,6 +105,8 @@ namespace NSUNS4_Character_Manager
         private Button button33;
         private Button button34;
         private Button button35;
+        private Button button36;
+        private Button button37;
         private FlowLayoutPanel extraToolsPanel;
         private Button extraToolsButtonTemplate;
         private TabPage tabPage7;
@@ -1103,6 +1105,8 @@ namespace NSUNS4_Character_Manager
             this.button33 = new System.Windows.Forms.Button();
             this.button34 = new System.Windows.Forms.Button();
             this.button35 = new System.Windows.Forms.Button();
+            this.button36 = new System.Windows.Forms.Button();
+            this.button37 = new System.Windows.Forms.Button();
             this.tabPage7 = new System.Windows.Forms.TabPage();
             this.extraToolsPanel = new System.Windows.Forms.FlowLayoutPanel();
             this.tabPage2 = new System.Windows.Forms.TabPage();
@@ -1646,6 +1650,8 @@ namespace NSUNS4_Character_Manager
             this.tabPage6.Controls.Add(this.button33);
             this.tabPage6.Controls.Add(this.button34);
             this.tabPage6.Controls.Add(this.button35);
+            this.tabPage6.Controls.Add(this.button36);
+            this.tabPage6.Controls.Add(this.button37);
             this.tabPage6.Location = new System.Drawing.Point(4, 22);
             this.tabPage6.Name = "tabPage6";
             this.tabPage6.Size = new System.Drawing.Size(602, 507);
@@ -1796,9 +1802,31 @@ namespace NSUNS4_Character_Manager
             this.button35.Name = "button35";
             this.button35.Size = new System.Drawing.Size(299, 38);
             this.button35.TabIndex = 39;
-            this.button35.Text = "Particle Chunk Editor\r\n(TrailParticle.xfbin / nuccChunkParticle)";
+            this.button35.Text = "Particle Chunk Editor";
             this.button35.UseVisualStyleBackColor = true;
             this.button35.Click += new System.EventHandler(this.button35_Click);
+            // 
+            // button36
+            // 
+            this.button36.Font = new System.Drawing.Font("Segoe UI", 8.5F);
+            this.button36.Location = new System.Drawing.Point(302, 91);
+            this.button36.Name = "button36";
+            this.button36.Size = new System.Drawing.Size(299, 38);
+            this.button36.TabIndex = 44;
+            this.button36.Text = "Trail Chunk Editor";
+            this.button36.UseVisualStyleBackColor = true;
+            this.button36.Click += new System.EventHandler(this.button36_Click);
+            // 
+            // button37
+            // 
+            this.button37.Font = new System.Drawing.Font("Segoe UI", 8.5F);
+            this.button37.Location = new System.Drawing.Point(1, 135);
+            this.button37.Name = "button37";
+            this.button37.Size = new System.Drawing.Size(299, 38);
+            this.button37.TabIndex = 45;
+            this.button37.Text = "XML Skill Editor";
+            this.button37.UseVisualStyleBackColor = true;
+            this.button37.Click += new System.EventHandler(this.button37_Click);
             // 
             // tabPage7
             // 
@@ -2384,6 +2412,18 @@ namespace NSUNS4_Character_Manager
         private void button35_Click(object sender, EventArgs e)
         {
             Tool_ParticleEditor t = new Tool_ParticleEditor();
+            t.Show();
+        }
+
+        private void button36_Click(object sender, EventArgs e)
+        {
+            Tool_TrailEditor t = new Tool_TrailEditor();
+            t.Show();
+        }
+
+        private void button37_Click(object sender, EventArgs e)
+        {
+            Tool_XmlBinaryEditor t = new Tool_XmlBinaryEditor();
             t.Show();
         }
     }

@@ -314,6 +314,18 @@
     <Compile Include="NSUNS4_Character_Manager\Tools\Tool_ParticleChunkReferenceEditor.Designer.cs">
       <DependentUpon>Tool_ParticleChunkReferenceEditor.cs</DependentUpon>
     </Compile>
+    <Compile Include="NSUNS4_Character_Manager\Tools\Tool_TrailEditor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="NSUNS4_Character_Manager\Tools\Tool_TrailEditor.Designer.cs">
+      <DependentUpon>Tool_TrailEditor.cs</DependentUpon>
+    </Compile>
+    <Compile Include="NSUNS4_Character_Manager\Tools\Tool_XmlBinaryEditor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="NSUNS4_Character_Manager\Tools\Tool_XmlBinaryEditor.Designer.cs">
+      <DependentUpon>Tool_XmlBinaryEditor.cs</DependentUpon>
+    </Compile>
     <Compile Include="NSUNS4_Character_Manager\Tools\Tool_playerCollisionEditor.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -509,6 +521,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="NSUNS4_Character_Manager\Tools\Tool_spTypeSupportParamEditor.resx">
       <DependentUpon>Tool_spTypeSupportParamEditor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="NSUNS4_Character_Manager\Tools\Tool_TrailEditor.resx">
+      <DependentUpon>Tool_TrailEditor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="NSUNS4_Character_Manager\Tools\Tool_XmlBinaryEditor.resx">
+      <DependentUpon>Tool_XmlBinaryEditor.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="NSUNS4_Character_Manager\Tools\Tool_UnlockCharaTotalEditor.resx">
       <DependentUpon>Tool_UnlockCharaTotalEditor.cs</DependentUpon>

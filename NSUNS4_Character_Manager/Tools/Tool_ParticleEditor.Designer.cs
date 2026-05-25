@@ -33,6 +33,8 @@ namespace NSUNS4_Character_Manager
         private ListBox managerListBox;
         private PropertyGrid managerPropertyGrid;
         private Button managerAddButton;
+        private Button managerCopyButton;
+        private Button managerPasteButton;
         private Button managerDuplicateButton;
         private Button managerDeleteButton;
         private Button managerSaveButton;
@@ -44,6 +46,8 @@ namespace NSUNS4_Character_Manager
         private ListBox resourceListBox;
         private PropertyGrid resourcePropertyGrid;
         private Button resourceAddButton;
+        private Button resourceCopyButton;
+        private Button resourcePasteButton;
         private Button resourceDuplicateButton;
         private Button resourceDeleteButton;
         private Button resourceSaveButton;
@@ -55,6 +59,8 @@ namespace NSUNS4_Character_Manager
         private ListBox positionListBox;
         private PropertyGrid positionPropertyGrid;
         private Button positionAddButton;
+        private Button positionCopyButton;
+        private Button positionPasteButton;
         private Button positionDuplicateButton;
         private Button positionDeleteButton;
         private Button positionSaveButton;
@@ -68,6 +74,8 @@ namespace NSUNS4_Character_Manager
         private ListBox forceFieldListBox;
         private PropertyGrid forceFieldPropertyGrid;
         private Button forceFieldAddButton;
+        private Button forceFieldCopyButton;
+        private Button forceFieldPasteButton;
         private Button forceFieldDuplicateButton;
         private Button forceFieldDeleteButton;
         private Button forceFieldSaveButton;
@@ -81,6 +89,8 @@ namespace NSUNS4_Character_Manager
         private ListBox nodeListBox;
         private DataGridView nodeEventsGrid;
         private Button nodeAddButton;
+        private Button nodeCopyButton;
+        private Button nodePasteButton;
         private Button nodeDuplicateButton;
         private Button nodeDeleteButton;
         private Button nodeSaveButton;
@@ -125,6 +135,8 @@ namespace NSUNS4_Character_Manager
             this.managerListBox = new ListBox();
             this.managerPropertyGrid = new PropertyGrid();
             this.managerAddButton = new Button();
+            this.managerCopyButton = new Button();
+            this.managerPasteButton = new Button();
             this.managerDuplicateButton = new Button();
             this.managerDeleteButton = new Button();
             this.managerSaveButton = new Button();
@@ -136,6 +148,8 @@ namespace NSUNS4_Character_Manager
             this.resourceListBox = new ListBox();
             this.resourcePropertyGrid = new PropertyGrid();
             this.resourceAddButton = new Button();
+            this.resourceCopyButton = new Button();
+            this.resourcePasteButton = new Button();
             this.resourceDuplicateButton = new Button();
             this.resourceDeleteButton = new Button();
             this.resourceSaveButton = new Button();
@@ -147,6 +161,8 @@ namespace NSUNS4_Character_Manager
             this.positionListBox = new ListBox();
             this.positionPropertyGrid = new PropertyGrid();
             this.positionAddButton = new Button();
+            this.positionCopyButton = new Button();
+            this.positionPasteButton = new Button();
             this.positionDuplicateButton = new Button();
             this.positionDeleteButton = new Button();
             this.positionSaveButton = new Button();
@@ -160,6 +176,8 @@ namespace NSUNS4_Character_Manager
             this.forceFieldListBox = new ListBox();
             this.forceFieldPropertyGrid = new PropertyGrid();
             this.forceFieldAddButton = new Button();
+            this.forceFieldCopyButton = new Button();
+            this.forceFieldPasteButton = new Button();
             this.forceFieldDuplicateButton = new Button();
             this.forceFieldDeleteButton = new Button();
             this.forceFieldSaveButton = new Button();
@@ -173,6 +191,8 @@ namespace NSUNS4_Character_Manager
             this.nodeListBox = new ListBox();
             this.nodeEventsGrid = new DataGridView();
             this.nodeAddButton = new Button();
+            this.nodeCopyButton = new Button();
+            this.nodePasteButton = new Button();
             this.nodeDuplicateButton = new Button();
             this.nodeDeleteButton = new Button();
             this.nodeSaveButton = new Button();
@@ -262,7 +282,7 @@ namespace NSUNS4_Character_Manager
             this.chunkPathTextBox.Size = new Size(562, 20);
             this.saveChunkMetaButton.Location = new Point(666, 9);
             this.saveChunkMetaButton.Size = new Size(104, 23);
-            this.saveChunkMetaButton.Text = "Apply Metadata";
+            this.saveChunkMetaButton.Text = "Apply Header";
             this.saveChunkMetaButton.Click += new System.EventHandler(this.saveChunkMetaButton_Click);
             this.addChunkButton.Location = new Point(776, 9);
             this.addChunkButton.Size = new Size(90, 23);
@@ -274,7 +294,7 @@ namespace NSUNS4_Character_Manager
             this.deleteChunkButton.Click += new System.EventHandler(this.deleteChunkButton_Click);
             this.editReferencesButton.Location = new Point(972, 9);
             this.editReferencesButton.Size = new Size(173, 23);
-            this.editReferencesButton.Text = "Edit Linked Chunks";
+            this.editReferencesButton.Text = "Manage Linked Chunks";
             this.editReferencesButton.Click += new System.EventHandler(this.editReferencesButton_Click);
             //
             // particleTabControl
@@ -300,10 +320,10 @@ namespace NSUNS4_Character_Manager
             this.positionTabPage.UseVisualStyleBackColor = true;
             this.forceFieldTabPage.UseVisualStyleBackColor = true;
             this.nodeTabPage.UseVisualStyleBackColor = true;
-            BuildPropertyTab(this.managerTabPage, this.managerListBox, this.managerHintLabel, "Grouped to match the particle panel: core settings plus alpha, scale, color, and timing.", this.managerAnimationLabel, "Animation Chunk", this.managerAnimationComboBox, this.managerEntryIndexLabel, "Particle Index", this.managerEntryIndexNumericUpDown, null, null, this.managerPropertyGrid, this.managerAddButton, this.managerDuplicateButton, this.managerDeleteButton, this.managerSaveButton, this.managerListBox_SelectedIndexChanged, this.managerAnimationComboBox_SelectedIndexChanged, this.managerEntryIndexNumericUpDown_ValueChanged, null, this.managerAddButton_Click, this.managerDuplicateButton_Click, this.managerDeleteButton_Click, this.managerSaveButton_Click);
-            BuildPropertyTab(this.resourceTabPage, this.resourceListBox, this.resourceHintLabel, "Select the referenced effect chunk by name instead of editing a raw index.", this.resourceEffectLabel, "Effect Chunk", this.resourceEffectComboBox, this.resourceParticleIndexLabel, "Particle Index", this.resourceParticleIndexNumericUpDown, null, null, this.resourcePropertyGrid, this.resourceAddButton, this.resourceDuplicateButton, this.resourceDeleteButton, this.resourceSaveButton, this.resourceListBox_SelectedIndexChanged, this.resourceEffectComboBox_SelectedIndexChanged, this.resourceParticleIndexNumericUpDown_ValueChanged, null, this.resourceAddButton_Click, this.resourceDuplicateButton_Click, this.resourceDeleteButton_Click, this.resourceSaveButton_Click);
-            BuildPropertyTab(this.positionTabPage, this.positionListBox, this.positionHintLabel, "Coord and clump references are explicit selectors. Remaining values stay grouped in the editor.", this.positionCoordLabel, "Coord Chunk", this.positionCoordComboBox, this.positionParticleIndexLabel, "Particle Index", this.positionParticleIndexNumericUpDown, this.positionClumpLabel, this.positionClumpComboBox, this.positionPropertyGrid, this.positionAddButton, this.positionDuplicateButton, this.positionDeleteButton, this.positionSaveButton, this.positionListBox_SelectedIndexChanged, this.positionCoordComboBox_SelectedIndexChanged, this.positionParticleIndexNumericUpDown_ValueChanged, this.positionClumpComboBox_SelectedIndexChanged, this.positionAddButton_Click, this.positionDuplicateButton_Click, this.positionDeleteButton_Click, this.positionSaveButton_Click);
-            BuildPropertyTab(this.forceFieldTabPage, this.forceFieldListBox, this.forceFieldHintLabel, "Force fields use named coord and clump selectors so the user can switch actual referenced chunks.", this.forceFieldCoordLabel, "Coord Chunk", this.forceFieldCoordComboBox, this.forceFieldParticleIndexLabel, "Particle Index", this.forceFieldParticleIndexNumericUpDown, this.forceFieldClumpLabel, this.forceFieldClumpComboBox, this.forceFieldPropertyGrid, this.forceFieldAddButton, this.forceFieldDuplicateButton, this.forceFieldDeleteButton, this.forceFieldSaveButton, this.forceFieldListBox_SelectedIndexChanged, this.forceFieldCoordComboBox_SelectedIndexChanged, this.forceFieldParticleIndexNumericUpDown_ValueChanged, this.forceFieldClumpComboBox_SelectedIndexChanged, this.forceFieldAddButton_Click, this.forceFieldDuplicateButton_Click, this.forceFieldDeleteButton_Click, this.forceFieldSaveButton_Click);
+            BuildPropertyTab(this.managerTabPage, this.managerListBox, this.managerHintLabel, "Select a particle setting on the left, use the quick link controls to adjust its animation and stored index, then edit the detailed values below.", this.managerAnimationLabel, "Animation Chunk", this.managerAnimationComboBox, this.managerEntryIndexLabel, "Stored Entry Index", this.managerEntryIndexNumericUpDown, null, null, this.managerPropertyGrid, this.managerAddButton, this.managerCopyButton, this.managerPasteButton, this.managerDuplicateButton, this.managerDeleteButton, this.managerSaveButton, this.managerListBox_SelectedIndexChanged, this.managerAnimationComboBox_SelectedIndexChanged, this.managerEntryIndexNumericUpDown_ValueChanged, null, this.managerAddButton_Click, this.managerCopyButton_Click, this.managerPasteButton_Click, this.managerDuplicateButton_Click, this.managerDeleteButton_Click, this.managerSaveButton_Click);
+            BuildPropertyTab(this.resourceTabPage, this.resourceListBox, this.resourceHintLabel, "Select a resource entry, then use the quick link controls to point it at a particle setting and effect chunk.", this.resourceEffectLabel, "Effect Chunk", this.resourceEffectComboBox, this.resourceParticleIndexLabel, "Linked Particle Index", this.resourceParticleIndexNumericUpDown, null, null, this.resourcePropertyGrid, this.resourceAddButton, this.resourceCopyButton, this.resourcePasteButton, this.resourceDuplicateButton, this.resourceDeleteButton, this.resourceSaveButton, this.resourceListBox_SelectedIndexChanged, this.resourceEffectComboBox_SelectedIndexChanged, this.resourceParticleIndexNumericUpDown_ValueChanged, null, this.resourceAddButton_Click, this.resourceCopyButton_Click, this.resourcePasteButton_Click, this.resourceDuplicateButton_Click, this.resourceDeleteButton_Click, this.resourceSaveButton_Click);
+            BuildPropertyTab(this.positionTabPage, this.positionListBox, this.positionHintLabel, "Select a position entry, choose the linked particle setting, then swap coord and clump references as needed.", this.positionCoordLabel, "Coord Chunk", this.positionCoordComboBox, this.positionParticleIndexLabel, "Linked Particle Index", this.positionParticleIndexNumericUpDown, this.positionClumpLabel, this.positionClumpComboBox, this.positionPropertyGrid, this.positionAddButton, this.positionCopyButton, this.positionPasteButton, this.positionDuplicateButton, this.positionDeleteButton, this.positionSaveButton, this.positionListBox_SelectedIndexChanged, this.positionCoordComboBox_SelectedIndexChanged, this.positionParticleIndexNumericUpDown_ValueChanged, this.positionClumpComboBox_SelectedIndexChanged, this.positionAddButton_Click, this.positionCopyButton_Click, this.positionPasteButton_Click, this.positionDuplicateButton_Click, this.positionDeleteButton_Click, this.positionSaveButton_Click);
+            BuildPropertyTab(this.forceFieldTabPage, this.forceFieldListBox, this.forceFieldHintLabel, "Select a force field entry, choose the linked particle setting, then adjust coord and clump links before editing the remaining values.", this.forceFieldCoordLabel, "Coord Chunk", this.forceFieldCoordComboBox, this.forceFieldParticleIndexLabel, "Linked Particle Index", this.forceFieldParticleIndexNumericUpDown, this.forceFieldClumpLabel, this.forceFieldClumpComboBox, this.forceFieldPropertyGrid, this.forceFieldAddButton, this.forceFieldCopyButton, this.forceFieldPasteButton, this.forceFieldDuplicateButton, this.forceFieldDeleteButton, this.forceFieldSaveButton, this.forceFieldListBox_SelectedIndexChanged, this.forceFieldCoordComboBox_SelectedIndexChanged, this.forceFieldParticleIndexNumericUpDown_ValueChanged, this.forceFieldClumpComboBox_SelectedIndexChanged, this.forceFieldAddButton_Click, this.forceFieldCopyButton_Click, this.forceFieldPasteButton_Click, this.forceFieldDuplicateButton_Click, this.forceFieldDeleteButton_Click, this.forceFieldSaveButton_Click);
             //
             // node tab
             //
@@ -312,27 +332,35 @@ namespace NSUNS4_Character_Manager
             this.nodeListBox.SelectedIndexChanged += new System.EventHandler(this.nodeListBox_SelectedIndexChanged);
             this.nodeAddButton.Location = new Point(6, 513);
             this.nodeAddButton.Size = new Size(64, 24);
-            this.nodeAddButton.Text = "Add";
+            this.nodeAddButton.Text = "Add Entry";
             this.nodeAddButton.Click += new System.EventHandler(this.nodeAddButton_Click);
-            this.nodeDuplicateButton.Location = new Point(76, 513);
+            this.nodeCopyButton.Location = new Point(76, 513);
+            this.nodeCopyButton.Size = new Size(60, 24);
+            this.nodeCopyButton.Text = "Copy";
+            this.nodeCopyButton.Click += new System.EventHandler(this.nodeCopyButton_Click);
+            this.nodePasteButton.Location = new Point(142, 513);
+            this.nodePasteButton.Size = new Size(60, 24);
+            this.nodePasteButton.Text = "Paste";
+            this.nodePasteButton.Click += new System.EventHandler(this.nodePasteButton_Click);
+            this.nodeDuplicateButton.Location = new Point(208, 513);
             this.nodeDuplicateButton.Size = new Size(75, 24);
             this.nodeDuplicateButton.Text = "Duplicate";
             this.nodeDuplicateButton.Click += new System.EventHandler(this.nodeDuplicateButton_Click);
-            this.nodeDeleteButton.Location = new Point(157, 513);
+            this.nodeDeleteButton.Location = new Point(289, 513);
             this.nodeDeleteButton.Size = new Size(62, 24);
-            this.nodeDeleteButton.Text = "Delete";
+            this.nodeDeleteButton.Text = "Remove";
             this.nodeDeleteButton.Click += new System.EventHandler(this.nodeDeleteButton_Click);
-            this.nodeSaveButton.Location = new Point(225, 513);
+            this.nodeSaveButton.Location = new Point(357, 513);
             this.nodeSaveButton.Size = new Size(71, 24);
-            this.nodeSaveButton.Text = "Apply";
+            this.nodeSaveButton.Text = "Apply Changes";
             this.nodeSaveButton.Click += new System.EventHandler(this.nodeSaveButton_Click);
             this.nodeHintLabel.AutoSize = true;
             this.nodeHintLabel.Location = new Point(314, 11);
             this.nodeHintLabel.MaximumSize = new Size(820, 0);
-            this.nodeHintLabel.Text = "Each row is one timeline point for the selected node. Use On / Spawn and Off / Despawn with the time value instead of editing the packed frame integers directly.";
+            this.nodeHintLabel.Text = "Select a frame timeline on the left, set the linked particle index, then add simple Spawn and Despawn timing rows below.";
             this.nodeParticleIndexLabel.AutoSize = true;
             this.nodeParticleIndexLabel.Location = new Point(314, 44);
-            this.nodeParticleIndexLabel.Text = "Particle Index";
+            this.nodeParticleIndexLabel.Text = "Linked Particle Index";
             this.nodeParticleIndexNumericUpDown.Location = new Point(400, 41);
             this.nodeParticleIndexNumericUpDown.Maximum = new decimal(new int[] { -1, 0, 0, 0 });
             this.nodeParticleIndexNumericUpDown.Size = new Size(120, 20);
@@ -345,14 +373,16 @@ namespace NSUNS4_Character_Manager
             this.nodeEventsGrid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             this.nodeAddEventButton.Location = new Point(317, 513);
             this.nodeAddEventButton.Size = new Size(92, 24);
-            this.nodeAddEventButton.Text = "Add Timing";
+            this.nodeAddEventButton.Text = "Add Timing Row";
             this.nodeAddEventButton.Click += new System.EventHandler(this.nodeAddEventButton_Click);
             this.nodeDeleteEventButton.Location = new Point(415, 513);
             this.nodeDeleteEventButton.Size = new Size(95, 24);
-            this.nodeDeleteEventButton.Text = "Delete Timing";
+            this.nodeDeleteEventButton.Text = "Remove Timing Row";
             this.nodeDeleteEventButton.Click += new System.EventHandler(this.nodeDeleteEventButton_Click);
             this.nodeTabPage.Controls.Add(this.nodeListBox);
             this.nodeTabPage.Controls.Add(this.nodeAddButton);
+            this.nodeTabPage.Controls.Add(this.nodeCopyButton);
+            this.nodeTabPage.Controls.Add(this.nodePasteButton);
             this.nodeTabPage.Controls.Add(this.nodeDuplicateButton);
             this.nodeTabPage.Controls.Add(this.nodeDeleteButton);
             this.nodeTabPage.Controls.Add(this.nodeSaveButton);
@@ -390,25 +420,45 @@ namespace NSUNS4_Character_Manager
             this.PerformLayout();
         }
 
-        private static void BuildPropertyTab(TabPage tabPage, ListBox listBox, Label hintLabel, string hintText, Label combo1Label, string combo1Text, ComboBox combo1, Label indexLabel, string indexText, NumericUpDown indexNumericUpDown, Label combo2Label, ComboBox combo2, PropertyGrid propertyGrid, Button addButton, Button duplicateButton, Button deleteButton, Button saveButton, System.EventHandler listChanged, System.EventHandler combo1Changed, System.EventHandler indexChanged, System.EventHandler combo2Changed, System.EventHandler addClick, System.EventHandler duplicateClick, System.EventHandler deleteClick, System.EventHandler saveClick)
+        private static void BuildPropertyTab(TabPage tabPage, ListBox listBox, Label hintLabel, string hintText, Label combo1Label, string combo1Text, ComboBox combo1, Label indexLabel, string indexText, NumericUpDown indexNumericUpDown, Label combo2Label, ComboBox combo2, PropertyGrid propertyGrid, Button addButton, Button copyButton, Button pasteButton, Button duplicateButton, Button deleteButton, Button saveButton, System.EventHandler listChanged, System.EventHandler combo1Changed, System.EventHandler indexChanged, System.EventHandler combo2Changed, System.EventHandler addClick, System.EventHandler copyClick, System.EventHandler pasteClick, System.EventHandler duplicateClick, System.EventHandler deleteClick, System.EventHandler saveClick)
         {
-            listBox.Location = new Point(6, 6);
-            listBox.Size = new Size(290, 498);
+            Label entriesLabel = new Label();
+            Label quickLinksLabel = new Label();
+            Label detailsLabel = new Label();
+            entriesLabel.AutoSize = true;
+            entriesLabel.Location = new Point(6, 6);
+            entriesLabel.Text = "Entries";
+            quickLinksLabel.AutoSize = true;
+            quickLinksLabel.Location = new Point(314, 44);
+            quickLinksLabel.Text = "Quick Links";
+            detailsLabel.AutoSize = true;
+            detailsLabel.Location = new Point(314, 124);
+            detailsLabel.Text = "Detailed Values";
+            listBox.Location = new Point(6, 26);
+            listBox.Size = new Size(290, 478);
             listBox.SelectedIndexChanged += listChanged;
             addButton.Location = new Point(6, 513);
             addButton.Size = new Size(64, 24);
             addButton.Text = "Add";
             addButton.Click += addClick;
-            duplicateButton.Location = new Point(76, 513);
+            copyButton.Location = new Point(76, 513);
+            copyButton.Size = new Size(60, 24);
+            copyButton.Text = "Copy";
+            copyButton.Click += copyClick;
+            pasteButton.Location = new Point(142, 513);
+            pasteButton.Size = new Size(60, 24);
+            pasteButton.Text = "Paste";
+            pasteButton.Click += pasteClick;
+            duplicateButton.Location = new Point(208, 513);
             duplicateButton.Size = new Size(75, 24);
             duplicateButton.Text = "Duplicate";
             duplicateButton.Click += duplicateClick;
-            deleteButton.Location = new Point(157, 513);
-            deleteButton.Size = new Size(62, 24);
-            deleteButton.Text = "Delete";
+            deleteButton.Location = new Point(289, 513);
+            deleteButton.Size = new Size(70, 24);
+            deleteButton.Text = "Remove";
             deleteButton.Click += deleteClick;
-            saveButton.Location = new Point(225, 513);
-            saveButton.Size = new Size(71, 24);
+            saveButton.Location = new Point(365, 513);
+            saveButton.Size = new Size(63, 24);
             saveButton.Text = "Apply";
             saveButton.Click += saveClick;
             hintLabel.AutoSize = true;
@@ -416,26 +466,31 @@ namespace NSUNS4_Character_Manager
             hintLabel.MaximumSize = new Size(820, 0);
             hintLabel.Text = hintText;
             combo1Label.AutoSize = true;
-            combo1Label.Location = new Point(314, 44);
+            combo1Label.Location = new Point(314, 64);
             combo1Label.Text = combo1Text;
             combo1.DropDownStyle = ComboBoxStyle.DropDownList;
-            combo1.Location = new Point(400, 41);
+            combo1.Location = new Point(430, 61);
             combo1.Size = new Size(300, 21);
             combo1.SelectedIndexChanged += combo1Changed;
             indexLabel.AutoSize = true;
-            indexLabel.Location = new Point(314, 73);
+            indexLabel.Location = new Point(314, 92);
             indexLabel.Text = indexText;
-            indexNumericUpDown.Location = new Point(400, 71);
+            indexNumericUpDown.Location = new Point(430, 90);
             indexNumericUpDown.Maximum = new decimal(new int[] { -1, 0, 0, 0 });
             indexNumericUpDown.Size = new Size(120, 20);
             indexNumericUpDown.ValueChanged += indexChanged;
-            propertyGrid.Location = new Point(317, 100);
-            propertyGrid.Size = new Size(825, 437);
+            propertyGrid.Location = new Point(317, 144);
+            propertyGrid.Size = new Size(825, 393);
             propertyGrid.HelpVisible = true;
             propertyGrid.PropertySort = PropertySort.Categorized;
             propertyGrid.ToolbarVisible = false;
+            tabPage.Controls.Add(entriesLabel);
+            tabPage.Controls.Add(quickLinksLabel);
+            tabPage.Controls.Add(detailsLabel);
             tabPage.Controls.Add(listBox);
             tabPage.Controls.Add(addButton);
+            tabPage.Controls.Add(copyButton);
+            tabPage.Controls.Add(pasteButton);
             tabPage.Controls.Add(duplicateButton);
             tabPage.Controls.Add(deleteButton);
             tabPage.Controls.Add(saveButton);
@@ -447,11 +502,11 @@ namespace NSUNS4_Character_Manager
             if (combo2Label != null && combo2 != null)
             {
                 combo2Label.AutoSize = true;
-                combo2Label.Location = new Point(722, 44);
+                combo2Label.Location = new Point(750, 64);
                 combo2Label.Text = "Clump Chunk";
                 combo2.DropDownStyle = ComboBoxStyle.DropDownList;
-                combo2.Location = new Point(807, 41);
-                combo2.Size = new Size(335, 21);
+                combo2.Location = new Point(838, 61);
+                combo2.Size = new Size(304, 21);
                 combo2.SelectedIndexChanged += combo2Changed;
                 tabPage.Controls.Add(combo2Label);
                 tabPage.Controls.Add(combo2);

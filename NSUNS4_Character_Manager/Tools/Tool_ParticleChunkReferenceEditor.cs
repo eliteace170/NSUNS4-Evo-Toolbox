@@ -39,13 +39,26 @@ namespace NSUNS4_Character_Manager
 
             bindingSource.DataSource = rows;
             referencesGrid.DataSource = bindingSource;
+            UpdateStatus();
         }
 
         private void InitializeGrid()
         {
             referencesGrid.AutoGenerateColumns = false;
             referencesGrid.Columns.Clear();
+            referencesGrid.AllowUserToAddRows = false;
+            referencesGrid.AllowUserToDeleteRows = false;
+            referencesGrid.MultiSelect = false;
+            referencesGrid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            referencesGrid.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
+            referencesGrid.SelectionChanged += referencesGrid_SelectionChanged;
 
+            referencesGrid.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                HeaderText = "#",
+                ReadOnly = true,
+                Width = 42
+            });
             referencesGrid.Columns.Add(new DataGridViewTextBoxColumn
             {
                 DataPropertyName = "Name",
@@ -100,19 +113,46 @@ namespace NSUNS4_Character_Manager
                 Type = "nuccChunkAnm",
                 Path = ""
             });
-            bindingSource.ResetBindings(false);
+            RefreshGrid();
             if (rows.Count > 0)
-                referencesGrid.CurrentCell = referencesGrid.Rows[rows.Count - 1].Cells[0];
+                referencesGrid.CurrentCell = referencesGrid.Rows[rows.Count - 1].Cells[1];
         }
 
         private void deleteButton_Click(object sender, EventArgs e)
         {
-            foreach (DataGridViewRow row in referencesGrid.SelectedRows.Cast<DataGridViewRow>().OrderByDescending(x => x.Index))
-            {
-                if (row.Index >= 0 && row.Index < rows.Count)
-                    rows.RemoveAt(row.Index);
-            }
-            bindingSource.ResetBindings(false);
+            int index = GetSelectedRowIndex();
+            if (index < 0 || index >= rows.Count)
+                return;
+
+            rows.RemoveAt(index);
+            RefreshGrid();
+            SelectRow(Math.Min(index, rows.Count - 1));
+        }
+
+        private void moveUpButton_Click(object sender, EventArgs e)
+        {
+            int index = GetSelectedRowIndex();
+            if (index <= 0 || index >= rows.Count)
+                return;
+
+            EditableReferenceRow row = rows[index];
+            rows.RemoveAt(index);
+            rows.Insert(index - 1, row);
+            RefreshGrid();
+            SelectRow(index - 1);
+        }
+
+        private void moveDownButton_Click(object sender, EventArgs e)
+        {
+            int index = GetSelectedRowIndex();
+            if (index < 0 || index >= rows.Count - 1)
+                return;
+
+            EditableReferenceRow row = rows[index];
+            rows.RemoveAt(index);
+            rows.Insert(index + 1, row);
+            RefreshGrid();
+            SelectRow(index + 1);
         }
 
         private void okButton_Click(object sender, EventArgs e)
@@ -126,6 +166,56 @@ namespace NSUNS4_Character_Manager
         {
             DialogResult = DialogResult.Cancel;
             Close();
+        }
+
+        private void referencesGrid_SelectionChanged(object sender, EventArgs e)
+        {
+            UpdateStatus();
+        }
+
+        private void RefreshGrid()
+        {
+            bindingSource.ResetBindings(false);
+            UpdateRowNumbers();
+            UpdateStatus();
+        }
+
+        private void UpdateRowNumbers()
+        {
+            for (int i = 0; i < referencesGrid.Rows.Count; i++)
+            {
+                DataGridViewRow row = referencesGrid.Rows[i];
+                if (!row.IsNewRow && row.Cells.Count > 0)
+                    row.Cells[0].Value = i.ToString();
+            }
+        }
+
+        private void UpdateStatus()
+        {
+            int selectedIndex = GetSelectedRowIndex();
+            countLabel.Text = rows.Count.ToString() + " linked chunk" + (rows.Count == 1 ? "" : "s");
+            selectionLabel.Text = selectedIndex >= 0 && selectedIndex < rows.Count
+                ? "Selected: " + (string.IsNullOrWhiteSpace(rows[selectedIndex].Name) ? "(unnamed)" : rows[selectedIndex].Name)
+                : "Selected: none";
+            moveUpButton.Enabled = selectedIndex > 0;
+            moveDownButton.Enabled = selectedIndex >= 0 && selectedIndex < rows.Count - 1;
+            deleteButton.Enabled = selectedIndex >= 0;
+        }
+
+        private int GetSelectedRowIndex()
+        {
+            return referencesGrid.CurrentRow != null ? referencesGrid.CurrentRow.Index : -1;
+        }
+
+        private void SelectRow(int index)
+        {
+            if (index < 0 || index >= referencesGrid.Rows.Count)
+                return;
+
+            referencesGrid.ClearSelection();
+            referencesGrid.Rows[index].Selected = true;
+            referencesGrid.CurrentCell = referencesGrid.Rows[index].Cells[Math.Min(1, referencesGrid.Rows[index].Cells.Count - 1)];
+            UpdateStatus();
         }
     }
 }
