@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
@@ -69,11 +71,16 @@ namespace NSUNS4_Character_Manager
         private static readonly string[] AllSuggestions = BuildAllSuggestions();
         private readonly XmlBinaryFileState fileState = new XmlBinaryFileState();
         private bool loadingEditor;
+        private bool highlightingXml;
         private bool suppressSuggestionPopup;
         private bool suggestionValueNeedsQuotes;
         private int suggestionReplaceStart;
         private int suggestionReplaceLength;
         private XmlBinaryChunkEntry copiedChunkEntry;
+        private const int WmSetRedraw = 0x000B;
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam);
 
         private sealed class XmlBinaryChunkEntry
         {
@@ -807,6 +814,9 @@ namespace NSUNS4_Character_Manager
 
         private void xmlTextBox_TextChanged(object sender, EventArgs e)
         {
+            if (!highlightingXml)
+                HighlightXmlSyntax();
+
             if (!loadingEditor && !suppressSuggestionPopup)
                 UpdateSuggestionPopup();
         }
@@ -1013,6 +1023,77 @@ namespace NSUNS4_Character_Manager
         private void HideSuggestionPopup()
         {
             suggestionListBox.Visible = false;
+        }
+
+        private void HighlightXmlSyntax()
+        {
+            string text = xmlTextBox.Text ?? "";
+            if (text.Length == 0 || text.Length > 500000)
+                return;
+
+            highlightingXml = true;
+            int selectionStart = xmlTextBox.SelectionStart;
+            int selectionLength = xmlTextBox.SelectionLength;
+
+            SendMessage(xmlTextBox.Handle, WmSetRedraw, IntPtr.Zero, IntPtr.Zero);
+            try
+            {
+                xmlTextBox.SelectAll();
+                xmlTextBox.SelectionColor = Color.Black;
+
+                foreach (Match match in Regex.Matches(text, "<!--[\\s\\S]*?-->|<!\\[CDATA\\[[\\s\\S]*?\\]\\]>|<[^>]+>"))
+                {
+                    string token = match.Value;
+                    if (token.StartsWith("<!--", StringComparison.Ordinal) ||
+                        token.StartsWith("<![CDATA[", StringComparison.Ordinal))
+                    {
+                        ApplyXmlSyntaxColor(match.Index, match.Length, Color.FromArgb(0, 128, 0));
+                        continue;
+                    }
+
+                    ApplyTagHighlight(match.Index, token);
+                }
+
+                foreach (Match entityMatch in Regex.Matches(text, "&[A-Za-z0-9#]+;"))
+                    ApplyXmlSyntaxColor(entityMatch.Index, entityMatch.Length, Color.FromArgb(128, 0, 128));
+            }
+            finally
+            {
+                int safeStart = Math.Min(selectionStart, xmlTextBox.TextLength);
+                int safeLength = Math.Min(selectionLength, xmlTextBox.TextLength - safeStart);
+                xmlTextBox.Select(safeStart, safeLength);
+                SendMessage(xmlTextBox.Handle, WmSetRedraw, new IntPtr(1), IntPtr.Zero);
+                xmlTextBox.Invalidate();
+                highlightingXml = false;
+            }
+        }
+
+        private void ApplyTagHighlight(int tagStart, string tagText)
+        {
+            ApplyXmlSyntaxColor(tagStart, tagText.Length, Color.FromArgb(0, 0, 180));
+
+            Match tagNameMatch = Regex.Match(tagText, "^<\\s*[!?/]?\\s*([A-Za-z_][A-Za-z0-9_.:-]*)");
+            if (tagNameMatch.Success)
+                ApplyXmlSyntaxColor(tagStart + tagNameMatch.Groups[1].Index, tagNameMatch.Groups[1].Length, Color.FromArgb(0, 0, 180));
+
+            foreach (Match attributeMatch in Regex.Matches(tagText, "([A-Za-z_][A-Za-z0-9_.:-]*)(\\s*=\\s*)(\"[^\"]*\"|'[^']*')"))
+            {
+                Group nameGroup = attributeMatch.Groups[1];
+                Group equalsGroup = attributeMatch.Groups[2];
+                Group valueGroup = attributeMatch.Groups[3];
+                ApplyXmlSyntaxColor(tagStart + nameGroup.Index, nameGroup.Length, Color.FromArgb(160, 80, 0));
+                ApplyXmlSyntaxColor(tagStart + equalsGroup.Index, equalsGroup.Length, Color.FromArgb(90, 90, 90));
+                ApplyXmlSyntaxColor(tagStart + valueGroup.Index, valueGroup.Length, Color.FromArgb(163, 21, 21));
+            }
+        }
+
+        private void ApplyXmlSyntaxColor(int start, int length, Color color)
+        {
+            if (length <= 0 || start < 0 || start + length > xmlTextBox.TextLength)
+                return;
+
+            xmlTextBox.Select(start, length);
+            xmlTextBox.SelectionColor = color;
         }
     }
 }

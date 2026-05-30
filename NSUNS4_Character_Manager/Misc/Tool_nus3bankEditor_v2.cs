@@ -1,4 +1,4 @@
-﻿using NAudio.Codecs;
+using NAudio.Codecs;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 using System;
@@ -16,6 +16,8 @@ using System.Runtime.InteropServices;
 
 namespace NSUNS4_Character_Manager.Misc {
     public partial class Tool_nus3bankEditor_v2 : Form {
+        private const string SoundClipboardFormat = "NSUNS4EvoToolbox.Nus3bankSound";
+        private const string SoundClipboardMagic = "NUS3SOUND";
         private WaveOutEvent waveOut; // or WaveOutEvent()
         private WaveFileReader reader;
         public Tool_nus3bankEditor_v2() {
@@ -130,7 +132,7 @@ namespace NSUNS4_Character_Manager.Misc {
             FileID = Main.b_ReadInt(BINF_fileBytes, BINF_fileBytes.Length - 0x04);
             FileID_v.Value = FileID;
             EntryCount = Main.b_ReadInt(fileBytes, TONE_Position + 0x08);
-            
+
             for (int x = 0; x<EntryCount; x++) {
                 long _ptr = TONE_Position + 0x0C + (0x08 * x);
                 int TONE_Size = Main.b_ReadInt(fileBytes, (int)_ptr+4);
@@ -244,6 +246,7 @@ namespace NSUNS4_Character_Manager.Misc {
                 dataGridView1.Rows.Add(x, SoundName);
                 FileOpen = true;
             }
+            ApplySoundNameColors();
         }
 
         public void ClearFile() {
@@ -318,8 +321,8 @@ namespace NSUNS4_Character_Manager.Misc {
                 tabControl1.TabPages.Add(tabPage1);
                 tabControl1.TabPages.Remove(tabPage2);
                 tabControl1.TabPages.Remove(tabPage3);
-                
-                
+
+
             }
             else if(comboBox1.SelectedIndex == 1) {
                 tabControl1.TabPages.Remove(tabPage1);
@@ -331,8 +334,11 @@ namespace NSUNS4_Character_Manager.Misc {
                 tabControl1.TabPages.Remove(tabPage2);
                 tabControl1.TabPages.Add(tabPage3);
             }
-            if (dataGridView1.CurrentCell.RowIndex != -1) {
-                TONE_SectionType_List[dataGridView1.CurrentCell.RowIndex] = comboBox1.SelectedIndex;
+            int currentRow = GetCurrentRowIndex();
+            if (currentRow != -1) {
+                TONE_SectionType_List[currentRow] = comboBox1.SelectedIndex;
+                ApplySoundNameColor(currentRow);
+                UpdateSoundFormatDisplay(currentRow);
             }
         }
 
@@ -341,7 +347,7 @@ namespace NSUNS4_Character_Manager.Misc {
         }
 
         private void listBox1_SelectedIndexChanged(object sender, EventArgs e) {
-            
+
         }
 
         private void listBox3_SelectedIndexChanged(object sender, EventArgs e) {
@@ -349,7 +355,7 @@ namespace NSUNS4_Character_Manager.Misc {
         }
 
         private void listBox2_SelectedIndexChanged(object sender, EventArgs e) {
-            int x = dataGridView1.CurrentCell.RowIndex;
+            int x = GetCurrentRowIndex();
             int c = listBox2.SelectedIndex;
             if (x != -1 && c != -1) {
                 SoundID_v.Value = TONE_RandomizerOneSection_SoundID_List[x][c];
@@ -358,15 +364,169 @@ namespace NSUNS4_Character_Manager.Misc {
             }
         }
 
+        private static string GetApplicationPath() {
+            return AppDomain.CurrentDomain.BaseDirectory;
+        }
+
+        private static string GetTempPath() {
+            return Path.Combine(GetApplicationPath(), "temp");
+        }
+
+        private static string[] GetExternalToolCandidates(string toolName, params string[] relativePaths) {
+            List<string> candidates = new List<string>();
+            string appPath = GetApplicationPath();
+            string dependencyPath = Path.Combine(appPath, "dependencies");
+
+            candidates.Add(Path.Combine(appPath, toolName));
+            candidates.Add(Path.Combine(dependencyPath, toolName));
+
+            foreach (string relativePath in relativePaths) {
+                candidates.Add(Path.Combine(appPath, relativePath));
+                candidates.Add(Path.Combine(dependencyPath, relativePath));
+            }
+
+            return candidates.ToArray();
+        }
+
+        private static string FindExternalTool(string toolName, params string[] relativePaths) {
+            foreach (string candidate in GetExternalToolCandidates(toolName, relativePaths)) {
+                if (File.Exists(candidate))
+                    return candidate;
+            }
+
+            return "";
+        }
+
+        private static bool ConfigureExternalTool(ProcessStartInfo startInfo, string toolName, params string[] relativePaths) {
+            string toolPath = FindExternalTool(toolName, relativePaths);
+            if (toolPath == "") {
+                MessageBox.Show(
+                    toolName + " was not found.\n\nPlace it in one of these locations:\n" +
+                    string.Join("\n", GetExternalToolCandidates(toolName, relativePaths)),
+                    "Missing audio tool",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+                return false;
+            }
+
+            string toolDirectory = Path.GetDirectoryName(toolPath);
+            string dependencyDirectory = Path.Combine(GetApplicationPath(), "dependencies");
+            string currentPath = startInfo.EnvironmentVariables["PATH"] ?? "";
+
+            startInfo.FileName = toolPath;
+            startInfo.WorkingDirectory = toolDirectory;
+            startInfo.EnvironmentVariables["PATH"] = dependencyDirectory + ";" + toolDirectory + ";" + currentPath;
+            return true;
+        }
+
+        private void ApplySoundNameColors() {
+            for (int rowIndex = 0; rowIndex < dataGridView1.Rows.Count; rowIndex++) {
+                ApplySoundNameColor(rowIndex);
+            }
+        }
+
+        private void ApplySoundNameColor(int rowIndex) {
+            if (rowIndex < 0 || rowIndex >= dataGridView1.Rows.Count || rowIndex >= TONE_SectionType_List.Count)
+                return;
+
+            DataGridViewCell soundNameCell = dataGridView1.Rows[rowIndex].Cells[1];
+            soundNameCell.Style.BackColor = Color.White;
+            soundNameCell.Style.SelectionBackColor = SystemColors.Highlight;
+
+            if (TONE_SectionType_List[rowIndex] == 1) {
+                soundNameCell.Style.BackColor = Color.Khaki;
+                soundNameCell.Style.SelectionBackColor = Color.Goldenrod;
+            }
+            else if (TONE_SectionType_List[rowIndex] == 0) {
+                bool hasSound = rowIndex < TONE_SoundData_List.Count && TONE_SoundData_List[rowIndex].Length > 4;
+                bool isEmptySlot = rowIndex < TONE_SoundName_List.Count && TONE_SoundName_List[rowIndex] == "Empty slot";
+
+                if (hasSound) {
+                    soundNameCell.Style.BackColor = Color.LightGreen;
+                    soundNameCell.Style.SelectionBackColor = Color.ForestGreen;
+                }
+                else if (!isEmptySlot) {
+                    soundNameCell.Style.BackColor = Color.LightCoral;
+                    soundNameCell.Style.SelectionBackColor = Color.Firebrick;
+                }
+            }
+        }
+
+        private string GetSoundFormat(int rowIndex) {
+            if (rowIndex < 0 || rowIndex >= TONE_SectionType_List.Count)
+                return "None";
+
+            if (TONE_SectionType_List[rowIndex] == 1)
+                return "Randomizer";
+
+            if (TONE_SectionType_List[rowIndex] == 2)
+                return "Empty";
+
+            if (rowIndex >= TONE_SoundData_List.Count || TONE_SoundData_List[rowIndex].Length <= 4)
+                return "No sound";
+
+            string format = Main.b_ReadString(TONE_SoundData_List[rowIndex], 0);
+            if (format.Length > 4)
+                format = Main.b_ReadString(TONE_SoundData_List[rowIndex], 0, 4);
+
+            if (format.Contains("VAG"))
+                return "VAG";
+            if (format.Contains("IDSP"))
+                return "IDSP";
+            if (format.Contains("RIFF"))
+                return "WAV";
+
+            format = format.Trim('\0', ' ');
+            if (format == "")
+                return "Unknown";
+
+            return format.ToUpperInvariant();
+        }
+
+        private string GetSoundFileExtension(int rowIndex) {
+            string format = GetSoundFormat(rowIndex);
+            if (format == "No sound" || format == "Empty" || format == "Randomizer" || format == "Unknown" || format == "None")
+                return "bin";
+
+            return format.ToLowerInvariant();
+        }
+
+        private string GetSafeFileName(string fileName) {
+            foreach (char invalidChar in Path.GetInvalidFileNameChars()) {
+                fileName = fileName.Replace(invalidChar, '_');
+            }
+
+            return fileName;
+        }
+
+        private void UpdateSoundFormatDisplay(int rowIndex) {
+            if (SoundFormat_v == null)
+                return;
+
+            SoundFormat_v.Text = GetSoundFormat(rowIndex);
+        }
+
+        private int GetCurrentRowIndex() {
+            if (dataGridView1.CurrentCell == null)
+                return -1;
+
+            int rowIndex = dataGridView1.CurrentCell.RowIndex;
+            if (rowIndex < 0 || rowIndex >= TONE_SoundName_List.Count)
+                return -1;
+
+            return rowIndex;
+        }
+
         private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e) {
             var senderGrid = (DataGridView)sender;
-            string path = Directory.GetCurrentDirectory();
-            if (!Directory.Exists(path + "\\temp")) {
-                Directory.CreateDirectory(path + "\\temp");
+            string tempPath = GetTempPath();
+            if (!Directory.Exists(tempPath)) {
+                Directory.CreateDirectory(tempPath);
             }
             if (senderGrid.Columns[e.ColumnIndex] is DataGridViewButtonColumn &&
                 e.RowIndex >= 0) {
                 if (TONE_SoundData_List[e.RowIndex].Length > 4 && TONE_SectionType_List[e.RowIndex] == 0) {
+                    StopCurrentPlayback();
                     string format = Main.b_ReadString(TONE_SoundData_List[e.RowIndex], 0);
                     if (format.Length > 4) {
                         format = Main.b_ReadString(TONE_SoundData_List[e.RowIndex], 0, 4);
@@ -377,20 +537,16 @@ namespace NSUNS4_Character_Manager.Misc {
                         format = "IDSP";
                     else if (format.Contains("RIFF"))
                         format = "WAV";
-                    if (File.Exists(path + "\\temp\\" + TONE_SoundName_List[e.RowIndex] + "." + format))
-                        File.Delete(path + "\\temp\\" + TONE_SoundName_List[e.RowIndex] + "." + format);
-                    Decode(TONE_SoundData_List[e.RowIndex], TONE_SoundName_List[e.RowIndex]);
-                    if (waveOut == null) {
-                        
-                        waveOut = new WaveOutEvent();
-                        waveOut.PlaybackStopped += OnPlaybackStopped;
+                    string sourcePath = Path.Combine(tempPath, TONE_SoundName_List[e.RowIndex] + "." + format);
+                    if (File.Exists(sourcePath))
+                        File.Delete(sourcePath);
+                    if (!Decode(TONE_SoundData_List[e.RowIndex], TONE_SoundName_List[e.RowIndex]))
+                        return;
 
-                    }
-                    if (reader == null) {
-                        reader = new WaveFileReader(path + "\\temp\\" + TONE_SoundName_List[e.RowIndex] + ".wav");
-                        waveOut.Init(reader);
-
-                    }
+                    waveOut = new WaveOutEvent();
+                    waveOut.PlaybackStopped += OnPlaybackStopped;
+                    reader = new WaveFileReader(Path.Combine(tempPath, TONE_SoundName_List[e.RowIndex] + ".wav"));
+                    waveOut.Init(reader);
                     waveOut.Volume = (float)trackBar1.Value/100;
                     waveOut.Play();
                 }
@@ -405,8 +561,9 @@ namespace NSUNS4_Character_Manager.Misc {
                 UpdateDataGrid();
         }
         void UpdateDataGrid() {
-            int x = dataGridView1.CurrentCell.RowIndex;
+            int x = GetCurrentRowIndex();
             if (x != -1) {
+                UpdateSoundFormatDisplay(x);
                 listBox2.Items.Clear();
                 comboBox1.SelectedIndex = TONE_SectionType_List[x];
                 if (TONE_SectionType_List[x] == 0) {
@@ -425,10 +582,10 @@ namespace NSUNS4_Character_Manager.Misc {
                 }
             }
         }
-        private void Decode(byte[] data, string name) {
-            string path = Directory.GetCurrentDirectory();
-            if (!Directory.Exists(path + "\\temp")) {
-                Directory.CreateDirectory(path + "\\temp");
+        private bool Decode(byte[] data, string name) {
+            string tempPath = GetTempPath();
+            if (!Directory.Exists(tempPath)) {
+                Directory.CreateDirectory(tempPath);
             }
             string format = Main.b_ReadString(data, 0);
             if (format.Length > 4) {
@@ -439,27 +596,38 @@ namespace NSUNS4_Character_Manager.Misc {
             else if (format.Contains("IDSP"))
                 format = "IDSP";
             if (format != "RIFF") {
-                if (!File.Exists(path + "\\temp\\" + name + "." + format)) {
-                    File.WriteAllBytes(path + "\\temp\\" + name + "." + format, data);
+                string sourcePath = Path.Combine(tempPath, name + "." + format);
+                string wavPath = Path.Combine(tempPath, name + ".wav");
+                if (!File.Exists(wavPath)) {
+                    File.WriteAllBytes(sourcePath, data);
                     Process p = new Process();
                     // Redirect the output stream of the child process.
                     p.StartInfo.UseShellExecute = false;
                     p.StartInfo.RedirectStandardOutput = true;
+                    p.StartInfo.RedirectStandardError = true;
                     p.StartInfo.CreateNoWindow = true;
-                    p.StartInfo.FileName = path + "\\vgmstream\\vgmstream.exe";
-                    p.StartInfo.Arguments = "-o " + "\"" + path + "\\temp\\" + name + ".wav" + "\" " + "\"" + path + "\\temp\\" + name + "." + format + "\"";
+                    if (!ConfigureExternalTool(p.StartInfo, "vgmstream.exe", Path.Combine("vgmstream", "vgmstream.exe")))
+                        return false;
+                    p.StartInfo.Arguments = "-o " + "\"" + wavPath + "\" " + "\"" + sourcePath + "\"";
                     p.Start();
                     string output = p.StandardOutput.ReadToEnd();
+                    string error = p.StandardError.ReadToEnd();
                     p.WaitForExit();
-                }
-                
-            }
-            else {
-                if (!File.Exists(path + "\\temp\\" + name + ".wav")) {
-                    File.WriteAllBytes(path + "\\temp\\" + name + ".wav", data);
+                    if (p.ExitCode != 0 || !File.Exists(wavPath)) {
+                        MessageBox.Show("vgmstream.exe failed to decode this sound.\n\n" + output + error, "Decode failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return false;
+                    }
                 }
 
             }
+            else {
+                string wavPath = Path.Combine(tempPath, name + ".wav");
+                if (!File.Exists(wavPath)) {
+                    File.WriteAllBytes(wavPath, data);
+                }
+
+            }
+            return true;
         }
 
         private void tabPage3_Click(object sender, EventArgs e) {
@@ -467,13 +635,15 @@ namespace NSUNS4_Character_Manager.Misc {
         }
 
         private void button5_Click(object sender, EventArgs e) {
-            int x = dataGridView1.CurrentCell.RowIndex;
+            int x = GetCurrentRowIndex();
             if (x != -1) {
                 TONE_SoundData_List[x] = new byte[0];
                 TONE_SoundSettings_List[x] = new byte[116] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0xB4, 0xC2, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x00, 0x00, 0x14, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x11, 0x00, 0x00, 0x00, 0x09, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0xB4, 0xC2, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
                 TONE_SoundSize_List[x] = 0;
                 TONE_SoundPos_List[x] = 0;
                 TONE_SectionTypeValues_List[x] = new byte[6] { 0x27, 0x84, 0x80, 0x18, 0x00, 0x00 };
+                ApplySoundNameColor(x);
+                UpdateSoundFormatDisplay(x);
                 MessageBox.Show("Sound data was deleted.");
             }
             else {
@@ -482,24 +652,286 @@ namespace NSUNS4_Character_Manager.Misc {
         }
 
         private void button9_Click(object sender, EventArgs e) {
-            int x = dataGridView1.CurrentCell.RowIndex;
+            int x = GetCurrentRowIndex();
             if (x != -1) {
                 OpenFileDialog o = new OpenFileDialog();
                 {
                     o.DefaultExt = "*.*";
                     o.Filter = "All formats(*.*)|*.*";
                 }
-                o.ShowDialog();
-                if (!(o.FileName != "") || !File.Exists(o.FileName)) {
+                if (o.ShowDialog() != DialogResult.OK || !(o.FileName != "") || !File.Exists(o.FileName)) {
                     return;
                 }
                 TONE_SoundSettings_List[x] = new byte[136] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0xB4, 0xC2, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x00, 0x00, 0x14, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x11, 0x00, 0x00, 0x00, 0x09, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0xB4, 0xC2, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x80, 0xBB, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0xBA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
                 TONE_SoundData_List[x] = File.ReadAllBytes(o.FileName);
                 TONE_SectionTypeValues_List[x] = new byte[6] { 0x27, 0x84, 0x9F, 0x38, 0x00, 0x00 };
+                ApplySoundNameColor(x);
+                UpdateSoundFormatDisplay(x);
                 MessageBox.Show("Sound successfully imported.");
             } else {
                 MessageBox.Show("Select sound slot.");
             }
+        }
+
+        private int GetSelectedExtractableSoundIndex() {
+            int x = GetCurrentRowIndex();
+            if (x == -1) {
+                MessageBox.Show("Select sound slot.");
+                return -1;
+            }
+
+            if (TONE_SectionType_List[x] != 0 || TONE_SoundData_List[x].Length <= 4) {
+                MessageBox.Show("Selected entry has no extractable sound data.");
+                return -1;
+            }
+
+            return x;
+        }
+
+        private void buttonExtractRawSound_Click(object sender, EventArgs e) {
+            int x = GetSelectedExtractableSoundIndex();
+            if (x == -1)
+                return;
+
+            ExtractSelectedSoundRaw(x);
+        }
+
+        private void buttonExtractWavSound_Click(object sender, EventArgs e) {
+            int x = GetSelectedExtractableSoundIndex();
+            if (x == -1)
+                return;
+
+            ExtractSelectedSoundAsWav(x);
+        }
+
+        private void buttonCopySound_Click(object sender, EventArgs e) {
+            int x = GetSelectedExtractableSoundIndex();
+            if (x == -1)
+                return;
+
+            DataObject dataObject = new DataObject();
+            dataObject.SetData(SoundClipboardFormat, false, CreateSoundClipboardPayload(x));
+            Clipboard.SetDataObject(dataObject, true);
+            MessageBox.Show("Sound copied to clipboard.");
+        }
+
+        private void buttonPasteSound_Click(object sender, EventArgs e) {
+            int x = GetCurrentRowIndex();
+            if (x == -1) {
+                MessageBox.Show("Select sound slot.");
+                return;
+            }
+
+            IDataObject clipboardData = Clipboard.GetDataObject();
+            if (clipboardData == null || !clipboardData.GetDataPresent(SoundClipboardFormat)) {
+                MessageBox.Show("No copied NUS3BANK sound data was found on the clipboard.");
+                return;
+            }
+
+            object clipboardObject = clipboardData.GetData(SoundClipboardFormat);
+            byte[] payload = clipboardObject as byte[];
+            if (payload == null || !TryApplySoundClipboardPayload(x, payload)) {
+                MessageBox.Show("Clipboard sound data is invalid.");
+                return;
+            }
+
+            dataGridView1.Rows[x].Cells[1].Value = TONE_SoundName_List[x];
+            comboBox1.SelectedIndex = 0;
+            ApplySoundNameColor(x);
+            UpdateSoundFormatDisplay(x);
+            MessageBox.Show("Sound pasted from clipboard.");
+        }
+
+        private byte[] CreateSoundClipboardPayload(int rowIndex) {
+            MemoryStream stream = new MemoryStream();
+            BinaryWriter writer = new BinaryWriter(stream);
+
+            writer.Write(SoundClipboardMagic);
+            writer.Write(1);
+            writer.Write(TONE_MainVolume_List[rowIndex]);
+            writer.Write(TONE_OverlaySound_List[rowIndex]);
+            WriteClipboardByteArray(writer, TONE_SectionTypeValues_List[rowIndex]);
+            WriteClipboardByteArray(writer, TONE_SoundSettings_List[rowIndex]);
+            WriteClipboardByteArray(writer, TONE_SoundData_List[rowIndex]);
+            writer.Flush();
+
+            return stream.ToArray();
+        }
+
+        private bool TryApplySoundClipboardPayload(int rowIndex, byte[] payload) {
+            try {
+                MemoryStream stream = new MemoryStream(payload);
+                BinaryReader reader = new BinaryReader(stream);
+
+                string magic = reader.ReadString();
+                int version = reader.ReadInt32();
+                if (magic != SoundClipboardMagic || version != 1)
+                    return false;
+
+                float volume = reader.ReadSingle();
+                bool overlaySound = reader.ReadBoolean();
+                byte[] sectionTypeValues = ReadClipboardByteArray(reader);
+                byte[] soundSettings = ReadClipboardByteArray(reader);
+                byte[] soundData = ReadClipboardByteArray(reader);
+                if (soundData.Length <= 4)
+                    return false;
+
+                TONE_SectionType_List[rowIndex] = 0;
+                TONE_MainVolume_List[rowIndex] = volume;
+                TONE_OverlaySound_List[rowIndex] = overlaySound;
+                TONE_SectionTypeValues_List[rowIndex] = sectionTypeValues;
+                TONE_SoundSettings_List[rowIndex] = soundSettings;
+                TONE_SoundData_List[rowIndex] = soundData;
+                TONE_SoundSize_List[rowIndex] = soundData.Length;
+                TONE_SoundPos_List[rowIndex] = 0;
+                return true;
+            }
+            catch {
+                return false;
+            }
+        }
+
+        private void WriteClipboardByteArray(BinaryWriter writer, byte[] data) {
+            writer.Write(data.Length);
+            writer.Write(data);
+        }
+
+        private byte[] ReadClipboardByteArray(BinaryReader reader) {
+            int length = reader.ReadInt32();
+            if (length < 0)
+                throw new InvalidDataException();
+
+            byte[] data = reader.ReadBytes(length);
+            if (data.Length != length)
+                throw new EndOfStreamException();
+
+            return data;
+        }
+
+        private byte[] GetDefaultImportedSoundSettings() {
+            return new byte[136] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0xB4, 0xC2, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x00, 0x00, 0x14, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x11, 0x00, 0x00, 0x00, 0x09, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0xB4, 0xC2, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x80, 0xBB, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0xBA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+        }
+
+        private byte[] GetDefaultImportedSectionTypeValues() {
+            return new byte[6] { 0x27, 0x84, 0x9F, 0x38, 0x00, 0x00 };
+        }
+
+        private int GetBnsfSamplesPerFrame(string codec) {
+            if (codec == "IS14")
+                return 640;
+            if (codec == "IS22")
+                return 960;
+
+            return 0;
+        }
+
+        private List<int> GetBnsfBytesPerFrameCandidates(string codec, int channels) {
+            List<int> candidates = new List<int>();
+
+            if (codec == "IS14") {
+                int[] baseCandidates = new int[3] { 60, 80, 120 };
+                foreach (int candidate in baseCandidates)
+                    candidates.Add(channels == 1 ? candidate : candidate * 2);
+            }
+            else if (codec == "IS22") {
+                int[] baseCandidates = new int[3] { 80, 120, 160 };
+                foreach (int candidate in baseCandidates)
+                    candidates.Add(channels == 1 ? candidate : candidate * 2);
+
+                for (int kbps = 36; kbps < 129; kbps += 4) {
+                    int candidate = (int)(2.5 * kbps);
+                    candidates.Add(channels == 1 ? candidate : candidate * 2);
+                }
+            }
+
+            return candidates.Where(candidate => candidate > 0).Distinct().OrderBy(candidate => candidate).ToList();
+        }
+
+        private int ComputeBnsfTotalSamples(string codec, int channels, int sdatSize, int oldTotalSamples) {
+            int samplesPerFrame = GetBnsfSamplesPerFrame(codec);
+            if (samplesPerFrame == 0 || (channels != 1 && channels != 2) || sdatSize <= 0)
+                return oldTotalSamples;
+
+            List<int> candidates = GetBnsfBytesPerFrameCandidates(codec, channels);
+            if (candidates.Count == 0)
+                return oldTotalSamples;
+
+            int bestTotalSamples = oldTotalSamples;
+            int bestBadRemainder = int.MaxValue;
+            int bestRemainder = int.MaxValue;
+            int bestCloseness = int.MaxValue;
+            int bestNegativeBpf = int.MaxValue;
+
+            foreach (int bytesPerFrame in candidates) {
+                int remainder = sdatSize % bytesPerFrame;
+                int frames = sdatSize / bytesPerFrame;
+                int totalSamples = frames * samplesPerFrame;
+                int badRemainder = remainder == 0 ? 0 : 1;
+                int closeness = oldTotalSamples > 0 ? Math.Abs(totalSamples - oldTotalSamples) : 0;
+                int negativeBpf = -bytesPerFrame;
+
+                if (badRemainder < bestBadRemainder ||
+                    (badRemainder == bestBadRemainder && remainder < bestRemainder) ||
+                    (badRemainder == bestBadRemainder && remainder == bestRemainder && closeness < bestCloseness) ||
+                    (badRemainder == bestBadRemainder && remainder == bestRemainder && closeness == bestCloseness && negativeBpf < bestNegativeBpf)) {
+                    bestTotalSamples = totalSamples;
+                    bestBadRemainder = badRemainder;
+                    bestRemainder = remainder;
+                    bestCloseness = closeness;
+                    bestNegativeBpf = negativeBpf;
+                }
+            }
+
+            return bestTotalSamples;
+        }
+
+        private void ApplyImportedSoundToSlot(int rowIndex, byte[] soundData) {
+            TONE_SectionType_List[rowIndex] = 0;
+            TONE_SoundSettings_List[rowIndex] = GetDefaultImportedSoundSettings();
+            TONE_SoundData_List[rowIndex] = soundData;
+            TONE_SoundSize_List[rowIndex] = soundData.Length;
+            TONE_SoundPos_List[rowIndex] = 0;
+            TONE_SectionTypeValues_List[rowIndex] = GetDefaultImportedSectionTypeValues();
+            ApplySoundNameColor(rowIndex);
+        }
+
+        private void ExtractSelectedSoundRaw(int rowIndex) {
+            string extension = GetSoundFileExtension(rowIndex);
+            SaveFileDialog s = new SaveFileDialog();
+            {
+                s.DefaultExt = "." + extension;
+                s.Filter = GetSoundFormat(rowIndex) + " file|*." + extension + "|All files|*.*";
+                s.FileName = GetSafeFileName(TONE_SoundName_List[rowIndex]) + "." + extension;
+            }
+            if (s.ShowDialog() != DialogResult.OK)
+                return;
+
+            File.WriteAllBytes(s.FileName, TONE_SoundData_List[rowIndex]);
+            MessageBox.Show("Sound extracted to " + s.FileName + ".");
+        }
+
+        private void ExtractSelectedSoundAsWav(int rowIndex) {
+            string tempPath = GetTempPath();
+            string wavPath = Path.Combine(tempPath, TONE_SoundName_List[rowIndex] + ".wav");
+
+            StopCurrentPlayback();
+            if (File.Exists(wavPath))
+                File.Delete(wavPath);
+
+            if (!Decode(TONE_SoundData_List[rowIndex], TONE_SoundName_List[rowIndex]))
+                return;
+
+            SaveFileDialog s = new SaveFileDialog();
+            {
+                s.DefaultExt = ".wav";
+                s.Filter = "WAV file|*.wav|All files|*.*";
+                s.FileName = GetSafeFileName(TONE_SoundName_List[rowIndex]) + ".wav";
+            }
+            if (s.ShowDialog() != DialogResult.OK)
+                return;
+
+            File.Copy(wavPath, s.FileName, true);
+            MessageBox.Show("WAV extracted to " + s.FileName + ".");
         }
 
         private void dataGridView1_RowsRemoved(object sender, DataGridViewRowsRemovedEventArgs e) {
@@ -531,6 +963,7 @@ namespace NSUNS4_Character_Manager.Misc {
                 for (int c = IndexSelectedRow; c < dataGridView1.Rows.Count; c++) {
                     dataGridView1.Rows[c].Cells[0].Value = c;
                 }
+                ApplySoundNameColors();
                 for (int c = 0; c < TONE_RandomizerOneSection_SoundID_List.Count; c++) {
                     for (int k = 0; k < TONE_RandomizerOneSection_SoundID_List[c].Count; k++) {
                         if (TONE_RandomizerOneSection_SoundID_List[c][k] > IndexSelectedRow) {
@@ -543,14 +976,15 @@ namespace NSUNS4_Character_Manager.Misc {
 
         private void dataGridView1_SelectionChanged(object sender, EventArgs e) {
             if (!cleaning) {
-                IndexSelectedRow = dataGridView1.CurrentCell.RowIndex;
+                IndexSelectedRow = GetCurrentRowIndex();
             }
         }
 
         private void dataGridView1_CellValueChanged(object sender, DataGridViewCellEventArgs e) {
             if (FileOpen) {
-                if (!cleaning) {
+                if (!cleaning && IndexSelectedRow != -1) {
                     TONE_SoundName_List[IndexSelectedRow] = dataGridView1.Rows[IndexSelectedRow].Cells[1].Value.ToString();
+                    ApplySoundNameColor(IndexSelectedRow);
                 }
             }
         }
@@ -569,7 +1003,7 @@ namespace NSUNS4_Character_Manager.Misc {
         }
 
         private void button1_Click(object sender, EventArgs e) {
-            int x = dataGridView1.CurrentCell.RowIndex;
+            int x = GetCurrentRowIndex();
             if (x!=-1) {
                 if (TONE_SectionType_List[x] != 2) {
                     TONE_SectionType_List.Add(TONE_SectionType_List[x]);
@@ -646,6 +1080,7 @@ namespace NSUNS4_Character_Manager.Misc {
                     dataGridView1.Rows.Add(dataGridView1.Rows.Count, SoundName);
                 }
                 dataGridView1.Rows[dataGridView1.Rows.Count-1].Selected = true;
+                ApplySoundNameColor(dataGridView1.Rows.Count - 1);
                 dataGridView1.CurrentCell = dataGridView1.Rows[dataGridView1.Rows.Count - 1].Cells[1];
 
             }
@@ -662,104 +1097,216 @@ namespace NSUNS4_Character_Manager.Misc {
 
         }
 
+        private byte[] ConvertWavToBnsf(string importSoundPath, bool showErrors = true) {
+            string tempPath = GetTempPath();
+            if (!Directory.Exists(tempPath)) {
+                Directory.CreateDirectory(tempPath);
+            }
+
+            string outputWavPath = Path.Combine(tempPath, "48000_output.wav");
+            using (var reader = new WaveFileReader(importSoundPath)) {
+                var newFormat = new WaveFormat(48000, 16, 1);
+                using (var conversionStream = new WaveFormatConversionStream(newFormat, reader)) {
+                    WaveFileWriter.CreateWaveFile(outputWavPath, conversionStream);
+                }
+            }
+
+            byte[] importSoundFile = File.ReadAllBytes(outputWavPath);
+            int posOfPcm = Main.b_FindBytes(importSoundFile, Encoding.ASCII.GetBytes("data"));
+            if (posOfPcm == -1) {
+                if (showErrors)
+                    MessageBox.Show("Wrong format file");
+                return null;
+            }
+
+            byte[] cleanedImportedSoundFile = new byte[0];
+            cleanedImportedSoundFile = Main.b_AddBytes(cleanedImportedSoundFile, importSoundFile, 0, posOfPcm + 8, importSoundFile.Length - posOfPcm - 8);
+
+            Process p = new Process();
+            p.StartInfo.UseShellExecute = false;
+            p.StartInfo.RedirectStandardOutput = true;
+            p.StartInfo.RedirectStandardError = true;
+            p.StartInfo.CreateNoWindow = true;
+            if (!ConfigureExternalTool(p.StartInfo, "encode.exe"))
+                return null;
+
+            string cleanedFilePath = Path.Combine(tempPath, "cleaned_file.wav");
+            string convertedFilePath = Path.Combine(tempPath, "converted_file.bnsf");
+            File.WriteAllBytes(cleanedFilePath, cleanedImportedSoundFile);
+            p.StartInfo.Arguments = "0 " + "\"" + cleanedFilePath + "\" " + "\"" + convertedFilePath + "\"" + " 48000 14000";
+            p.Start();
+            string output = p.StandardOutput.ReadToEnd();
+            string error = p.StandardError.ReadToEnd();
+            p.WaitForExit();
+            if (p.ExitCode != 0 || !File.Exists(convertedFilePath)) {
+                if (showErrors)
+                    MessageBox.Show("encode.exe failed to convert this WAV file.\n\n" + output + error, "Encode failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return null;
+            }
+
+            byte[] convertedSoundFile = File.ReadAllBytes(convertedFilePath);
+            byte[] bnsfHeader = new byte[48] { 0x42, 0x4E, 0x53, 0x46, 0x00, 0x00, 0x4C, 0x80, 0x49, 0x53, 0x31, 0x34, 0x73, 0x66, 0x6D, 0x74, 0x00, 0x00, 0x00, 0x14, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0xBB, 0x80, 0x00, 0x00, 0xED, 0x89, 0x00, 0x00, 0x00, 0x00, 0x00, 0x78, 0x02, 0x80, 0x73, 0x64, 0x61, 0x74, 0x00, 0x00, 0x4C, 0x58 };
+            byte[] bnsfSound = new byte[0];
+            bnsfSound = Main.b_AddBytes(bnsfSound, bnsfHeader);
+            bnsfSound = Main.b_AddBytes(bnsfSound, convertedSoundFile);
+
+            int importedSampleRate = Main.b_byteArrayToInt(Main.b_ReadByteArray(importSoundFile, 24, 4));
+            int wavSampleCount = Main.b_byteArrayToInt(Main.b_ReadByteArray(importSoundFile, posOfPcm + 4, 4)) / importSoundFile[32];
+            int bnsfTotalSamples = ComputeBnsfTotalSamples("IS14", 1, convertedSoundFile.Length, wavSampleCount);
+
+            byte[] size1OfBnsf = BitConverter.GetBytes(convertedSoundFile.Length);
+            byte[] invertedSize1OfBnsf = new byte[4] { size1OfBnsf[3], size1OfBnsf[2], size1OfBnsf[1], size1OfBnsf[0] };
+            byte[] size2OfBnsf = BitConverter.GetBytes(convertedSoundFile.Length + 0x28);
+            byte[] invertedSize2OfBnsf = new byte[4] { size2OfBnsf[3], size2OfBnsf[2], size2OfBnsf[1], size2OfBnsf[0] };
+            byte[] bnsfSampleRate = BitConverter.GetBytes(importedSampleRate);
+            byte[] invertedBnsfSampleRate = new byte[4] { bnsfSampleRate[3], bnsfSampleRate[2], bnsfSampleRate[1], bnsfSampleRate[0] };
+            byte[] bnsfSoundLength = BitConverter.GetBytes(bnsfTotalSamples);
+            byte[] invertedBnsfSoundLength = new byte[4] { bnsfSoundLength[3], bnsfSoundLength[2], bnsfSoundLength[1], bnsfSoundLength[0] };
+
+            bnsfSound = Main.b_ReplaceBytes(bnsfSound, invertedSize1OfBnsf, 44);
+            bnsfSound = Main.b_ReplaceBytes(bnsfSound, invertedSize2OfBnsf, 4);
+            bnsfSound = Main.b_ReplaceBytes(bnsfSound, invertedBnsfSampleRate, 24);
+            bnsfSound = Main.b_ReplaceBytes(bnsfSound, invertedBnsfSoundLength, 28);
+            return bnsfSound;
+        }
+
+        private void ResetBatchImportProgress() {
+            if (batchImportProgressBar == null)
+                return;
+
+            batchImportProgressBar.Value = 0;
+            batchImportProgressBar.Visible = false;
+        }
+
+        private void StartBatchImportProgress(int maximum) {
+            if (batchImportProgressBar == null)
+                return;
+
+            batchImportProgressBar.Minimum = 0;
+            batchImportProgressBar.Maximum = Math.Max(1, maximum);
+            batchImportProgressBar.Value = 0;
+            batchImportProgressBar.Visible = true;
+        }
+
+        private void UpdateBatchImportProgress(int value) {
+            if (batchImportProgressBar == null)
+                return;
+
+            batchImportProgressBar.Value = Math.Min(value, batchImportProgressBar.Maximum);
+            Application.DoEvents();
+        }
+
+        private void BatchImportMatchedFolder(bool convertWavToBnsf) {
+            if (!FileOpen) {
+                MessageBox.Show("Open NUS3BANK file");
+                return;
+            }
+
+            string selectedFolder = SelectExplorerFolder("Select folder with matching sound files");
+            if (selectedFolder == "")
+                return;
+
+            string[] files = Directory.GetFiles(selectedFolder);
+            if (files.Length == 0) {
+                MessageBox.Show("No files found in selected folder.");
+                return;
+            }
+
+            int importedCount = 0;
+            int convertedCount = 0;
+            int failedCount = 0;
+            int matchedFileCount = 0;
+
+            StartBatchImportProgress(files.Length);
+            try {
+                for (int fileIndex = 0; fileIndex < files.Length; fileIndex++) {
+                    string filePath = files[fileIndex];
+                    string soundName = Path.GetFileNameWithoutExtension(filePath);
+                    List<int> matchingRows = new List<int>();
+
+                    for (int rowIndex = 0; rowIndex < TONE_SoundName_List.Count; rowIndex++) {
+                        if (string.Equals(TONE_SoundName_List[rowIndex], soundName, StringComparison.OrdinalIgnoreCase))
+                            matchingRows.Add(rowIndex);
+                    }
+
+                    if (matchingRows.Count > 0) {
+                        matchedFileCount++;
+                        byte[] soundData = null;
+                        bool converted = false;
+
+                        try {
+                            if (convertWavToBnsf && string.Equals(Path.GetExtension(filePath), ".wav", StringComparison.OrdinalIgnoreCase)) {
+                                soundData = ConvertWavToBnsf(filePath, false);
+                                converted = soundData != null;
+                            }
+                            else {
+                                soundData = File.ReadAllBytes(filePath);
+                            }
+                        }
+                        catch {
+                            soundData = null;
+                        }
+
+                        if (soundData == null || soundData.Length <= 4) {
+                            failedCount += matchingRows.Count;
+                        }
+                        else {
+                            foreach (int rowIndex in matchingRows) {
+                                ApplyImportedSoundToSlot(rowIndex, soundData);
+                                importedCount++;
+                                if (converted)
+                                    convertedCount++;
+                            }
+                        }
+                    }
+
+                    UpdateBatchImportProgress(fileIndex + 1);
+                }
+            }
+            finally {
+                ResetBatchImportProgress();
+            }
+
+            int currentRow = GetCurrentRowIndex();
+            if (currentRow != -1)
+                UpdateSoundFormatDisplay(currentRow);
+
+            MessageBox.Show(
+                "Batch import complete.\n\nMatched files: " + matchedFileCount +
+                "\nImported slots: " + importedCount +
+                "\nConverted WAV files: " + convertedCount +
+                "\nFailed slots: " + failedCount);
+        }
+
+        private string SelectExplorerFolder(string title) {
+            Microsoft.WindowsAPICodePack.Dialogs.CommonOpenFileDialog dialog = new Microsoft.WindowsAPICodePack.Dialogs.CommonOpenFileDialog();
+            dialog.IsFolderPicker = true;
+            dialog.Title = title;
+
+            if (dialog.ShowDialog() != Microsoft.WindowsAPICodePack.Dialogs.CommonFileDialogResult.Ok || dialog.FileName == "")
+                return "";
+
+            return dialog.FileName;
+        }
+
         private void button10_Click(object sender, EventArgs e) {
-            int x = dataGridView1.CurrentCell.RowIndex;
+            int x = GetCurrentRowIndex();
             if (x != -1) {
                 OpenFileDialog o = new OpenFileDialog();
                 {
                     o.DefaultExt = "*.wav";
                     o.Filter = "Waveform Audio File (*.wav)|*.wav*";
                 }
-                o.ShowDialog();
-                if (!(o.FileName != "") || !File.Exists(o.FileName)) {
+                if (o.ShowDialog() != DialogResult.OK || !(o.FileName != "") || !File.Exists(o.FileName)) {
                     return;
                 }
-                string path = Directory.GetCurrentDirectory();
-                if (!Directory.Exists(path + "\\temp")) {
-                    Directory.CreateDirectory(path + "\\temp");
-                }
-                string ImportSoundPath = o.FileName;
 
-                using (var reader = new WaveFileReader(ImportSoundPath)) {
-                    var newFormat = new WaveFormat(48000, 16, 1);
-                    using (var conversionStream = new WaveFormatConversionStream(newFormat, reader)) {
-                        WaveFileWriter.CreateWaveFile(path + "\\temp\\48000_output.wav", conversionStream);
-                    }
-                }
-                byte[] ImportSoundFile = File.ReadAllBytes(path + "\\temp\\48000_output.wav");
-                byte[] CleanedImportedSoundFile = new byte[0];
-                byte[] ConvertedSoundFile = new byte[0];
-                int PosOfPCM = 0;
-                PosOfPCM = Main.b_FindBytes(ImportSoundFile, Encoding.ASCII.GetBytes("data"));
-                if (PosOfPCM == -1) {
-                    MessageBox.Show("Wrong format file");
-                } else {
-                    CleanedImportedSoundFile = Main.b_AddBytes(CleanedImportedSoundFile, ImportSoundFile, 0, PosOfPCM + 8, ImportSoundFile.Length - PosOfPCM - 8);
+                byte[] bnsfSound = ConvertWavToBnsf(o.FileName);
+                if (bnsfSound == null)
+                    return;
 
-                    Process p = new Process();
-                    // Redirect the output stream of the child process.
-                    p.StartInfo.UseShellExecute = false;
-                    p.StartInfo.RedirectStandardOutput = true;
-                    p.StartInfo.CreateNoWindow = true;
-                    p.StartInfo.FileName = "encode.exe";
-                    
-                    File.WriteAllBytes(path + "\\temp\\cleaned_file.wav", CleanedImportedSoundFile);
-                    p.StartInfo.Arguments = "0 " + "\"" + path + "\\temp\\cleaned_file.wav" + "\" " + "\"" + path + "\\temp\\converted_file.bnsf\"" + " 48000 14000";
-                    //MessageBox.Show(p.StartInfo.Arguments);
-                    p.Start();
-                    string output = p.StandardOutput.ReadToEnd();
-                    p.WaitForExit();
-                    string pathOfConvertedFile = path + "\\temp\\converted_file.bnsf";
-                    ConvertedSoundFile = File.ReadAllBytes(pathOfConvertedFile);
-                    byte[] BNSFHeader = new byte[48] { 0x42, 0x4E, 0x53, 0x46, 0x00, 0x00, 0x4C, 0x80, 0x49, 0x53, 0x31, 0x34, 0x73, 0x66, 0x6D, 0x74, 0x00, 0x00, 0x00, 0x14, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0xBB, 0x80, 0x00, 0x00, 0xED, 0x89, 0x00, 0x00, 0x00, 0x00, 0x00, 0x78, 0x02, 0x80, 0x73, 0x64, 0x61, 0x74, 0x00, 0x00, 0x4C, 0x58 };
-                    byte[] BNSFSound = new byte[0];
-                    BNSFSound = Main.b_AddBytes(BNSFSound, BNSFHeader);
-                    BNSFSound = Main.b_AddBytes(BNSFSound, ConvertedSoundFile);
-                    int ImportedSoundBitRate = Main.b_byteArrayToInt(Main.b_ReadByteArray(ImportSoundFile, 24, 4));
-                    int ImportedSoundSoundLength = Main.b_byteArrayToInt(Main.b_ReadByteArray(ImportSoundFile, PosOfPCM + 4, 4)) / ImportSoundFile[32];
-
-                    byte[] Size1OfBNSF = BitConverter.GetBytes(ConvertedSoundFile.Length);
-                    byte[] InvertedSize1OfBNSF = new byte[4]
-                    {
-                    Size1OfBNSF[3],
-                    Size1OfBNSF[2],
-                    Size1OfBNSF[1],
-                    Size1OfBNSF[0]
-                    };
-
-                    byte[] Size2OfBNSF = BitConverter.GetBytes(ConvertedSoundFile.Length + 0x28);
-                    byte[] InvertedSize2OfBNSF = new byte[4]
-                    {
-                    Size2OfBNSF[3],
-                    Size2OfBNSF[2],
-                    Size2OfBNSF[1],
-                    Size2OfBNSF[0]
-                    };
-                    byte[] BNSFBitrate = BitConverter.GetBytes(ImportedSoundBitRate);
-                    byte[] InvertedBNSFBitrate = new byte[4]
-                    {
-                    BNSFBitrate[3],
-                    BNSFBitrate[2],
-                    BNSFBitrate[1],
-                    BNSFBitrate[0]
-                    };
-                    byte[] BNSFSoundLength = BitConverter.GetBytes(ImportedSoundSoundLength);
-                    byte[] InvertedBNSFSoundLength = new byte[4]
-                    {
-                    BNSFSoundLength[3],
-                    BNSFSoundLength[2],
-                    BNSFSoundLength[1],
-                    BNSFSoundLength[0]
-                    };
-                    BNSFSound = Main.b_ReplaceBytes(BNSFSound, InvertedSize1OfBNSF, 44);
-                    BNSFSound = Main.b_ReplaceBytes(BNSFSound, InvertedSize2OfBNSF, 4);
-                    BNSFSound = Main.b_ReplaceBytes(BNSFSound, InvertedBNSFBitrate, 24);
-                    BNSFSound = Main.b_ReplaceBytes(BNSFSound, InvertedBNSFSoundLength, 28);
-                    TONE_SoundSettings_List[x] = new byte[136] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0xB4, 0xC2, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x00, 0x00, 0x14, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x11, 0x00, 0x00, 0x00, 0x09, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0xB4, 0xC2, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x80, 0xBB, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0xBA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-                    TONE_SoundData_List[x] = BNSFSound;
-                    TONE_SoundSize_List[x] = TONE_SoundData_List[x].Length;
-                    TONE_SectionTypeValues_List[x] = new byte[6] { 0x27, 0x84, 0x9F, 0x38, 0x00, 0x00 };
-                }
+                ApplyImportedSoundToSlot(x, bnsfSound);
+                UpdateSoundFormatDisplay(x);
 
                 MessageBox.Show("Sound successfully imported in BNSF format.");
             } else {
@@ -772,17 +1319,42 @@ namespace NSUNS4_Character_Manager.Misc {
         }
 
         private void Tool_nus3bankEditor_v2_FormClosed(object sender, FormClosedEventArgs e) {
-            if (waveOut != null && reader != null)
-                waveOut.Stop();
-            string path = Directory.GetCurrentDirectory();
-            if (Directory.Exists(path + "\\temp"))
-                Directory.Delete(path + "\\temp", true);
+            StopCurrentPlayback();
+            string tempPath = GetTempPath();
+            if (Directory.Exists(tempPath))
+                Directory.Delete(tempPath, true);
         }
-        private void OnPlaybackStopped(object sender, StoppedEventArgs args) {
-            waveOut.Dispose();
+
+        private void StopCurrentPlayback() {
+            if (waveOut != null) {
+                waveOut.PlaybackStopped -= OnPlaybackStopped;
+                waveOut.Stop();
+            }
+
+            DisposeCurrentPlayback();
+        }
+
+        private void DisposeCurrentPlayback() {
+            WaveOutEvent output = waveOut;
+            WaveFileReader activeReader = reader;
+
             waveOut = null;
-            reader.Dispose();
             reader = null;
+
+            if (output != null) {
+                output.PlaybackStopped -= OnPlaybackStopped;
+                output.Dispose();
+            }
+
+            if (activeReader != null)
+                activeReader.Dispose();
+        }
+
+        private void OnPlaybackStopped(object sender, StoppedEventArgs args) {
+            if (!ReferenceEquals(sender, waveOut))
+                return;
+
+            DisposeCurrentPlayback();
         }
         private void dataGridView1_Click(object sender, EventArgs e) {
 
@@ -794,7 +1366,7 @@ namespace NSUNS4_Character_Manager.Misc {
         }
 
         private void button2_Click_1(object sender, EventArgs e) {
-            int x = dataGridView1.CurrentCell.RowIndex;
+            int x = GetCurrentRowIndex();
             if (x!=-1) {
                 TONE_MainVolume_List[x] = (float)Volume_v.Value;
                 TONE_OverlaySound_List[x] = Overlay_v.Checked;
@@ -805,7 +1377,7 @@ namespace NSUNS4_Character_Manager.Misc {
         }
 
         private void button6_Click(object sender, EventArgs e) {
-            int x = dataGridView1.CurrentCell.RowIndex;
+            int x = GetCurrentRowIndex();
             if (x != -1) {
                 int x2 = listBox2.SelectedIndex;
                 if (x2 != -1) {
@@ -816,7 +1388,7 @@ namespace NSUNS4_Character_Manager.Misc {
                     TONE_RandomizerSectionCount_List[x]++;
                     if (TONE_RandomizerOneSection_ID_List[x].Count > 0) {
                         if (TONE_RandomizerOneSection_ID_List[x].Count > 1) {
-                            for (int c = 0; c > TONE_RandomizerOneSection_ID_List[x].Count; c++) {
+                            for (int c = 0; c < TONE_RandomizerOneSection_ID_List[x].Count; c++) {
                                 TONE_RandomizerOneSection_ID_List[x][c] = c + 1;
                             }
                         }
@@ -836,7 +1408,7 @@ namespace NSUNS4_Character_Manager.Misc {
         }
 
         private void button8_Click(object sender, EventArgs e) {
-            int x = dataGridView1.CurrentCell.RowIndex;
+            int x = GetCurrentRowIndex();
             if (x != -1) {
                 int x2 = listBox2.SelectedIndex;
                 if (x2 != -1) {
@@ -848,7 +1420,7 @@ namespace NSUNS4_Character_Manager.Misc {
                     TONE_RandomizerSectionCount_List[x]--;
                     if (TONE_RandomizerOneSection_ID_List[x].Count > 0) {
                         if (TONE_RandomizerOneSection_ID_List[x].Count > 1) {
-                            for (int c = 0; c > TONE_RandomizerOneSection_ID_List[x].Count - 1; c++) {
+                            for (int c = 0; c < TONE_RandomizerOneSection_ID_List[x].Count - 1; c++) {
                                 TONE_RandomizerOneSection_ID_List[x][c] = c + 1;
                             }
                         }
@@ -866,7 +1438,7 @@ namespace NSUNS4_Character_Manager.Misc {
         }
 
         private void button7_Click(object sender, EventArgs e) {
-            int x = dataGridView1.CurrentCell.RowIndex;
+            int x = GetCurrentRowIndex();
             if (x != -1) {
                 int x2 = listBox2.SelectedIndex;
                 if (x2 != -1) {
@@ -884,7 +1456,7 @@ namespace NSUNS4_Character_Manager.Misc {
         }
 
         private void button14_Click(object sender, EventArgs e) {
-            int x = dataGridView1.CurrentCell.RowIndex;
+            int x = GetCurrentRowIndex();
             if (x != -1) {
 
                 TONE_RandomizerUnk2_List[x] = (float)unk1_v.Value;
@@ -900,13 +1472,15 @@ namespace NSUNS4_Character_Manager.Misc {
         }
 
         private void exportAllSoundsToolStripMenuItem_Click(object sender, EventArgs e) {
-            
+
         }
 
         private void originalFormatToolStripMenuItem_Click(object sender, EventArgs e) {
             if (FileOpen) {
-                FolderBrowserDialog FBD = new FolderBrowserDialog();
-                FBD.ShowDialog();
+                string selectedFolder = SelectExplorerFolder("Select export folder");
+                if (selectedFolder == "")
+                    return;
+
                 for (int x = 0; x < TONE_SoundData_List.Count; x++) {
 
                     if (TONE_SectionType_List[x] != 2 && TONE_SectionType_List[x] != 1 && TONE_SoundData_List[x].Length > 4) {
@@ -922,14 +1496,14 @@ namespace NSUNS4_Character_Manager.Misc {
                             format = "WAV";
                         string path = "";
                         if (toolStripComboBox1.SelectedIndex == 0)
-                            path = FBD.SelectedPath + "\\" + x.ToString() + "-" + name + "." + format;
+                            path = Path.Combine(selectedFolder, x.ToString() + "-" + name + "." + format);
                         else if (toolStripComboBox1.SelectedIndex == 1)
-                            path = FBD.SelectedPath + "\\" + name + "." + format;
+                            path = Path.Combine(selectedFolder, name + "." + format);
 
                         File.WriteAllBytes(path, TONE_SoundData_List[x]);
                     };
                 }
-                MessageBox.Show("Files saved to " + FBD.SelectedPath);
+                MessageBox.Show("Files saved to " + selectedFolder);
             } else {
                 MessageBox.Show("Open NUS3BANK file");
 
@@ -937,23 +1511,26 @@ namespace NSUNS4_Character_Manager.Misc {
         }
         private void wAVFormatToolStripMenuItem_Click(object sender, EventArgs e) {
             if (FileOpen) {
-                FolderBrowserDialog FBD = new FolderBrowserDialog();
-                FBD.ShowDialog();
-                string path = Directory.GetCurrentDirectory();
+                string selectedFolder = SelectExplorerFolder("Select export folder");
+                if (selectedFolder == "")
+                    return;
+
+                string tempPath = GetTempPath();
                 for (int x = 0; x < TONE_SoundData_List.Count; x++) {
 
                     if (TONE_SectionType_List[x] != 2 && TONE_SectionType_List[x] != 1 && TONE_SoundData_List[x].Length > 4) {
-                        Decode(TONE_SoundData_List[x], TONE_SoundName_List[x]);
+                        if (!Decode(TONE_SoundData_List[x], TONE_SoundName_List[x]))
+                            return;
                         string name = TONE_SoundName_List[x];
                         string exp_path = "";
                         if (toolStripComboBox1.SelectedIndex == 0)
-                            exp_path = FBD.SelectedPath + "\\" + x.ToString() + "-" + name + ".wav";
+                            exp_path = Path.Combine(selectedFolder, x.ToString() + "-" + name + ".wav");
                         else if (toolStripComboBox1.SelectedIndex == 1)
-                            exp_path = FBD.SelectedPath + "\\" + name + ".wav";
-                        File.Copy(path + "\\temp\\" + TONE_SoundName_List[x] + ".wav", exp_path, true);
+                            exp_path = Path.Combine(selectedFolder, name + ".wav");
+                        File.Copy(Path.Combine(tempPath, TONE_SoundName_List[x] + ".wav"), exp_path, true);
                     };
                 }
-                MessageBox.Show("Files saved to " + FBD.SelectedPath);
+                MessageBox.Show("Files saved to " + selectedFolder);
             }
             else {
                 MessageBox.Show("Open NUS3BANK file");
@@ -964,7 +1541,9 @@ namespace NSUNS4_Character_Manager.Misc {
             if (FileOpen) {
                 OpenFileDialog o = new OpenFileDialog();
                 o.Multiselect = true;
-                o.ShowDialog();
+                if (o.ShowDialog() != DialogResult.OK)
+                    return;
+
                 for (int x = 0; x < o.FileNames.Length; x++) {
                     TONE_SoundName_List.Add(Path.GetFileNameWithoutExtension(o.FileNames[x]));
                     TONE_SectionType_List.Add(0);
@@ -989,14 +1568,23 @@ namespace NSUNS4_Character_Manager.Misc {
                     TONE_SoundPos_List.Add(0);
                     TONE_SoundSize_List.Add(0);
                     dataGridView1.Rows.Add(dataGridView1.Rows.Count, Path.GetFileNameWithoutExtension(o.FileNames[x]));
+                    ApplySoundNameColor(dataGridView1.Rows.Count - 1);
                 }
             } else {
                 MessageBox.Show("Open NUS3BANK file");
             }
         }
 
+        private void batchImportMatchedRawToolStripMenuItem_Click(object sender, EventArgs e) {
+            BatchImportMatchedFolder(false);
+        }
+
+        private void batchImportMatchedConvertWavToolStripMenuItem_Click(object sender, EventArgs e) {
+            BatchImportMatchedFolder(true);
+        }
+
         private void button3_Click(object sender, EventArgs e) {
-            
+
         }
 
         private void saveToolStripMenuItem_Click(object sender, EventArgs e) {
@@ -1039,8 +1627,10 @@ namespace NSUNS4_Character_Manager.Misc {
                     s.Filter = "NUS3BANK files|*.NUS3BANK";
                 }
             }
-            if (basepath == "")
-                s.ShowDialog();
+            if (basepath == "") {
+                if (s.ShowDialog() != DialogResult.OK)
+                    return;
+            }
             else
                 s.FileName = basepath;
             if (!(s.FileName != "")) {
@@ -1154,7 +1744,7 @@ namespace NSUNS4_Character_Manager.Misc {
                     TONE_Section = Main.b_AddBytes(TONE_Section, new byte[4] { 0, 0, 0, 0 });
                     TONE_Section = Main.b_AddBytes(TONE_Section, new byte[3]);
 
-                } 
+                }
                 else if (TONE_SectionType_List[x] == 2) {
                     TONE_Section = Main.b_AddBytes(TONE_Section, new byte[8] { 0x01, 0x00, 0x00, 0x00, 0xFF, 0x00, 0x00, 0x00 });
                 }
@@ -1218,11 +1808,11 @@ namespace NSUNS4_Character_Manager.Misc {
                         s.DefaultExt = ".xfbin";
                         s.Filter = ".xfbin|.xfbin";
                     }
-                    s.ShowDialog();
-                    if (s.FileName != "") {
-                        File.WriteAllBytes(s.FileName, fileStart);
-                        MessageBox.Show("File saved to " + s.FileName + ".");
-                    }
+                    if (s.ShowDialog() != DialogResult.OK)
+                        return;
+
+                    File.WriteAllBytes(s.FileName, fileStart);
+                    MessageBox.Show("File saved to " + s.FileName + ".");
                 }
                 else {
                     MessageBox.Show("This file isn't btlcmn");

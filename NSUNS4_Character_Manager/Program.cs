@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Reflection;
 using System.Windows.Forms;
 
 namespace NSUNS4_Character_Manager
@@ -8,9 +10,29 @@ namespace NSUNS4_Character_Manager
         [STAThread]
         private static void Main()
         {
+            InstallDependencyResolver();
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(defaultValue: false);
             Application.Run(new Main());
+        }
+
+        private static void InstallDependencyResolver()
+        {
+            AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
+        }
+
+        private static Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args)
+        {
+            AssemblyName requestedAssembly = new AssemblyName(args.Name);
+            string dependencyPath = Path.Combine(
+                AppDomain.CurrentDomain.BaseDirectory,
+                "dependencies",
+                requestedAssembly.Name + ".dll");
+
+            if (!File.Exists(dependencyPath))
+                return null;
+
+            return Assembly.LoadFrom(dependencyPath);
         }
 
         public static string[] HITEFF =

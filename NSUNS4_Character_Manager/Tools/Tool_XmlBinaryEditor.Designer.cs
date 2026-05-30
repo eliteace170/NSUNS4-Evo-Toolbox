@@ -25,7 +25,7 @@ namespace NSUNS4_Character_Manager
         private Label chunkPathLabel;
         private TextBox chunkNameTextBox;
         private TextBox chunkPathTextBox;
-        private TextBox xmlTextBox;
+        private RichTextBox xmlTextBox;
         private ListBox suggestionListBox;
         private StatusStrip statusStrip1;
         private ToolStripStatusLabel statusLabel;
@@ -54,7 +54,7 @@ namespace NSUNS4_Character_Manager
             this.saveChunkButton = new System.Windows.Forms.Button();
             this.editorPanel = new System.Windows.Forms.Panel();
             this.suggestionListBox = new System.Windows.Forms.ListBox();
-            this.xmlTextBox = new System.Windows.Forms.TextBox();
+            this.xmlTextBox = new System.Windows.Forms.RichTextBox();
             this.chunkPathTextBox = new System.Windows.Forms.TextBox();
             this.chunkNameTextBox = new System.Windows.Forms.TextBox();
             this.chunkPathLabel = new System.Windows.Forms.Label();
@@ -72,7 +72,7 @@ namespace NSUNS4_Character_Manager
             this.fileToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(1343, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(1727, 24);
             this.menuStrip1.TabIndex = 0;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -207,7 +207,7 @@ namespace NSUNS4_Character_Manager
             this.editorPanel.Controls.Add(this.chunkNameLabel);
             this.editorPanel.Location = new System.Drawing.Point(326, 31);
             this.editorPanel.Name = "editorPanel";
-            this.editorPanel.Size = new System.Drawing.Size(1005, 535);
+            this.editorPanel.Size = new System.Drawing.Size(1389, 535);
             this.editorPanel.TabIndex = 6;
             // 
             // suggestionListBox
@@ -225,18 +225,19 @@ namespace NSUNS4_Character_Manager
             // 
             // xmlTextBox
             // 
-            this.xmlTextBox.AcceptsReturn = true;
             this.xmlTextBox.AcceptsTab = true;
             this.xmlTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.xmlTextBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.xmlTextBox.DetectUrls = false;
             this.xmlTextBox.Font = new System.Drawing.Font("Consolas", 9F);
+            this.xmlTextBox.HideSelection = false;
             this.xmlTextBox.Location = new System.Drawing.Point(11, 57);
-            this.xmlTextBox.Multiline = true;
             this.xmlTextBox.Name = "xmlTextBox";
-            this.xmlTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.xmlTextBox.Size = new System.Drawing.Size(979, 463);
+            this.xmlTextBox.Size = new System.Drawing.Size(1363, 463);
             this.xmlTextBox.TabIndex = 4;
+            this.xmlTextBox.Text = "";
             this.xmlTextBox.WordWrap = false;
             this.xmlTextBox.TextChanged += new System.EventHandler(this.xmlTextBox_TextChanged);
             this.xmlTextBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.xmlTextBox_KeyDown);
@@ -248,7 +249,7 @@ namespace NSUNS4_Character_Manager
             | System.Windows.Forms.AnchorStyles.Right)));
             this.chunkPathTextBox.Location = new System.Drawing.Point(82, 31);
             this.chunkPathTextBox.Name = "chunkPathTextBox";
-            this.chunkPathTextBox.Size = new System.Drawing.Size(908, 20);
+            this.chunkPathTextBox.Size = new System.Drawing.Size(1292, 20);
             this.chunkPathTextBox.TabIndex = 3;
             // 
             // chunkNameTextBox
@@ -257,7 +258,7 @@ namespace NSUNS4_Character_Manager
             | System.Windows.Forms.AnchorStyles.Right)));
             this.chunkNameTextBox.Location = new System.Drawing.Point(82, 7);
             this.chunkNameTextBox.Name = "chunkNameTextBox";
-            this.chunkNameTextBox.Size = new System.Drawing.Size(908, 20);
+            this.chunkNameTextBox.Size = new System.Drawing.Size(1292, 20);
             this.chunkNameTextBox.TabIndex = 2;
             // 
             // chunkPathLabel
@@ -284,7 +285,7 @@ namespace NSUNS4_Character_Manager
             this.statusLabel});
             this.statusStrip1.Location = new System.Drawing.Point(0, 575);
             this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(1343, 22);
+            this.statusStrip1.Size = new System.Drawing.Size(1727, 22);
             this.statusStrip1.TabIndex = 7;
             this.statusStrip1.Text = "statusStrip1";
             // 
@@ -297,7 +298,7 @@ namespace NSUNS4_Character_Manager
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1343, 597);
+            this.ClientSize = new System.Drawing.Size(1727, 597);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.editorPanel);
             this.Controls.Add(this.saveChunkButton);
