@@ -546,7 +546,7 @@ namespace NSUNS4_Character_Manager.Misc {
                     waveOut = new WaveOutEvent();
                     waveOut.PlaybackStopped += OnPlaybackStopped;
                     reader = new WaveFileReader(Path.Combine(tempPath, TONE_SoundName_List[e.RowIndex] + ".wav"));
-                    waveOut.Init(reader);
+                    waveOut.Init(CreatePlaybackProvider(reader));
                     waveOut.Volume = (float)trackBar1.Value/100;
                     waveOut.Play();
                 }
@@ -1356,6 +1356,38 @@ namespace NSUNS4_Character_Manager.Misc {
 
             DisposeCurrentPlayback();
         }
+
+        private IWaveProvider CreatePlaybackProvider(WaveFileReader activeReader) {
+            ISampleProvider sampleProvider = activeReader.ToSampleProvider();
+            float pitchFactor = GetPitchFactor();
+
+            if (Math.Abs(pitchFactor - 1.0f) > 0.001f) {
+                SmbPitchShiftingSampleProvider pitchProvider = new SmbPitchShiftingSampleProvider(sampleProvider);
+                pitchProvider.PitchFactor = pitchFactor;
+                sampleProvider = pitchProvider;
+            }
+
+            return new SampleToWaveProvider16(sampleProvider);
+        }
+
+        private float GetPitchFactor() {
+            if (Pitch_v == null)
+                return 1.0f;
+
+            double cents = Math.Max(-30000.0, Math.Min(30000.0, (double)Pitch_v.Value));
+            return (float)Math.Pow(2.0, cents / 1200.0);
+        }
+
+        private void PitchSlider_v_ValueChanged(object sender, EventArgs e) {
+            if (Pitch_v != null && Pitch_v.Value != PitchSlider_v.Value)
+                Pitch_v.Value = PitchSlider_v.Value;
+        }
+
+        private void Pitch_v_ValueChanged(object sender, EventArgs e) {
+            if (PitchSlider_v != null && PitchSlider_v.Value != (int)Pitch_v.Value)
+                PitchSlider_v.Value = (int)Pitch_v.Value;
+        }
+
         private void dataGridView1_Click(object sender, EventArgs e) {
 
             if (dataGridView1.Rows.Count > 0)

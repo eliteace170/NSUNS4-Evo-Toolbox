@@ -29,6 +29,9 @@ namespace NSUNS4_Character_Manager.Misc {
             this.textBox1 = new System.Windows.Forms.TextBox();
             this.button4 = new System.Windows.Forms.Button();
             this.button5 = new System.Windows.Forms.Button();
+            this.labelPitch = new System.Windows.Forms.Label();
+            this.PitchSlider_v = new System.Windows.Forms.TrackBar();
+            this.Pitch_v = new System.Windows.Forms.NumericUpDown();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.button2 = new System.Windows.Forms.Button();
@@ -93,6 +96,9 @@ namespace NSUNS4_Character_Manager.Misc {
             this.SoundName_dg = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.PlaySound_b = new System.Windows.Forms.DataGridViewButtonColumn();
             this.trackBar1 = new System.Windows.Forms.TrackBar();
+            this.VolumeLabel = new System.Windows.Forms.Label();
+            ((System.ComponentModel.ISupportInitialize)(this.PitchSlider_v)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Pitch_v)).BeginInit();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.Volume_v)).BeginInit();
@@ -119,15 +125,15 @@ namespace NSUNS4_Character_Manager.Misc {
             "Sound",
             "Sound randomizer",
             "Empty Slot"});
-            this.comboBox1.Location = new System.Drawing.Point(363, 32);
+            this.comboBox1.Location = new System.Drawing.Point(359, 32);
             this.comboBox1.Name = "comboBox1";
-            this.comboBox1.Size = new System.Drawing.Size(410, 21);
+            this.comboBox1.Size = new System.Drawing.Size(414, 21);
             this.comboBox1.TabIndex = 1;
             this.comboBox1.SelectedIndexChanged += new System.EventHandler(this.comboBox1_SelectedIndexChanged);
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(11, 504);
+            this.button1.Location = new System.Drawing.Point(10, 618);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(346, 23);
             this.button1.TabIndex = 2;
@@ -137,14 +143,14 @@ namespace NSUNS4_Character_Manager.Misc {
             // 
             // textBox1
             // 
-            this.textBox1.Location = new System.Drawing.Point(12, 528);
+            this.textBox1.Location = new System.Drawing.Point(10, 647);
             this.textBox1.Name = "textBox1";
             this.textBox1.Size = new System.Drawing.Size(262, 20);
             this.textBox1.TabIndex = 5;
             // 
             // button4
             // 
-            this.button4.Location = new System.Drawing.Point(274, 526);
+            this.button4.Location = new System.Drawing.Point(274, 647);
             this.button4.Name = "button4";
             this.button4.Size = new System.Drawing.Size(83, 23);
             this.button4.TabIndex = 6;
@@ -162,12 +168,53 @@ namespace NSUNS4_Character_Manager.Misc {
             this.button5.UseVisualStyleBackColor = true;
             this.button5.Click += new System.EventHandler(this.button5_Click);
             // 
+            // labelPitch
+            // 
+            this.labelPitch.AutoSize = true;
+            this.labelPitch.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(254)));
+            this.labelPitch.Location = new System.Drawing.Point(541, 560);
+            this.labelPitch.Name = "labelPitch";
+            this.labelPitch.Size = new System.Drawing.Size(55, 25);
+            this.labelPitch.TabIndex = 26;
+            this.labelPitch.Text = "Pitch";
+            // 
+            // PitchSlider_v
+            // 
+            this.PitchSlider_v.LargeChange = 1200;
+            this.PitchSlider_v.Location = new System.Drawing.Point(363, 596);
+            this.PitchSlider_v.Maximum = 30000;
+            this.PitchSlider_v.Minimum = -30000;
+            this.PitchSlider_v.Name = "PitchSlider_v";
+            this.PitchSlider_v.Size = new System.Drawing.Size(410, 45);
+            this.PitchSlider_v.SmallChange = 100;
+            this.PitchSlider_v.TabIndex = 28;
+            this.PitchSlider_v.TickFrequency = 1200;
+            this.PitchSlider_v.ValueChanged += new System.EventHandler(this.PitchSlider_v_ValueChanged);
+            // 
+            // Pitch_v
+            // 
+            this.Pitch_v.Location = new System.Drawing.Point(365, 644);
+            this.Pitch_v.Maximum = new decimal(new int[] {
+            30000,
+            0,
+            0,
+            0});
+            this.Pitch_v.Minimum = new decimal(new int[] {
+            30000,
+            0,
+            0,
+            -2147483648});
+            this.Pitch_v.Name = "Pitch_v";
+            this.Pitch_v.Size = new System.Drawing.Size(408, 20);
+            this.Pitch_v.TabIndex = 27;
+            this.Pitch_v.ValueChanged += new System.EventHandler(this.Pitch_v_ValueChanged);
+            // 
             // tabControl1
             // 
             this.tabControl1.Controls.Add(this.tabPage1);
             this.tabControl1.Controls.Add(this.tabPage2);
             this.tabControl1.Controls.Add(this.tabPage3);
-            this.tabControl1.Location = new System.Drawing.Point(363, 59);
+            this.tabControl1.Location = new System.Drawing.Point(359, 59);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
             this.tabControl1.Size = new System.Drawing.Size(414, 393);
@@ -347,7 +394,7 @@ namespace NSUNS4_Character_Manager.Misc {
             this.tabPage2.Location = new System.Drawing.Point(4, 22);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(406, 367);
+            this.tabPage2.Size = new System.Drawing.Size(406, 396);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Sound Randomizer";
             this.tabPage2.UseVisualStyleBackColor = true;
@@ -612,7 +659,7 @@ namespace NSUNS4_Character_Manager.Misc {
             this.tabPage3.Location = new System.Drawing.Point(4, 22);
             this.tabPage3.Name = "tabPage3";
             this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage3.Size = new System.Drawing.Size(406, 367);
+            this.tabPage3.Size = new System.Drawing.Size(406, 396);
             this.tabPage3.TabIndex = 2;
             this.tabPage3.Text = "Empty slot";
             this.tabPage3.UseVisualStyleBackColor = true;
@@ -630,25 +677,25 @@ namespace NSUNS4_Character_Manager.Misc {
             // 
             // FileID_v
             // 
-            this.FileID_v.Location = new System.Drawing.Point(363, 526);
+            this.FileID_v.Location = new System.Drawing.Point(657, 4);
             this.FileID_v.Maximum = new decimal(new int[] {
             65535,
             0,
             0,
             0});
             this.FileID_v.Name = "FileID_v";
-            this.FileID_v.Size = new System.Drawing.Size(410, 20);
+            this.FileID_v.Size = new System.Drawing.Size(116, 20);
             this.FileID_v.TabIndex = 9;
             this.FileID_v.ValueChanged += new System.EventHandler(this.FileID_v_ValueChanged);
             // 
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(449, 499);
+            this.label2.Location = new System.Drawing.Point(572, 6);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(238, 26);
+            this.label2.Size = new System.Drawing.Size(79, 13);
             this.label2.TabIndex = 10;
-            this.label2.Text = "NUS3BANK ID\r\n(requires difference for all files for normal working)";
+            this.label2.Text = "NUS3BANK ID\r\n";
             this.label2.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
             // 
             // menuStrip1
@@ -818,7 +865,7 @@ namespace NSUNS4_Character_Manager.Misc {
             this.dataGridView1.Location = new System.Drawing.Point(10, 32);
             this.dataGridView1.MultiSelect = false;
             this.dataGridView1.Name = "dataGridView1";
-            this.dataGridView1.Size = new System.Drawing.Size(347, 470);
+            this.dataGridView1.Size = new System.Drawing.Size(347, 580);
             this.dataGridView1.TabIndex = 24;
             this.dataGridView1.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridView1_CellContentClick);
             this.dataGridView1.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridView1_CellValueChanged);
@@ -859,30 +906,47 @@ namespace NSUNS4_Character_Manager.Misc {
             // 
             // trackBar1
             // 
-            this.trackBar1.Location = new System.Drawing.Point(363, 454);
+            this.trackBar1.Location = new System.Drawing.Point(363, 512);
             this.trackBar1.Maximum = 100;
             this.trackBar1.Name = "trackBar1";
             this.trackBar1.Size = new System.Drawing.Size(410, 45);
             this.trackBar1.TabIndex = 25;
-            this.trackBar1.Value = 35;
+            this.trackBar1.Value = 50;
             this.trackBar1.Scroll += new System.EventHandler(this.trackBar1_Scroll);
             this.trackBar1.ValueChanged += new System.EventHandler(this.trackBar1_ValueChanged);
+            // 
+            // VolumeLabel
+            // 
+            this.VolumeLabel.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.VolumeLabel.AutoSize = true;
+            this.VolumeLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(254)));
+            this.VolumeLabel.Location = new System.Drawing.Point(530, 484);
+            this.VolumeLabel.Name = "VolumeLabel";
+            this.VolumeLabel.Size = new System.Drawing.Size(79, 25);
+            this.VolumeLabel.TabIndex = 92;
+            this.VolumeLabel.Text = "Volume";
             // 
             // Tool_nus3bankEditor_v2
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(780, 551);
+            this.ClientSize = new System.Drawing.Size(780, 674);
+            this.Controls.Add(this.VolumeLabel);
             this.Controls.Add(this.trackBar1);
             this.Controls.Add(this.dataGridView1);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.FileID_v);
             this.Controls.Add(this.tabControl1);
+            this.Controls.Add(this.menuStrip1);
+            this.Controls.Add(this.PitchSlider_v);
+            this.Controls.Add(this.Pitch_v);
+            this.Controls.Add(this.labelPitch);
             this.Controls.Add(this.button4);
             this.Controls.Add(this.textBox1);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.comboBox1);
-            this.Controls.Add(this.menuStrip1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
             this.MainMenuStrip = this.menuStrip1;
             this.MaximizeBox = false;
@@ -891,6 +955,8 @@ namespace NSUNS4_Character_Manager.Misc {
             this.Text = "NUS3BANK Editor v2.1";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.Tool_nus3bankEditor_v2_FormClosed);
             this.Load += new System.EventHandler(this.Tool_nus3bankEditor_v2_Load);
+            ((System.ComponentModel.ISupportInitialize)(this.PitchSlider_v)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Pitch_v)).EndInit();
             this.tabControl1.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
             this.tabPage1.PerformLayout();
@@ -987,5 +1053,9 @@ namespace NSUNS4_Character_Manager.Misc {
         private System.Windows.Forms.Button buttonPasteSound;
         private System.Windows.Forms.Button buttonExtractRawSound;
         private System.Windows.Forms.Button buttonExtractWavSound;
+        private System.Windows.Forms.Label labelPitch;
+        private System.Windows.Forms.TrackBar PitchSlider_v;
+        private System.Windows.Forms.NumericUpDown Pitch_v;
+        private System.Windows.Forms.Label VolumeLabel;
     }
 }
