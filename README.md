@@ -12,8 +12,11 @@ https://github.com/TheLeonX/NSUNS4-Toolbox
 - **EV SFX Editor**
 - **MusicParam (deprecated)**
 - **EvoUnlockItemParam (Evo Specific) Editor**
-- **CostumeBreakParam Editor
-- **UnlockCharaTotal Editor
+- **CostumeBreakParam Editor**
+- **UnlockCharaTotal Editor**
+- **Particle Chunk Editor**
+- **Trail Chunk Editor**
+- **XML Skill Editor(Text editor for skill/projectile files)**
 
 ## Notes
 
