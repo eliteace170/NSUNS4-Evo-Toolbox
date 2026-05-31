@@ -2406,6 +2406,7 @@ namespace NSUNS4_Character_Manager.Tools
             movementList[actualver][actualanm][actualmov] = movementList[actualver][actualanm][switchmov];
             movementList[actualver][actualanm][switchmov] = mov;
 
+            ReloadMovementList(actualver, actualanm);
             mov_list.SelectedIndex = switchmov;
         }
 
@@ -2417,7 +2418,7 @@ namespace NSUNS4_Character_Manager.Tools
                 int actualanm = anm_list.SelectedIndex;
                 int actualmov = mov_list.SelectedIndex;
 
-                if (fileOpen == false || actualver == -1 || actualanm == -1) return;
+                if (fileOpen == false || actualver == -1 || actualanm == -1 || actualmov == -1) return;
 
                 if (actualmov != 0)
                 {
@@ -2444,7 +2445,7 @@ namespace NSUNS4_Character_Manager.Tools
                 int actualanm = anm_list.SelectedIndex;
                 int actualmov = mov_list.SelectedIndex;
 
-                if (fileOpen == false || actualver == -1 || actualanm == -1) return;
+                if (fileOpen == false || actualver == -1 || actualanm == -1 || actualmov == -1) return;
 
                 if (actualmov < mov_list.Items.Count - 1)
                 {

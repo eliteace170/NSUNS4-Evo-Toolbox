@@ -277,6 +277,18 @@
     <Compile Include="NSUNS4_Character_Manager\Tools\Tool_IconEditor.Designer.cs">
       <DependentUpon>Tool_IconEditor.cs</DependentUpon>
     </Compile>
+    <Compile Include="NSUNS4_Character_Manager\Tools\Tool_FinalSpSkillCutInEditor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="NSUNS4_Character_Manager\Tools\Tool_FinalSpSkillCutInEditor.Designer.cs">
+      <DependentUpon>Tool_FinalSpSkillCutInEditor.cs</DependentUpon>
+    </Compile>
+    <Compile Include="NSUNS4_Character_Manager\Tools\Tool_ItemInfoEditor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="NSUNS4_Character_Manager\Tools\Tool_ItemInfoEditor.Designer.cs">
+      <DependentUpon>Tool_ItemInfoEditor.cs</DependentUpon>
+    </Compile>
     <Compile Include="NSUNS4_Character_Manager\Tools\Tool_MessageInfoEditor.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -473,6 +485,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="NSUNS4_Character_Manager\Tools\Tool_IconEditor.resx">
       <DependentUpon>Tool_IconEditor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="NSUNS4_Character_Manager\Tools\Tool_FinalSpSkillCutInEditor.resx">
+      <DependentUpon>Tool_FinalSpSkillCutInEditor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="NSUNS4_Character_Manager\Tools\Tool_ItemInfoEditor.resx">
+      <DependentUpon>Tool_ItemInfoEditor.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="NSUNS4_Character_Manager\Tools\Tool_MessageInfoEditor.resx">
       <DependentUpon>Tool_MessageInfoEditor.cs</DependentUpon>

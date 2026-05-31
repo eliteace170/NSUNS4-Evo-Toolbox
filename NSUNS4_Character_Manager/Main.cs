@@ -56,6 +56,8 @@ namespace NSUNS4_Character_Manager
         public static string damageprmPath = "[null]";
         public static string spTypeSupportParamPath = "[null]";
         public static string unlockEvoItemParamPath = "[null]";
+        public static string itemInfoPath = "[null]";
+        public static string finalSpSkillCutInPath = "[null]";
         private Button button9;
         private Button button10;
         private Button button11;
@@ -107,6 +109,8 @@ namespace NSUNS4_Character_Manager
         private Button button35;
         private Button button36;
         private Button button37;
+        private Button button38;
+        private Button button39;
         private FlowLayoutPanel extraToolsPanel;
         private Button extraToolsButtonTemplate;
         private TabPage tabPage7;
@@ -165,6 +169,8 @@ namespace NSUNS4_Character_Manager
             cfg.Add("[null]");
             cfg.Add("[null]");
             cfg.Add("[null]");
+            cfg.Add("[null]");
+            cfg.Add("[null]");
             File.WriteAllLines(ConfigPath, cfg.ToArray());
             MessageBox.Show("Config file created.");
         }
@@ -197,6 +203,8 @@ namespace NSUNS4_Character_Manager
             cfg.Add(damageprmPath);
             cfg.Add(spTypeSupportParamPath);
             cfg.Add(unlockEvoItemParamPath);
+            cfg.Add(itemInfoPath);
+            cfg.Add(finalSpSkillCutInPath);
             File.WriteAllLines(ConfigPath, cfg.ToArray());
             MessageBox.Show("Config file saved.");
         }
@@ -229,6 +237,8 @@ namespace NSUNS4_Character_Manager
             if (cfg.Length > 22) damageprmPath = cfg[22];
             if (cfg.Length > 23) spTypeSupportParamPath = cfg[23];
             if (cfg.Length > 24) unlockEvoItemParamPath = cfg[24];
+            if (cfg.Length > 25) itemInfoPath = cfg[25];
+            if (cfg.Length > 26) finalSpSkillCutInPath = cfg[26];
             //MessageBox.Show("Loaded paths.");
         }
 
@@ -1084,6 +1094,9 @@ namespace NSUNS4_Character_Manager
             this.button30 = new System.Windows.Forms.Button();
             this.button31 = new System.Windows.Forms.Button();
             this.button32 = new System.Windows.Forms.Button();
+            this.button34 = new System.Windows.Forms.Button();
+            this.button38 = new System.Windows.Forms.Button();
+            this.button39 = new System.Windows.Forms.Button();
             this.button29 = new System.Windows.Forms.Button();
             this.button28 = new System.Windows.Forms.Button();
             this.button27 = new System.Windows.Forms.Button();
@@ -1103,7 +1116,6 @@ namespace NSUNS4_Character_Manager
             this.label2 = new System.Windows.Forms.Label();
             this.linkLabel3 = new System.Windows.Forms.LinkLabel();
             this.button33 = new System.Windows.Forms.Button();
-            this.button34 = new System.Windows.Forms.Button();
             this.button35 = new System.Windows.Forms.Button();
             this.button36 = new System.Windows.Forms.Button();
             this.button37 = new System.Windows.Forms.Button();
@@ -1487,6 +1499,9 @@ namespace NSUNS4_Character_Manager
             this.tabPage3.Controls.Add(this.button30);
             this.tabPage3.Controls.Add(this.button31);
             this.tabPage3.Controls.Add(this.button32);
+            this.tabPage3.Controls.Add(this.button34);
+            this.tabPage3.Controls.Add(this.button38);
+            this.tabPage3.Controls.Add(this.button39);
             this.tabPage3.Controls.Add(this.button29);
             this.tabPage3.Controls.Add(this.button28);
             this.tabPage3.Controls.Add(this.button27);
@@ -1546,6 +1561,39 @@ namespace NSUNS4_Character_Manager
             this.button32.Text = "Event Sound Editor\r\n(*_ev.xfbin)";
             this.button32.UseVisualStyleBackColor = true;
             this.button32.Click += new System.EventHandler(this.button32_Click);
+            // 
+            // button34
+            // 
+            this.button34.Font = new System.Drawing.Font("Segoe UI", 8.5F);
+            this.button34.Location = new System.Drawing.Point(301, 411);
+            this.button34.Name = "button34";
+            this.button34.Size = new System.Drawing.Size(299, 38);
+            this.button34.TabIndex = 38;
+            this.button34.Text = "Costume Break Param Editor\r\n(costumeBreakParam.xfbin)";
+            this.button34.UseVisualStyleBackColor = true;
+            this.button34.Click += new System.EventHandler(this.button34_Click);
+            // 
+            // button38
+            // 
+            this.button38.Font = new System.Drawing.Font("Segoe UI", 8.5F);
+            this.button38.Location = new System.Drawing.Point(301, 374);
+            this.button38.Name = "button38";
+            this.button38.Size = new System.Drawing.Size(299, 38);
+            this.button38.TabIndex = 46;
+            this.button38.Text = "ItemInfo Editor\r\n(itemInfo.bin.xfbin)";
+            this.button38.UseVisualStyleBackColor = true;
+            this.button38.Click += new System.EventHandler(this.button38_Click);
+            // 
+            // button39
+            // 
+            this.button39.Font = new System.Drawing.Font("Segoe UI", 8.5F);
+            this.button39.Location = new System.Drawing.Point(3, 411);
+            this.button39.Name = "button39";
+            this.button39.Size = new System.Drawing.Size(299, 38);
+            this.button39.TabIndex = 47;
+            this.button39.Text = "Final Sp Skill CutIn Editor\r\n(finalSpSkillCutIn.bin.xfbin)";
+            this.button39.UseVisualStyleBackColor = true;
+            this.button39.Click += new System.EventHandler(this.button39_Click);
             // 
             // button29
             // 
@@ -1648,7 +1696,6 @@ namespace NSUNS4_Character_Manager
             this.tabPage6.Controls.Add(this.button17);
             this.tabPage6.Controls.Add(this.button18);
             this.tabPage6.Controls.Add(this.button33);
-            this.tabPage6.Controls.Add(this.button34);
             this.tabPage6.Controls.Add(this.button35);
             this.tabPage6.Controls.Add(this.button36);
             this.tabPage6.Controls.Add(this.button37);
@@ -1784,17 +1831,6 @@ namespace NSUNS4_Character_Manager
             this.button33.UseVisualStyleBackColor = true;
             this.button33.Click += new System.EventHandler(this.button33_Click);
             // 
-            // button34
-            // 
-            this.button34.Font = new System.Drawing.Font("Segoe UI", 8.5F);
-            this.button34.Location = new System.Drawing.Point(1, 47);
-            this.button34.Name = "button34";
-            this.button34.Size = new System.Drawing.Size(299, 38);
-            this.button34.TabIndex = 38;
-            this.button34.Text = "Costume Break Param Editor\r\n(costumeBreakParam.xfbin)";
-            this.button34.UseVisualStyleBackColor = true;
-            this.button34.Click += new System.EventHandler(this.button34_Click);
-            // 
             // button35
             // 
             this.button35.Font = new System.Drawing.Font("Segoe UI", 8.5F);
@@ -1820,7 +1856,7 @@ namespace NSUNS4_Character_Manager
             // button37
             // 
             this.button37.Font = new System.Drawing.Font("Segoe UI", 8.5F);
-            this.button37.Location = new System.Drawing.Point(1, 135);
+            this.button37.Location = new System.Drawing.Point(1, 47);
             this.button37.Name = "button37";
             this.button37.Size = new System.Drawing.Size(299, 38);
             this.button37.TabIndex = 45;
@@ -2254,6 +2290,8 @@ namespace NSUNS4_Character_Manager
             damageprmPath = datawin32Path + "\\spc\\damageprm.bin.xfbin";
             spTypeSupportParamPath = datawin32Path + "\\spc\\WIN64\\spTypeSupportParam.xfbin";
             unlockEvoItemParamPath = datawin32Path + "\\spc\\WIN64\\EvoUnlockItemParam.xfbin";
+            itemInfoPath = datawin32Path + "\\bin_le\\x64\\ItemInfo.bin.xfbin";
+            finalSpSkillCutInPath = datawin32Path + "\\bin_le\\x64\\finalSpSkillCutIn.bin.xfbin";
 
             SaveConfig();
         }
@@ -2281,6 +2319,8 @@ namespace NSUNS4_Character_Manager
                 messageInfoPath = datawin32Path + "\\message";
                 spTypeSupportParamPath = datawin32Path + "\\spc\\WIN64\\spTypeSupportParam.xfbin";
                 unlockEvoItemParamPath = datawin32Path + "\\spc\\WIN64\\EvoUnlockItemParam.xfbin";
+                itemInfoPath = datawin32Path + "\\bin_le\\x64\\ItemInfo.bin.xfbin";
+                finalSpSkillCutInPath = datawin32Path + "\\bin_le\\x64\\finalSpSkillCutIn.bin.xfbin";
             }
                 
             else {
@@ -2424,6 +2464,18 @@ namespace NSUNS4_Character_Manager
         private void button37_Click(object sender, EventArgs e)
         {
             Tool_XmlBinaryEditor t = new Tool_XmlBinaryEditor();
+            t.Show();
+        }
+
+        private void button38_Click(object sender, EventArgs e)
+        {
+            Tool_ItemInfoEditor t = new Tool_ItemInfoEditor();
+            t.Show();
+        }
+
+        private void button39_Click(object sender, EventArgs e)
+        {
+            Tool_FinalSpSkillCutInEditor t = new Tool_FinalSpSkillCutInEditor();
             t.Show();
         }
     }
