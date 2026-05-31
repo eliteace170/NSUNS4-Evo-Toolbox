@@ -14,6 +14,8 @@ https://github.com/TheLeonX/NSUNS4-Toolbox
 - **EvoUnlockItemParam (Evo Specific) Editor**
 - **CostumeBreakParam Editor**
 - **UnlockCharaTotal Editor**
+- **ItemInfo Editor**
+- **FinalSpSkillCutIn Editor**
 - **XML Skill Editor(Text editor for skill/projectile files)**
 
 ## Notes
