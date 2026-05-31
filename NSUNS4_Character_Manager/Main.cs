@@ -58,6 +58,7 @@ namespace NSUNS4_Character_Manager
         public static string unlockEvoItemParamPath = "[null]";
         public static string itemInfoPath = "[null]";
         public static string finalSpSkillCutInPath = "[null]";
+        public static string costumeBreakParamPath = "[null]";
         private Button button9;
         private Button button10;
         private Button button11;
@@ -171,6 +172,7 @@ namespace NSUNS4_Character_Manager
             cfg.Add("[null]");
             cfg.Add("[null]");
             cfg.Add("[null]");
+            cfg.Add("[null]");
             File.WriteAllLines(ConfigPath, cfg.ToArray());
             MessageBox.Show("Config file created.");
         }
@@ -205,6 +207,7 @@ namespace NSUNS4_Character_Manager
             cfg.Add(unlockEvoItemParamPath);
             cfg.Add(itemInfoPath);
             cfg.Add(finalSpSkillCutInPath);
+            cfg.Add(costumeBreakParamPath);
             File.WriteAllLines(ConfigPath, cfg.ToArray());
             MessageBox.Show("Config file saved.");
         }
@@ -239,7 +242,51 @@ namespace NSUNS4_Character_Manager
             if (cfg.Length > 24) unlockEvoItemParamPath = cfg[24];
             if (cfg.Length > 25) itemInfoPath = cfg[25];
             if (cfg.Length > 26) finalSpSkillCutInPath = cfg[26];
+            if (cfg.Length > 27) costumeBreakParamPath = cfg[27];
+            BackfillDefaultPaths();
             //MessageBox.Show("Loaded paths.");
+        }
+
+        private static void BackfillDefaultPaths()
+        {
+            if (string.IsNullOrWhiteSpace(datawin32Path) || datawin32Path == "[null]" || !Directory.Exists(datawin32Path))
+                return;
+
+            if (!File.Exists(itemInfoPath))
+                itemInfoPath = ResolveDataWin32File("ItemInfo.bin.xfbin",
+                    "duel\\WIN64\\ItemInfo.bin.xfbin",
+                    "spc\\WIN64\\ItemInfo.bin.xfbin");
+
+            if (!File.Exists(finalSpSkillCutInPath))
+                finalSpSkillCutInPath = ResolveDataWin32File("finalSpSkillCutIn.bin.xfbin",
+                    "spc\\WIN64\\finalSpSkillCutIn.bin.xfbin",
+                    "spc\\WIN64\\x64\\finalSpSkillCutIn.bin.xfbin");
+
+            if (!File.Exists(costumeBreakParamPath))
+                costumeBreakParamPath = ResolveDataWin32File("costumeBreakParam.xfbin",
+                    "spc\\WIN64\\costumeBreakParam.xfbin",
+                    "spc\\WIN64\\x64\\costumeBreakParam.xfbin");
+        }
+
+        private static string ResolveDataWin32File(string fileName, params string[] relativeCandidates)
+        {
+            foreach (string relativeCandidate in relativeCandidates)
+            {
+                string candidate = Path.Combine(datawin32Path, relativeCandidate);
+                if (File.Exists(candidate))
+                    return candidate;
+            }
+
+            try
+            {
+                foreach (string foundFile in Directory.GetFiles(datawin32Path, fileName, SearchOption.AllDirectories))
+                    return foundFile;
+            }
+            catch
+            {
+            }
+
+            return Path.Combine(datawin32Path, relativeCandidates[0]);
         }
 
         // Add costume
@@ -1591,7 +1638,7 @@ namespace NSUNS4_Character_Manager
             this.button39.Name = "button39";
             this.button39.Size = new System.Drawing.Size(299, 38);
             this.button39.TabIndex = 47;
-            this.button39.Text = "Final Sp Skill CutIn Editor\r\n(finalSpSkillCutIn.bin.xfbin)";
+            this.button39.Text = "FinalSpSkillCutIn Editor\r\n(finalSpSkillCutIn.bin.xfbin)";
             this.button39.UseVisualStyleBackColor = true;
             this.button39.Click += new System.EventHandler(this.button39_Click);
             // 
@@ -2290,8 +2337,15 @@ namespace NSUNS4_Character_Manager
             damageprmPath = datawin32Path + "\\spc\\damageprm.bin.xfbin";
             spTypeSupportParamPath = datawin32Path + "\\spc\\WIN64\\spTypeSupportParam.xfbin";
             unlockEvoItemParamPath = datawin32Path + "\\spc\\WIN64\\EvoUnlockItemParam.xfbin";
-            itemInfoPath = datawin32Path + "\\bin_le\\x64\\ItemInfo.bin.xfbin";
-            finalSpSkillCutInPath = datawin32Path + "\\bin_le\\x64\\finalSpSkillCutIn.bin.xfbin";
+            itemInfoPath = ResolveDataWin32File("ItemInfo.bin.xfbin",
+                "duel\\WIN64\\ItemInfo.bin.xfbin",
+                "spc\\WIN64\\ItemInfo.bin.xfbin");
+            finalSpSkillCutInPath = ResolveDataWin32File("finalSpSkillCutIn.bin.xfbin",
+                "spc\\WIN64\\finalSpSkillCutIn.bin.xfbin",
+                "spc\\WIN64\\x64\\finalSpSkillCutIn.bin.xfbin");
+            costumeBreakParamPath = ResolveDataWin32File("costumeBreakParam.xfbin",
+                "spc\\WIN64\\costumeBreakParam.xfbin",
+                "spc\\WIN64\\x64\\costumeBreakParam.xfbin");
 
             SaveConfig();
         }
@@ -2319,8 +2373,15 @@ namespace NSUNS4_Character_Manager
                 messageInfoPath = datawin32Path + "\\message";
                 spTypeSupportParamPath = datawin32Path + "\\spc\\WIN64\\spTypeSupportParam.xfbin";
                 unlockEvoItemParamPath = datawin32Path + "\\spc\\WIN64\\EvoUnlockItemParam.xfbin";
-                itemInfoPath = datawin32Path + "\\bin_le\\x64\\ItemInfo.bin.xfbin";
-                finalSpSkillCutInPath = datawin32Path + "\\bin_le\\x64\\finalSpSkillCutIn.bin.xfbin";
+                itemInfoPath = ResolveDataWin32File("ItemInfo.bin.xfbin",
+                    "duel\\WIN64\\ItemInfo.bin.xfbin",
+                    "spc\\WIN64\\ItemInfo.bin.xfbin");
+                finalSpSkillCutInPath = ResolveDataWin32File("finalSpSkillCutIn.bin.xfbin",
+                    "spc\\WIN64\\finalSpSkillCutIn.bin.xfbin",
+                    "spc\\WIN64\\x64\\finalSpSkillCutIn.bin.xfbin");
+                costumeBreakParamPath = ResolveDataWin32File("costumeBreakParam.xfbin",
+                    "spc\\WIN64\\costumeBreakParam.xfbin",
+                    "spc\\WIN64\\x64\\costumeBreakParam.xfbin");
             }
                 
             else {

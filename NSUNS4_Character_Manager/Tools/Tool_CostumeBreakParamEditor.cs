@@ -42,6 +42,8 @@ namespace NSUNS4_Character_Manager
             unkValue.Maximum = uint.MaxValue;
             ApplyDisplayMode();
             ResetUi();
+            if (System.ComponentModel.LicenseManager.UsageMode != System.ComponentModel.LicenseUsageMode.Designtime && File.Exists(Main.costumeBreakParamPath))
+                LoadFile(Main.costumeBreakParamPath);
         }
 
         private void ResetUi()
