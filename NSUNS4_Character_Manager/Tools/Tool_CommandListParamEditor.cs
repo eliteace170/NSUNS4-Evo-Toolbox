@@ -368,8 +368,6 @@ namespace NSUNS4_Character_Manager
 
                 fileState = parsedState;
                 sourceFilePath = filePath;
-                TryAutoLoadCharacodeReferences(filePath);
-                TryAutoLoadMessageInfoReferences(filePath);
                 ResolveCharacodeNames();
                 ResolveMessageTexts();
                 RefreshEntryList(0);
@@ -487,28 +485,6 @@ namespace NSUNS4_Character_Manager
                     return;
 
                 LoadCharacodeReferences(dialog.FileName, true);
-            }
-        }
-
-        private void TryAutoLoadCharacodeReferences(string commandListPath)
-        {
-            if (characodeNamesByHash.Count > 0)
-                return;
-
-            string sourceDirectory = Path.GetDirectoryName(commandListPath) ?? string.Empty;
-            string baseDirectory = AppDomain.CurrentDomain.BaseDirectory ?? string.Empty;
-            string[] candidates =
-            {
-                Main.chaPath,
-                Path.Combine(sourceDirectory, "characode.bin.xfbin"),
-                Path.Combine(baseDirectory, "xfbinFiles", "characode.bin.xfbin"),
-                Path.Combine(Environment.CurrentDirectory ?? string.Empty, "xfbinFiles", "characode.bin.xfbin")
-            };
-
-            foreach (string candidate in candidates.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase))
-            {
-                if (File.Exists(candidate) && LoadCharacodeReferences(candidate, false))
-                    return;
             }
         }
 
@@ -690,30 +666,6 @@ namespace NSUNS4_Character_Manager
                 configuredPath,
                 Path.Combine(configuredPath, "messageInfo.bin.xfbin"),
                 Path.Combine(configuredPath, "WIN64", "eng", "messageInfo.bin.xfbin")
-            };
-            foreach (string candidate in candidates.Distinct(StringComparer.OrdinalIgnoreCase))
-            {
-                if (File.Exists(candidate) && LoadMessageInfoReferences(candidate, false))
-                    return;
-            }
-        }
-
-        private void TryAutoLoadMessageInfoReferences(string commandListPath)
-        {
-            if (messageTextByHash.Count > 0)
-                return;
-
-            TryLoadConfiguredMessageInfoReferences();
-            if (messageTextByHash.Count > 0)
-                return;
-
-            string sourceDirectory = Path.GetDirectoryName(commandListPath) ?? string.Empty;
-            string baseDirectory = AppDomain.CurrentDomain.BaseDirectory ?? string.Empty;
-            string[] candidates =
-            {
-                Path.Combine(sourceDirectory, "messageInfo.bin.xfbin"),
-                Path.Combine(baseDirectory, "xfbinFiles", "messageInfo.bin.xfbin"),
-                Path.Combine(Environment.CurrentDirectory ?? string.Empty, "xfbinFiles", "messageInfo.bin.xfbin")
             };
             foreach (string candidate in candidates.Distinct(StringComparer.OrdinalIgnoreCase))
             {
