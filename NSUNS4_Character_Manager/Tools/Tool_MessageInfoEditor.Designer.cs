@@ -81,6 +81,7 @@
             this.numericUpDown1 = new System.Windows.Forms.NumericUpDown();
             this.label18 = new System.Windows.Forms.Label();
             this.textBox1 = new System.Windows.Forms.TextBox();
+            this.copyCrc32Button = new System.Windows.Forms.Button();
             this.label19 = new System.Windows.Forms.Label();
             this.label20 = new System.Windows.Forms.Label();
             this.textBox2 = new System.Windows.Forms.TextBox();
@@ -96,6 +97,9 @@
             this.textBox4 = new System.Windows.Forms.TextBox();
             this.comboBox2 = new System.Windows.Forms.ComboBox();
             this.checkBox2 = new System.Windows.Forms.CheckBox();
+            this.hashSearchLabel = new System.Windows.Forms.Label();
+            this.hashSearchTextBox = new System.Windows.Forms.TextBox();
+            this.hashSearchButton = new System.Windows.Forms.Button();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).BeginInit();
             this.SuspendLayout();
@@ -106,7 +110,7 @@
             this.listBox1.HorizontalScrollbar = true;
             this.listBox1.Location = new System.Drawing.Point(10, 49);
             this.listBox1.Name = "listBox1";
-            this.listBox1.Size = new System.Drawing.Size(408, 355);
+            this.listBox1.Size = new System.Drawing.Size(408, 329);
             this.listBox1.TabIndex = 0;
             this.listBox1.SelectedIndexChanged += new System.EventHandler(this.listBox1_SelectedIndexChanged);
             // 
@@ -516,7 +520,7 @@
             this.comboBox1.FormattingEnabled = true;
             this.comboBox1.Location = new System.Drawing.Point(474, 443);
             this.comboBox1.Name = "comboBox1";
-            this.comboBox1.Size = new System.Drawing.Size(247, 21);
+            this.comboBox1.Size = new System.Drawing.Size(199, 21);
             this.comboBox1.TabIndex = 44;
             this.comboBox1.SelectedIndexChanged += new System.EventHandler(this.comboBox1_SelectedIndexChanged);
             // 
@@ -564,9 +568,19 @@
             this.textBox1.Location = new System.Drawing.Point(474, 414);
             this.textBox1.Name = "textBox1";
             this.textBox1.ReadOnly = true;
-            this.textBox1.Size = new System.Drawing.Size(247, 20);
+            this.textBox1.Size = new System.Drawing.Size(199, 20);
             this.textBox1.TabIndex = 49;
             this.textBox1.TextChanged += new System.EventHandler(this.textBox1_TextChanged);
+            // 
+            // copyCrc32Button
+            // 
+            this.copyCrc32Button.Location = new System.Drawing.Point(679, 412);
+            this.copyCrc32Button.Name = "copyCrc32Button";
+            this.copyCrc32Button.Size = new System.Drawing.Size(45, 23);
+            this.copyCrc32Button.TabIndex = 65;
+            this.copyCrc32Button.Text = "Copy";
+            this.copyCrc32Button.UseVisualStyleBackColor = true;
+            this.copyCrc32Button.Click += new System.EventHandler(this.copyCrc32Button_Click);
             // 
             // label19
             // 
@@ -581,7 +595,7 @@
             // label20
             // 
             this.label20.AutoSize = true;
-            this.label20.Location = new System.Drawing.Point(6, 449);
+            this.label20.Location = new System.Drawing.Point(7, 425);
             this.label20.Name = "label20";
             this.label20.Size = new System.Drawing.Size(64, 13);
             this.label20.TabIndex = 52;
@@ -590,7 +604,7 @@
             // 
             // textBox2
             // 
-            this.textBox2.Location = new System.Drawing.Point(76, 446);
+            this.textBox2.Location = new System.Drawing.Point(77, 422);
             this.textBox2.Name = "textBox2";
             this.textBox2.Size = new System.Drawing.Size(271, 20);
             this.textBox2.TabIndex = 51;
@@ -598,7 +612,7 @@
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(353, 444);
+            this.button1.Location = new System.Drawing.Point(354, 420);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(65, 23);
             this.button1.TabIndex = 53;
@@ -608,9 +622,9 @@
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(730, 473);
+            this.button2.Location = new System.Drawing.Point(827, 473);
             this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(479, 23);
+            this.button2.Size = new System.Drawing.Size(382, 23);
             this.button2.TabIndex = 54;
             this.button2.Text = "Save changes";
             this.button2.UseVisualStyleBackColor = true;
@@ -618,7 +632,7 @@
             // 
             // button3
             // 
-            this.button3.Location = new System.Drawing.Point(9, 408);
+            this.button3.Location = new System.Drawing.Point(10, 384);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(210, 30);
             this.button3.TabIndex = 55;
@@ -628,7 +642,7 @@
             // 
             // button4
             // 
-            this.button4.Location = new System.Drawing.Point(225, 408);
+            this.button4.Location = new System.Drawing.Point(226, 384);
             this.button4.Name = "button4";
             this.button4.Size = new System.Drawing.Size(193, 30);
             this.button4.TabIndex = 56;
@@ -639,7 +653,7 @@
             // checkBox1
             // 
             this.checkBox1.AutoSize = true;
-            this.checkBox1.Location = new System.Drawing.Point(730, 446);
+            this.checkBox1.Location = new System.Drawing.Point(679, 446);
             this.checkBox1.Name = "checkBox1";
             this.checkBox1.Size = new System.Drawing.Size(116, 17);
             this.checkBox1.TabIndex = 57;
@@ -649,7 +663,7 @@
             // label21
             // 
             this.label21.AutoSize = true;
-            this.label21.Location = new System.Drawing.Point(727, 417);
+            this.label21.Location = new System.Drawing.Point(824, 418);
             this.label21.Name = "label21";
             this.label21.Size = new System.Drawing.Size(151, 13);
             this.label21.TabIndex = 59;
@@ -659,16 +673,16 @@
             // 
             // textBox3
             // 
-            this.textBox3.Location = new System.Drawing.Point(884, 414);
+            this.textBox3.Location = new System.Drawing.Point(981, 415);
             this.textBox3.MaxLength = 256;
             this.textBox3.Name = "textBox3";
-            this.textBox3.Size = new System.Drawing.Size(233, 20);
+            this.textBox3.Size = new System.Drawing.Size(228, 20);
             this.textBox3.TabIndex = 58;
             this.textBox3.TextChanged += new System.EventHandler(this.textBox3_TextChanged);
             // 
             // button5
             // 
-            this.button5.Location = new System.Drawing.Point(353, 473);
+            this.button5.Location = new System.Drawing.Point(354, 449);
             this.button5.Name = "button5";
             this.button5.Size = new System.Drawing.Size(65, 23);
             this.button5.TabIndex = 62;
@@ -679,7 +693,7 @@
             // label22
             // 
             this.label22.AutoSize = true;
-            this.label22.Location = new System.Drawing.Point(42, 478);
+            this.label22.Location = new System.Drawing.Point(43, 454);
             this.label22.Name = "label22";
             this.label22.Size = new System.Drawing.Size(28, 13);
             this.label22.TabIndex = 61;
@@ -688,7 +702,7 @@
             // 
             // textBox4
             // 
-            this.textBox4.Location = new System.Drawing.Point(76, 475);
+            this.textBox4.Location = new System.Drawing.Point(77, 451);
             this.textBox4.Name = "textBox4";
             this.textBox4.Size = new System.Drawing.Size(271, 20);
             this.textBox4.TabIndex = 60;
@@ -728,11 +742,40 @@
             this.checkBox2.UseVisualStyleBackColor = true;
             this.checkBox2.CheckedChanged += new System.EventHandler(this.checkBox2_CheckedChanged);
             // 
+            // hashSearchLabel
+            // 
+            this.hashSearchLabel.AutoSize = true;
+            this.hashSearchLabel.Location = new System.Drawing.Point(42, 483);
+            this.hashSearchLabel.Name = "hashSearchLabel";
+            this.hashSearchLabel.Size = new System.Drawing.Size(32, 13);
+            this.hashSearchLabel.TabIndex = 66;
+            this.hashSearchLabel.Text = "Hash";
+            // 
+            // hashSearchTextBox
+            // 
+            this.hashSearchTextBox.Location = new System.Drawing.Point(77, 480);
+            this.hashSearchTextBox.Name = "hashSearchTextBox";
+            this.hashSearchTextBox.Size = new System.Drawing.Size(271, 20);
+            this.hashSearchTextBox.TabIndex = 67;
+            // 
+            // hashSearchButton
+            // 
+            this.hashSearchButton.Location = new System.Drawing.Point(354, 478);
+            this.hashSearchButton.Name = "hashSearchButton";
+            this.hashSearchButton.Size = new System.Drawing.Size(65, 23);
+            this.hashSearchButton.TabIndex = 68;
+            this.hashSearchButton.Text = "Search";
+            this.hashSearchButton.UseVisualStyleBackColor = true;
+            this.hashSearchButton.Click += new System.EventHandler(this.hashSearchButton_Click);
+            // 
             // Tool_MessageInfoEditor
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1221, 505);
+            this.ClientSize = new System.Drawing.Size(1221, 506);
+            this.Controls.Add(this.hashSearchButton);
+            this.Controls.Add(this.hashSearchTextBox);
+            this.Controls.Add(this.hashSearchLabel);
             this.Controls.Add(this.checkBox2);
             this.Controls.Add(this.comboBox2);
             this.Controls.Add(this.button5);
@@ -748,6 +791,7 @@
             this.Controls.Add(this.label20);
             this.Controls.Add(this.textBox2);
             this.Controls.Add(this.label19);
+            this.Controls.Add(this.copyCrc32Button);
             this.Controls.Add(this.textBox1);
             this.Controls.Add(this.label18);
             this.Controls.Add(this.numericUpDown1);
@@ -865,6 +909,7 @@
         private System.Windows.Forms.NumericUpDown numericUpDown1;
         private System.Windows.Forms.Label label18;
         private System.Windows.Forms.TextBox textBox1;
+        private System.Windows.Forms.Button copyCrc32Button;
         private System.Windows.Forms.Label label19;
         private System.Windows.Forms.Label label20;
         private System.Windows.Forms.TextBox textBox2;
@@ -880,5 +925,8 @@
         private System.Windows.Forms.TextBox textBox4;
         private System.Windows.Forms.ComboBox comboBox2;
         private System.Windows.Forms.CheckBox checkBox2;
+        private System.Windows.Forms.Label hashSearchLabel;
+        private System.Windows.Forms.TextBox hashSearchTextBox;
+        private System.Windows.Forms.Button hashSearchButton;
     }
 }

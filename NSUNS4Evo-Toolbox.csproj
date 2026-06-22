@@ -232,6 +232,24 @@
     <Compile Include="NSUNS4_Character_Manager\Tools\Tool_CostumeBreakParamEditor.Designer.cs">
       <DependentUpon>Tool_CostumeBreakParamEditor.cs</DependentUpon>
     </Compile>
+    <Compile Include="NSUNS4_Character_Manager\Tools\Tool_CommandListParamEditor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="NSUNS4_Character_Manager\Tools\Tool_CommandListParamEditor.Designer.cs">
+      <DependentUpon>Tool_CommandListParamEditor.cs</DependentUpon>
+    </Compile>
+    <Compile Include="NSUNS4_Character_Manager\Tools\Tool_CommandListCloneDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="NSUNS4_Character_Manager\Tools\Tool_CommandListCloneDialog.Designer.cs">
+      <DependentUpon>Tool_CommandListCloneDialog.cs</DependentUpon>
+    </Compile>
+    <Compile Include="NSUNS4_Character_Manager\Tools\Tool_CommandListCostumeDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="NSUNS4_Character_Manager\Tools\Tool_CommandListCostumeDialog.Designer.cs">
+      <DependentUpon>Tool_CommandListCostumeDialog.cs</DependentUpon>
+    </Compile>
     <Compile Include="NSUNS4_Character_Manager\Tools\Tool_damageeffEditor.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -462,6 +480,9 @@
     <EmbeddedResource Include="NSUNS4_Character_Manager\Tools\Tool_CostumeBreakParamEditor.resx">
       <DependentUpon>Tool_CostumeBreakParamEditor.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="NSUNS4_Character_Manager\Tools\Tool_CommandListParamEditor.resx">
+      <DependentUpon>Tool_CommandListParamEditor.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="NSUNS4_Character_Manager\Tools\Tool_damageeffEditor.resx">
       <DependentUpon>Tool_damageeffEditor.cs</DependentUpon>
     </EmbeddedResource>
@@ -585,9 +606,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>dependencies\encode.exe</TargetPath>
     </Content>
-    <Content Include="vgmstream\**\*.*">
+    <Content Include="vgmstream-win64\**\*.*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>dependencies\vgmstream\%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
+      <TargetPath>dependencies\vgmstream-win64\%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
     </Content>
   </ItemGroup>
   <ItemGroup>

@@ -15,5 +15,7 @@
 
 *_output.xfbin
 _tmp_*
+tmp_*
 _codex_write_test.tmp
 
+Backport-CommandListParamConnections.ps1

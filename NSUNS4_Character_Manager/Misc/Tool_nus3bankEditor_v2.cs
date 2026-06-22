@@ -18,14 +18,110 @@ namespace NSUNS4_Character_Manager.Misc {
     public partial class Tool_nus3bankEditor_v2 : Form {
         private const string SoundClipboardFormat = "NSUNS4EvoToolbox.Nus3bankSound";
         private const string SoundClipboardMagic = "NUS3SOUND";
+        private const string VgmstreamDecoderName = "vgmstream-win64";
+        private const string VgmstreamDecoderExe = "vgmstream-cli.exe";
+        private const string NubDeleteSlotTooltip = "Deleting slots is not supported for NUB files.";
+        private const string NubCopySoundTooltip = "Copying sounds is not supported for NUB files.";
+        private const string NubPasteSoundTooltip = "Pasting sounds is not supported for NUB files.";
+        private const string NubImportSoundTooltip = "Importing sounds is not supported for NUB files.";
+        private const int BnsfLoopTailSize = 28;
         private WaveOutEvent waveOut; // or WaveOutEvent()
         private WaveFileReader reader;
+        private VolumeSampleProvider playbackVolumeProvider;
+        private bool NubMode = false;
+        private bool deleteSoundButtonTooltipVisible = false;
+        private bool updatingBnsfLoopControls = false;
+        private XfbinParserBackend nubBackend;
+        private List<NubChunkState> nubChunks = new List<NubChunkState>();
+        private List<NubSoundEntry> nubSoundEntries = new List<NubSoundEntry>();
+
+        private sealed class NubChunkState {
+            public XfbinBinaryChunkItem ChunkItem;
+            public byte[] Data;
+            public int FileSize;
+            public int Version;
+            public int Unknown0C;
+            public int EntryCount;
+            public int DataOffset;
+            public int DataSize;
+            public int HeaderSize;
+            public bool Standalone;
+            public bool BigEndian;
+            public int PayloadOffset;
+            public List<NubSoundEntry> Entries = new List<NubSoundEntry>();
+        }
+
+        private sealed class NubSoundEntry {
+            public NubChunkState Chunk;
+            public int RecordOffset;
+            public int HeaderSize;
+            public int SubheaderSize;
+            public int BnsfHeaderOffset;
+            public int DataSizeOffset;
+            public int DataPointerOffset;
+            public int EntryId;
+            public string RecordCodec = "";
+            public int RecordGroup;
+            public int RecordType;
+            public int ContainerDataPointer;
+            public int ContainerDataSize;
+            public int DataPointer;
+            public int DataSize;
+            public byte[] DataPrefix = new byte[0];
+            public int BnsfFileSize;
+            public string BnsfCodec = "";
+            public string BnsfFormatChunk = "";
+            public int BnsfFormatSize;
+            public int Channels;
+            public int SampleRate;
+            public int TotalSamples;
+            public int LoopOrReserved;
+            public int FrameInfo;
+            public string BnsfDataChunk = "";
+        }
+
+        private sealed class BnsfLoopInfo {
+            public int SampleRate;
+            public int Channels;
+            public int TotalSamples;
+            public int LoopStart;
+            public int LoopEnd;
+            public bool LoopEnabled;
+            public int TailType;
+        }
+
+        private sealed class PlaybackRateSampleProvider : ISampleProvider {
+            private readonly ISampleProvider source;
+
+            public PlaybackRateSampleProvider(ISampleProvider source, float rateFactor) {
+                if (source == null)
+                    throw new ArgumentNullException("source");
+                if (rateFactor <= 0)
+                    throw new ArgumentOutOfRangeException("rateFactor");
+
+                this.source = source;
+                double adjustedSampleRate = source.WaveFormat.SampleRate * (double)rateFactor;
+                int sampleRate = Math.Max(1, Math.Min(int.MaxValue, (int)Math.Round(adjustedSampleRate)));
+                WaveFormat = WaveFormat.CreateIeeeFloatWaveFormat(sampleRate, source.WaveFormat.Channels);
+            }
+
+            public WaveFormat WaveFormat { get; private set; }
+
+            public int Read(float[] buffer, int offset, int count) {
+                return source.Read(buffer, offset, count);
+            }
+        }
+
         public Tool_nus3bankEditor_v2() {
             InitializeComponent();
             tabControl1.TabPages.Remove(tabPage1);
             tabControl1.TabPages.Remove(tabPage2);
             tabControl1.TabPages.Remove(tabPage3);
             toolStripComboBox1.SelectedIndex = 0;
+            tabPage1.MouseMove += tabPage1_MouseMove;
+            tabPage1.MouseLeave += tabPage1_MouseLeave;
+            UpdateBnsfLoopControls(-1);
+            UpdateContainerModeUi();
         }
         public bool cleaning = false;
         public bool FileOpen = false;
@@ -97,7 +193,7 @@ namespace NSUNS4_Character_Manager.Misc {
             OpenFileDialog o = new OpenFileDialog();
             {
                 o.DefaultExt = ".xfbin";
-                o.Filter = "XFBIN Container(*.xfbin)|*.xfbin|NUS3BANK Container(*.nus3bank)|*.nus3bank";
+                o.Filter = "Sound containers (*.xfbin;*.nus3bank;*.nub)|*.xfbin;*.nus3bank;*.nub|XFBIN Container(*.xfbin)|*.xfbin|NUS3BANK Container(*.nus3bank)|*.nus3bank|NUB Container(*.nub)|*.nub";
             }
             if (basepath != "") {
                 o.FileName = basepath;
@@ -110,11 +206,29 @@ namespace NSUNS4_Character_Manager.Misc {
             ClearFile();
             FilePath = o.FileName;
             fileBytes = File.ReadAllBytes(FilePath);
+            if (Path.GetExtension(FilePath).Equals(".nub", StringComparison.OrdinalIgnoreCase)) {
+                if (OpenStandaloneNubFile(FilePath, fileBytes))
+                    return;
+
+                MessageBox.Show("This NUB file is not a supported old nuccChunkNub sound file.");
+                ClearFile();
+                return;
+            }
+
             if (Main.b_ReadString2(fileBytes, 0, 4) == "NUCC")
                 XfbinHeader = true;
             else
                 XfbinHeader = false;
             NUS3_Position = Main.b_FindBytes(fileBytes, new byte[4] { 0x4E, 0x55, 0x53, 0x33 });
+            if (XfbinHeader && NUS3_Position < 0) {
+                if (OpenNubXfbin(FilePath))
+                    return;
+
+                MessageBox.Show("This XFBIN does not contain a supported NUS3BANK or old nuccChunkNub sound chunk.");
+                ClearFile();
+                return;
+            }
+
             PROP_Position = Main.b_FindBytes(fileBytes, new byte[4] { 0x50, 0x52, 0x4F, 0x50 }, NUS3_Position+0x50);
             BINF_Position = Main.b_FindBytes(fileBytes, new byte[4] { 0x42, 0x49, 0x4E, 0x46 }, NUS3_Position + 0x50);
             GRP_Position = Main.b_FindBytes(fileBytes, new byte[4] { 0x47, 0x52, 0x50, 0x20 }, NUS3_Position + 0x50);
@@ -247,6 +361,348 @@ namespace NSUNS4_Character_Manager.Misc {
                 FileOpen = true;
             }
             ApplySoundNameColors();
+            UpdateContainerModeUi();
+        }
+
+        private bool OpenNubXfbin(string path) {
+            try {
+                nubBackend = new XfbinParserBackend(path);
+                List<XfbinBinaryChunkItem> chunks = nubBackend.GetChunkItems("nuccChunkNub");
+                foreach (XfbinBinaryChunkItem chunk in chunks) {
+                    if (chunk.BinaryData == null || chunk.BinaryData.Length < 0x30)
+                        continue;
+                    if (!IsOldNubChunk(chunk.BinaryData))
+                        continue;
+
+                    NubChunkState chunkState = ReadNubChunkHeader(chunk);
+                    LoadNubChunkSounds(chunkState);
+                    if (chunkState.Entries.Count > 0)
+                        nubChunks.Add(chunkState);
+                }
+
+                if (nubSoundEntries.Count == 0) {
+                    if (nubBackend != null) {
+                        nubBackend.Dispose();
+                        nubBackend = null;
+                    }
+                    return false;
+                }
+
+                NubMode = true;
+                XfbinHeader = true;
+                FileOpen = true;
+                FileID_v.Value = 0;
+
+                for (int x = 0; x < nubSoundEntries.Count; x++) {
+                    NubSoundEntry entry = nubSoundEntries[x];
+                    TONE_SectionType_List.Add(0);
+                    TONE_SectionTypeValues_List.Add(new byte[6]);
+                    TONE_SoundName_List.Add(BuildNubSoundName(entry, x));
+                    TONE_SoundPos_List.Add(entry.DataPointer);
+                    TONE_SoundSize_List.Add(entry.DataSize);
+                    TONE_MainVolume_List.Add(0);
+                    TONE_SoundSettings_List.Add(new byte[0]);
+                    TONE_SoundData_List.Add(ReadNubSoundData(entry));
+                    TONE_RandomizerType_List.Add(0);
+                    TONE_RandomizerLength_List.Add(0);
+                    TONE_RandomizerUnk1_List.Add(-1);
+                    TONE_RandomizerSectionCount_List.Add(0);
+                    TONE_RandomizerOneSection_ID_List.Add(new List<int>());
+                    TONE_RandomizerOneSection_unk_List.Add(new List<int>());
+                    TONE_RandomizerOneSection_PlayChance_List.Add(new List<float>());
+                    TONE_RandomizerOneSection_SoundID_List.Add(new List<int>());
+                    TONE_RandomizerUnk2_List.Add(0);
+                    TONE_RandomizerUnk3_List.Add(0);
+                    TONE_RandomizerUnk4_List.Add(0);
+                    TONE_RandomizerUnk5_List.Add(0);
+                    TONE_RandomizerUnk6_List.Add(0);
+                    TONE_OverlaySound_List.Add(true);
+                    dataGridView1.Rows.Add(x, TONE_SoundName_List[x]);
+                }
+
+                ApplySoundNameColors();
+                UpdateContainerModeUi();
+                if (dataGridView1.Rows.Count > 0)
+                    dataGridView1.CurrentCell = dataGridView1.Rows[0].Cells[1];
+                return true;
+            } catch (Exception ex) {
+                if (nubBackend != null) {
+                    nubBackend.Dispose();
+                    nubBackend = null;
+                }
+                MessageBox.Show("Failed to open old nuccChunkNub sound file: " + ex.Message);
+                return false;
+            }
+        }
+
+        private bool OpenStandaloneNubFile(string path, byte[] data) {
+            if (!IsStandaloneNub(data))
+                return false;
+
+            XfbinBinaryChunkItem chunk = new XfbinBinaryChunkItem {
+                FileName = Path.GetFileName(path),
+                FilePath = path,
+                BinaryData = data,
+                ChunkName = Path.GetFileNameWithoutExtension(path),
+                ChunkType = "nuccChunkNub"
+            };
+
+            NubChunkState chunkState = ReadNubChunkHeader(chunk);
+            chunkState.Standalone = true;
+            chunkState.BigEndian = true;
+            chunkState.PayloadOffset = 0;
+            LoadNubChunkSounds(chunkState);
+            if (chunkState.Entries.Count == 0)
+                return false;
+
+            nubChunks.Add(chunkState);
+            NubMode = true;
+            XfbinHeader = false;
+            FileOpen = true;
+            FileID_v.Value = 0;
+
+            for (int x = 0; x < nubSoundEntries.Count; x++) {
+                NubSoundEntry entry = nubSoundEntries[x];
+                TONE_SectionType_List.Add(0);
+                TONE_SectionTypeValues_List.Add(new byte[6]);
+                TONE_SoundName_List.Add(BuildNubSoundName(entry, x));
+                TONE_SoundPos_List.Add(entry.DataPointer);
+                TONE_SoundSize_List.Add(entry.DataSize);
+                TONE_MainVolume_List.Add(0);
+                TONE_SoundSettings_List.Add(new byte[0]);
+                TONE_SoundData_List.Add(ReadNubSoundData(entry));
+                TONE_RandomizerType_List.Add(0);
+                TONE_RandomizerLength_List.Add(0);
+                TONE_RandomizerUnk1_List.Add(-1);
+                TONE_RandomizerSectionCount_List.Add(0);
+                TONE_RandomizerOneSection_ID_List.Add(new List<int>());
+                TONE_RandomizerOneSection_unk_List.Add(new List<int>());
+                TONE_RandomizerOneSection_PlayChance_List.Add(new List<float>());
+                TONE_RandomizerOneSection_SoundID_List.Add(new List<int>());
+                TONE_RandomizerUnk2_List.Add(0);
+                TONE_RandomizerUnk3_List.Add(0);
+                TONE_RandomizerUnk4_List.Add(0);
+                TONE_RandomizerUnk5_List.Add(0);
+                TONE_RandomizerUnk6_List.Add(0);
+                TONE_OverlaySound_List.Add(true);
+                dataGridView1.Rows.Add(x, TONE_SoundName_List[x]);
+            }
+
+            ApplySoundNameColors();
+            UpdateContainerModeUi();
+            if (dataGridView1.Rows.Count > 0)
+                dataGridView1.CurrentCell = dataGridView1.Rows[0].Cells[1];
+            return true;
+        }
+
+        private static bool IsOldNubChunk(byte[] data) {
+            return data.Length > 8 &&
+                data[4] == 0x01 &&
+                data[5] == 0x02 &&
+                data[6] == 0x01 &&
+                data[7] == 0x00;
+        }
+
+        private static bool IsStandaloneNub(byte[] data) {
+            if (data == null || data.Length < 0x20)
+                return false;
+
+            int version = ReadInt32BE(data, 0);
+            return (version == 0x00020000 || version == 0x00020100 || version == 0x01020100) &&
+                ReadInt32BE(data, 4) == 0;
+        }
+
+        private NubChunkState ReadNubChunkHeader(XfbinBinaryChunkItem chunk) {
+            byte[] data = chunk.BinaryData;
+            bool standalone = IsStandaloneNub(data);
+            bool bigEndian = standalone;
+            int baseOffset = standalone ? 0 : 4;
+            return new NubChunkState {
+                ChunkItem = chunk,
+                Data = data,
+                FileSize = standalone ? data.Length : ReadInt32BE(data, 0),
+                Version = ReadNubInt32(data, baseOffset + 0x00, bigEndian),
+                Unknown0C = ReadNubInt32(data, baseOffset + 0x08, bigEndian),
+                EntryCount = ReadNubInt32(data, baseOffset + 0x0C, bigEndian),
+                DataOffset = ReadNubInt32(data, baseOffset + 0x10, bigEndian) + baseOffset,
+                DataSize = ReadNubInt32(data, baseOffset + 0x14, bigEndian),
+                HeaderSize = ReadNubInt32(data, baseOffset + 0x18, bigEndian),
+                Standalone = standalone,
+                BigEndian = bigEndian,
+                PayloadOffset = baseOffset
+            };
+        }
+
+        private void LoadNubChunkSounds(NubChunkState chunkState) {
+            byte[] data = chunkState.Data;
+            int dataOffset = chunkState.DataOffset;
+            if (dataOffset <= 0 || dataOffset > data.Length)
+                return;
+
+            int searchOffset = 0;
+            while (true) {
+                int bnsfOffset = FindBytes(data, Encoding.ASCII.GetBytes("BNSF"), searchOffset, dataOffset);
+                if (bnsfOffset < 0)
+                    break;
+
+                int recordOffset = bnsfOffset - 0xBC;
+                if (recordOffset >= 0 &&
+                    recordOffset + 0x20 <= data.Length &&
+                    bnsfOffset + 0x30 <= data.Length) {
+                    int dataSize = ReadNubInt32(data, recordOffset + 0x14, chunkState.BigEndian);
+                    int dataPointer = ReadNubInt32(data, recordOffset + 0x18, chunkState.BigEndian);
+                    int subheaderSize = ReadNubInt32(data, recordOffset + 0x1C, chunkState.BigEndian);
+                    int headerSize = AlignTo(0xBC + subheaderSize, 0x10);
+                    int bnsfDataSize = ReadInt32BE(data, bnsfOffset + 0x2C);
+                    if (dataSize > 0 &&
+                        dataSize == bnsfDataSize &&
+                        dataPointer >= 0 &&
+                        headerSize >= 0xBC &&
+                        recordOffset + headerSize <= dataOffset &&
+                        dataOffset + dataPointer + dataSize <= data.Length) {
+                        NubSoundEntry entry = new NubSoundEntry {
+                            Chunk = chunkState,
+                            RecordOffset = recordOffset,
+                            HeaderSize = headerSize,
+                            SubheaderSize = subheaderSize,
+                            BnsfHeaderOffset = bnsfOffset,
+                            DataSizeOffset = recordOffset + 0x14,
+                            DataPointerOffset = recordOffset + 0x18,
+                            EntryId = ReadNubInt32(data, recordOffset + 0x08, chunkState.BigEndian),
+                            RecordCodec = Main.b_ReadString(data, recordOffset, 4).Trim('\0', ' '),
+                            RecordGroup = ReadNubInt32(data, recordOffset + 0x04, chunkState.BigEndian),
+                            RecordType = ReadNubInt32(data, recordOffset + 0x0C, chunkState.BigEndian),
+                            ContainerDataPointer = dataPointer,
+                            ContainerDataSize = dataSize,
+                            DataPointer = dataPointer,
+                            DataSize = dataSize,
+                            BnsfFileSize = ReadInt32BE(data, bnsfOffset + 0x04),
+                            BnsfCodec = Main.b_ReadString(data, bnsfOffset + 0x08, 4).Trim('\0', ' '),
+                            BnsfFormatChunk = Main.b_ReadString(data, bnsfOffset + 0x0C, 4).Trim('\0', ' '),
+                            BnsfFormatSize = ReadInt32BE(data, bnsfOffset + 0x10),
+                            Channels = ReadInt32BE(data, bnsfOffset + 0x14),
+                            SampleRate = ReadInt32BE(data, bnsfOffset + 0x18),
+                            TotalSamples = ReadInt32BE(data, bnsfOffset + 0x1C),
+                            LoopOrReserved = ReadInt32BE(data, bnsfOffset + 0x20),
+                            FrameInfo = ReadInt32BE(data, bnsfOffset + 0x24),
+                            BnsfDataChunk = Main.b_ReadString(data, bnsfOffset + 0x28, 4).Trim('\0', ' ')
+                        };
+                        NormalizeNubPlayableDataRange(entry);
+                        chunkState.Entries.Add(entry);
+                        nubSoundEntries.Add(entry);
+                    }
+                }
+
+                searchOffset = bnsfOffset + 4;
+            }
+        }
+
+        private string BuildNubSoundName(NubSoundEntry entry, int index) {
+            string chunkName = entry.Chunk != null && entry.Chunk.ChunkItem != null ? entry.Chunk.ChunkItem.ChunkName : "nub";
+            if (string.IsNullOrWhiteSpace(chunkName))
+                chunkName = "nub";
+
+            return chunkName + "_" + entry.EntryId.ToString("D3") + "_" + index.ToString("D3");
+        }
+
+        private void NormalizeNubPlayableDataRange(NubSoundEntry entry) {
+            if (!HasOldNubPlayablePrefix(entry))
+                return;
+
+            int dataOffset = entry.Chunk.DataOffset;
+            entry.DataPrefix = Main.b_ReadByteArray(entry.Chunk.Data, dataOffset + entry.ContainerDataPointer, 4);
+            entry.DataPointer = entry.ContainerDataPointer + 4;
+            entry.DataSize = entry.ContainerDataSize - 4;
+        }
+
+        private bool HasOldNubPlayablePrefix(NubSoundEntry entry) {
+            if (entry == null || entry.Chunk == null || entry.Chunk.Data == null || entry.ContainerDataSize <= 4)
+                return false;
+
+            return string.Equals(entry.RecordCodec, "is14", StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(entry.BnsfCodec, "IS14", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private byte[] ReadNubSoundData(NubSoundEntry entry) {
+            int dataOffset = entry.Chunk.DataOffset;
+            byte[] result = new byte[0];
+            byte[] nubHeader = Main.b_ReadByteArray(entry.Chunk.Data, entry.RecordOffset, entry.HeaderSize);
+            WriteNubInt32(nubHeader, 0x14, entry.DataSize, entry.Chunk.BigEndian);
+            WriteNubInt32(nubHeader, 0x18, 0, entry.Chunk.BigEndian);
+            WriteInt32BE(nubHeader, 0xBC + 0x04, entry.DataSize + 0x28);
+            WriteInt32BE(nubHeader, 0xBC + 0x2C, entry.DataSize);
+            result = Main.b_AddBytes(result, nubHeader);
+            result = Main.b_AddBytes(result, Main.b_ReadByteArray(entry.Chunk.Data, dataOffset + entry.DataPointer, entry.DataSize));
+            return result;
+        }
+
+        private static int AlignTo(int value, int alignment) {
+            if (alignment <= 0)
+                return value;
+
+            int remainder = value % alignment;
+            return remainder == 0 ? value : value + alignment - remainder;
+        }
+
+        private static int FindBytes(byte[] data, byte[] pattern, int start, int end) {
+            if (data == null || pattern == null || pattern.Length == 0)
+                return -1;
+
+            int max = Math.Min(end, data.Length) - pattern.Length;
+            for (int i = Math.Max(0, start); i <= max; i++) {
+                bool match = true;
+                for (int x = 0; x < pattern.Length; x++) {
+                    if (data[i + x] != pattern[x]) {
+                        match = false;
+                        break;
+                    }
+                }
+
+                if (match)
+                    return i;
+            }
+
+            return -1;
+        }
+
+        private static int ReadInt32LE(byte[] data, int offset) {
+            if (data == null || offset < 0 || offset + 4 > data.Length)
+                return 0;
+
+            return BitConverter.ToInt32(data, offset);
+        }
+
+        private static int ReadNubInt32(byte[] data, int offset, bool bigEndian) {
+            return bigEndian ? ReadInt32BE(data, offset) : ReadInt32LE(data, offset);
+        }
+
+        private static int ReadInt32BE(byte[] data, int offset) {
+            if (data == null || offset < 0 || offset + 4 > data.Length)
+                return 0;
+
+            return (data[offset] << 24) |
+                (data[offset + 1] << 16) |
+                (data[offset + 2] << 8) |
+                data[offset + 3];
+        }
+
+        private static void WriteInt32LE(byte[] data, int offset, int value) {
+            byte[] bytes = BitConverter.GetBytes(value);
+            Buffer.BlockCopy(bytes, 0, data, offset, 4);
+        }
+
+        private static void WriteNubInt32(byte[] data, int offset, int value, bool bigEndian) {
+            if (bigEndian)
+                WriteInt32BE(data, offset, value);
+            else
+                WriteInt32LE(data, offset, value);
+        }
+
+        private static void WriteInt32BE(byte[] data, int offset, int value) {
+            data[offset] = (byte)((value >> 24) & 0xFF);
+            data[offset + 1] = (byte)((value >> 16) & 0xFF);
+            data[offset + 2] = (byte)((value >> 8) & 0xFF);
+            data[offset + 3] = (byte)(value & 0xFF);
         }
 
         public void ClearFile() {
@@ -255,6 +711,13 @@ namespace NSUNS4_Character_Manager.Misc {
             FilePath = "";
             fileBytes = new byte[0];
             XfbinHeader = false;
+            NubMode = false;
+            if (nubBackend != null) {
+                nubBackend.Dispose();
+                nubBackend = null;
+            }
+            nubChunks = new List<NubChunkState>();
+            nubSoundEntries = new List<NubSoundEntry>();
             NUS3_Position = 0;
             PROP_Position = 0;
             BINF_Position = 0;
@@ -295,6 +758,8 @@ namespace NSUNS4_Character_Manager.Misc {
             FileID = 0;
             dataGridView1.Rows.Clear();
             listBox2.Items.Clear();
+            UpdateBnsfLoopControls(-1);
+            UpdateContainerModeUi();
             cleaning = false;
         }
 
@@ -339,6 +804,7 @@ namespace NSUNS4_Character_Manager.Misc {
                 TONE_SectionType_List[currentRow] = comboBox1.SelectedIndex;
                 ApplySoundNameColor(currentRow);
                 UpdateSoundFormatDisplay(currentRow);
+                UpdateBnsfLoopControls(currentRow);
             }
         }
 
@@ -419,6 +885,33 @@ namespace NSUNS4_Character_Manager.Misc {
             return true;
         }
 
+        private static bool ConfigureVgmstreamTool(ProcessStartInfo startInfo) {
+            string[] candidates = new string[] {
+                Path.Combine(GetApplicationPath(), "dependencies", VgmstreamDecoderName, VgmstreamDecoderExe),
+                Path.Combine(GetApplicationPath(), VgmstreamDecoderName, VgmstreamDecoderExe)
+            };
+
+            string toolPath = candidates.FirstOrDefault(File.Exists);
+            if (string.IsNullOrWhiteSpace(toolPath)) {
+                MessageBox.Show(
+                    "The selected decoder was not found.\n\nOnly " + VgmstreamDecoderName + "\\" + VgmstreamDecoderExe + " is supported.\n\nExpected location:\n" +
+                    string.Join("\n", candidates),
+                    "Missing audio tool",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+                return false;
+            }
+
+            string toolDirectory = Path.GetDirectoryName(toolPath);
+            string dependencyDirectory = Path.Combine(GetApplicationPath(), "dependencies");
+            string currentPath = startInfo.EnvironmentVariables["PATH"] ?? "";
+
+            startInfo.FileName = toolPath;
+            startInfo.WorkingDirectory = toolDirectory;
+            startInfo.EnvironmentVariables["PATH"] = dependencyDirectory + ";" + toolDirectory + ";" + currentPath;
+            return true;
+        }
+
         private void ApplySoundNameColors() {
             for (int rowIndex = 0; rowIndex < dataGridView1.Rows.Count; rowIndex++) {
                 ApplySoundNameColor(rowIndex);
@@ -462,6 +955,9 @@ namespace NSUNS4_Character_Manager.Misc {
             if (TONE_SectionType_List[rowIndex] == 2)
                 return "Empty";
 
+            if (NubMode && rowIndex < nubSoundEntries.Count)
+                return GetNubSoundFormat(nubSoundEntries[rowIndex]);
+
             if (rowIndex >= TONE_SoundData_List.Count || TONE_SoundData_List[rowIndex].Length <= 4)
                 return "No sound";
 
@@ -483,7 +979,27 @@ namespace NSUNS4_Character_Manager.Misc {
             return format.ToUpperInvariant();
         }
 
+        private string GetNubSoundFormat(NubSoundEntry entry) {
+            if (entry == null)
+                return "NUB";
+
+            string channelText = entry.Channels == 1 ? "Mono" : entry.Channels == 2 ? "Stereo" : entry.Channels + "ch";
+            return string.Format(
+                "NUB {0}/{1} {2}Hz {3}, {4} samples, entry {5}, ptr 0x{6:X}, size 0x{7:X}",
+                entry.RecordCodec.ToUpperInvariant(),
+                entry.BnsfCodec.ToUpperInvariant(),
+                entry.SampleRate,
+                channelText,
+                entry.TotalSamples,
+                entry.EntryId,
+                entry.DataPointer,
+                entry.DataSize);
+        }
+
         private string GetSoundFileExtension(int rowIndex) {
+            if (NubMode && rowIndex >= 0 && rowIndex < nubSoundEntries.Count)
+                return nubSoundEntries[rowIndex].RecordCodec.ToLowerInvariant();
+
             string format = GetSoundFormat(rowIndex);
             if (format == "No sound" || format == "Empty" || format == "Randomizer" || format == "Unknown" || format == "None")
                 return "bin";
@@ -504,6 +1020,179 @@ namespace NSUNS4_Character_Manager.Misc {
                 return;
 
             SoundFormat_v.Text = GetSoundFormat(rowIndex);
+        }
+
+        private bool TryGetBnsfLoopInfo(int rowIndex, out BnsfLoopInfo info) {
+            info = null;
+            if (NubMode || rowIndex < 0 || rowIndex >= TONE_SoundData_List.Count || rowIndex >= TONE_SoundSettings_List.Count)
+                return false;
+            if (rowIndex >= TONE_SectionType_List.Count || TONE_SectionType_List[rowIndex] != 0)
+                return false;
+
+            byte[] soundData = TONE_SoundData_List[rowIndex];
+            byte[] settings = TONE_SoundSettings_List[rowIndex];
+            if (soundData == null || soundData.Length < 0x30 || settings == null || settings.Length < BnsfLoopTailSize)
+                return false;
+            if (Main.b_ReadString(soundData, 0, 4) != "BNSF")
+                return false;
+
+            int tailOffset = settings.Length - BnsfLoopTailSize;
+            int bnsfChannels = ReadInt32BE(soundData, 0x14);
+            int bnsfSampleRate = ReadInt32BE(soundData, 0x18);
+            int bnsfTotalSamples = ReadInt32BE(soundData, 0x1C);
+
+            info = new BnsfLoopInfo {
+                SampleRate = bnsfSampleRate > 0 ? bnsfSampleRate : BitConverter.ToInt32(settings, tailOffset + 0x00),
+                Channels = bnsfChannels > 0 ? bnsfChannels : BitConverter.ToInt32(settings, tailOffset + 0x04),
+                TotalSamples = bnsfTotalSamples > 0 ? bnsfTotalSamples : BitConverter.ToInt32(settings, tailOffset + 0x08),
+                LoopStart = BitConverter.ToInt32(settings, tailOffset + 0x0C),
+                LoopEnd = BitConverter.ToInt32(settings, tailOffset + 0x10),
+                LoopEnabled = BitConverter.ToInt32(settings, tailOffset + 0x14) == 1,
+                TailType = BitConverter.ToInt32(settings, tailOffset + 0x18)
+            };
+            return true;
+        }
+
+        private void UpdateBnsfLoopControls(int rowIndex) {
+            if (BnsfLoop_v == null || BnsfLoopStart_v == null || BnsfLoopEnd_v == null || buttonBnsfLoopFullSound == null)
+                return;
+
+            updatingBnsfLoopControls = true;
+            BnsfLoopInfo info;
+            if (!TryGetBnsfLoopInfo(rowIndex, out info)) {
+                SetBnsfLoopControlsEnabled(false);
+                BnsfLoop_v.Checked = false;
+                SetBnsfLoopNumericValue(BnsfLoopStart_v, 0, 0);
+                SetBnsfLoopNumericValue(BnsfLoopEnd_v, 0, 0);
+                updatingBnsfLoopControls = false;
+                return;
+            }
+
+            int maxLoopSample = Math.Max(0, info.TotalSamples - 1);
+            BnsfLoop_v.Checked = info.LoopEnabled && info.LoopEnd > info.LoopStart;
+            SetBnsfLoopNumericValue(BnsfLoopStart_v, info.LoopStart, maxLoopSample);
+            SetBnsfLoopNumericValue(BnsfLoopEnd_v, info.LoopEnd, maxLoopSample);
+            SetBnsfLoopControlsEnabled(true);
+            updatingBnsfLoopControls = false;
+        }
+
+        private void SetBnsfLoopControlsEnabled(bool enabled) {
+            BnsfLoop_v.Enabled = enabled;
+            labelBnsfLoopStart.Enabled = enabled;
+            labelBnsfLoopEnd.Enabled = enabled;
+            BnsfLoopStart_v.Enabled = enabled && BnsfLoop_v.Checked;
+            BnsfLoopEnd_v.Enabled = enabled && BnsfLoop_v.Checked;
+            buttonBnsfLoopFullSound.Enabled = enabled;
+        }
+
+        private void SetBnsfLoopNumericValue(NumericUpDown control, int value, int maximum) {
+            int safeMaximum = Math.Max(0, maximum);
+            int safeValue = Math.Max(0, Math.Min(value, safeMaximum));
+            control.Maximum = int.MaxValue;
+            control.Value = safeValue;
+            control.Maximum = safeMaximum;
+        }
+
+        private void ApplyBnsfLoopControlsToSelectedSound() {
+            if (updatingBnsfLoopControls)
+                return;
+
+            int rowIndex = GetCurrentRowIndex();
+            BnsfLoopInfo info;
+            if (!TryGetBnsfLoopInfo(rowIndex, out info))
+                return;
+
+            int maxLoopSample = Math.Max(0, info.TotalSamples - 1);
+            bool loopEnabled = BnsfLoop_v.Checked;
+            int loopStart = 0;
+            int loopEnd = 0;
+            if (loopEnabled) {
+                loopStart = Math.Max(0, Math.Min((int)BnsfLoopStart_v.Value, maxLoopSample));
+                loopEnd = Math.Max(loopStart, Math.Min((int)BnsfLoopEnd_v.Value, maxLoopSample));
+            }
+
+            WriteBnsfLoopInfo(rowIndex, loopEnabled, loopStart, loopEnd);
+            UpdateBnsfLoopControls(rowIndex);
+        }
+
+        private void WriteBnsfLoopInfo(int rowIndex, bool loopEnabled, int loopStart, int loopEnd) {
+            BnsfLoopInfo info;
+            if (!TryGetBnsfLoopInfo(rowIndex, out info))
+                return;
+
+            byte[] settings = TONE_SoundSettings_List[rowIndex];
+            int tailOffset = settings.Length - BnsfLoopTailSize;
+            int maxLoopSample = Math.Max(0, info.TotalSamples - 1);
+            int safeLoopStart = Math.Max(0, Math.Min(loopStart, maxLoopSample));
+            int safeLoopEnd = Math.Max(safeLoopStart, Math.Min(loopEnd, maxLoopSample));
+            WriteInt32LE(settings, tailOffset + 0x00, info.SampleRate);
+            WriteInt32LE(settings, tailOffset + 0x04, info.Channels);
+            WriteInt32LE(settings, tailOffset + 0x08, info.TotalSamples);
+            WriteInt32LE(settings, tailOffset + 0x0C, loopEnabled ? safeLoopStart : 0);
+            WriteInt32LE(settings, tailOffset + 0x10, loopEnabled ? safeLoopEnd : 0);
+            WriteInt32LE(settings, tailOffset + 0x14, loopEnabled ? 1 : 0);
+        }
+
+        private void RefreshBnsfLoopMetadata(int rowIndex) {
+            BnsfLoopInfo info;
+            if (TryGetBnsfLoopInfo(rowIndex, out info))
+                WriteBnsfLoopInfo(rowIndex, info.LoopEnabled, info.LoopStart, info.LoopEnd);
+        }
+
+        private void UpdateContainerModeUi() {
+            if (Mode_v != null)
+                Mode_v.Text = "Mode: " + (NubMode ? "NUB" : "NUS3BANK");
+
+            if (button5 != null) {
+                button5.Enabled = !NubMode;
+                if (toolTip1 != null)
+                    toolTip1.SetToolTip(button5, NubMode ? NubDeleteSlotTooltip : "");
+            }
+
+            SetNubModeButtonState(buttonCopySound, NubCopySoundTooltip);
+            SetNubModeButtonState(buttonPasteSound, NubPasteSoundTooltip);
+            SetNubModeButtonState(button9, NubImportSoundTooltip);
+            SetNubModeButtonState(button10, NubImportSoundTooltip);
+
+            if (!NubMode)
+                HideNubDeleteSlotTooltip();
+        }
+
+        private void SetNubModeButtonState(Button button, string disabledTooltip) {
+            if (button == null)
+                return;
+
+            button.Enabled = !NubMode;
+            if (toolTip1 != null)
+                toolTip1.SetToolTip(button, NubMode ? disabledTooltip : "");
+        }
+
+        private void tabPage1_MouseMove(object sender, MouseEventArgs e) {
+            if (!NubMode || button5 == null || button5.Enabled || toolTip1 == null || tabPage1 == null) {
+                HideNubDeleteSlotTooltip();
+                return;
+            }
+
+            Rectangle deleteButtonBounds = new Rectangle(button5.Location, button5.Size);
+            if (deleteButtonBounds.Contains(e.Location)) {
+                if (!deleteSoundButtonTooltipVisible) {
+                    toolTip1.Show(NubDeleteSlotTooltip, tabPage1, e.X + 12, e.Y + 12, 3000);
+                    deleteSoundButtonTooltipVisible = true;
+                }
+            } else {
+                HideNubDeleteSlotTooltip();
+            }
+        }
+
+        private void tabPage1_MouseLeave(object sender, EventArgs e) {
+            HideNubDeleteSlotTooltip();
+        }
+
+        private void HideNubDeleteSlotTooltip() {
+            if (deleteSoundButtonTooltipVisible && toolTip1 != null && tabPage1 != null)
+                toolTip1.Hide(tabPage1);
+
+            deleteSoundButtonTooltipVisible = false;
         }
 
         private int GetCurrentRowIndex() {
@@ -540,14 +1229,13 @@ namespace NSUNS4_Character_Manager.Misc {
                     string sourcePath = Path.Combine(tempPath, TONE_SoundName_List[e.RowIndex] + "." + format);
                     if (File.Exists(sourcePath))
                         File.Delete(sourcePath);
-                    if (!Decode(TONE_SoundData_List[e.RowIndex], TONE_SoundName_List[e.RowIndex]))
+                    if (!DecodeSound(e.RowIndex))
                         return;
 
                     waveOut = new WaveOutEvent();
                     waveOut.PlaybackStopped += OnPlaybackStopped;
                     reader = new WaveFileReader(Path.Combine(tempPath, TONE_SoundName_List[e.RowIndex] + ".wav"));
                     waveOut.Init(CreatePlaybackProvider(reader));
-                    waveOut.Volume = (float)trackBar1.Value/100;
                     waveOut.Play();
                 }
                 else {
@@ -564,6 +1252,7 @@ namespace NSUNS4_Character_Manager.Misc {
             int x = GetCurrentRowIndex();
             if (x != -1) {
                 UpdateSoundFormatDisplay(x);
+                UpdateBnsfLoopControls(x);
                 listBox2.Items.Clear();
                 comboBox1.SelectedIndex = TONE_SectionType_List[x];
                 if (TONE_SectionType_List[x] == 0) {
@@ -582,6 +1271,54 @@ namespace NSUNS4_Character_Manager.Misc {
                 }
             }
         }
+        private bool DecodeSound(int rowIndex) {
+            if (NubMode && rowIndex >= 0 && rowIndex < nubSoundEntries.Count)
+                return DecodeNubEntry(rowIndex);
+
+            if (rowIndex < 0 || rowIndex >= TONE_SoundData_List.Count)
+                return false;
+
+            return Decode(TONE_SoundData_List[rowIndex], TONE_SoundName_List[rowIndex]);
+        }
+
+        private bool DecodeNubEntry(int rowIndex) {
+            string tempPath = GetTempPath();
+            if (!Directory.Exists(tempPath))
+                Directory.CreateDirectory(tempPath);
+
+            NubSoundEntry entry = nubSoundEntries[rowIndex];
+            int subsongIndex = entry.Chunk.Entries.IndexOf(entry) + 1;
+            if (subsongIndex <= 0)
+                return false;
+
+            string sourcePath = Path.Combine(tempPath, GetSafeFileName(entry.Chunk.ChunkItem.ChunkName) + ".nub");
+            string wavPath = Path.Combine(tempPath, TONE_SoundName_List[rowIndex] + ".wav");
+            if (File.Exists(wavPath))
+                File.Delete(wavPath);
+
+            File.WriteAllBytes(sourcePath, Main.b_ReadByteArray(entry.Chunk.Data, entry.Chunk.PayloadOffset, entry.Chunk.Data.Length - entry.Chunk.PayloadOffset));
+
+            Process p = new Process();
+            p.StartInfo.UseShellExecute = false;
+            p.StartInfo.RedirectStandardOutput = true;
+            p.StartInfo.RedirectStandardError = true;
+            p.StartInfo.CreateNoWindow = true;
+            if (!ConfigureVgmstreamTool(p.StartInfo))
+                return false;
+
+            p.StartInfo.Arguments = "-s " + subsongIndex + " -o " + "\"" + wavPath + "\" " + "\"" + sourcePath + "\"";
+            p.Start();
+            string output = p.StandardOutput.ReadToEnd();
+            string error = p.StandardError.ReadToEnd();
+            p.WaitForExit();
+            if (p.ExitCode != 0 || !File.Exists(wavPath)) {
+                MessageBox.Show(Path.GetFileName(p.StartInfo.FileName) + " failed to decode this NUB sound.\n\n" + output + error, "Decode failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+
+            return true;
+        }
+
         private bool Decode(byte[] data, string name) {
             string tempPath = GetTempPath();
             if (!Directory.Exists(tempPath)) {
@@ -598,33 +1335,31 @@ namespace NSUNS4_Character_Manager.Misc {
             if (format != "RIFF") {
                 string sourcePath = Path.Combine(tempPath, name + "." + format);
                 string wavPath = Path.Combine(tempPath, name + ".wav");
-                if (!File.Exists(wavPath)) {
-                    File.WriteAllBytes(sourcePath, data);
-                    Process p = new Process();
-                    // Redirect the output stream of the child process.
-                    p.StartInfo.UseShellExecute = false;
-                    p.StartInfo.RedirectStandardOutput = true;
-                    p.StartInfo.RedirectStandardError = true;
-                    p.StartInfo.CreateNoWindow = true;
-                    if (!ConfigureExternalTool(p.StartInfo, "vgmstream.exe", Path.Combine("vgmstream", "vgmstream.exe")))
-                        return false;
-                    p.StartInfo.Arguments = "-o " + "\"" + wavPath + "\" " + "\"" + sourcePath + "\"";
-                    p.Start();
-                    string output = p.StandardOutput.ReadToEnd();
-                    string error = p.StandardError.ReadToEnd();
-                    p.WaitForExit();
-                    if (p.ExitCode != 0 || !File.Exists(wavPath)) {
-                        MessageBox.Show("vgmstream.exe failed to decode this sound.\n\n" + output + error, "Decode failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        return false;
-                    }
+                if (File.Exists(wavPath))
+                    File.Delete(wavPath);
+                File.WriteAllBytes(sourcePath, data);
+                Process p = new Process();
+                // Redirect the output stream of the child process.
+                p.StartInfo.UseShellExecute = false;
+                p.StartInfo.RedirectStandardOutput = true;
+                p.StartInfo.RedirectStandardError = true;
+                p.StartInfo.CreateNoWindow = true;
+                if (!ConfigureVgmstreamTool(p.StartInfo))
+                    return false;
+                p.StartInfo.Arguments = "-o " + "\"" + wavPath + "\" " + "\"" + sourcePath + "\"";
+                p.Start();
+                string output = p.StandardOutput.ReadToEnd();
+                string error = p.StandardError.ReadToEnd();
+                p.WaitForExit();
+                if (p.ExitCode != 0 || !File.Exists(wavPath)) {
+                    MessageBox.Show(Path.GetFileName(p.StartInfo.FileName) + " failed to decode this sound.\n\n" + output + error, "Decode failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return false;
                 }
 
             }
             else {
                 string wavPath = Path.Combine(tempPath, name + ".wav");
-                if (!File.Exists(wavPath)) {
-                    File.WriteAllBytes(wavPath, data);
-                }
+                File.WriteAllBytes(wavPath, data);
 
             }
             return true;
@@ -635,6 +1370,9 @@ namespace NSUNS4_Character_Manager.Misc {
         }
 
         private void button5_Click(object sender, EventArgs e) {
+            if (NubMode)
+                return;
+
             int x = GetCurrentRowIndex();
             if (x != -1) {
                 TONE_SoundData_List[x] = new byte[0];
@@ -644,6 +1382,7 @@ namespace NSUNS4_Character_Manager.Misc {
                 TONE_SectionTypeValues_List[x] = new byte[6] { 0x27, 0x84, 0x80, 0x18, 0x00, 0x00 };
                 ApplySoundNameColor(x);
                 UpdateSoundFormatDisplay(x);
+                UpdateBnsfLoopControls(x);
                 MessageBox.Show("Sound data was deleted.");
             }
             else {
@@ -652,6 +1391,9 @@ namespace NSUNS4_Character_Manager.Misc {
         }
 
         private void button9_Click(object sender, EventArgs e) {
+            if (NubMode)
+                return;
+
             int x = GetCurrentRowIndex();
             if (x != -1) {
                 OpenFileDialog o = new OpenFileDialog();
@@ -662,11 +1404,17 @@ namespace NSUNS4_Character_Manager.Misc {
                 if (o.ShowDialog() != DialogResult.OK || !(o.FileName != "") || !File.Exists(o.FileName)) {
                     return;
                 }
+                if (NubMode && Main.b_ReadString(File.ReadAllBytes(o.FileName), 0, 4) != "BNSF") {
+                    MessageBox.Show("Old nuccChunkNub mode only supports direct BNSF import. Use the WAV to BNSF import button for WAV files.");
+                    return;
+                }
                 TONE_SoundSettings_List[x] = new byte[136] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0xB4, 0xC2, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x00, 0x00, 0x14, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x11, 0x00, 0x00, 0x00, 0x09, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0xB4, 0xC2, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x80, 0xBB, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0xBA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
                 TONE_SoundData_List[x] = File.ReadAllBytes(o.FileName);
                 TONE_SectionTypeValues_List[x] = new byte[6] { 0x27, 0x84, 0x9F, 0x38, 0x00, 0x00 };
+                RefreshBnsfLoopMetadata(x);
                 ApplySoundNameColor(x);
                 UpdateSoundFormatDisplay(x);
+                UpdateBnsfLoopControls(x);
                 MessageBox.Show("Sound successfully imported.");
             } else {
                 MessageBox.Show("Select sound slot.");
@@ -705,6 +1453,9 @@ namespace NSUNS4_Character_Manager.Misc {
         }
 
         private void buttonCopySound_Click(object sender, EventArgs e) {
+            if (NubMode)
+                return;
+
             int x = GetSelectedExtractableSoundIndex();
             if (x == -1)
                 return;
@@ -716,6 +1467,9 @@ namespace NSUNS4_Character_Manager.Misc {
         }
 
         private void buttonPasteSound_Click(object sender, EventArgs e) {
+            if (NubMode)
+                return;
+
             int x = GetCurrentRowIndex();
             if (x == -1) {
                 MessageBox.Show("Select sound slot.");
@@ -739,6 +1493,7 @@ namespace NSUNS4_Character_Manager.Misc {
             comboBox1.SelectedIndex = 0;
             ApplySoundNameColor(x);
             UpdateSoundFormatDisplay(x);
+            UpdateBnsfLoopControls(x);
             MessageBox.Show("Sound pasted from clipboard.");
         }
 
@@ -892,6 +1647,7 @@ namespace NSUNS4_Character_Manager.Misc {
             TONE_SoundSize_List[rowIndex] = soundData.Length;
             TONE_SoundPos_List[rowIndex] = 0;
             TONE_SectionTypeValues_List[rowIndex] = GetDefaultImportedSectionTypeValues();
+            RefreshBnsfLoopMetadata(rowIndex);
             ApplySoundNameColor(rowIndex);
         }
 
@@ -918,7 +1674,7 @@ namespace NSUNS4_Character_Manager.Misc {
             if (File.Exists(wavPath))
                 File.Delete(wavPath);
 
-            if (!Decode(TONE_SoundData_List[rowIndex], TONE_SoundName_List[rowIndex]))
+            if (!DecodeSound(rowIndex))
                 return;
 
             SaveFileDialog s = new SaveFileDialog();
@@ -935,6 +1691,9 @@ namespace NSUNS4_Character_Manager.Misc {
         }
 
         private void dataGridView1_RowsRemoved(object sender, DataGridViewRowsRemovedEventArgs e) {
+            if (NubMode)
+                return;
+
             if (!cleaning) {
                 TONE_SectionType_List.RemoveAt(IndexSelectedRow);
                 TONE_SectionTypeValues_List.RemoveAt(IndexSelectedRow);
@@ -1290,6 +2049,9 @@ namespace NSUNS4_Character_Manager.Misc {
         }
 
         private void button10_Click(object sender, EventArgs e) {
+            if (NubMode)
+                return;
+
             int x = GetCurrentRowIndex();
             if (x != -1) {
                 OpenFileDialog o = new OpenFileDialog();
@@ -1307,6 +2069,7 @@ namespace NSUNS4_Character_Manager.Misc {
 
                 ApplyImportedSoundToSlot(x, bnsfSound);
                 UpdateSoundFormatDisplay(x);
+                UpdateBnsfLoopControls(x);
 
                 MessageBox.Show("Sound successfully imported in BNSF format.");
             } else {
@@ -1340,6 +2103,7 @@ namespace NSUNS4_Character_Manager.Misc {
 
             waveOut = null;
             reader = null;
+            playbackVolumeProvider = null;
 
             if (output != null) {
                 output.PlaybackStopped -= OnPlaybackStopped;
@@ -1359,22 +2123,31 @@ namespace NSUNS4_Character_Manager.Misc {
 
         private IWaveProvider CreatePlaybackProvider(WaveFileReader activeReader) {
             ISampleProvider sampleProvider = activeReader.ToSampleProvider();
-            float pitchFactor = GetPitchFactor();
+            float rateFactor = GetPitchFactor();
 
-            if (Math.Abs(pitchFactor - 1.0f) > 0.001f) {
-                SmbPitchShiftingSampleProvider pitchProvider = new SmbPitchShiftingSampleProvider(sampleProvider);
-                pitchProvider.PitchFactor = pitchFactor;
-                sampleProvider = pitchProvider;
+            if (Math.Abs(rateFactor - 1.0f) > 0.001f) {
+                int outputSampleRate = sampleProvider.WaveFormat.SampleRate;
+                PlaybackRateSampleProvider rateProvider = new PlaybackRateSampleProvider(sampleProvider, rateFactor);
+                sampleProvider = new WdlResamplingSampleProvider(rateProvider, outputSampleRate);
             }
 
-            return new SampleToWaveProvider16(sampleProvider);
+            playbackVolumeProvider = new VolumeSampleProvider(sampleProvider);
+            playbackVolumeProvider.Volume = GetPlaybackVolume();
+            return new SampleToWaveProvider16(playbackVolumeProvider);
+        }
+
+        private float GetPlaybackVolume() {
+            if (trackBar1 == null)
+                return 0.5f;
+
+            return Math.Max(0.0f, Math.Min(1.0f, trackBar1.Value / 100.0f));
         }
 
         private float GetPitchFactor() {
             if (Pitch_v == null)
                 return 1.0f;
 
-            double cents = Math.Max(-30000.0, Math.Min(30000.0, (double)Pitch_v.Value));
+            double cents = Math.Max(-5000.0, Math.Min(5000.0, (double)Pitch_v.Value));
             return (float)Math.Pow(2.0, cents / 1200.0);
         }
 
@@ -1386,6 +2159,29 @@ namespace NSUNS4_Character_Manager.Misc {
         private void Pitch_v_ValueChanged(object sender, EventArgs e) {
             if (PitchSlider_v != null && PitchSlider_v.Value != (int)Pitch_v.Value)
                 PitchSlider_v.Value = (int)Pitch_v.Value;
+        }
+
+        private void BnsfLoop_v_CheckedChanged(object sender, EventArgs e) {
+            ApplyBnsfLoopControlsToSelectedSound();
+        }
+
+        private void BnsfLoopStart_v_ValueChanged(object sender, EventArgs e) {
+            ApplyBnsfLoopControlsToSelectedSound();
+        }
+
+        private void BnsfLoopEnd_v_ValueChanged(object sender, EventArgs e) {
+            ApplyBnsfLoopControlsToSelectedSound();
+        }
+
+        private void buttonBnsfLoopFullSound_Click(object sender, EventArgs e) {
+            int rowIndex = GetCurrentRowIndex();
+            BnsfLoopInfo info;
+            if (!TryGetBnsfLoopInfo(rowIndex, out info))
+                return;
+
+            int maxLoopSample = Math.Max(0, info.TotalSamples - 1);
+            WriteBnsfLoopInfo(rowIndex, true, 0, maxLoopSample);
+            UpdateBnsfLoopControls(rowIndex);
         }
 
         private void dataGridView1_Click(object sender, EventArgs e) {
@@ -1402,6 +2198,7 @@ namespace NSUNS4_Character_Manager.Misc {
             if (x!=-1) {
                 TONE_MainVolume_List[x] = (float)Volume_v.Value;
                 TONE_OverlaySound_List[x] = Overlay_v.Checked;
+                ApplyBnsfLoopControlsToSelectedSound();
             }
             else {
                 MessageBox.Show("Select sound section");
@@ -1551,7 +2348,7 @@ namespace NSUNS4_Character_Manager.Misc {
                 for (int x = 0; x < TONE_SoundData_List.Count; x++) {
 
                     if (TONE_SectionType_List[x] != 2 && TONE_SectionType_List[x] != 1 && TONE_SoundData_List[x].Length > 4) {
-                        if (!Decode(TONE_SoundData_List[x], TONE_SoundName_List[x]))
+                        if (!DecodeSound(x))
                             return;
                         string name = TONE_SoundName_List[x];
                         string exp_path = "";
@@ -1640,6 +2437,11 @@ namespace NSUNS4_Character_Manager.Misc {
                     File.Delete(FilePath + ".backup");
                 }
                 File.Copy(FilePath, FilePath + ".backup");
+                if (NubMode) {
+                    SaveNubFile(FilePath);
+                    if (this.Visible) MessageBox.Show("File saved to " + FilePath + ".");
+                    return;
+                }
                 string extension = Path.GetExtension(FilePath);
                 File.WriteAllBytes(FilePath, ConvertToFile(extension));
                 if (this.Visible) MessageBox.Show("File saved to " + FilePath + ".");
@@ -1650,7 +2452,11 @@ namespace NSUNS4_Character_Manager.Misc {
         public void SaveFileAs(string basepath = "") {
             SaveFileDialog s = new SaveFileDialog();
             {
-                if (XfbinHeader) {
+                if (NubMode && !XfbinHeader) {
+                    s.DefaultExt = ".nub";
+                    s.Filter = "NUB files|*.nub";
+                }
+                else if (XfbinHeader) {
                     s.DefaultExt = ".xfbin";
                     s.Filter = "XFBIN files|*.xfbin|NUS3BANK files|*.NUS3BANK";
                 }
@@ -1676,11 +2482,100 @@ namespace NSUNS4_Character_Manager.Misc {
             } else {
                 FilePath = s.FileName;
             }
+            if (NubMode) {
+                SaveNubFile(FilePath);
+                if (basepath == "")
+                    MessageBox.Show("File saved to " + FilePath + ".");
+                return;
+            }
             string extension = Path.GetExtension(s.FileName);
             File.WriteAllBytes(FilePath, ConvertToFile(extension));
             if (basepath == "")
                 MessageBox.Show("File saved to " + FilePath + ".");
         }
+
+        private void SaveNubFile(string outputPath) {
+            if (nubChunks.Count == 0)
+                throw new InvalidOperationException("Old NUB backend is not loaded.");
+
+            if (nubBackend == null) {
+                byte[] updatedChunk = BuildNubChunkData(nubChunks[0]);
+                File.WriteAllBytes(outputPath, updatedChunk);
+                nubChunks[0].Data = updatedChunk;
+                fileBytes = updatedChunk;
+                return;
+            }
+
+            foreach (NubChunkState chunk in nubChunks) {
+                byte[] updatedChunk = BuildNubChunkData(chunk);
+                File.WriteAllBytes(chunk.ChunkItem.FilePath, updatedChunk);
+                chunk.Data = updatedChunk;
+                chunk.ChunkItem.BinaryData = updatedChunk;
+            }
+
+            nubBackend.RepackTo(outputPath);
+            fileBytes = File.ReadAllBytes(outputPath);
+        }
+
+        private byte[] BuildNubChunkData(NubChunkState chunk) {
+            int dataOffset = chunk.DataOffset;
+            byte[] output = Main.b_ReadByteArray(chunk.Data, 0, dataOffset);
+            byte[] soundData = new byte[0];
+            Dictionary<string, int> dataPointersBySound = new Dictionary<string, int>();
+
+            foreach (NubSoundEntry entry in chunk.Entries) {
+                int globalIndex = nubSoundEntries.IndexOf(entry);
+                if (globalIndex < 0 || globalIndex >= TONE_SoundData_List.Count)
+                    continue;
+
+                byte[] nubSound = TONE_SoundData_List[globalIndex] ?? new byte[0];
+                if (nubSound.Length < entry.HeaderSize || !string.Equals(Main.b_ReadString(nubSound, 0, 4), entry.RecordCodec, StringComparison.OrdinalIgnoreCase))
+                    throw new InvalidOperationException("Old NUB mode only supports " + entry.RecordCodec + " sound data for " + TONE_SoundName_List[globalIndex] + ".");
+
+                int newDataPointer;
+                int newDataSize = nubSound.Length - entry.HeaderSize;
+                byte[] nubHeader = Main.b_ReadByteArray(nubSound, 0, entry.HeaderSize);
+                byte[] rawSound = Main.b_ReadByteArray(nubSound, entry.HeaderSize, newDataSize);
+                byte[] containerSound = Main.b_AddBytes(entry.DataPrefix ?? new byte[0], rawSound);
+                int containerDataSize = containerSound.Length;
+                string soundKey = Convert.ToBase64String(containerSound);
+                if (dataPointersBySound.ContainsKey(soundKey)) {
+                    newDataPointer = dataPointersBySound[soundKey];
+                } else {
+                    while (soundData.Length % 8 != 0)
+                        soundData = Main.b_AddBytes(soundData, new byte[1]);
+
+                    newDataPointer = soundData.Length;
+                    dataPointersBySound[soundKey] = newDataPointer;
+                    soundData = Main.b_AddBytes(soundData, containerSound);
+                }
+
+                WriteNubInt32(nubHeader, 0x14, containerDataSize, entry.Chunk.BigEndian);
+                WriteNubInt32(nubHeader, 0x18, newDataPointer, entry.Chunk.BigEndian);
+                WriteInt32BE(nubHeader, 0xBC + 0x04, containerDataSize + 0x28);
+                WriteInt32BE(nubHeader, 0xBC + 0x2C, containerDataSize);
+
+                output = Main.b_ReplaceBytes(output, nubHeader, entry.RecordOffset);
+                WriteNubInt32(output, entry.DataSizeOffset, containerDataSize, entry.Chunk.BigEndian);
+                WriteNubInt32(output, entry.DataPointerOffset, newDataPointer, entry.Chunk.BigEndian);
+
+                entry.ContainerDataPointer = newDataPointer;
+                entry.ContainerDataSize = containerDataSize;
+                entry.DataPointer = newDataPointer + ((entry.DataPrefix == null) ? 0 : entry.DataPrefix.Length);
+                entry.DataSize = newDataSize;
+                entry.BnsfFileSize = containerDataSize + 0x28;
+            }
+
+            int dataEndOrSize = chunk.Standalone ? chunk.DataOffset + soundData.Length : soundData.Length;
+            WriteNubInt32(output, chunk.PayloadOffset + 0x14, dataEndOrSize, chunk.BigEndian);
+            output = Main.b_AddBytes(output, soundData);
+            if (!chunk.Standalone)
+                WriteInt32BE(output, 0x00, output.Length - 4);
+            chunk.DataSize = soundData.Length;
+            chunk.FileSize = chunk.Standalone ? output.Length : output.Length - 4;
+            return output;
+        }
+
         public byte[] ConvertToFile(string extension) {
             byte[] ConvertedFile = new byte[0];
             if (XfbinHeader && extension.Contains("xfbin"))
@@ -1812,8 +2707,9 @@ namespace NSUNS4_Character_Manager.Misc {
         }
 
         private void trackBar1_ValueChanged(object sender, EventArgs e) {
-            if (waveOut != null && reader != null)
-                waveOut.Volume = (float)trackBar1.Value / 100;
+            VolumeSampleProvider activeVolumeProvider = playbackVolumeProvider;
+            if (activeVolumeProvider != null)
+                activeVolumeProvider.Volume = GetPlaybackVolume();
         }
 
         private void createListForSeparamToolStripMenuItem_Click(object sender, EventArgs e) {

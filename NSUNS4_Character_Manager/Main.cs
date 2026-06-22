@@ -59,6 +59,7 @@ namespace NSUNS4_Character_Manager
         public static string itemInfoPath = "[null]";
         public static string finalSpSkillCutInPath = "[null]";
         public static string costumeBreakParamPath = "[null]";
+        public static string commandListParamPath = "[null]";
         private Button button9;
         private Button button10;
         private Button button11;
@@ -112,6 +113,7 @@ namespace NSUNS4_Character_Manager
         private Button button37;
         private Button button38;
         private Button button39;
+        private Button button40;
         private FlowLayoutPanel extraToolsPanel;
         private Button extraToolsButtonTemplate;
         private TabPage tabPage7;
@@ -145,6 +147,7 @@ namespace NSUNS4_Character_Manager
         void CreateConfig()
         {
             List<string> cfg = new List<string>();
+            cfg.Add("[null]");
             cfg.Add("[null]");
             cfg.Add("[null]");
             cfg.Add("[null]");
@@ -208,6 +211,7 @@ namespace NSUNS4_Character_Manager
             cfg.Add(itemInfoPath);
             cfg.Add(finalSpSkillCutInPath);
             cfg.Add(costumeBreakParamPath);
+            cfg.Add(commandListParamPath);
             File.WriteAllLines(ConfigPath, cfg.ToArray());
             MessageBox.Show("Config file saved.");
         }
@@ -243,6 +247,7 @@ namespace NSUNS4_Character_Manager
             if (cfg.Length > 25) itemInfoPath = cfg[25];
             if (cfg.Length > 26) finalSpSkillCutInPath = cfg[26];
             if (cfg.Length > 27) costumeBreakParamPath = cfg[27];
+            if (cfg.Length > 28) commandListParamPath = cfg[28];
             BackfillDefaultPaths();
             //MessageBox.Show("Loaded paths.");
         }
@@ -266,6 +271,10 @@ namespace NSUNS4_Character_Manager
                 costumeBreakParamPath = ResolveDataWin32File("costumeBreakParam.xfbin",
                     "spc\\WIN64\\costumeBreakParam.xfbin",
                     "spc\\WIN64\\x64\\costumeBreakParam.xfbin");
+
+            if (!File.Exists(commandListParamPath))
+                commandListParamPath = ResolveDataWin32File("commandListParam.bin.xfbin",
+                    "duel\\WIN64\\commandListParam.bin.xfbin");
         }
 
         private static string ResolveDataWin32File(string fileName, params string[] relativeCandidates)
@@ -1166,6 +1175,7 @@ namespace NSUNS4_Character_Manager
             this.button35 = new System.Windows.Forms.Button();
             this.button36 = new System.Windows.Forms.Button();
             this.button37 = new System.Windows.Forms.Button();
+            this.button40 = new System.Windows.Forms.Button();
             this.tabPage7 = new System.Windows.Forms.TabPage();
             this.extraToolsPanel = new System.Windows.Forms.FlowLayoutPanel();
             this.tabPage2 = new System.Windows.Forms.TabPage();
@@ -1567,12 +1577,13 @@ namespace NSUNS4_Character_Manager
             this.tabPage3.Controls.Add(this.button4);
             this.tabPage3.Controls.Add(this.button8);
             this.tabPage3.Controls.Add(this.button21);
+            this.tabPage3.Controls.Add(this.button40);
             this.tabPage3.Location = new System.Drawing.Point(4, 22);
             this.tabPage3.Name = "tabPage3";
             this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
             this.tabPage3.Size = new System.Drawing.Size(602, 507);
             this.tabPage3.TabIndex = 0;
-            this.tabPage3.Text = "Character Managment";
+            this.tabPage3.Text = "Character Management";
             this.tabPage3.UseVisualStyleBackColor = true;
             this.tabPage3.Click += new System.EventHandler(this.tabPage3_Click);
             // 
@@ -1694,7 +1705,7 @@ namespace NSUNS4_Character_Manager
             this.tabPage4.Padding = new System.Windows.Forms.Padding(3);
             this.tabPage4.Size = new System.Drawing.Size(602, 507);
             this.tabPage4.TabIndex = 1;
-            this.tabPage4.Text = "Stage Managment";
+            this.tabPage4.Text = "Stage Management";
             this.tabPage4.UseVisualStyleBackColor = true;
             // 
             // tabPage5
@@ -1706,7 +1717,7 @@ namespace NSUNS4_Character_Manager
             this.tabPage5.Name = "tabPage5";
             this.tabPage5.Size = new System.Drawing.Size(602, 507);
             this.tabPage5.TabIndex = 2;
-            this.tabPage5.Text = "Story Mode Managment";
+            this.tabPage5.Text = "Story Mode Management";
             this.tabPage5.UseVisualStyleBackColor = true;
             // 
             // button24
@@ -1910,7 +1921,18 @@ namespace NSUNS4_Character_Manager
             this.button37.Text = "XML Skill Editor";
             this.button37.UseVisualStyleBackColor = true;
             this.button37.Click += new System.EventHandler(this.button37_Click);
-            // 
+            //
+            // button40
+            //
+            this.button40.Font = new System.Drawing.Font("Segoe UI", 8.5F);
+            this.button40.Location = new System.Drawing.Point(3, 448);
+            this.button40.Name = "button40";
+            this.button40.Size = new System.Drawing.Size(299, 38);
+            this.button40.TabIndex = 48;
+            this.button40.Text = "Command List Param Editor\r\n(commandListParam.bin.xfbin)";
+            this.button40.UseVisualStyleBackColor = true;
+            this.button40.Click += new System.EventHandler(this.button40_Click);
+            //
             // tabPage7
             // 
             this.tabPage7.Controls.Add(this.extraToolsPanel);
@@ -2346,6 +2368,8 @@ namespace NSUNS4_Character_Manager
             costumeBreakParamPath = ResolveDataWin32File("costumeBreakParam.xfbin",
                 "spc\\WIN64\\costumeBreakParam.xfbin",
                 "spc\\WIN64\\x64\\costumeBreakParam.xfbin");
+            commandListParamPath = ResolveDataWin32File("commandListParam.bin.xfbin",
+                "duel\\WIN64\\commandListParam.bin.xfbin");
 
             SaveConfig();
         }
@@ -2382,6 +2406,8 @@ namespace NSUNS4_Character_Manager
                 costumeBreakParamPath = ResolveDataWin32File("costumeBreakParam.xfbin",
                     "spc\\WIN64\\costumeBreakParam.xfbin",
                     "spc\\WIN64\\x64\\costumeBreakParam.xfbin");
+                commandListParamPath = ResolveDataWin32File("commandListParam.bin.xfbin",
+                    "duel\\WIN64\\commandListParam.bin.xfbin");
             }
                 
             else {
@@ -2537,6 +2563,12 @@ namespace NSUNS4_Character_Manager
         private void button39_Click(object sender, EventArgs e)
         {
             Tool_FinalSpSkillCutInEditor t = new Tool_FinalSpSkillCutInEditor();
+            t.Show();
+        }
+
+        private void button40_Click(object sender, EventArgs e)
+        {
+            Tool_CommandListParamEditor t = new Tool_CommandListParamEditor();
             t.Show();
         }
     }

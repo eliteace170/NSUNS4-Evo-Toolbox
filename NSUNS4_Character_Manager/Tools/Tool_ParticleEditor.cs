@@ -1,6 +1,7 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
@@ -91,13 +92,17 @@ namespace NSUNS4_Character_Manager
 
             DataGridViewTextBoxColumn frameColumn = new DataGridViewTextBoxColumn();
             frameColumn.Name = "frameColumn";
-            frameColumn.HeaderText = "Time";
+            frameColumn.HeaderText = "Frame";
+            frameColumn.ToolTipText = "Frame value stored in 1/33-frame units. Decimal values are supported.";
+            frameColumn.ValueType = typeof(float);
+            frameColumn.DefaultCellStyle.Format = "0.###";
             frameColumn.Width = 140;
             nodeEventsGrid.Columns.Add(frameColumn);
         }
 
         private void ResetUi()
         {
+            Text = "Particle Chunk Editor";
             suppressChunkSelection = true;
             chunkComboBox.Items.Clear();
             chunkComboBox.SelectedIndex = -1;
@@ -179,6 +184,7 @@ namespace NSUNS4_Character_Manager
             }
 
             filePath = path;
+            Text = "Particle Chunk Editor - " + Path.GetFileName(path);
             chunks.Clear();
             chunks.AddRange(parsedChunks);
             RefreshChunkList(0);
@@ -267,7 +273,7 @@ namespace NSUNS4_Character_Manager
                 return linkLabel + " | No timing";
 
             return linkLabel + " | " + string.Join(", ", events.Select(x =>
-                string.Format("{0} @ {1}", x.Action == ParticleNodeAction.On ? "Spawn" : "Despawn", x.Frame)).ToArray());
+                string.Format(CultureInfo.InvariantCulture, "{0} @ {1:0.###}", x.Action == ParticleNodeAction.On ? "Spawn" : "Despawn", x.Frame)).ToArray());
         }
 
         private static void EnsureNodeLinks(ParticleChunkState chunk)
@@ -363,16 +369,16 @@ namespace NSUNS4_Character_Manager
         {
             ParticleChunkState chunk = SelectedChunk;
             suppressReferenceSelection = true;
-            PopulateReferenceCombo(managerAnimationComboBox, chunk, "nuccChunkAnm", chunk.Managers.Count > 0 && managerListBox.SelectedIndex >= 0 ? chunk.Managers[managerListBox.SelectedIndex].AnimationChunkIndex : 0);
-            PopulateReferenceCombo(resourceEffectComboBox, chunk, null, chunk.Resources.Count > 0 && resourceListBox.SelectedIndex >= 0 ? chunk.Resources[resourceListBox.SelectedIndex].EffectChunkIndex : 0);
-            PopulateReferenceCombo(positionCoordComboBox, chunk, "nuccChunkCoord", chunk.Positions.Count > 0 && positionListBox.SelectedIndex >= 0 ? chunk.Positions[positionListBox.SelectedIndex].CoordChunkIndex : 0);
-            PopulateReferenceCombo(positionClumpComboBox, chunk, "nuccChunkClump", chunk.Positions.Count > 0 && positionListBox.SelectedIndex >= 0 ? chunk.Positions[positionListBox.SelectedIndex].ClumpChunkIndex : 0);
-            PopulateReferenceCombo(forceFieldCoordComboBox, chunk, "nuccChunkCoord", chunk.ForceFields.Count > 0 && forceFieldListBox.SelectedIndex >= 0 ? chunk.ForceFields[forceFieldListBox.SelectedIndex].CoordChunkIndex : 0);
-            PopulateReferenceCombo(forceFieldClumpComboBox, chunk, "nuccChunkClump", chunk.ForceFields.Count > 0 && forceFieldListBox.SelectedIndex >= 0 ? chunk.ForceFields[forceFieldListBox.SelectedIndex].ClumpChunkIndex : 0);
+            PopulateReferenceCombo(managerAnimationComboBox, chunk, "nuccChunkAnm", chunk.Managers.Count > 0 && managerListBox.SelectedIndex >= 0 ? (int)chunk.Managers[managerListBox.SelectedIndex].AnimationChunkIndex : 0, false);
+            PopulateReferenceCombo(resourceEffectComboBox, chunk, null, chunk.Resources.Count > 0 && resourceListBox.SelectedIndex >= 0 ? (int)chunk.Resources[resourceListBox.SelectedIndex].EffectChunkIndex : 0, false);
+            PopulateReferenceCombo(positionCoordComboBox, chunk, "nuccChunkCoord", chunk.Positions.Count > 0 && positionListBox.SelectedIndex >= 0 ? chunk.Positions[positionListBox.SelectedIndex].CoordChunkIndex : -1, true);
+            PopulateReferenceCombo(positionClumpComboBox, chunk, "nuccChunkClump", chunk.Positions.Count > 0 && positionListBox.SelectedIndex >= 0 ? chunk.Positions[positionListBox.SelectedIndex].ClumpChunkIndex : -1, true);
+            PopulateReferenceCombo(forceFieldCoordComboBox, chunk, "nuccChunkCoord", chunk.ForceFields.Count > 0 && forceFieldListBox.SelectedIndex >= 0 ? chunk.ForceFields[forceFieldListBox.SelectedIndex].CoordChunkIndex : -1, true);
+            PopulateReferenceCombo(forceFieldClumpComboBox, chunk, "nuccChunkClump", chunk.ForceFields.Count > 0 && forceFieldListBox.SelectedIndex >= 0 ? chunk.ForceFields[forceFieldListBox.SelectedIndex].ClumpChunkIndex : -1, true);
             suppressReferenceSelection = false;
         }
 
-        private static void PopulateReferenceCombo(ComboBox comboBox, ParticleChunkState chunk, string chunkTypeFilter, uint selectedIndex)
+        private static void PopulateReferenceCombo(ComboBox comboBox, ParticleChunkState chunk, string chunkTypeFilter, int selectedIndex, bool allowNone)
         {
             comboBox.Items.Clear();
             if (chunk == null)
@@ -380,6 +386,9 @@ namespace NSUNS4_Character_Manager
                 comboBox.SelectedIndex = -1;
                 return;
             }
+
+            if (allowNone)
+                comboBox.Items.Add(new ReferenceComboItem { Index = -1, Label = "(none / -1)" });
 
             foreach (var pair in chunk.References.Select((entry, index) => new { entry, index }))
             {
@@ -451,9 +460,12 @@ namespace NSUNS4_Character_Manager
                 if (actionValue == null || frameValue == null)
                     continue;
 
-                int frame;
-                if (!int.TryParse(frameValue.ToString(), out frame))
-                    throw new InvalidOperationException("Node frame values must be integers.");
+                float frame;
+                if (!float.TryParse(frameValue.ToString(), NumberStyles.Float, CultureInfo.CurrentCulture, out frame) &&
+                    !float.TryParse(frameValue.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out frame))
+                    throw new InvalidOperationException("Node frame values must be numeric.");
+                if (float.IsNaN(frame) || float.IsInfinity(frame) || frame < 0f || frame > ushort.MaxValue / 33f)
+                    throw new InvalidOperationException("Node frame values must be between 0 and 1985.909.");
 
                 ParticleNodeAction action;
                 if (actionValue is ParticleNodeAction)
@@ -519,6 +531,7 @@ namespace NSUNS4_Character_Manager
             }
 
             filePath = outputPath;
+            Text = "Particle Chunk Editor - " + Path.GetFileName(outputPath);
             foreach (ParticleChunkState chunk in chunks.Where(x => !x.DeletePending))
                 chunk.OriginalChunkName = chunk.ChunkName;
             chunks.RemoveAll(x => x.DeletePending);
@@ -585,6 +598,13 @@ namespace NSUNS4_Character_Manager
                 int newIndex;
                 return map.TryGetValue((int)oldIndex, out newIndex) ? (uint)newIndex : 0u;
             };
+            Func<int, int> remapSigned = oldIndex =>
+            {
+                if (oldIndex < 0)
+                    return oldIndex;
+                int newIndex;
+                return map.TryGetValue(oldIndex, out newIndex) ? newIndex : 0;
+            };
 
             foreach (ParticleManagerEntry entry in chunk.Managers)
                 entry.AnimationChunkIndex = remap(entry.AnimationChunkIndex);
@@ -592,13 +612,13 @@ namespace NSUNS4_Character_Manager
                 entry.EffectChunkIndex = remap(entry.EffectChunkIndex);
             foreach (ParticlePositionEntry entry in chunk.Positions)
             {
-                entry.CoordChunkIndex = remap(entry.CoordChunkIndex);
-                entry.ClumpChunkIndex = remap(entry.ClumpChunkIndex);
+                entry.CoordChunkIndex = remapSigned(entry.CoordChunkIndex);
+                entry.ClumpChunkIndex = remapSigned(entry.ClumpChunkIndex);
             }
             foreach (ParticleForceFieldEntry entry in chunk.ForceFields)
             {
-                entry.CoordChunkIndex = remap(entry.CoordChunkIndex);
-                entry.ClumpChunkIndex = remap(entry.ClumpChunkIndex);
+                entry.CoordChunkIndex = remapSigned(entry.CoordChunkIndex);
+                entry.ClumpChunkIndex = remapSigned(entry.ClumpChunkIndex);
             }
         }
 
@@ -610,6 +630,17 @@ namespace NSUNS4_Character_Manager
             if (item == null)
                 return;
             apply((uint)item.Index);
+            RefreshSectionLists();
+        }
+
+        private void ApplySelectedSignedReferenceCombo(ComboBox comboBox, Action<int> apply)
+        {
+            if (suppressReferenceSelection)
+                return;
+            ReferenceComboItem item = comboBox.SelectedItem as ReferenceComboItem;
+            if (item == null)
+                return;
+            apply(item.Index);
             RefreshSectionLists();
         }
 
@@ -892,7 +923,7 @@ namespace NSUNS4_Character_Manager
         {
             ParticleChunkState chunk = SelectedChunk;
             if (SelectedPositionEntry != null)
-                ApplySelectedReferenceCombo(positionCoordComboBox, v => SelectedPositionEntry.CoordChunkIndex = v);
+                ApplySelectedSignedReferenceCombo(positionCoordComboBox, v => SelectedPositionEntry.CoordChunkIndex = v);
         }
 
         private void positionParticleIndexNumericUpDown_ValueChanged(object sender, EventArgs e)
@@ -906,14 +937,14 @@ namespace NSUNS4_Character_Manager
         {
             ParticleChunkState chunk = SelectedChunk;
             if (SelectedPositionEntry != null)
-                ApplySelectedReferenceCombo(positionClumpComboBox, v => SelectedPositionEntry.ClumpChunkIndex = v);
+                ApplySelectedSignedReferenceCombo(positionClumpComboBox, v => SelectedPositionEntry.ClumpChunkIndex = v);
         }
 
         private void forceFieldCoordComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
             ParticleChunkState chunk = SelectedChunk;
             if (SelectedForceFieldEntry != null)
-                ApplySelectedReferenceCombo(forceFieldCoordComboBox, v => SelectedForceFieldEntry.CoordChunkIndex = v);
+                ApplySelectedSignedReferenceCombo(forceFieldCoordComboBox, v => SelectedForceFieldEntry.CoordChunkIndex = v);
         }
 
         private void forceFieldParticleIndexNumericUpDown_ValueChanged(object sender, EventArgs e)
@@ -927,7 +958,7 @@ namespace NSUNS4_Character_Manager
         {
             ParticleChunkState chunk = SelectedChunk;
             if (SelectedForceFieldEntry != null)
-                ApplySelectedReferenceCombo(forceFieldClumpComboBox, v => SelectedForceFieldEntry.ClumpChunkIndex = v);
+                ApplySelectedSignedReferenceCombo(forceFieldClumpComboBox, v => SelectedForceFieldEntry.ClumpChunkIndex = v);
         }
 
         private void nodeParticleIndexNumericUpDown_ValueChanged(object sender, EventArgs e)

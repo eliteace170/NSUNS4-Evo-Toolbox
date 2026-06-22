@@ -724,6 +724,51 @@ namespace NSUNS4_Character_Manager.Tools
 
         }
 
+        private void copyCrc32Button_Click(object sender, EventArgs e)
+        {
+            if (!string.IsNullOrEmpty(textBox1.Text))
+            {
+                Clipboard.SetText(textBox1.Text.Replace("-", ""));
+            }
+        }
+
+        private void hashSearchButton_Click(object sender, EventArgs e)
+        {
+            int languageIndex = comboBox2.SelectedIndex;
+            if (languageIndex < 0 || languageIndex >= OpenedFile.Count || !OpenedFile[languageIndex])
+            {
+                MessageBox.Show("Open a language file before searching for a hash.");
+                return;
+            }
+
+            string hash = hashSearchTextBox.Text.Trim().Replace("-", "").Replace(" ", "");
+            if (hash.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+            {
+                hash = hash.Substring(2);
+            }
+
+            uint hashValue;
+            if (hash.Length != 8 || !uint.TryParse(hash, System.Globalization.NumberStyles.HexNumber,
+                System.Globalization.CultureInfo.InvariantCulture, out hashValue))
+            {
+                MessageBox.Show("Enter an 8-digit hexadecimal hash, for example 12340E2F.");
+                return;
+            }
+
+            string normalizedHash = hash.ToUpperInvariant();
+            for (int i = 0; i < CRC32CodesList[languageIndex].Count; i++)
+            {
+                string entryHash = BitConverter.ToString(CRC32CodesList[languageIndex][i]).Replace("-", "");
+                if (entryHash == normalizedHash)
+                {
+                    listBox1.SelectedIndex = i;
+                    return;
+                }
+            }
+
+            MessageBox.Show("Couldn't find an entry with that hash.");
+        }
+
         private void label18_Click(object sender, EventArgs e)
         {
 

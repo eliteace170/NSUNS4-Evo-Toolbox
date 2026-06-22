@@ -24,11 +24,13 @@ namespace NSUNS4_Character_Manager.Misc {
         /// the contents of this method with the code editor.
         /// </summary>
         private void InitializeComponent() {
+            this.components = new System.ComponentModel.Container();
             this.comboBox1 = new System.Windows.Forms.ComboBox();
             this.button1 = new System.Windows.Forms.Button();
             this.textBox1 = new System.Windows.Forms.TextBox();
             this.button4 = new System.Windows.Forms.Button();
             this.button5 = new System.Windows.Forms.Button();
+            this.Mode_v = new System.Windows.Forms.Label();
             this.labelPitch = new System.Windows.Forms.Label();
             this.PitchSlider_v = new System.Windows.Forms.TrackBar();
             this.Pitch_v = new System.Windows.Forms.NumericUpDown();
@@ -37,6 +39,12 @@ namespace NSUNS4_Character_Manager.Misc {
             this.button2 = new System.Windows.Forms.Button();
             this.labelSoundFormat = new System.Windows.Forms.Label();
             this.SoundFormat_v = new System.Windows.Forms.Label();
+            this.BnsfLoop_v = new System.Windows.Forms.CheckBox();
+            this.labelBnsfLoopStart = new System.Windows.Forms.Label();
+            this.BnsfLoopStart_v = new System.Windows.Forms.NumericUpDown();
+            this.labelBnsfLoopEnd = new System.Windows.Forms.Label();
+            this.BnsfLoopEnd_v = new System.Windows.Forms.NumericUpDown();
+            this.buttonBnsfLoopFullSound = new System.Windows.Forms.Button();
             this.buttonCopySound = new System.Windows.Forms.Button();
             this.buttonPasteSound = new System.Windows.Forms.Button();
             this.buttonExtractRawSound = new System.Windows.Forms.Button();
@@ -97,10 +105,13 @@ namespace NSUNS4_Character_Manager.Misc {
             this.PlaySound_b = new System.Windows.Forms.DataGridViewButtonColumn();
             this.trackBar1 = new System.Windows.Forms.TrackBar();
             this.VolumeLabel = new System.Windows.Forms.Label();
+            this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.PitchSlider_v)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Pitch_v)).BeginInit();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.BnsfLoopStart_v)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.BnsfLoopEnd_v)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Volume_v)).BeginInit();
             this.tabPage2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.unk5_v)).BeginInit();
@@ -182,8 +193,8 @@ namespace NSUNS4_Character_Manager.Misc {
             // 
             this.PitchSlider_v.LargeChange = 1200;
             this.PitchSlider_v.Location = new System.Drawing.Point(363, 596);
-            this.PitchSlider_v.Maximum = 30000;
-            this.PitchSlider_v.Minimum = -30000;
+            this.PitchSlider_v.Maximum = 5000;
+            this.PitchSlider_v.Minimum = -5000;
             this.PitchSlider_v.Name = "PitchSlider_v";
             this.PitchSlider_v.Size = new System.Drawing.Size(410, 45);
             this.PitchSlider_v.SmallChange = 100;
@@ -195,12 +206,12 @@ namespace NSUNS4_Character_Manager.Misc {
             // 
             this.Pitch_v.Location = new System.Drawing.Point(365, 644);
             this.Pitch_v.Maximum = new decimal(new int[] {
-            30000,
+            5000,
             0,
             0,
             0});
             this.Pitch_v.Minimum = new decimal(new int[] {
-            30000,
+            5000,
             0,
             0,
             -2147483648});
@@ -225,6 +236,12 @@ namespace NSUNS4_Character_Manager.Misc {
             this.tabPage1.Controls.Add(this.button2);
             this.tabPage1.Controls.Add(this.labelSoundFormat);
             this.tabPage1.Controls.Add(this.SoundFormat_v);
+            this.tabPage1.Controls.Add(this.BnsfLoop_v);
+            this.tabPage1.Controls.Add(this.labelBnsfLoopStart);
+            this.tabPage1.Controls.Add(this.BnsfLoopStart_v);
+            this.tabPage1.Controls.Add(this.labelBnsfLoopEnd);
+            this.tabPage1.Controls.Add(this.BnsfLoopEnd_v);
+            this.tabPage1.Controls.Add(this.buttonBnsfLoopFullSound);
             this.tabPage1.Controls.Add(this.buttonCopySound);
             this.tabPage1.Controls.Add(this.buttonPasteSound);
             this.tabPage1.Controls.Add(this.buttonExtractRawSound);
@@ -270,6 +287,73 @@ namespace NSUNS4_Character_Manager.Misc {
             this.SoundFormat_v.Size = new System.Drawing.Size(33, 13);
             this.SoundFormat_v.TabIndex = 87;
             this.SoundFormat_v.Text = "None";
+            //
+            // BnsfLoop_v
+            //
+            this.BnsfLoop_v.AutoSize = true;
+            this.BnsfLoop_v.Location = new System.Drawing.Point(5, 69);
+            this.BnsfLoop_v.Name = "BnsfLoop_v";
+            this.BnsfLoop_v.Size = new System.Drawing.Size(82, 17);
+            this.BnsfLoop_v.TabIndex = 94;
+            this.BnsfLoop_v.Text = "Loop sound";
+            this.BnsfLoop_v.UseVisualStyleBackColor = true;
+            this.BnsfLoop_v.CheckedChanged += new System.EventHandler(this.BnsfLoop_v_CheckedChanged);
+            //
+            // labelBnsfLoopStart
+            //
+            this.labelBnsfLoopStart.AutoSize = true;
+            this.labelBnsfLoopStart.Location = new System.Drawing.Point(5, 96);
+            this.labelBnsfLoopStart.Name = "labelBnsfLoopStart";
+            this.labelBnsfLoopStart.Size = new System.Drawing.Size(29, 13);
+            this.labelBnsfLoopStart.TabIndex = 95;
+            this.labelBnsfLoopStart.Text = "Start";
+            //
+            // BnsfLoopStart_v
+            //
+            this.BnsfLoopStart_v.Location = new System.Drawing.Point(48, 94);
+            this.BnsfLoopStart_v.Maximum = new decimal(new int[] {
+            2147483647,
+            0,
+            0,
+            0});
+            this.BnsfLoopStart_v.Name = "BnsfLoopStart_v";
+            this.BnsfLoopStart_v.Size = new System.Drawing.Size(145, 20);
+            this.BnsfLoopStart_v.TabIndex = 96;
+            this.BnsfLoopStart_v.ThousandsSeparator = true;
+            this.BnsfLoopStart_v.ValueChanged += new System.EventHandler(this.BnsfLoopStart_v_ValueChanged);
+            //
+            // labelBnsfLoopEnd
+            //
+            this.labelBnsfLoopEnd.AutoSize = true;
+            this.labelBnsfLoopEnd.Location = new System.Drawing.Point(210, 96);
+            this.labelBnsfLoopEnd.Name = "labelBnsfLoopEnd";
+            this.labelBnsfLoopEnd.Size = new System.Drawing.Size(26, 13);
+            this.labelBnsfLoopEnd.TabIndex = 97;
+            this.labelBnsfLoopEnd.Text = "End";
+            //
+            // BnsfLoopEnd_v
+            //
+            this.BnsfLoopEnd_v.Location = new System.Drawing.Point(244, 94);
+            this.BnsfLoopEnd_v.Maximum = new decimal(new int[] {
+            2147483647,
+            0,
+            0,
+            0});
+            this.BnsfLoopEnd_v.Name = "BnsfLoopEnd_v";
+            this.BnsfLoopEnd_v.Size = new System.Drawing.Size(158, 20);
+            this.BnsfLoopEnd_v.TabIndex = 98;
+            this.BnsfLoopEnd_v.ThousandsSeparator = true;
+            this.BnsfLoopEnd_v.ValueChanged += new System.EventHandler(this.BnsfLoopEnd_v_ValueChanged);
+            //
+            // buttonBnsfLoopFullSound
+            //
+            this.buttonBnsfLoopFullSound.Location = new System.Drawing.Point(2, 121);
+            this.buttonBnsfLoopFullSound.Name = "buttonBnsfLoopFullSound";
+            this.buttonBnsfLoopFullSound.Size = new System.Drawing.Size(403, 26);
+            this.buttonBnsfLoopFullSound.TabIndex = 99;
+            this.buttonBnsfLoopFullSound.Text = "Use full sound as loop range";
+            this.buttonBnsfLoopFullSound.UseVisualStyleBackColor = true;
+            this.buttonBnsfLoopFullSound.Click += new System.EventHandler(this.buttonBnsfLoopFullSound_Click);
             // 
             // buttonCopySound
             // 
@@ -697,7 +781,16 @@ namespace NSUNS4_Character_Manager.Misc {
             this.label2.TabIndex = 10;
             this.label2.Text = "NUS3BANK ID\r\n";
             this.label2.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
-            // 
+            //
+            // Mode_v
+            //
+            this.Mode_v.AutoSize = true;
+            this.Mode_v.Location = new System.Drawing.Point(359, 6);
+            this.Mode_v.Name = "Mode_v";
+            this.Mode_v.Size = new System.Drawing.Size(94, 13);
+            this.Mode_v.TabIndex = 93;
+            this.Mode_v.Text = "Mode: NUS3BANK";
+            //
             // menuStrip1
             // 
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -927,6 +1020,10 @@ namespace NSUNS4_Character_Manager.Misc {
             this.VolumeLabel.Size = new System.Drawing.Size(79, 25);
             this.VolumeLabel.TabIndex = 92;
             this.VolumeLabel.Text = "Volume";
+            //
+            // toolTip1
+            //
+            this.toolTip1.ShowAlways = true;
             // 
             // Tool_nus3bankEditor_v2
             // 
@@ -936,6 +1033,7 @@ namespace NSUNS4_Character_Manager.Misc {
             this.Controls.Add(this.VolumeLabel);
             this.Controls.Add(this.trackBar1);
             this.Controls.Add(this.dataGridView1);
+            this.Controls.Add(this.Mode_v);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.FileID_v);
             this.Controls.Add(this.tabControl1);
@@ -960,6 +1058,8 @@ namespace NSUNS4_Character_Manager.Misc {
             this.tabControl1.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
             this.tabPage1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.BnsfLoopStart_v)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.BnsfLoopEnd_v)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Volume_v)).EndInit();
             this.tabPage2.ResumeLayout(false);
             this.tabPage2.PerformLayout();
@@ -989,6 +1089,7 @@ namespace NSUNS4_Character_Manager.Misc {
         private System.Windows.Forms.TextBox textBox1;
         private System.Windows.Forms.Button button4;
         private System.Windows.Forms.Button button5;
+        private System.Windows.Forms.Label Mode_v;
         private System.Windows.Forms.TabControl tabControl1;
         private System.Windows.Forms.TabPage tabPage1;
         private System.Windows.Forms.Button button10;
@@ -1049,6 +1150,12 @@ namespace NSUNS4_Character_Manager.Misc {
         private System.Windows.Forms.ToolStripComboBox toolStripComboBox1;
         private System.Windows.Forms.Label labelSoundFormat;
         private System.Windows.Forms.Label SoundFormat_v;
+        private System.Windows.Forms.CheckBox BnsfLoop_v;
+        private System.Windows.Forms.Label labelBnsfLoopStart;
+        private System.Windows.Forms.NumericUpDown BnsfLoopStart_v;
+        private System.Windows.Forms.Label labelBnsfLoopEnd;
+        private System.Windows.Forms.NumericUpDown BnsfLoopEnd_v;
+        private System.Windows.Forms.Button buttonBnsfLoopFullSound;
         private System.Windows.Forms.Button buttonCopySound;
         private System.Windows.Forms.Button buttonPasteSound;
         private System.Windows.Forms.Button buttonExtractRawSound;
@@ -1057,5 +1164,6 @@ namespace NSUNS4_Character_Manager.Misc {
         private System.Windows.Forms.TrackBar PitchSlider_v;
         private System.Windows.Forms.NumericUpDown Pitch_v;
         private System.Windows.Forms.Label VolumeLabel;
+        private System.Windows.Forms.ToolTip toolTip1;
     }
 }
