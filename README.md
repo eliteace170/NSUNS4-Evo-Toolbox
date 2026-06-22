@@ -16,6 +16,7 @@ https://github.com/TheLeonX/NSUNS4-Toolbox
 - **UnlockCharaTotal Editor**
 - **ItemInfo Editor**
 - **FinalSpSkillCutIn Editor**
+- **commandListParam Editor**
 - **XML Skill Editor(Text editor for skill/projectile files)**
 
 ## Notes
