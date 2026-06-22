@@ -1157,6 +1157,7 @@ namespace NSUNS4_Character_Manager
             this.button28 = new System.Windows.Forms.Button();
             this.button27 = new System.Windows.Forms.Button();
             this.button26 = new System.Windows.Forms.Button();
+            this.button40 = new System.Windows.Forms.Button();
             this.tabPage4 = new System.Windows.Forms.TabPage();
             this.tabPage5 = new System.Windows.Forms.TabPage();
             this.button24 = new System.Windows.Forms.Button();
@@ -1175,7 +1176,6 @@ namespace NSUNS4_Character_Manager
             this.button35 = new System.Windows.Forms.Button();
             this.button36 = new System.Windows.Forms.Button();
             this.button37 = new System.Windows.Forms.Button();
-            this.button40 = new System.Windows.Forms.Button();
             this.tabPage7 = new System.Windows.Forms.TabPage();
             this.extraToolsPanel = new System.Windows.Forms.FlowLayoutPanel();
             this.tabPage2 = new System.Windows.Forms.TabPage();
@@ -1697,6 +1697,17 @@ namespace NSUNS4_Character_Manager
             this.button26.UseVisualStyleBackColor = true;
             this.button26.Click += new System.EventHandler(this.button26_Click);
             // 
+            // button40
+            // 
+            this.button40.Font = new System.Drawing.Font("Segoe UI", 8.5F);
+            this.button40.Location = new System.Drawing.Point(3, 448);
+            this.button40.Name = "button40";
+            this.button40.Size = new System.Drawing.Size(299, 38);
+            this.button40.TabIndex = 48;
+            this.button40.Text = "Command List Param Editor\r\n(commandListParam.bin.xfbin)";
+            this.button40.UseVisualStyleBackColor = true;
+            this.button40.Click += new System.EventHandler(this.button40_Click);
+            // 
             // tabPage4
             // 
             this.tabPage4.Controls.Add(this.button20);
@@ -1921,18 +1932,7 @@ namespace NSUNS4_Character_Manager
             this.button37.Text = "XML Skill Editor";
             this.button37.UseVisualStyleBackColor = true;
             this.button37.Click += new System.EventHandler(this.button37_Click);
-            //
-            // button40
-            //
-            this.button40.Font = new System.Drawing.Font("Segoe UI", 8.5F);
-            this.button40.Location = new System.Drawing.Point(3, 448);
-            this.button40.Name = "button40";
-            this.button40.Size = new System.Drawing.Size(299, 38);
-            this.button40.TabIndex = 48;
-            this.button40.Text = "Command List Param Editor\r\n(commandListParam.bin.xfbin)";
-            this.button40.UseVisualStyleBackColor = true;
-            this.button40.Click += new System.EventHandler(this.button40_Click);
-            //
+            // 
             // tabPage7
             // 
             this.tabPage7.Controls.Add(this.extraToolsPanel);
@@ -2049,7 +2049,7 @@ namespace NSUNS4_Character_Manager
             this.MaximizeBox = false;
             this.Name = "Main";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Naruto: Storm 4 Evo Toolbox v6.8.5 (Ace\'s build)";
+            this.Text = "Naruto: Storm 4 Evo Toolbox v6.8.8 (Ace\'s build)";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.Main_FormClosed);
             this.Load += new System.EventHandler(this.Main_Load);
             this.menuStrip1.ResumeLayout(false);
