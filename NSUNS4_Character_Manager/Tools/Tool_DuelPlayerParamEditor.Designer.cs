@@ -1079,7 +1079,7 @@ namespace NSUNS4_Character_Manager
             // 
             // setBaseNinjaDash
             // 
-            this.setBaseNinjaDash.Hexadecimal = true;
+            this.setBaseNinjaDash.DecimalPlaces = 5;
             this.setBaseNinjaDash.Location = new System.Drawing.Point(320, 264);
             this.setBaseNinjaDash.Maximum = new decimal(new int[] {
             255,
@@ -1092,7 +1092,7 @@ namespace NSUNS4_Character_Manager
             // 
             // setAwakeNinjaDash
             // 
-            this.setAwakeNinjaDash.Hexadecimal = true;
+            this.setAwakeNinjaDash.DecimalPlaces = 5;
             this.setAwakeNinjaDash.Location = new System.Drawing.Point(438, 264);
             this.setAwakeNinjaDash.Maximum = new decimal(new int[] {
             255,
@@ -1113,7 +1113,7 @@ namespace NSUNS4_Character_Manager
             // 
             // setBaseAirDashDuration
             // 
-            this.setBaseAirDashDuration.Hexadecimal = true;
+            this.setBaseAirDashDuration.DecimalPlaces = 5;
             this.setBaseAirDashDuration.Location = new System.Drawing.Point(320, 292);
             this.setBaseAirDashDuration.Maximum = new decimal(new int[] {
             255,
@@ -1126,7 +1126,7 @@ namespace NSUNS4_Character_Manager
             // 
             // setAwakeAirDashDuration
             // 
-            this.setAwakeAirDashDuration.Hexadecimal = true;
+            this.setAwakeAirDashDuration.DecimalPlaces = 5;
             this.setAwakeAirDashDuration.Location = new System.Drawing.Point(438, 292);
             this.setAwakeAirDashDuration.Maximum = new decimal(new int[] {
             255,
@@ -1147,7 +1147,7 @@ namespace NSUNS4_Character_Manager
             // 
             // setBaseGroundedChakraDashDuration
             // 
-            this.setBaseGroundedChakraDashDuration.Hexadecimal = true;
+            this.setBaseGroundedChakraDashDuration.DecimalPlaces = 5;
             this.setBaseGroundedChakraDashDuration.Location = new System.Drawing.Point(320, 320);
             this.setBaseGroundedChakraDashDuration.Maximum = new decimal(new int[] {
             255,
@@ -1160,7 +1160,7 @@ namespace NSUNS4_Character_Manager
             // 
             // setAwakeGroundedChakraDashDuration
             // 
-            this.setAwakeGroundedChakraDashDuration.Hexadecimal = true;
+            this.setAwakeGroundedChakraDashDuration.DecimalPlaces = 5;
             this.setAwakeGroundedChakraDashDuration.Location = new System.Drawing.Point(438, 320);
             this.setAwakeGroundedChakraDashDuration.Maximum = new decimal(new int[] {
             255,
@@ -1285,6 +1285,7 @@ namespace NSUNS4_Character_Manager
             // 
             // setEvo1
             // 
+            this.setEvo1.Hexadecimal = true;
             this.setEvo1.Location = new System.Drawing.Point(320, 460);
             this.setEvo1.Maximum = new decimal(new int[] {
             -1,
