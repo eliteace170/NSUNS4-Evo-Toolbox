@@ -1530,7 +1530,7 @@ namespace NSUNS4_Character_Manager
             this.tabControl1.Location = new System.Drawing.Point(0, 24);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(624, 565);
+            this.tabControl1.Size = new System.Drawing.Size(624, 544);
             this.tabControl1.TabIndex = 31;
             // 
             // tabPage1
@@ -1540,7 +1540,7 @@ namespace NSUNS4_Character_Manager
             this.tabPage1.Location = new System.Drawing.Point(4, 22);
             this.tabPage1.Name = "tabPage1";
             this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(616, 539);
+            this.tabPage1.Size = new System.Drawing.Size(616, 518);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "For modders";
             // 
@@ -1558,7 +1558,7 @@ namespace NSUNS4_Character_Manager
             this.tabControl2.Name = "tabControl2";
             this.tabControl2.RightToLeft = System.Windows.Forms.RightToLeft.No;
             this.tabControl2.SelectedIndex = 0;
-            this.tabControl2.Size = new System.Drawing.Size(610, 533);
+            this.tabControl2.Size = new System.Drawing.Size(610, 512);
             this.tabControl2.TabIndex = 31;
             // 
             // tabPage3
@@ -1592,7 +1592,7 @@ namespace NSUNS4_Character_Manager
             this.tabPage3.Location = new System.Drawing.Point(4, 22);
             this.tabPage3.Name = "tabPage3";
             this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage3.Size = new System.Drawing.Size(602, 507);
+            this.tabPage3.Size = new System.Drawing.Size(602, 486);
             this.tabPage3.TabIndex = 0;
             this.tabPage3.Text = "Character Management";
             this.tabPage3.UseVisualStyleBackColor = true;
@@ -2058,7 +2058,7 @@ namespace NSUNS4_Character_Manager
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(624, 589);
+            this.ClientSize = new System.Drawing.Size(624, 568);
             this.Controls.Add(this.linkLabel9);
             this.Controls.Add(this.linkLabel2);
             this.Controls.Add(this.linkLabel1);

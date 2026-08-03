@@ -39,12 +39,35 @@ namespace NSUNS4_Character_Manager.Tools
         None = ushort.MaxValue
     }
 
+    internal enum CpuCompareOperation
+    {
+        Equal = 0,
+        NotEqual = 1,
+        Greater = 2,
+        GreaterEqual = 3,
+        Less = 4,
+        LessEqual = 5
+    }
+
+    internal enum CpuBitTestMode
+    {
+        MustBeSet = 0,
+        MustBeClear = 1
+    }
+
     internal enum CpuPlayerType
     {
         Normal = 0,
-        Dash = 1,
+        UnobservedType01 = 1,
         ProjectileType = 2,
-        PuppetType = 7
+        UnobservedType03 = 3,
+        PossibleGroundedSpecialType = 4,
+        NormalAwakening = 5,
+        ProjectileAwakeningType = 6,
+        PuppetType = 7,
+        UnobservedType08 = 8,
+        UnobservedType09 = 9,
+        UnobservedType10 = 10
     }
 
     internal abstract class CpuParamChunkState
@@ -138,7 +161,7 @@ namespace NSUNS4_Character_Manager.Tools
     {
         public ushort Type = (ushort)CpuScriptType.CtrlCommand;
         public ushort CommandNumber = (ushort)CpuScriptCommand.SetParam;
-        public int ParameterNumber;
+        public int ParameterIndex;
         public int Value;
         public int[] UnusedArguments = CreateFilledIntArray(6, -1);
 
@@ -148,7 +171,7 @@ namespace NSUNS4_Character_Manager.Tools
             {
                 Type = Type,
                 CommandNumber = CommandNumber,
-                ParameterNumber = ParameterNumber,
+                ParameterIndex = ParameterIndex,
                 Value = Value,
                 UnusedArguments = (int[])UnusedArguments.Clone()
             };
@@ -166,16 +189,26 @@ namespace NSUNS4_Character_Manager.Tools
     internal sealed class CpuActionEntry
     {
         public string Name = string.Empty;
-        public int[] UnknownValues = new int[6];
-        public int[] ActionNumberTags = CreateFilledIntArray(4, 9999);
+        public int RuntimeValue08;
+        public int RuntimeValue0C;
+        public int RuntimeValue10;
+        public int RuntimeValue14;
+        public int RuntimeValue18Base;
+        public int RuntimeValue18Addend;
+        public int[] ActionMaskBitIndices = CreateFilledIntArray(4, 9999);
 
         public CpuActionEntry Clone()
         {
             return new CpuActionEntry
             {
                 Name = Name,
-                UnknownValues = (int[])UnknownValues.Clone(),
-                ActionNumberTags = (int[])ActionNumberTags.Clone()
+                RuntimeValue08 = RuntimeValue08,
+                RuntimeValue0C = RuntimeValue0C,
+                RuntimeValue10 = RuntimeValue10,
+                RuntimeValue14 = RuntimeValue14,
+                RuntimeValue18Base = RuntimeValue18Base,
+                RuntimeValue18Addend = RuntimeValue18Addend,
+                ActionMaskBitIndices = (int[])ActionMaskBitIndices.Clone()
             };
         }
 
@@ -194,9 +227,9 @@ namespace NSUNS4_Character_Manager.Tools
         public int Type;
         public string[] ActionSlots = CreateStringArray(32);
         public uint ScriptGroupIndexA;
-        public bool ScriptGroupFlagA;
-        public uint ScriptGroupIndexB;
-        public bool ScriptGroupFlagB;
+        public uint ScriptGroupFlagA;
+        public uint ReservedGroupLikeIndexB;
+        public uint ReservedGroupLikeFlagB;
 
         public CpuPlayerEntry Clone()
         {
@@ -207,8 +240,8 @@ namespace NSUNS4_Character_Manager.Tools
                 ActionSlots = (string[])ActionSlots.Clone(),
                 ScriptGroupIndexA = ScriptGroupIndexA,
                 ScriptGroupFlagA = ScriptGroupFlagA,
-                ScriptGroupIndexB = ScriptGroupIndexB,
-                ScriptGroupFlagB = ScriptGroupFlagB
+                ReservedGroupLikeIndexB = ReservedGroupLikeIndexB,
+                ReservedGroupLikeFlagB = ReservedGroupLikeFlagB
             };
         }
 
@@ -383,7 +416,7 @@ namespace NSUNS4_Character_Manager.Tools
                     {
                         Type = ReadUInt16LE(bytes, offset),
                         CommandNumber = ReadUInt16LE(bytes, offset + 2),
-                        ParameterNumber = ReadInt32LE(bytes, offset + 4),
+                        ParameterIndex = ReadInt32LE(bytes, offset + 4),
                         Value = ReadInt32LE(bytes, offset + 8),
                         UnusedArguments = new int[6]
                     };
@@ -417,10 +450,14 @@ namespace NSUNS4_Character_Manager.Tools
                 int entryOffset = checked(20 + ((int)i * ActionEntrySize));
                 CpuActionEntry entry = new CpuActionEntry();
                 entry.Name = ReadSequentialRelativeString(bytes, entryOffset, stringTableStart, ref nextExpectedString, false, "cpuActionParam name");
-                for (int value = 0; value < 6; value++)
-                    entry.UnknownValues[value] = ReadInt32LE(bytes, entryOffset + 8 + (value * 4));
-                for (int tag = 0; tag < 4; tag++)
-                    entry.ActionNumberTags[tag] = ReadInt32LE(bytes, entryOffset + 32 + (tag * 4));
+                entry.RuntimeValue08 = ReadInt32LE(bytes, entryOffset + 8);
+                entry.RuntimeValue0C = ReadInt32LE(bytes, entryOffset + 12);
+                entry.RuntimeValue10 = ReadInt32LE(bytes, entryOffset + 16);
+                entry.RuntimeValue14 = ReadInt32LE(bytes, entryOffset + 20);
+                entry.RuntimeValue18Base = ReadInt32LE(bytes, entryOffset + 24);
+                entry.RuntimeValue18Addend = ReadInt32LE(bytes, entryOffset + 28);
+                for (int bit = 0; bit < 4; bit++)
+                    entry.ActionMaskBitIndices[bit] = ReadInt32LE(bytes, entryOffset + 32 + (bit * 4));
                 state.Entries.Add(entry);
             }
 
@@ -460,9 +497,9 @@ namespace NSUNS4_Character_Manager.Tools
                 }
 
                 entry.ScriptGroupIndexA = ReadUInt32LE(bytes, entryOffset + 152);
-                entry.ScriptGroupFlagA = ReadBooleanUInt32(bytes, entryOffset + 156, "ScriptGroupFlagA");
-                entry.ScriptGroupIndexB = ReadUInt32LE(bytes, entryOffset + 200);
-                entry.ScriptGroupFlagB = ReadBooleanUInt32(bytes, entryOffset + 204, "ScriptGroupFlagB");
+                entry.ScriptGroupFlagA = ReadUInt32LE(bytes, entryOffset + 156);
+                entry.ReservedGroupLikeIndexB = ReadUInt32LE(bytes, entryOffset + 200);
+                entry.ReservedGroupLikeFlagB = ReadUInt32LE(bytes, entryOffset + 204);
                 state.Entries.Add(entry);
             }
 
@@ -525,7 +562,7 @@ namespace NSUNS4_Character_Manager.Tools
                     ValidateArrayLength(entry.UnusedArguments, 6, "cpu_strength unused arguments");
                     WriteUInt16LE(output, offset, entry.Type);
                     WriteUInt16LE(output, offset + 2, entry.CommandNumber);
-                    WriteInt32LE(output, offset + 4, entry.ParameterNumber);
+                    WriteInt32LE(output, offset + 4, entry.ParameterIndex);
                     WriteInt32LE(output, offset + 8, entry.Value);
                     for (int argument = 0; argument < 6; argument++)
                         WriteInt32LE(output, offset + 12 + (argument * 4), entry.UnusedArguments[argument]);
@@ -542,8 +579,7 @@ namespace NSUNS4_Character_Manager.Tools
             int stringBytesLength = 0;
             foreach (CpuActionEntry entry in state.Entries)
             {
-                ValidateArrayLength(entry.UnknownValues, 6, "cpuActionParam unknown values");
-                ValidateArrayLength(entry.ActionNumberTags, 4, "cpuActionParam action tags");
+                ValidateArrayLength(entry.ActionMaskBitIndices, 4, "cpuActionParam action mask bit indices");
                 byte[] stringBytes = BuildNullTerminatedString(entry.Name, false, "Action name");
                 strings.Add(stringBytes);
                 stringBytesLength = checked(stringBytesLength + stringBytes.Length);
@@ -558,10 +594,14 @@ namespace NSUNS4_Character_Manager.Tools
                 CpuActionEntry entry = state.Entries[i];
                 int entryOffset = 20 + (i * ActionEntrySize);
                 WriteUInt64LE(output, entryOffset, checked((ulong)(nextString - entryOffset)));
-                for (int value = 0; value < 6; value++)
-                    WriteInt32LE(output, entryOffset + 8 + (value * 4), entry.UnknownValues[value]);
-                for (int tag = 0; tag < 4; tag++)
-                    WriteInt32LE(output, entryOffset + 32 + (tag * 4), entry.ActionNumberTags[tag]);
+                WriteInt32LE(output, entryOffset + 8, entry.RuntimeValue08);
+                WriteInt32LE(output, entryOffset + 12, entry.RuntimeValue0C);
+                WriteInt32LE(output, entryOffset + 16, entry.RuntimeValue10);
+                WriteInt32LE(output, entryOffset + 20, entry.RuntimeValue14);
+                WriteInt32LE(output, entryOffset + 24, entry.RuntimeValue18Base);
+                WriteInt32LE(output, entryOffset + 28, entry.RuntimeValue18Addend);
+                for (int bit = 0; bit < 4; bit++)
+                    WriteInt32LE(output, entryOffset + 32 + (bit * 4), entry.ActionMaskBitIndices[bit]);
                 Array.Copy(strings[i], 0, output, nextString, strings[i].Length);
                 nextString += strings[i].Length;
             }
@@ -618,9 +658,9 @@ namespace NSUNS4_Character_Manager.Tools
                 }
 
                 WriteUInt32LE(output, entryOffset + 152, entry.ScriptGroupIndexA);
-                WriteUInt32LE(output, entryOffset + 156, entry.ScriptGroupFlagA ? 1U : 0U);
-                WriteUInt32LE(output, entryOffset + 200, entry.ScriptGroupIndexB);
-                WriteUInt32LE(output, entryOffset + 204, entry.ScriptGroupFlagB ? 1U : 0U);
+                WriteUInt32LE(output, entryOffset + 156, entry.ScriptGroupFlagA);
+                WriteUInt32LE(output, entryOffset + 200, entry.ReservedGroupLikeIndexB);
+                WriteUInt32LE(output, entryOffset + 204, entry.ReservedGroupLikeFlagB);
             }
             return output;
         }
@@ -691,14 +731,6 @@ namespace NSUNS4_Character_Manager.Tools
                 throw new InvalidOperationException(formatName + " pointer size must be 8.");
             if (reserved != 0)
                 throw new InvalidOperationException(formatName + " reserved header field must be zero.");
-        }
-
-        private static bool ReadBooleanUInt32(byte[] bytes, int offset, string fieldName)
-        {
-            uint value = ReadUInt32LE(bytes, offset);
-            if (value > 1)
-                throw new InvalidOperationException(fieldName + " must be zero or one.");
-            return value != 0;
         }
 
         private static string ReadSequentialRelativeString(byte[] bytes, int fieldOffset, int stringTableStart, ref int nextExpectedString, bool allowNull, string description)

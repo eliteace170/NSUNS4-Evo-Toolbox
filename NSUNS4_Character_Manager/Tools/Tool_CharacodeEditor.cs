@@ -19,6 +19,8 @@ namespace NSUNS4_Character_Manager
 
 		public int CharacterCount = 0;
 
+		private bool displayIndexesAsHex = true;
+
 		private IContainer components = null;
 
 		private ListBox ListBox1;
@@ -40,6 +42,8 @@ namespace NSUNS4_Character_Manager
 		private ToolStripMenuItem saveAsToolStripMenuItem;
 
 		private ToolStripMenuItem closeToolStripMenuItem;
+
+		private ToolStripMenuItem indexFormatToolStripMenuItem;
         private TextBox Search_TB;
         private Button Search;
         private TextBox textBox1;
@@ -93,7 +97,7 @@ namespace NSUNS4_Character_Manager
 				{
                     string character = Main.b_ReadString(fileBytes, fileStart + 0x20 + (x * 8));
                     CharacterList.Add(character);
-					ListBox1.Items.Add((x + 1).ToString("X2") + " = " + character);
+					ListBox1.Items.Add(GetCharacterListItemText(x, character));
 				}
 
                 FileOpen = true;
@@ -111,7 +115,7 @@ namespace NSUNS4_Character_Manager
 		public void AddID(string ID)
 		{
 			CharacterList.Add(ID);
-			ListBox1.Items.Add((CharacterCount + 1).ToString("X2") + " = " + ID);
+			ListBox1.Items.Add(GetCharacterListItemText(CharacterCount, ID));
 			ListBox1.SelectedIndex = ListBox1.Items.Count - 1;
 			CharacterCount++;
 		}
@@ -236,8 +240,14 @@ namespace NSUNS4_Character_Manager
 			for (int x = 0; x < CharacterCount; x++)
 			{
 				string character = CharacterList[x];
-				ListBox1.Items[x] = (x + 1).ToString("X2") + " = " + character;
+				ListBox1.Items[x] = GetCharacterListItemText(x, character);
 			}
+		}
+
+		private string GetCharacterListItemText(int index, string character)
+		{
+			string format = displayIndexesAsHex ? "X2" : "D2";
+			return (index + 1).ToString(format) + " = " + character;
 		}
 
 		public void ExitTool()
@@ -387,6 +397,7 @@ namespace NSUNS4_Character_Manager
             this.saveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saveAsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.closeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.indexFormatToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.textBox1 = new System.Windows.Forms.TextBox();
             this.Search_TB = new System.Windows.Forms.TextBox();
             this.Search = new System.Windows.Forms.Button();
@@ -427,7 +438,8 @@ namespace NSUNS4_Character_Manager
             // 
             this.menuStrip1.Font = new System.Drawing.Font("CC2 RocknRoll Latin DB", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.fileToolStripMenuItem});
+            this.fileToolStripMenuItem,
+            this.indexFormatToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
             this.menuStrip1.Size = new System.Drawing.Size(295, 24);
@@ -482,6 +494,14 @@ namespace NSUNS4_Character_Manager
             this.closeToolStripMenuItem.Size = new System.Drawing.Size(124, 22);
             this.closeToolStripMenuItem.Text = "Close File";
             this.closeToolStripMenuItem.Click += new System.EventHandler(this.closeToolStripMenuItem_Click);
+            //
+            // indexFormatToolStripMenuItem
+            //
+            this.indexFormatToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.indexFormatToolStripMenuItem.Name = "indexFormatToolStripMenuItem";
+            this.indexFormatToolStripMenuItem.Size = new System.Drawing.Size(73, 20);
+            this.indexFormatToolStripMenuItem.Text = "Index: Hex";
+            this.indexFormatToolStripMenuItem.Click += new System.EventHandler(this.indexFormatToolStripMenuItem_Click);
             // 
             // textBox1
             // 
@@ -573,6 +593,34 @@ namespace NSUNS4_Character_Manager
         {
 
         }
+
+		private void indexFormatToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			int selectedIndex = ListBox1.SelectedIndex;
+			int topIndex = ListBox1.Items.Count > 0 ? ListBox1.TopIndex : 0;
+
+			displayIndexesAsHex = !displayIndexesAsHex;
+			indexFormatToolStripMenuItem.Text = displayIndexesAsHex ? "Index: Hex" : "Index: Dec";
+
+			ListBox1.BeginUpdate();
+			try
+			{
+				UpdateList();
+			}
+			finally
+			{
+				ListBox1.EndUpdate();
+			}
+
+			if (selectedIndex >= 0 && selectedIndex < ListBox1.Items.Count)
+			{
+				ListBox1.SelectedIndex = selectedIndex;
+			}
+			if (ListBox1.Items.Count > 0)
+			{
+				ListBox1.TopIndex = Math.Min(topIndex, ListBox1.Items.Count - 1);
+			}
+		}
 
         private void Tool_CharacodeEditor_Load(object sender, EventArgs e)
         {

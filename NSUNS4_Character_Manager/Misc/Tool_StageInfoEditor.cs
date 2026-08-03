@@ -1,4079 +1,2420 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace NSUNS4_Character_Manager.Misc
 {
+    /// <summary>
+    /// Editor for the StageInfo/advStageInfo binary chunk used by NSUNS4.
+    ///
+    /// The legacy implementation treated most of the 0x130-byte stage record as
+    /// unrelated lists of values.  This implementation mirrors the typed
+    /// StageInfoModel/StageInfoViewModel layout: every known stage and object field
+    /// is edited through one model and serialized from the documented offsets.
+    /// Unknown/reserved bytes are retained in RawRecord when a file is reopened.
+    /// </summary>
     public partial class Tool_StageInfoEditor : Form
     {
-        public Tool_StageInfoEditor()
-        {
-            InitializeComponent();
-            for (int x = 0; x < Program.lensFlareList.Length; x++) LensFlare_combobox.Items.Add(Program.lensFlareList[x]);
-            for (int x = 0; x < Program.YesNoList.Length; x++) Camera_list_combobox.Items.Add(Program.YesNoList[x]);
-            for (int x = 0; x < Program.TypeSectionList.Length; x++) TypeEntry_combobox.Items.Add(Program.TypeSectionList[x]);
-        }
+        private readonly BindingList<StageInfoStage> _stages = new BindingList<StageInfoStage>();
+        private StageInfoStage _currentStage;
+        private StageInfoStage _stageEditBuffer;
+        private StageInfoPath _currentPath;
+        private StageInfoObject _currentObject;
+        private StageInfoObject _objectEditBuffer;
+        private StageInfoStage _copiedStageProperties;
+        private bool _stageEditDirty;
+        private bool _pathEditDirty;
+        private bool _objectEditDirty;
+        private bool _loadingUi;
+        private bool _dirty;
+        private bool _initialFileLoadAttempted;
+        private string _fileBinName = "stageInfo";
+
+        // Kept public for compatibility with callers and older toolbox code.
         public byte[] fileBytes = new byte[0];
         public byte[] header = new byte[0];
         public bool FileOpen = false;
         public string FilePath = "";
         public int EntryCount = 0;
-        public List<byte[]> MainStageSection = new List<byte[]>();
-        public int FilePos = 0;
-        public List<string> StageNameList = new List<string>();
-        public List<string> c_sta_List = new List<string>();
-        public List<string> BTL_NSX_List = new List<string>();
-        public List<int> CountOfFiles = new List<int>();
-        public List<int> CountOfMeshes =new List<int>();
-        public List<int> MainSection_WeatherSettings = new List<int>();
-        public List<int> MainSection_lensFlareSettings = new List<int>();
-        public List<int> MainSection_EnablelensFlareSettings = new List<int>();
-        public List<float> MainSection_X_PositionLightPoint = new List<float>();
-        public List<float> MainSection_Y_PositionLightPoint = new List<float>();
-        public List<float> MainSection_Z_PositionLightPoint = new List<float>();
-        public List<float> MainSection_X_PositionShadow = new List<float>();
-        public List<float> MainSection_Y_PositionShadow = new List<float>();
-        public List<float> MainSection_Z_PositionShadow = new List<float>();
-        public List<float> MainSection_unk1 = new List<float>();
-        public List<int> MainSection_ShadowSetting_value1 = new List<int>();
-        public List<int> MainSection_ShadowSetting_value2 = new List<int>();
-        public List<float> MainSection_PowerLight = new List<float>();
-        public List<float> MainSection_PowerSkyColor = new List<float>();
-        public List<float> MainSection_PowerGlare = new List<float>();
-        public List<float> MainSection_blur = new List<float>();
-        public List<float> MainSection_X_PositionGlarePoint = new List<float>();
-        public List<float> MainSection_Y_PositionGlarePoint = new List<float>();
-        public List<float> MainSection_Z_PositionGlarePoint = new List<float>();
-        public List<float> MainSectionGlareVagueness = new List<float>();
-        public List<byte[]> MainSection_ColorGlare = new List<byte[]>();
-        public List<byte[]> MainSection_ColorSky = new List<byte[]>();
-        public List<byte[]> MainSection_ColorRock = new List<byte[]>();
-        public List<byte[]> MainSection_ColorGroundEffect = new List<byte[]>();
-        public List<byte[]> MainSection_ColorPlayerLight = new List<byte[]>();
-        public List<byte[]> MainSection_ColorLight = new List<byte[]>();
-        public List<byte[]> MainSection_ColorShadow = new List<byte[]>();
-        public List<byte[]> MainSection_ColorUnknown = new List<byte[]>();
-        public List<byte[]> MainSection_ColorUnknown2 = new List<byte[]>();
-        public List<int> MainSection_EnableGlareSettingValue1 = new List<int>();
-        public List<int> MainSection_EnableGlareSettingValue2 = new List<int>();
-        public List<int> MainSection_EnableGlareSettingValue3 = new List<int>();
-        public List<bool> GlareEnabled = new List<bool>();
-        public List<float> MainSection_X_MysteriousPosition = new List<float>();
-        public List<float> MainSection_Y_MysteriousPosition = new List<float>();
-        public List<float> MainSection_Z_MysteriousPosition = new List<float>();
-        public List<float> MainSection_MysteriousGlareValue1 = new List<float>();
-        public List<float> MainSection_MysteriousGlareValue2 = new List<float>();
-        public List<float> MainSection_MysteriousGlareValue3 = new List<float>();
-        public List<float> MainSection_UnknownValue1 = new List<float>();
-        public List<float> MainSection_UnknownValue2 = new List<float>();
-        public List<float> MainSection_UnknownValue3 = new List<float>();
-        public List<List<byte[]>> SecondaryStageSection = new List<List<byte[]>>();
-        public List<List<string>> SecondarySectionFilePath = new List<List<string>>();
-        public List<int> One_SecondarySectionFilePath = new List<int>();
-        public List<int> One_SecondarySectionLoadPath = new List<int>();
-        public List<int> One_SecondarySectionCameraValue = new List<int>();
-        public List<int> One_SecondarySectionMysteriousValue = new List<int>();
-        public List<string> One_SecondarySectionFilePathString = new List<string>();
-        public List<string> One_SecondarySectionLoadPathString = new List<string>();
-        public List<string> One_SecondarySectionLoadMeshString = new List<string>();
-        public List<string> One_SecondarySectionLoadPathDmyString = new List<string>();
-        public List<string> One_SecondarySectionLoadDmyString = new List<string>();
-        public List<string> One_SecondaryTypeBreakableWall_Effect01 = new List<string>();
-        public List<string> One_SecondaryTypeBreakableWall_Effect02 = new List<string>();
-        public List<string> One_SecondaryTypeBreakableWall_Effect03 = new List<string>();
-        public List<string> One_SecondaryTypeBreakableWall_Sound = new List<string>();
-        public List<string> One_SecondaryTypeBreakableObject_Effect01 = new List<string>();
-        public List<string> One_SecondaryTypeBreakableObject_Effect02 = new List<string>();
-        public List<string> One_SecondaryTypeBreakableObject_Effect03 = new List<string>();
-        public List<string> One_SecondaryTypeBreakableObject_path = new List<string>();
-        public List<int> One_SecondaryTypeSection = new List<int>();
-        public List<int> One_SecondaryConst3C = new List<int>();
-        public List<int> One_SecondaryConst78 = new List<int>();
-        public List<int> One_SecondaryConstBreakableWallValue1 = new List<int>();
-        public List<int> One_SecondaryConstBreakableWallValue2 = new List<int>();
-        public List<float> One_SecondaryTypeAnimationSection_speed = new List<float>();
-        public List<List<string>> SecondarySectionLoadPath = new List<List<string>>();
-        public List<List<string>> SecondarySectionLoadMesh = new List<List<string>>();
-        public List<List<string>> SecondarySectionPositionFilePath = new List<List<string>>();
-        public List<List<string>> SecondarySectionPosition = new List<List<string>>();
-        public List<List<int>> SecondaryTypeSection = new List<List<int>>();
-        public List<List<float>> SecondaryTypeAnimationSection_speed = new List<List<float>>();
-        public List<List<int>> SecondarySectionCameraValue = new List<List<int>>();
-        public List<List<int>> SecondarySectionMysteriousValue = new List<List<int>>();
-        public List<List<int>> SecondaryConst3C = new List<List<int>>();
-        public List<List<int>> SecondaryConst78 = new List<List<int>>();
-        public List<List<int>> SecondaryConstBreakableWallValue1 = new List<List<int>>();
-        public List<List<int>> SecondaryConstBreakableWallValue2 = new List<List<int>>();
-        public List<List<string>> SecondaryTypeBreakableWall_Effect01 = new List<List<string>>();
-        public List<List<string>> SecondaryTypeBreakableWall_Effect02 = new List<List<string>>();
-        public List<List<string>> SecondaryTypeBreakableWall_Effect03 = new List<List<string>>();
-        public List<List<string>> SecondaryTypeBreakableWall_Sound = new List<List<string>>();
-        public List<List<string>> SecondaryTypeBreakableObject_Effect01 = new List<List<string>>();
-        public List<List<string>> SecondaryTypeBreakableObject_Effect02 = new List<List<string>>();
-        public List<List<string>> SecondaryTypeBreakableObject_Effect03 = new List<List<string>>();
-        public List<List<string>> SecondaryTypeBreakableObject_path = new List<List<string>>();
-        public List<float> One_SecondaryTypeBreakableObject_Speed01 = new List<float>();
-        public List<float> One_SecondaryTypeBreakableObject_Speed02 = new List<float>();
-        public List<float> One_SecondaryTypeBreakableObject_Speed03 = new List<float>();
-        public List<float> One_SecondaryTypeBreakableWall_volume = new List<float>();
-        public List<List<float>> SecondaryTypeBreakableObject_Speed01 = new List<List<float>>();
-        public List<List<float>> SecondaryTypeBreakableObject_Speed02 = new List<List<float>>();
-        public List<List<float>> SecondaryTypeBreakableObject_Speed03 = new List<List<float>>();
-        public List<List<float>> SecondaryTypeBreakableWall_volume = new List<List<float>>();
 
-        public float copied_MainSection_X_MysteriousPosition = 0;
-        public float copied_MainSection_Y_MysteriousPosition = 0;
-        public float copied_MainSection_Z_MysteriousPosition = 0;
-        public float copied_MainSection_X_PositionGlarePoint = 0;
-        public float copied_MainSection_Y_PositionGlarePoint = 0;
-        public float copied_MainSection_Z_PositionGlarePoint = 0;
-        public float copied_MainSection_X_PositionLightPoint = 0;
-        public float copied_MainSection_Y_PositionLightPoint = 0;
-        public float copied_MainSection_Z_PositionLightPoint = 0;
-        public float copied_MainSection_X_PositionShadow = 0;
-        public float copied_MainSection_Y_PositionShadow = 0;
-        public float copied_MainSection_Z_PositionShadow = 0;
-        public float copied_MainSection_PowerGlare = 0;
-        public float copied_MainSection_blur = 0;
-        public float copied_MainSection_unk1 = 0;
-        public float copied_MainSection_PowerLight = 0;
-        public float copied_MainSectionGlareVagueness = 0;
-        public float copied_MainSection_MysteriousGlareValue1 = 0;
-        public float copied_MainSection_MysteriousGlareValue2 = 0;
-        public float copied_MainSection_MysteriousGlareValue3 = 0;
-        public float copied_MainSection_UnknownValue1 = 0;
-        public float copied_MainSection_UnknownValue2 = 0;
-        public float copied_MainSection_UnknownValue3 = 0;
-        public float copied_MainSection_PowerSkyColor = 0;
-        public byte[] copied_MainSection_ColorGlare = new byte[4] { 00, 00, 00, 00 };
-        public byte[] copied_MainSection_ColorSky = new byte[4] { 00, 00, 00, 00 };
-        public byte[] copied_MainSection_ColorRock = new byte[4] { 00, 00, 00, 00 };
-        public byte[] copied_MainSection_ColorGroundEffect = new byte[4] { 00, 00, 00, 00 };
-        public byte[] copied_MainSection_ColorPlayerLight = new byte[4] { 00, 00, 00, 00 };
-        public byte[] copied_MainSection_ColorLight = new byte[4] { 00, 00, 00, 00 };
-        public byte[] copied_MainSection_ColorShadow = new byte[4] { 00, 00, 00, 00 };
-        public byte[] copied_MainSection_ColorUnknown = new byte[4] { 00, 00, 00, 00 };
-        public byte[] copied_MainSection_ColorUnknown2 = new byte[4] { 00, 00, 00, 00 };
-        public int copied_MainSection_WeatherSettings = 0;
-        public int copied_MainSection_lensFlareSettings = 0;
-        public int copied_MainSection_EnablelensFlareSettings = 0;
-        public int copied_MainSection_EnableGlareSettingValue1 = 0;
-        public int copied_MainSection_EnableGlareSettingValue2 = 0;
-        public int copied_MainSection_EnableGlareSettingValue3 = 0;
-        public int copied_MainSection_ShadowSetting_value1 = 0;
-        public int copied_MainSection_ShadowSetting_value2 = 0;
-        public bool copied_settings = false;
-
-
-
-        public void ClearFile()
-        {
-            FileOpen = false;
-            FilePath = "";
-            EntryCount = 0;
-            MainStageSection = new List<byte[]>();
-            FilePos = 0;
-            StageNameList = new List<string>();
-            c_sta_List = new List<string>();
-            BTL_NSX_List = new List<string>();
-            CountOfFiles = new List<int>();
-            CountOfMeshes =new List<int>();
-            MainSection_ColorUnknown = new List<byte[]>();
-            MainSection_unk1 = new List<float>();
-            MainSection_ColorUnknown2 = new List<byte[]>();
-            MainSection_ColorSky = new List<byte[]>();
-            MainSection_WeatherSettings = new List<int>();
-            MainSection_lensFlareSettings = new List<int>();
-            copied_MainSection_ShadowSetting_value1 = 0;
-            copied_MainSection_ShadowSetting_value2 = 0;
-            MainSection_EnablelensFlareSettings = new List<int>();
-            MainSection_ColorGroundEffect = new List<byte[]>();
-            MainSection_ColorPlayerLight = new List<byte[]>();
-            MainSection_X_PositionLightPoint = new List<float>();
-            MainSection_Y_PositionLightPoint = new List<float>();
-            MainSection_Z_PositionLightPoint = new List<float>();
-            MainSection_ColorLight = new List<byte[]>();
-            MainSection_X_PositionShadow = new List<float>();
-            MainSection_Y_PositionShadow = new List<float>();
-            MainSection_Z_PositionShadow = new List<float>();
-            MainSection_ShadowSetting_value1 = new List<int>();
-            MainSection_ColorShadow = new List<byte[]>();
-            MainSection_ShadowSetting_value2 = new List<int>();
-            MainSection_PowerLight = new List<float>();
-            MainSection_PowerGlare = new List<float>();
-            MainSection_blur = new List<float>();
-            MainSection_X_PositionGlarePoint = new List<float>();
-            MainSection_Y_PositionGlarePoint = new List<float>();
-            MainSection_Z_PositionGlarePoint = new List<float>();
-            MainSectionGlareVagueness = new List<float>();
-            MainSection_ColorGlare = new List<byte[]>();
-            MainSection_ColorRock = new List<byte[]>();
-            MainSection_EnableGlareSettingValue1 = new List<int>();
-            MainSection_EnableGlareSettingValue2 = new List<int>();
-            MainSection_EnableGlareSettingValue3 = new List<int>();
-            GlareEnabled = new List<bool>();
-            MainSection_X_MysteriousPosition = new List<float>();
-            MainSection_Y_MysteriousPosition = new List<float>();
-            MainSection_Z_MysteriousPosition = new List<float>();
-            MainSection_MysteriousGlareValue1 = new List<float>();
-            MainSection_MysteriousGlareValue2 = new List<float>();
-            MainSection_MysteriousGlareValue3 = new List<float>();
-            MainSection_UnknownValue1 = new List<float>();
-            MainSection_UnknownValue2 = new List<float>();
-            MainSection_UnknownValue3 = new List<float>();
-            SecondaryStageSection = new List<List<byte[]>>();
-            SecondarySectionFilePath = new List<List<string>>();
-            One_SecondarySectionFilePath = new List<int>();
-            One_SecondarySectionLoadPath = new List<int>();
-            One_SecondarySectionCameraValue = new List<int>();
-            One_SecondarySectionMysteriousValue = new List<int>();
-            One_SecondarySectionFilePathString = new List<string>();
-            One_SecondarySectionLoadPathString = new List<string>();
-            One_SecondarySectionLoadMeshString = new List<string>();
-            One_SecondarySectionLoadPathDmyString = new List<string>();
-            One_SecondarySectionLoadDmyString = new List<string>();
-            One_SecondaryTypeBreakableWall_Effect01 = new List<string>();
-            One_SecondaryTypeBreakableWall_Effect02 = new List<string>();
-            One_SecondaryTypeBreakableWall_Effect03 = new List<string>();
-            One_SecondaryTypeBreakableWall_Sound = new List<string>();
-            One_SecondaryTypeBreakableObject_Effect01 = new List<string>();
-            One_SecondaryTypeBreakableObject_Effect02 = new List<string>();
-            One_SecondaryTypeBreakableObject_Effect03 = new List<string>();
-            One_SecondaryTypeBreakableObject_path = new List<string>();
-            MainSection_PowerSkyColor = new List<float>();
-            One_SecondaryTypeSection = new List<int>();
-            One_SecondaryConst3C = new List<int>();
-            One_SecondaryConst78 = new List<int>();
-            One_SecondaryConstBreakableWallValue1 = new List<int>();
-            One_SecondaryConstBreakableWallValue2 = new List<int>();
-            One_SecondaryTypeAnimationSection_speed = new List<float>();
-            SecondarySectionLoadPath = new List<List<string>>();
-            SecondarySectionLoadMesh = new List<List<string>>();
-            SecondarySectionPositionFilePath = new List<List<string>>();
-            SecondarySectionPosition = new List<List<string>>();
-            SecondaryTypeSection = new List<List<int>>();
-            SecondaryTypeAnimationSection_speed = new List<List<float>>();
-            SecondarySectionCameraValue = new List<List<int>>();
-            SecondarySectionMysteriousValue = new List<List<int>>();
-            SecondaryConst3C = new List<List<int>>();
-            SecondaryConst78 = new List<List<int>>();
-            SecondaryConstBreakableWallValue1 = new List<List<int>>();
-            SecondaryConstBreakableWallValue2 = new List<List<int>>();
-            SecondaryTypeBreakableWall_Effect01 = new List<List<string>>();
-            SecondaryTypeBreakableWall_Effect02 = new List<List<string>>();
-            SecondaryTypeBreakableWall_Effect03 = new List<List<string>>();
-            SecondaryTypeBreakableWall_Sound = new List<List<string>>();
-            SecondaryTypeBreakableObject_Effect01 = new List<List<string>>();
-            SecondaryTypeBreakableObject_Effect02 = new List<List<string>>();
-            SecondaryTypeBreakableObject_Effect03 = new List<List<string>>();
-            SecondaryTypeBreakableObject_path = new List<List<string>>();
-            One_SecondaryTypeBreakableObject_Speed01 = new List<float>();
-            One_SecondaryTypeBreakableObject_Speed02 = new List<float>();
-            One_SecondaryTypeBreakableObject_Speed03 = new List<float>();
-            One_SecondaryTypeBreakableWall_volume = new List<float>();
-            SecondaryTypeBreakableObject_Speed01 = new List<List<float>>();
-            SecondaryTypeBreakableObject_Speed02 = new List<List<float>>();
-            SecondaryTypeBreakableObject_Speed03 = new List<List<float>>();
-            SecondaryTypeBreakableWall_volume = new List<List<float>>();
-            copied_MainSection_X_MysteriousPosition = 0;
-            copied_MainSection_Y_MysteriousPosition = 0;
-            copied_MainSection_Z_MysteriousPosition = 0;
-            copied_MainSection_X_PositionGlarePoint = 0;
-            copied_MainSection_Y_PositionGlarePoint = 0;
-            copied_MainSection_Z_PositionGlarePoint = 0;
-            copied_MainSection_X_PositionLightPoint = 0;
-            copied_MainSection_Y_PositionLightPoint = 0;
-            copied_MainSection_Z_PositionLightPoint = 0;
-            copied_MainSection_X_PositionShadow = 0;
-            copied_MainSection_Y_PositionShadow = 0;
-            copied_MainSection_Z_PositionShadow = 0;
-            copied_MainSection_PowerGlare = 0;
-            copied_MainSection_blur = 0;
-            copied_MainSection_PowerLight = 0;
-            copied_MainSectionGlareVagueness = 0;
-            copied_MainSection_MysteriousGlareValue1 = 0;
-            copied_MainSection_MysteriousGlareValue2 = 0;
-            copied_MainSection_PowerSkyColor = 0;
-            copied_MainSection_ColorGlare = new byte[4] { 00, 00, 00, 00 };
-            copied_MainSection_ColorSky = new byte[4] { 00, 00, 00, 00 };
-            copied_MainSection_ColorRock = new byte[4] { 00, 00, 00, 00 };
-            copied_MainSection_ColorGroundEffect = new byte[4] { 00, 00, 00, 00 };
-            copied_MainSection_ColorPlayerLight = new byte[4] { 00, 00, 00, 00 };
-            copied_MainSection_ColorLight = new byte[4] { 00, 00, 00, 00 };
-            copied_MainSection_ColorShadow = new byte[4] { 00, 00, 00, 00 };
-            copied_MainSection_ColorUnknown = new byte[4] { 00, 00, 00, 00 };
-            copied_MainSection_WeatherSettings = 0;
-            copied_MainSection_lensFlareSettings = 0;
-            copied_MainSection_EnablelensFlareSettings = 0;
-            copied_MainSection_EnableGlareSettingValue1 = 0;
-            copied_MainSection_EnableGlareSettingValue2 = 0;
-            copied_MainSection_EnableGlareSettingValue3 = 0;
-            copied_MainSection_unk1 = 0;
-            copied_settings = false;
-            fileBytes = new byte[0];
-            header = new byte[0];
-            listBox1.Items.Clear();
-        }
-
-        private void saveToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            OpenFile();
-        }
-
-        private void Tool_StageInfoEditor_Load(object sender, EventArgs e)
-        {
-            if (File.Exists(Main.stageInfoPath) == true) {
-                OpenFile(Main.stageInfoPath);
-            }
-        }
-
-        public void OpenFile(string FileName = "") {
-            if (FileName == "") {
-                OpenFileDialog o = new OpenFileDialog();
-                {
-                    o.DefaultExt = ".xfbin";
-                    o.Filter = "*.xfbin|*.xfbin";
-                }
-                o.ShowDialog();
-                FileName = o.FileName;
-            }
-            ClearFile();
-            if (FileName == "" || File.Exists(FileName) == false) return;
-            fileBytes = File.ReadAllBytes(FileName);
-            FileOpen = true;
-            FilePath = FileName;
-            FilePos = Main.b_FindBytes(fileBytes, new byte[4] { 0xF2, 0x03, 0x00, 0x00 }, 0);
-            header = Main.b_ReadByteArray(fileBytes, 0, FilePos + 16);
-            EntryCount = fileBytes[FilePos + 4] + fileBytes[FilePos + 5] * 256 + fileBytes[FilePos + 6] * 65536 + fileBytes[FilePos + 7] * 16777216;
-            for (int x2 = 0; x2 < EntryCount; x2++) {
-                long _ptr = FilePos + 0x10 + 0x130 * x2;
-                string STAGE_NAME = "";
-                MainStageSection.Add(Main.b_ReadByteArray(fileBytes, (int)_ptr, 0x130));
-                long _ptrCharacter3 = fileBytes[_ptr] + fileBytes[_ptr + 1] * 0x100 + fileBytes[_ptr + 2] * 0x10000 + fileBytes[_ptr + 3] * 0x1000000;
-                for (int a2 = 0; a2 < 40; a2++) {
-                    if (fileBytes[_ptr + _ptrCharacter3 + a2] != 0) {
-                        string str2 = STAGE_NAME;
-                        char c = (char)fileBytes[_ptr + _ptrCharacter3 + a2];
-                        STAGE_NAME = str2 + c;
-                    } else {
-                        a2 = 40;
-                    }
-                }
-                string c_sta_x = "";
-                _ptrCharacter3 = fileBytes[_ptr + 8] + fileBytes[_ptr + 9] * 0x100 + fileBytes[_ptr + 10] * 0x10000 + fileBytes[_ptr + 11] * 0x1000000;
-                for (int a2 = 0; a2 < 16; a2++) {
-                    if (fileBytes[_ptr + 8 + _ptrCharacter3 + a2] != 0) {
-                        string str2 = c_sta_x;
-                        char c = (char)fileBytes[_ptr + 8 + _ptrCharacter3 + a2];
-                        c_sta_x = str2 + c;
-                    } else {
-                        a2 = 16;
-                    }
-                }
-                string BTL_NSX_XXXXX = "";
-                _ptrCharacter3 = fileBytes[_ptr + 16] + fileBytes[_ptr + 17] * 0x100 + fileBytes[_ptr + 18] * 0x10000 + fileBytes[_ptr + 19] * 0x1000000;
-                for (int a2 = 0; a2 < 16; a2++) {
-                    if (fileBytes[_ptr + 16 + _ptrCharacter3 + a2] != 0) {
-                        string str2 = BTL_NSX_XXXXX;
-                        char c = (char)fileBytes[_ptr + 16 + _ptrCharacter3 + a2];
-                        BTL_NSX_XXXXX = str2 + c;
-                    } else {
-                        a2 = 40;
-                    }
-                }
-                int CountFile = fileBytes[_ptr + 24] + fileBytes[_ptr + 25] * 0x100 + fileBytes[_ptr + 26] * 0x10000 + fileBytes[_ptr + 27] * 0x1000000;
-                int CountEntries = fileBytes[_ptr + 40] + fileBytes[_ptr + 41] * 0x100 + fileBytes[_ptr + 42] * 0x10000 + fileBytes[_ptr + 43] * 0x1000000;
-                int PosPaths = fileBytes[_ptr + 32] + fileBytes[_ptr + 33] * 0x100 + fileBytes[_ptr + 34] * 0x10000 + fileBytes[_ptr + 35] * 0x1000000;
-                int PosMeshes = fileBytes[_ptr + 48] + fileBytes[_ptr + 49] * 0x100 + fileBytes[_ptr + 50] * 0x10000 + fileBytes[_ptr + 51] * 0x1000000;
-                long _ptrPosPath = FilePos + 0x10 + 32 + (0x130 * x2);
-                long _ptrPosMesh = FilePos + 0x10 + 48 + (0x130 * x2);
-                CountOfFiles.Add(CountFile);
-                CountOfMeshes.Add(CountEntries);
-                MainSection_WeatherSettings.Add(fileBytes[_ptr + 56]);
-                MainSection_EnablelensFlareSettings.Add(fileBytes[_ptr + 88]);
-                MainSection_lensFlareSettings.Add(fileBytes[_ptr + 92]);
-                MainSection_ShadowSetting_value1.Add(fileBytes[_ptr + 132]);
-                MainSection_ShadowSetting_value2.Add(fileBytes[_ptr + 140]);
-                MainSection_ColorGroundEffect.Add(Main.b_ReadByteArray(fileBytes, (int)_ptr + 60, 4));
-                MainSection_ColorUnknown2.Add(Main.b_ReadByteArray(fileBytes, (int)_ptr + 64, 4));
-                MainSection_ColorPlayerLight.Add(Main.b_ReadByteArray(fileBytes, (int)_ptr + 68, 4));
-                MainSection_ColorLight.Add(Main.b_ReadByteArray(fileBytes, (int)_ptr + 112, 4));
-                MainSection_ColorShadow.Add(Main.b_ReadByteArray(fileBytes, (int)_ptr + 136, 4));
-                MainSection_ColorGlare.Add(Main.b_ReadByteArray(fileBytes, (int)_ptr + 244, 4));
-                MainSection_ColorRock.Add(Main.b_ReadByteArray(fileBytes, (int)_ptr + 268, 4));
-                MainSection_ColorSky.Add(Main.b_ReadByteArray(fileBytes, (int)_ptr + 156, 4));
-                MainSection_ColorUnknown.Add(Main.b_ReadByteArray(fileBytes, (int)_ptr + 116, 4));
-                MainSection_PowerSkyColor.Add(Main.b_ReadFloat(Main.b_ReadByteArray(fileBytes, (int)_ptr + 152, 4), 0));
-                MainSection_X_PositionLightPoint.Add(Main.b_ReadFloat(Main.b_ReadByteArray(fileBytes, (int)_ptr + 100, 4), 0));
-                MainSection_unk1.Add(Main.b_ReadFloat(Main.b_ReadByteArray(fileBytes, (int)_ptr + 144, 4), 0));
-                MainSection_Y_PositionLightPoint.Add(Main.b_ReadFloat(Main.b_ReadByteArray(fileBytes, (int)_ptr + 104, 4), 0));
-                MainSection_Z_PositionLightPoint.Add(Main.b_ReadFloat(Main.b_ReadByteArray(fileBytes, (int)_ptr + 108, 4), 0));
-                MainSection_X_PositionShadow.Add(Main.b_ReadFloat(Main.b_ReadByteArray(fileBytes, (int)_ptr + 120, 4), 0));
-                MainSection_Y_PositionShadow.Add(Main.b_ReadFloat(Main.b_ReadByteArray(fileBytes, (int)_ptr + 124, 4), 0));
-                MainSection_Z_PositionShadow.Add(Main.b_ReadFloat(Main.b_ReadByteArray(fileBytes, (int)_ptr + 128, 4), 0));
-                MainSection_X_PositionGlarePoint.Add(Main.b_ReadFloat(Main.b_ReadByteArray(fileBytes, (int)_ptr + 248, 4), 0));
-                MainSection_Y_PositionGlarePoint.Add(Main.b_ReadFloat(Main.b_ReadByteArray(fileBytes, (int)_ptr + 252, 4), 0));
-                MainSection_Z_PositionGlarePoint.Add(Main.b_ReadFloat(Main.b_ReadByteArray(fileBytes, (int)_ptr + 256, 4), 0));
-                MainSection_PowerLight.Add(Main.b_ReadFloat(Main.b_ReadByteArray(fileBytes, (int)_ptr + 148, 4), 0));
-                MainSection_PowerGlare.Add(Main.b_ReadFloat(Main.b_ReadByteArray(fileBytes, (int)_ptr + 240, 4), 0));
-                MainSection_blur.Add(Main.b_ReadFloat(Main.b_ReadByteArray(fileBytes, (int)_ptr + 200, 4), 0));
-                MainSection_EnableGlareSettingValue1.Add(fileBytes[_ptr + 204]);
-                MainSection_EnableGlareSettingValue2.Add(fileBytes[_ptr + 224]);
-                MainSection_EnableGlareSettingValue3.Add(fileBytes[_ptr + 228]);
-                if (fileBytes[_ptr + 228] == 01) {
-                    GlareEnabled.Add(true);
-                } else {
-                    GlareEnabled.Add(false);
-                }
-                MainSection_X_MysteriousPosition.Add(Main.b_ReadFloat(Main.b_ReadByteArray(fileBytes, (int)_ptr + 212, 4), 0));
-                MainSection_Y_MysteriousPosition.Add(Main.b_ReadFloat(Main.b_ReadByteArray(fileBytes, (int)_ptr + 216, 4), 0));
-                MainSection_Z_MysteriousPosition.Add(Main.b_ReadFloat(Main.b_ReadByteArray(fileBytes, (int)_ptr + 220, 4), 0));
-                MainSection_MysteriousGlareValue1.Add(Main.b_ReadFloat(Main.b_ReadByteArray(fileBytes, (int)_ptr + 236, 4), 0));
-                MainSection_MysteriousGlareValue2.Add(Main.b_ReadFloat(Main.b_ReadByteArray(fileBytes, (int)_ptr + 264, 4), 0));
-                MainSection_MysteriousGlareValue3.Add(Main.b_ReadFloat(Main.b_ReadByteArray(fileBytes, (int)_ptr + 232, 4), 0));
-                MainSection_UnknownValue1.Add(Main.b_ReadFloat(Main.b_ReadByteArray(fileBytes, (int)_ptr + 164, 4), 0));
-                MainSection_UnknownValue2.Add(Main.b_ReadFloat(Main.b_ReadByteArray(fileBytes, (int)_ptr + 168, 4), 0));
-                MainSection_UnknownValue3.Add(Main.b_ReadFloat(Main.b_ReadByteArray(fileBytes, (int)_ptr + 172, 4), 0));
-                MainSectionGlareVagueness.Add(Main.b_ReadFloat(Main.b_ReadByteArray(fileBytes, (int)_ptr + 260, 4), 0));
-
-                for (int x3 = 0; x3 < CountFile; x3++) {
-                    int _ptrPosPath_extra = Main.b_byteArrayToInt(Main.b_ReadByteArray(fileBytes, (int)_ptrPosPath + PosPaths, 4));
-                    One_SecondarySectionFilePathString.Add(Main.b_ReadString(fileBytes, (int)_ptrPosPath + PosPaths + _ptrPosPath_extra, -1));
-                    _ptrPosPath = _ptrPosPath + 8;
-                }
-                for (int x3 = 0; x3 < CountEntries; x3++) {
-                    int _ptrPosLoadPath_extra = Main.b_byteArrayToInt(Main.b_ReadByteArray(fileBytes, (int)_ptrPosMesh + PosMeshes, 4));
-                    int _ptrPosLoadMesh_extra = Main.b_byteArrayToInt(Main.b_ReadByteArray(fileBytes, (int)_ptrPosMesh + PosMeshes + 8, 4));
-                    int _ptrPosLoadPathdmy_extra = Main.b_byteArrayToInt(Main.b_ReadByteArray(fileBytes, (int)_ptrPosMesh + PosMeshes + 16, 4));
-                    int _ptrPosLoadDmy_extra = Main.b_byteArrayToInt(Main.b_ReadByteArray(fileBytes, (int)_ptrPosMesh + PosMeshes + 24, 4));
-                    int _ptrPosType_extra = fileBytes[(int)_ptrPosMesh + PosMeshes + 32];
-                    int _ptrPosCameraValue_extra = fileBytes[(int)_ptrPosMesh + PosMeshes + 40];
-                    int _ptrPosMysteriousValue_extra = fileBytes[(int)_ptrPosMesh + PosMeshes + 44];
-                    int _ptrPosConstValue3C = fileBytes[(int)_ptrPosMesh + PosMeshes + 112];
-                    int _ptrPosConstValue78 = fileBytes[(int)_ptrPosMesh + PosMeshes + 116];
-                    int _ptrPosConstBreakableWallValue1 = fileBytes[(int)_ptrPosMesh + PosMeshes + 128];
-                    int _ptrPosConstBreakableWallValue2 = fileBytes[(int)_ptrPosMesh + PosMeshes + 132];
-                    float _ptrPosAnimationSpeed_extra = Main.b_ReadFloat(Main.b_ReadByteArray(fileBytes, (int)_ptrPosMesh + PosMeshes + 36, 4), 0);
-                    int _ptrPosBreakableEffect01 = Main.b_byteArrayToInt(Main.b_ReadByteArray(fileBytes, (int)_ptrPosMesh + PosMeshes + 120, 4));
-                    int _ptrPosBreakableEffect02 = Main.b_byteArrayToInt(Main.b_ReadByteArray(fileBytes, (int)_ptrPosMesh + PosMeshes + 136, 4));
-                    int _ptrPosBreakableEffect03 = Main.b_byteArrayToInt(Main.b_ReadByteArray(fileBytes, (int)_ptrPosMesh + PosMeshes + 144, 4));
-                    int _ptrPosBreakableWallSound = Main.b_byteArrayToInt(Main.b_ReadByteArray(fileBytes, (int)_ptrPosMesh + PosMeshes + 160, 4));
-                    int _ptrPosBreakableObjectPath = Main.b_byteArrayToInt(Main.b_ReadByteArray(fileBytes, (int)_ptrPosMesh + PosMeshes + 56, 4));
-                    int _ptrPosBreakableObjectEffect01 = Main.b_byteArrayToInt(Main.b_ReadByteArray(fileBytes, (int)_ptrPosMesh + PosMeshes + 64, 4));
-                    int _ptrPosBreakableObjectEffect02 = Main.b_byteArrayToInt(Main.b_ReadByteArray(fileBytes, (int)_ptrPosMesh + PosMeshes + 80, 4));
-                    int _ptrPosBreakableObjectEffect03 = Main.b_byteArrayToInt(Main.b_ReadByteArray(fileBytes, (int)_ptrPosMesh + PosMeshes + 96, 4));
-                    float _ptrPosAnimationBreakableObject_Speed01_extra = Main.b_ReadFloat(Main.b_ReadByteArray(fileBytes, (int)_ptrPosMesh + PosMeshes + 72, 4), 0);
-                    float _ptrPosAnimationBreakableObject_Speed02_extra = Main.b_ReadFloat(Main.b_ReadByteArray(fileBytes, (int)_ptrPosMesh + PosMeshes + 88, 4), 0);
-                    float _ptrPosAnimationBreakableObject_Speed03_extra = Main.b_ReadFloat(Main.b_ReadByteArray(fileBytes, (int)_ptrPosMesh + PosMeshes + 104, 4), 0);
-                    float _ptrPosAnimationBreakableWall_volume_extra = Main.b_ReadFloat(Main.b_ReadByteArray(fileBytes, (int)_ptrPosMesh + PosMeshes + 152, 4), 0);
-                    One_SecondarySectionLoadPathString.Add(Main.b_ReadString(fileBytes, (int)_ptrPosMesh + PosMeshes + _ptrPosLoadPath_extra, -1));
-                    One_SecondarySectionLoadMeshString.Add(Main.b_ReadString(fileBytes, (int)_ptrPosMesh + PosMeshes + _ptrPosLoadMesh_extra + 8, -1));
-                    One_SecondarySectionLoadPathDmyString.Add(Main.b_ReadString(fileBytes, (int)_ptrPosMesh + PosMeshes + _ptrPosLoadPathdmy_extra + 16, -1));
-                    One_SecondarySectionLoadDmyString.Add(Main.b_ReadString(fileBytes, (int)_ptrPosMesh + PosMeshes + _ptrPosLoadDmy_extra + 24, -1));
-                    One_SecondaryTypeSection.Add(_ptrPosType_extra);
-                    One_SecondarySectionCameraValue.Add(_ptrPosCameraValue_extra);
-                    One_SecondarySectionMysteriousValue.Add(_ptrPosMysteriousValue_extra);
-                    One_SecondaryTypeAnimationSection_speed.Add(_ptrPosAnimationSpeed_extra);
-                    One_SecondaryConst3C.Add(_ptrPosConstValue3C);
-                    One_SecondaryConst78.Add(_ptrPosConstValue78);
-                    One_SecondaryConstBreakableWallValue1.Add(_ptrPosConstBreakableWallValue1);
-                    One_SecondaryConstBreakableWallValue2.Add(_ptrPosConstBreakableWallValue2);
-                    One_SecondaryTypeBreakableWall_Effect01.Add(Main.b_ReadString(fileBytes, (int)_ptrPosMesh + PosMeshes + _ptrPosBreakableEffect01 + 120, -1));
-                    One_SecondaryTypeBreakableWall_Effect02.Add(Main.b_ReadString(fileBytes, (int)_ptrPosMesh + PosMeshes + _ptrPosBreakableEffect02 + 136, -1));
-                    One_SecondaryTypeBreakableWall_Effect03.Add(Main.b_ReadString(fileBytes, (int)_ptrPosMesh + PosMeshes + _ptrPosBreakableEffect03 + 144, -1));
-                    One_SecondaryTypeBreakableWall_Sound.Add(Main.b_ReadString(fileBytes, (int)_ptrPosMesh + PosMeshes + _ptrPosBreakableWallSound + 160, -1));
-                    One_SecondaryTypeBreakableObject_path.Add(Main.b_ReadString(fileBytes, (int)_ptrPosMesh + PosMeshes + _ptrPosBreakableObjectPath + 56, -1));
-                    One_SecondaryTypeBreakableObject_Effect01.Add(Main.b_ReadString(fileBytes, (int)_ptrPosMesh + PosMeshes + _ptrPosBreakableObjectEffect01 + 64, -1));
-                    One_SecondaryTypeBreakableObject_Effect02.Add(Main.b_ReadString(fileBytes, (int)_ptrPosMesh + PosMeshes + _ptrPosBreakableObjectEffect02 + 80, -1));
-                    One_SecondaryTypeBreakableObject_Effect03.Add(Main.b_ReadString(fileBytes, (int)_ptrPosMesh + PosMeshes + _ptrPosBreakableObjectEffect03 + 96, -1));
-                    One_SecondaryTypeBreakableObject_Speed01.Add(_ptrPosAnimationBreakableObject_Speed01_extra);
-                    One_SecondaryTypeBreakableObject_Speed02.Add(_ptrPosAnimationBreakableObject_Speed02_extra);
-                    One_SecondaryTypeBreakableObject_Speed03.Add(_ptrPosAnimationBreakableObject_Speed03_extra);
-                    One_SecondaryTypeBreakableWall_volume.Add(_ptrPosAnimationBreakableWall_volume_extra);
-                    _ptrPosMesh = _ptrPosMesh + 0xB0;
-                }
-                SecondarySectionFilePath.Add(One_SecondarySectionFilePathString);
-
-                SecondarySectionLoadPath.Add(One_SecondarySectionLoadPathString);
-                SecondarySectionLoadMesh.Add(One_SecondarySectionLoadMeshString);
-                SecondarySectionPositionFilePath.Add(One_SecondarySectionLoadPathDmyString);
-                SecondarySectionPosition.Add(One_SecondarySectionLoadDmyString);
-                SecondaryTypeSection.Add(One_SecondaryTypeSection);
-                SecondaryTypeAnimationSection_speed.Add(One_SecondaryTypeAnimationSection_speed);
-                SecondarySectionCameraValue.Add(One_SecondarySectionCameraValue);
-                SecondarySectionMysteriousValue.Add(One_SecondarySectionMysteriousValue);
-                SecondaryConst3C.Add(One_SecondaryConst3C);
-                SecondaryConst78.Add(One_SecondaryConst78);
-                SecondaryConstBreakableWallValue1.Add(One_SecondaryConstBreakableWallValue1);
-                SecondaryConstBreakableWallValue2.Add(One_SecondaryConstBreakableWallValue2);
-                SecondaryTypeBreakableWall_Effect01.Add(One_SecondaryTypeBreakableWall_Effect01);
-                SecondaryTypeBreakableWall_Effect02.Add(One_SecondaryTypeBreakableWall_Effect02);
-                SecondaryTypeBreakableWall_Effect03.Add(One_SecondaryTypeBreakableWall_Effect03);
-                SecondaryTypeBreakableWall_Sound.Add(One_SecondaryTypeBreakableWall_Sound);
-                SecondaryTypeBreakableWall_volume.Add(One_SecondaryTypeBreakableWall_volume);
-                SecondaryTypeBreakableObject_path.Add(One_SecondaryTypeBreakableObject_path);
-                SecondaryTypeBreakableObject_Effect01.Add(One_SecondaryTypeBreakableObject_Effect01);
-                SecondaryTypeBreakableObject_Effect02.Add(One_SecondaryTypeBreakableObject_Effect02);
-                SecondaryTypeBreakableObject_Effect03.Add(One_SecondaryTypeBreakableObject_Effect03);
-                SecondaryTypeBreakableObject_Speed01.Add(One_SecondaryTypeBreakableObject_Speed01);
-                SecondaryTypeBreakableObject_Speed02.Add(One_SecondaryTypeBreakableObject_Speed02);
-                SecondaryTypeBreakableObject_Speed03.Add(One_SecondaryTypeBreakableObject_Speed03);
-
-
-
-                One_SecondarySectionFilePathString = new List<string>();
-                One_SecondarySectionLoadPathString = new List<string>();
-                One_SecondarySectionLoadMeshString = new List<string>();
-                One_SecondarySectionLoadPathDmyString = new List<string>();
-                One_SecondarySectionLoadDmyString = new List<string>();
-                One_SecondaryTypeSection = new List<int>();
-                One_SecondarySectionCameraValue = new List<int>();
-                One_SecondarySectionMysteriousValue = new List<int>();
-                One_SecondaryTypeAnimationSection_speed = new List<float>();
-                One_SecondaryConst3C = new List<int>();
-                One_SecondaryConst78 = new List<int>();
-                One_SecondaryConstBreakableWallValue1 = new List<int>();
-                One_SecondaryConstBreakableWallValue2 = new List<int>();
-                One_SecondaryTypeBreakableWall_Effect01 = new List<string>();
-                One_SecondaryTypeBreakableWall_Effect02 = new List<string>();
-                One_SecondaryTypeBreakableWall_Effect03 = new List<string>();
-                One_SecondaryTypeBreakableWall_Sound = new List<string>();
-                One_SecondaryTypeBreakableWall_volume = new List<float>();
-                One_SecondaryTypeBreakableObject_path = new List<string>();
-                One_SecondaryTypeBreakableObject_Effect01 = new List<string>();
-                One_SecondaryTypeBreakableObject_Effect02 = new List<string>();
-                One_SecondaryTypeBreakableObject_Effect03 = new List<string>();
-                One_SecondaryTypeBreakableObject_Speed01 = new List<float>();
-                One_SecondaryTypeBreakableObject_Speed02 = new List<float>();
-                One_SecondaryTypeBreakableObject_Speed03 = new List<float>();
-                c_sta_List.Add(c_sta_x);
-                StageNameList.Add(STAGE_NAME);
-                BTL_NSX_List.Add(BTL_NSX_XXXXX);
-                listBox1.Items.Add(StageNameList[x2]);
-            }
-            StageCount.Text = StageNameList.Count.ToString() + " or 0x" + StageNameList.Count.ToString("X2");
-        }
-        public void CloseFile()
-        {
-            ClearFile();
-            FileOpen = false;
-            FilePath = "";
-        }
-        private void button6_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    ColorDialog MyDialog = new ColorDialog();
-                    MyDialog.AllowFullOpen = true;
-                    MyDialog.ShowHelp = true;
-                    MyDialog.AnyColor = true;
-                    byte[] Color = new byte[4]
-                        {
-                    MainSection_ColorRock[x][3],
-                    MainSection_ColorRock[x][2],
-                    MainSection_ColorRock[x][1],
-                    0x00
-                        };
-                    int color_int = Main.b_byteArrayToInt(Color);
-                    MyDialog.CustomColors = new int[] { color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, };
-                    if (MyDialog.ShowDialog() == DialogResult.OK)
-                    {
-                        byte[] ColorReverse = new byte[4]
-                        {
-                    MyDialog.Color.A,
-                    MyDialog.Color.B,
-                    MyDialog.Color.G,
-                    MyDialog.Color.R
-                        };
-                        MainSection_ColorRock[x] = Main.b_ReplaceBytes(MainSection_ColorRock[x], ColorReverse, 0, 0);
-                        RockColorInfo_tb.Text = BitConverter.ToString(MainSection_ColorRock[x]);
-                    };
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-                
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void button8_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    MainSection_ColorRock[x] = Main.b_ReplaceBytes(MainSection_ColorRock[x], new byte[4] { 0xFF, 0x5F, 0x6B, 0x82 }, 0, 0);
-                    RockColorInfo_tb.Text = BitConverter.ToString(MainSection_ColorRock[x]);
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-                
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void pictureBox1_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void pictureBox6_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void numericUpDown1_ValueChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label45_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void button21_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    ColorDialog MyDialog = new ColorDialog();
-                    MyDialog.AllowFullOpen = true;
-                    MyDialog.ShowHelp = true;
-                    MyDialog.AnyColor = true;
-                    byte[] Color = new byte[4]
-                         {
-                    MainSection_ColorGlare[x][3],
-                    MainSection_ColorGlare[x][2],
-                    MainSection_ColorGlare[x][1],
-                    0x00
-                         };
-                    int color_int = Main.b_byteArrayToInt(Color);
-                    MyDialog.CustomColors = new int[] { color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, };
-                    if (MyDialog.ShowDialog() == DialogResult.OK)
-                    {
-                        byte[] ColorReverse = new byte[4]
-                        {
-                    MyDialog.Color.A,
-                    MyDialog.Color.B,
-                    MyDialog.Color.G,
-                    MyDialog.Color.R
-                        };
-                        MainSection_ColorGlare[x] = Main.b_ReplaceBytes(MainSection_ColorGlare[x], ColorReverse, 0, 0);
-                        GlareColorInfo_tb.Text = BitConverter.ToString(MainSection_ColorGlare[x]);
-                    };
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-        }
-
-        private void closeToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                DialogResult msg = MessageBox.Show("Are you sure you want to close this file?", "", MessageBoxButtons.OKCancel);
-                if (msg == DialogResult.OK)
-                {
-                    CloseFile();
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            int x = listBox1.SelectedIndex;
-            if (x > -1 && x < listBox1.Items.Count)
-            {
-                StageName_Textbox.Text = StageNameList[x];
-                c_sta_xx_Textbox.Text = c_sta_List[x];
-                BTL_NSX_Textbox.Text = BTL_NSX_List[x];
-                Glare_power_value.Value = (decimal)MainSection_PowerGlare[x];
-                Light_power_value.Value = (decimal)MainSection_PowerLight[x];
-                unk1_v.Value = (decimal)MainSection_unk1[x];
-                Vagueness_glare.Value = (decimal)MainSectionGlareVagueness[x];
-                RockColorInfo_tb.Text = BitConverter.ToString(MainSection_ColorRock[x]);
-                PlayerLightColorInfo_tb.Text = BitConverter.ToString(MainSection_ColorPlayerLight[x]);
-                GroundEffectColorInfo_tb.Text = BitConverter.ToString(MainSection_ColorGroundEffect[x]);
-                LightColorInfo_tb.Text = BitConverter.ToString(MainSection_ColorLight[x]);
-                ShadowColorInfo_tb.Text = BitConverter.ToString(MainSection_ColorShadow[x]);
-                GlareColorInfo_tb.Text = BitConverter.ToString(MainSection_ColorGlare[x]);
-                SkyColorInfo_tb.Text = BitConverter.ToString(MainSection_ColorSky[x]);
-                UnknownColorInfo_tb.Text = BitConverter.ToString(MainSection_ColorUnknown[x]);
-                Unknown2ColorInfo_tb.Text = BitConverter.ToString(MainSection_ColorUnknown2[x]);
-                Shadow_X_Pos.Value = (decimal)MainSection_X_PositionShadow[x];
-                Shadow_Y_Pos.Value = (decimal)MainSection_Y_PositionShadow[x];
-                Shadow_Z_Pos.Value = (decimal)MainSection_Z_PositionShadow[x];
-                BlurValue.Value = (decimal)MainSection_blur[x];
-                Light_X_Pos.Value = (decimal)MainSection_X_PositionLightPoint[x];
-                Light_Y_Pos.Value = (decimal)MainSection_Y_PositionLightPoint[x];
-                Light_Z_Pos.Value = (decimal)MainSection_Z_PositionLightPoint[x];
-                M_Glare_Value1.Value = (decimal)MainSection_MysteriousGlareValue1[x];
-                M_Glare_Value2.Value = (decimal)MainSection_MysteriousGlareValue2[x];
-                M_Glare_Value3.Value = (decimal)MainSection_MysteriousGlareValue3[x];
-                unknown1_v.Value = (decimal)MainSection_UnknownValue1[x];
-                unknown2_v.Value = (decimal)MainSection_UnknownValue2[x];
-                unknown3_v.Value = (decimal)MainSection_UnknownValue3[x];
-                Glare_X_Pos.Value = (decimal)MainSection_X_MysteriousPosition[x];
-                Glare_Y_Pos.Value = (decimal)MainSection_Y_MysteriousPosition[x];
-                Glare_Z_Pos.Value = (decimal)MainSection_Z_MysteriousPosition[x];
-                Sky_light_strength.Value = (decimal)MainSection_PowerSkyColor[x];
-                lensFlare_X_Pos.Value = (decimal)MainSection_X_PositionGlarePoint[x];
-                lensFlare_Y_Pos.Value = (decimal)MainSection_Y_PositionGlarePoint[x];
-                lensFlare_Z_Pos.Value = (decimal)MainSection_Z_PositionGlarePoint[x];
-                if (MainSection_WeatherSettings[x]==0)
-                {
-                    weather.Text = "No weather settings";
-                }
-                else if (MainSection_WeatherSettings[x] == 2)
-                {
-                    weather.Text = "rain";
-                }
-                else if (MainSection_WeatherSettings[x] == 1)
-                {
-                    weather.Text = "snow";
-                }
-                else
-                {
-                    weather.Text = "unknown";
-                }
-                if (MainSection_EnableGlareSettingValue3[x]==1)
-                {
-                    glare3_cb.Checked = true;
-                }
-                else
-                {
-                    glare3_cb.Checked = false;
-                }
-                if (MainSection_ShadowSetting_value1[x] == 1)
-                {
-                    shadow1_cb.Checked = true;
-                }
-                else
-                {
-                    shadow1_cb.Checked = false;
-                }
-                if (MainSection_ShadowSetting_value2[x] == 1)
-                {
-                    shadow2_cb.Checked = true;
-                }
-                else
-                {
-                    shadow2_cb.Checked = false;
-                }
-                if (MainSection_EnableGlareSettingValue2[x] == 1)
-                {
-                    glare2_cb.Checked = true;
-                }
-                else
-                {
-                    glare2_cb.Checked = false;
-                }
-                if (MainSection_EnableGlareSettingValue1[x] == 1)
-                {
-                    glare1_cb.Checked = true;
-                }
-                else
-                {
-                    glare1_cb.Checked = false;
-                }
-                if (MainSection_lensFlareSettings[x]==0)
-                {
-                    LensFlare_combobox.SelectedIndex = 0;
-                    lensFlareEnabledText.Text = "uviolet_lensFlare";
-                }
-                else if (MainSection_lensFlareSettings[x] == 1)
-                {
-                    LensFlare_combobox.SelectedIndex = 1;
-                    lensFlareEnabledText.Text = "oprism_lensFlare";
-                }
-                else if (MainSection_lensFlareSettings[x] == 2)
-                {
-                    LensFlare_combobox.SelectedIndex = 2;
-                    lensFlareEnabledText.Text = "phalo_lensFlare";
-                }
-                else if (MainSection_lensFlareSettings[x] == 3)
-                {
-                    LensFlare_combobox.SelectedIndex = 3;
-                    lensFlareEnabledText.Text = "gpurpose_lensFlare";
-                }
-                else if (MainSection_lensFlareSettings[x] == 4)
-                {
-                    LensFlare_combobox.SelectedIndex = 4;
-                    lensFlareEnabledText.Text = "mlight_lensFlare";
-                }
-                else if (MainSection_lensFlareSettings[x] == 5)
-                {
-                    LensFlare_combobox.SelectedIndex = 5;
-                    lensFlareEnabledText.Text = "sunset_lensFlare";
-                }
-                else
-                {
-                    LensFlare_combobox.SelectedIndex = -1;
-                }
-                if (MainSection_EnablelensFlareSettings[x] == 1)
-                {
-                    
-                }
-                else
-                {
-                    lensFlareEnabledText.Text = "Disabled";
-                }
-                listBox2.Items.Clear();
-                listBox3.Items.Clear();
-                for (int x2 = 0; x2 < CountOfFiles[x]; x2++)
-                {
-                    listBox2.Items.Add(SecondarySectionFilePath[x][x2]);
-                };
-                for (int x2 = 0; x2 < CountOfMeshes[x]; x2++)
-                {
-                    listBox3.Items.Add((x2+1).ToString() + " - " + SecondarySectionLoadMesh[x][x2]);
-                };
-            }
-        }
-
-        private void button27_Click(object sender, EventArgs e)
-        {
-            int x = listBox1.SelectedIndex;
-            if (FileOpen)
-            {
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    StageNameList[x] = StageName_Textbox.Text;
-                    c_sta_List[x] = c_sta_xx_Textbox.Text;
-                    BTL_NSX_List[x] = BTL_NSX_Textbox.Text;
-                    listBox1.Items[x] = StageName_Textbox.Text;
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else 
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void listBox2_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            int x = listBox1.SelectedIndex;
-            int x2 = listBox2.SelectedIndex;
-            if (x2 > -1 && x2 < listBox2.Items.Count)
-            {
-                S_Path_Textbox.Text = SecondarySectionFilePath[x][x2];
-
-            }
-        }
-
-        private void textBox2_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void listBox3_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            int x = listBox1.SelectedIndex;
-            int x3 = listBox3.SelectedIndex;
-            if (x3 > -1 && x3 < listBox3.Items.Count)
-            {
-                S_LoadPath_Textbox.Text = SecondarySectionLoadPath[x][x3];
-                S_LoadMesh_Textbox.Text = SecondarySectionLoadMesh[x][x3];
-                S_LoadPathPos_Textbox.Text = SecondarySectionPositionFilePath[x][x3];
-                S_LoadPos_Textbox.Text = SecondarySectionPosition[x][x3];
-                if (SecondarySectionCameraValue[x][x3]==1)
-                {
-                    Camera_list_combobox.SelectedIndex = 0;
-                }
-                else
-                {
-                    Camera_list_combobox.SelectedIndex = 1;
-                }
-                if (SecondaryTypeSection[x][x3] == 0)
-                {
-                    TypeEntry_combobox.SelectedIndex = SecondaryTypeSection[x][x3];
-                    SpeedAnimationValue.Enabled = false;
-                    S_BW_EFF01_Textbox.Enabled = false;
-                    S_BW_EFF02_Textbox.Enabled = false;
-                    S_BW_EFF03_Textbox.Enabled = false;
-                    S_BW_Sound_Textbox.Enabled = false;
-                    S_BO_EFF01_Textbox.Enabled = false;
-                    S_BO_EFF02_Textbox.Enabled = false;
-                    S_BO_EFF03_Textbox.Enabled = false;
-                    S_BO_EFF01_spd.Enabled = false;
-                    S_BO_EFF02_spd.Enabled = false;
-                    S_BO_EFF03_spd.Enabled = false;
-                    S_BO_Path_Textbox.Enabled = false;
-                    S_BW_sound_volume.Enabled = false;
-                }
-                else if (SecondaryTypeSection[x][x3] == 1)
-                {
-                    TypeEntry_combobox.SelectedIndex = SecondaryTypeSection[x][x3];
-                    SpeedAnimationValue.Enabled = true;
-                    S_BW_EFF01_Textbox.Enabled = false;
-                    S_BW_EFF02_Textbox.Enabled = false;
-                    S_BW_EFF03_Textbox.Enabled = false;
-                    S_BW_Sound_Textbox.Enabled = false;
-                    S_BO_EFF01_Textbox.Enabled = false;
-                    S_BO_EFF02_Textbox.Enabled = false;
-                    S_BO_EFF03_Textbox.Enabled = false;
-                    S_BO_EFF01_spd.Enabled = false;
-                    S_BO_EFF02_spd.Enabled = false;
-                    S_BO_EFF03_spd.Enabled = false;
-                    S_BO_Path_Textbox.Enabled = false;
-                    S_BW_sound_volume.Enabled = false;
-                }
-                else if (SecondaryTypeSection[x][x3] == 4)
-                {
-                    TypeEntry_combobox.SelectedIndex = SecondaryTypeSection[x][x3];
-                    SpeedAnimationValue.Enabled = true;
-                    S_BW_EFF01_Textbox.Enabled = false;
-                    S_BW_EFF02_Textbox.Enabled = false;
-                    S_BW_EFF03_Textbox.Enabled = false;
-                    S_BW_Sound_Textbox.Enabled = false;
-                    S_BO_EFF01_Textbox.Enabled = false;
-                    S_BO_EFF02_Textbox.Enabled = false;
-                    S_BO_EFF03_Textbox.Enabled = false;
-                    S_BO_EFF01_spd.Enabled = false;
-                    S_BO_EFF02_spd.Enabled = false;
-                    S_BO_EFF03_spd.Enabled = false;
-                    S_BO_Path_Textbox.Enabled = false;
-                    S_BW_sound_volume.Enabled = false;
-                    numericUpDown1.Enabled = false;
-                    numericUpDown2.Enabled = false;
-                }
-                else if (SecondaryTypeSection[x][x3] == 7)
-                {
-                    TypeEntry_combobox.SelectedIndex = SecondaryTypeSection[x][x3];
-                    SpeedAnimationValue.Enabled = true;
-                    S_BW_EFF01_Textbox.Enabled = true;
-                    S_BW_EFF02_Textbox.Enabled = true;
-                    S_BW_EFF03_Textbox.Enabled = true;
-                    S_BW_Sound_Textbox.Enabled = true;
-                    S_BO_EFF01_Textbox.Enabled = true;
-                    S_BO_EFF02_Textbox.Enabled = true;
-                    S_BO_EFF03_Textbox.Enabled = true;
-                    S_BO_EFF01_spd.Enabled = true;
-                    S_BO_EFF02_spd.Enabled = true;
-                    S_BO_EFF03_spd.Enabled = true;
-                    S_BO_Path_Textbox.Enabled = true;
-                    S_BW_sound_volume.Enabled = true;
-                    numericUpDown1.Enabled = true;
-                    numericUpDown2.Enabled = true;
-                }
-                else if (SecondaryTypeSection[x][x3] == 10)
-                {
-                    TypeEntry_combobox.SelectedIndex = SecondaryTypeSection[x][x3];
-                    SpeedAnimationValue.Enabled = false;
-                    S_BW_EFF01_Textbox.Enabled = false;
-                    S_BW_EFF02_Textbox.Enabled = false;
-                    S_BW_EFF03_Textbox.Enabled = false;
-                    S_BW_Sound_Textbox.Enabled = false;
-                    S_BO_EFF01_Textbox.Enabled = false;
-                    S_BO_EFF02_Textbox.Enabled = false;
-                    S_BO_EFF03_Textbox.Enabled = false;
-                    S_BO_EFF01_spd.Enabled = false;
-                    S_BO_EFF02_spd.Enabled = false;
-                    S_BO_EFF03_spd.Enabled = false;
-                    S_BO_Path_Textbox.Enabled = false;
-                    S_BW_sound_volume.Enabled = false;
-                    numericUpDown1.Enabled = false;
-                    numericUpDown2.Enabled = false;
-                }
-                else if (SecondaryTypeSection[x][x3] == 11)
-                {
-                    TypeEntry_combobox.SelectedIndex = SecondaryTypeSection[x][x3];
-                    SpeedAnimationValue.Enabled = true;
-                    S_BW_EFF01_Textbox.Enabled = false;
-                    S_BW_EFF02_Textbox.Enabled = false;
-                    S_BW_EFF03_Textbox.Enabled = false;
-                    S_BW_Sound_Textbox.Enabled = false;
-                    S_BO_EFF01_Textbox.Enabled = true;
-                    S_BO_EFF02_Textbox.Enabled = true;
-                    S_BO_EFF03_Textbox.Enabled = true;
-                    S_BO_EFF01_spd.Enabled = true;
-                    S_BO_EFF02_spd.Enabled = true;
-                    S_BO_EFF03_spd.Enabled = true;
-                    S_BO_Path_Textbox.Enabled = true;
-                    S_BW_sound_volume.Enabled = false;
-                    numericUpDown1.Enabled = false;
-                    numericUpDown2.Enabled = false;
-                }
-                else
-                {
-                    TypeEntry_combobox.SelectedIndex = SecondaryTypeSection[x][x3];
-                    S_BW_EFF01_Textbox.Enabled = true;
-                    S_BW_EFF02_Textbox.Enabled = true;
-                    S_BW_EFF03_Textbox.Enabled = true;
-                    S_BW_Sound_Textbox.Enabled = true;
-                    S_BO_EFF01_Textbox.Enabled = true;
-                    S_BO_EFF02_Textbox.Enabled = true;
-                    S_BO_EFF03_Textbox.Enabled = true;
-                    S_BO_EFF01_spd.Enabled = true;
-                    S_BO_EFF02_spd.Enabled = true;
-                    S_BO_EFF03_spd.Enabled = true;
-                    S_BO_Path_Textbox.Enabled = true;
-                    numericUpDown1.Enabled = true;
-                    numericUpDown2.Enabled = true;
-                }
-                MysteriousValue.Value = SecondarySectionMysteriousValue[x][x3];
-                SpeedAnimationValue.Value = (decimal)SecondaryTypeAnimationSection_speed[x][x3];
-                S_BW_EFF01_Textbox.Text = SecondaryTypeBreakableWall_Effect01[x][x3];
-                S_BW_EFF02_Textbox.Text = SecondaryTypeBreakableWall_Effect02[x][x3];
-                S_BW_EFF03_Textbox.Text = SecondaryTypeBreakableWall_Effect03[x][x3];
-                S_BW_Sound_Textbox.Text = SecondaryTypeBreakableWall_Sound[x][x3];
-                S_BO_Path_Textbox.Text = SecondaryTypeBreakableObject_path[x][x3];
-                S_BO_EFF01_Textbox.Text = SecondaryTypeBreakableObject_Effect01[x][x3];
-                S_BO_EFF02_Textbox.Text = SecondaryTypeBreakableObject_Effect02[x][x3];
-                S_BO_EFF03_Textbox.Text = SecondaryTypeBreakableObject_Effect03[x][x3];
-                S_BO_EFF01_spd.Value = (decimal)SecondaryTypeBreakableObject_Speed01[x][x3];
-                S_BO_EFF02_spd.Value = (decimal)SecondaryTypeBreakableObject_Speed02[x][x3];
-                S_BO_EFF03_spd.Value = (decimal)SecondaryTypeBreakableObject_Speed03[x][x3];
-                S_BW_sound_volume.Value = (decimal)SecondaryTypeBreakableWall_volume[x][x3];
-                S_BO_EFF03_spd.Value = (decimal)SecondaryTypeBreakableObject_Speed03[x][x3];
-                numericUpDown1.Value = (decimal)SecondaryConstBreakableWallValue1[x][x3];
-                numericUpDown2.Value = (decimal)SecondaryConstBreakableWallValue2[x][x3];
-            }
-        }
-
-        private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-
-        }
-
-        private void linkLabel2_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-
-        }
-
-        private void linkLabel4_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            pictureBox3.Visible = true;
-            linkLabel3.Enabled = true;
-            linkLabel4.Enabled = false;
-        }
-
-        private void linkLabel3_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            pictureBox3.Visible = false;
-            linkLabel3.Enabled = false;
-            linkLabel4.Enabled = true;
-        }
-
-        private void S_BO_EFF03_spd_ValueChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void button34_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    ColorDialog MyDialog = new ColorDialog();
-                    MyDialog.AllowFullOpen = true;
-                    MyDialog.ShowHelp = true;
-                    MyDialog.AnyColor = true;
-                    byte[] Color = new byte[4]
-                         {
-                    MainSection_ColorPlayerLight[x][3],
-                    MainSection_ColorPlayerLight[x][2],
-                    MainSection_ColorPlayerLight[x][1],
-                    0x00
-                         };
-                    int color_int = Main.b_byteArrayToInt(Color);
-                    MyDialog.CustomColors = new int[] { color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, };
-                    if (MyDialog.ShowDialog() == DialogResult.OK)
-                    {
-                        byte[] ColorReverse = new byte[4]
-                        {
-                    MyDialog.Color.A,
-                    MyDialog.Color.B,
-                    MyDialog.Color.G,
-                    MyDialog.Color.R
-                        };
-                        MainSection_ColorPlayerLight[x] = Main.b_ReplaceBytes(MainSection_ColorPlayerLight[x], ColorReverse, 0, 0);
-
-                        PlayerLightColorInfo_tb.Text = BitConverter.ToString(MainSection_ColorPlayerLight[x]);
-
-                    };
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-                
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void button37_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    ColorDialog MyDialog = new ColorDialog();
-                    MyDialog.AllowFullOpen = true;
-                    MyDialog.ShowHelp = true;
-                    MyDialog.AnyColor = true;
-                    byte[] Color = new byte[4]
-                        {
-                    MainSection_ColorGroundEffect[x][3],
-                    MainSection_ColorGroundEffect[x][2],
-                    MainSection_ColorGroundEffect[x][1],
-                    0x00
-                        };
-                    int color_int = Main.b_byteArrayToInt(Color);
-                    MyDialog.CustomColors = new int[] { color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, };
-                    if (MyDialog.ShowDialog() == DialogResult.OK)
-                    {
-                        byte[] ColorReverse = new byte[4]
-                        {
-                    0xFF,
-                    MyDialog.Color.B,
-                    MyDialog.Color.G,
-                    MyDialog.Color.R
-                        };
-                        MainSection_ColorGroundEffect[x] = Main.b_ReplaceBytes(MainSection_ColorGroundEffect[x], ColorReverse, 0, 0);
-                        GroundEffectColorInfo_tb.Text = BitConverter.ToString(MainSection_ColorGroundEffect[x]);
-                    };
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void button9_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    ColorDialog MyDialog = new ColorDialog();
-                    MyDialog.AllowFullOpen = true;
-                    MyDialog.ShowHelp = true;
-                    MyDialog.AnyColor = true;
-                    byte[] Color = new byte[4]
-                         {
-                    MainSection_ColorLight[x][3],
-                    MainSection_ColorLight[x][2],
-                    MainSection_ColorLight[x][1],
-                    0x00
-                         };
-                    int color_int = Main.b_byteArrayToInt(Color);
-                    MyDialog.CustomColors = new int[] { color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, };
-                    if (MyDialog.ShowDialog() == DialogResult.OK)
-                    {
-                        byte[] ColorReverse = new byte[4]
-                        {
-                    MyDialog.Color.A,
-                    MyDialog.Color.B,
-                    MyDialog.Color.G,
-                    MyDialog.Color.R
-                        };
-                        MainSection_ColorLight[x] = Main.b_ReplaceBytes(MainSection_ColorLight[x], ColorReverse, 0, 0);
-                        LightColorInfo_tb.Text = BitConverter.ToString(MainSection_ColorLight[x]);
-                    };
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-                
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void button14_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    ColorDialog MyDialog = new ColorDialog();
-                    MyDialog.AllowFullOpen = true;
-                    MyDialog.ShowHelp = true;
-                    MyDialog.AnyColor = true;
-                    byte[] Color = new byte[4]
-                         {
-                    MainSection_ColorShadow[x][3],
-                    MainSection_ColorShadow[x][2],
-                    MainSection_ColorShadow[x][1],
-                    0x00
-                         };
-                    int color_int = Main.b_byteArrayToInt(Color);
-                    MyDialog.CustomColors = new int[] { color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, };
-                    if (MyDialog.ShowDialog() == DialogResult.OK)
-                    {
-                        byte[] ColorReverse = new byte[4]
-                        {
-                    MyDialog.Color.A,
-                    MyDialog.Color.B,
-                    MyDialog.Color.G,
-                    MyDialog.Color.R
-                        };
-                        MainSection_ColorShadow[x] = Main.b_ReplaceBytes(MainSection_ColorShadow[x], ColorReverse, 0, 0);
-                        ShadowColorInfo_tb.Text = BitConverter.ToString(MainSection_ColorShadow[x]);
-                        MainSection_ShadowSetting_value1[x] = 1;
-                        MainSection_ShadowSetting_value2[x] = 1;
-                    };
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-                
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void button32_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    MainSection_ColorPlayerLight[x] = Main.b_ReplaceBytes(MainSection_ColorPlayerLight[x], new byte[4] { 0xFF, 0xFF, 0xFF, 0xFF }, 0, 0);
-                    PlayerLightColorInfo_tb.Text = BitConverter.ToString(MainSection_ColorPlayerLight[x]);
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void button35_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    MainSection_ColorGroundEffect[x] = Main.b_ReplaceBytes(MainSection_ColorGroundEffect[x], new byte[4] { 0xFF, 0xFF, 0xFF, 0xFF }, 0, 0);
-                    GroundEffectColorInfo_tb.Text = BitConverter.ToString(MainSection_ColorGroundEffect[x]);
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-                
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void button10_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                MainSection_ColorLight[x] = Main.b_ReplaceBytes(MainSection_ColorLight[x], new byte[4] { 0xFF, 0xFF, 0xFF, 0xFF }, 0, 0);
-                LightColorInfo_tb.Text = BitConverter.ToString(MainSection_ColorLight[x]);
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void button12_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    MainSection_ColorShadow[x] = Main.b_ReplaceBytes(MainSection_ColorShadow[x], new byte[4] { 0x00, 0x00, 0x00, 0x0 }, 0, 0);
-                    ShadowColorInfo_tb.Text = BitConverter.ToString(MainSection_ColorShadow[x]);
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-                
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void button19_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    MainSection_ColorGlare[x] = Main.b_ReplaceBytes(MainSection_ColorGlare[x], new byte[4] { 0x00, 0x00, 0x00, 0x0 }, 0, 0);
-                    GlareColorInfo_tb.Text = BitConverter.ToString(MainSection_ColorGlare[x]);
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-                
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-
-        }
-
-        private void button29_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                int x2 = listBox2.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    if (x2>-1 && x2<listBox2.Items.Count)
-                    {
-                        SecondarySectionFilePath[x][x2] = S_Path_Textbox.Text;
-                        listBox2.Items[x2] = S_Path_Textbox.Text;
-                    }
-                    else
-                    {
-                        MessageBox.Show("No path selected...", "Warning");
-                    }
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void button17_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    SecondarySectionFilePath[x].Add(S_Path_Textbox.Text);
-                    CountOfFiles[x]++;
-                    listBox2.Items.Add(S_Path_Textbox.Text);
-                    listBox2.SelectedIndex = listBox2.Items.Count - 1;
-
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-        public void RemoveID(int Index)
-        {
-            int x = listBox1.SelectedIndex;
-            if (listBox2.Items.Count > Index)
-            {
-                if (listBox2.SelectedIndex > 0)
-                {
-                    listBox2.SelectedIndex--;
-                }
-                else
-                {
-                    listBox2.ClearSelected();
-                }
-
-                SecondarySectionFilePath[x].RemoveAt(Index);
-                CountOfFiles[x]--;
-                listBox2.Items.RemoveAt(Index);
-
-                MessageBox.Show("Entry deleted.");
-            }
-            else
-            {
-                MessageBox.Show("No item to delete...");
-            }
-        }
-        private void button13_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                int x2 = listBox2.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    if (x2 > -1 && x2 < listBox2.Items.Count)
-                    {
-                        RemoveID(listBox2.SelectedIndex);
-                    }
-                    else
-                    {
-                        MessageBox.Show("No path selected...", "Warning");
-                    }
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void button28_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                int x3 = listBox3.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    if (x3 > -1 && x3 < listBox3.Items.Count)
-                    {
-                        SecondarySectionLoadPath[x][x3] = S_LoadPath_Textbox.Text;
-                        SecondarySectionLoadMesh[x][x3] = S_LoadMesh_Textbox.Text;
-                        SecondarySectionPositionFilePath[x][x3] = S_LoadPathPos_Textbox.Text;
-                        SecondarySectionPosition[x][x3] = S_LoadPos_Textbox.Text;
-                        SecondaryConstBreakableWallValue1[x][x3] = (int)numericUpDown1.Value;
-                        SecondaryConstBreakableWallValue2[x][x3] = (int)numericUpDown2.Value;
-                        SecondarySectionMysteriousValue[x][x3] = 0;
-                        if (Camera_list_combobox.SelectedIndex == 0)
-                        {
-                            SecondarySectionCameraValue[x][x3] = 1;
-                        }
-                        else
-                        {
-                            SecondarySectionCameraValue[x][x3] = 0;
-                        }
-                        if (TypeEntry_combobox.SelectedIndex == 0)
-                        {
-                            SecondaryTypeSection[x][x3] = TypeEntry_combobox.SelectedIndex;
-                            SecondaryConstBreakableWallValue1[x][x3] = 0;
-                            SecondaryConstBreakableWallValue2[x][x3] = 0;
-                            SecondaryConst3C[x][x3] = 0;
-                            SecondaryConst78[x][x3] = 0;
-                        }
-                        else if(TypeEntry_combobox.SelectedIndex == 1)
-                        {
-                            SecondaryTypeSection[x][x3] = TypeEntry_combobox.SelectedIndex;
-                            SecondaryConstBreakableWallValue1[x][x3] = 0;
-                            SecondaryConstBreakableWallValue2[x][x3] = 0;
-                            SecondaryConst3C[x][x3] = 0x3C;
-                            SecondaryConst78[x][x3] = 0x78;
-                        }
-                        else if (TypeEntry_combobox.SelectedIndex == 4)
-                        {
-                            SecondaryTypeSection[x][x3] = TypeEntry_combobox.SelectedIndex;
-                            SecondaryConstBreakableWallValue1[x][x3] = 0;
-                            SecondaryConstBreakableWallValue2[x][x3] = 0;
-                            SecondaryConst3C[x][x3] = 0;
-                            SecondaryConst78[x][x3] = 0;
-                        }
-                        else if (TypeEntry_combobox.SelectedIndex == 7)
-                        {
-                            SecondaryTypeSection[x][x3] = TypeEntry_combobox.SelectedIndex;
-                            SecondaryConst3C[x][x3] = 0x3C;
-                            SecondaryConst78[x][x3] = 0x78;
-                        }
-                        else if (TypeEntry_combobox.SelectedIndex == 10)
-                        {
-                            SecondaryTypeSection[x][x3] = TypeEntry_combobox.SelectedIndex;
-                            SecondarySectionMysteriousValue[x][x3] = 1;
-                            SecondaryConstBreakableWallValue1[x][x3] = 0;
-                            SecondaryConstBreakableWallValue2[x][x3] = 0;
-                            SecondaryConst3C[x][x3] = 0x3C;
-                            SecondaryConst78[x][x3] = 0x78;
-                        }
-                        else if (TypeEntry_combobox.SelectedIndex == 11)
-                        {
-                            SecondaryTypeSection[x][x3] = TypeEntry_combobox.SelectedIndex;
-                            SecondaryConstBreakableWallValue1[x][x3] = 0;
-                            SecondaryConstBreakableWallValue2[x][x3] = 0;
-                            SecondaryConst3C[x][x3] = 0x3C;
-                            SecondaryConst78[x][x3] = 0x78;
-                        }
-                        else
-                        {
-                            SecondaryTypeSection[x][x3] = TypeEntry_combobox.SelectedIndex;
-                            SecondaryConstBreakableWallValue1[x][x3] = 0;
-                            SecondaryConstBreakableWallValue2[x][x3] = 0;
-                            SecondaryConst3C[x][x3] = 0;
-                            SecondaryConst78[x][x3] = 0;
-                        }
-                        SecondaryTypeAnimationSection_speed[x][x3] = (float) SpeedAnimationValue.Value;
-                        SecondaryTypeBreakableWall_Effect01[x][x3] = S_BW_EFF01_Textbox.Text;
-                        SecondaryTypeBreakableWall_Effect02[x][x3] = S_BW_EFF02_Textbox.Text;
-                        SecondaryTypeBreakableWall_Effect03[x][x3] = S_BW_EFF03_Textbox.Text;
-                        SecondaryTypeBreakableWall_Sound[x][x3] = S_BW_Sound_Textbox.Text;
-                        SecondaryTypeBreakableObject_path[x][x3] = S_BO_Path_Textbox.Text;
-                        SecondaryTypeBreakableObject_Effect01[x][x3] = S_BO_EFF01_Textbox.Text;
-                        SecondaryTypeBreakableObject_Effect02[x][x3] = S_BO_EFF02_Textbox.Text;
-                        SecondaryTypeBreakableObject_Effect03[x][x3] = S_BO_EFF03_Textbox.Text;
-                        SecondaryTypeBreakableObject_Speed01[x][x3] = (float)S_BO_EFF01_spd.Value;
-                        SecondaryTypeBreakableObject_Speed02[x][x3] = (float)S_BO_EFF02_spd.Value;
-                        SecondaryTypeBreakableObject_Speed03[x][x3] = (float)S_BO_EFF03_spd.Value;
-                        SecondaryTypeBreakableWall_volume[x][x3] = (float)S_BW_sound_volume.Value;
-                        listBox3.Items[x3] =(x3+1).ToString() + " - " + S_LoadMesh_Textbox.Text;
-                    }
-                    else
-                    {
-                        MessageBox.Show("No path selected...", "Warning");
-                    }
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void TypeEntry_combobox_SelectedIndexChanged(object sender, EventArgs e)
-        {
-
-            if (TypeEntry_combobox.SelectedIndex == 0)
-            {
-                SpeedAnimationValue.Enabled = false;
-                S_BW_EFF01_Textbox.Enabled = false;
-                S_BW_EFF02_Textbox.Enabled = false;
-                S_BW_EFF03_Textbox.Enabled = false;
-                S_BW_Sound_Textbox.Enabled = false;
-                S_BO_EFF01_Textbox.Enabled = false;
-                S_BO_EFF02_Textbox.Enabled = false;
-                S_BO_EFF03_Textbox.Enabled = false;
-                S_BO_EFF01_spd.Enabled = false;
-                S_BO_EFF02_spd.Enabled = false;
-                S_BO_EFF03_spd.Enabled = false;
-                S_BO_Path_Textbox.Enabled = false;
-                S_BW_sound_volume.Enabled = false;
-                numericUpDown1.Enabled = false;
-                numericUpDown2.Enabled = false;
-            }
-            else if (TypeEntry_combobox.SelectedIndex == 1)
-            {
-                SpeedAnimationValue.Enabled = true;
-                S_BW_EFF01_Textbox.Enabled = false;
-                S_BW_EFF02_Textbox.Enabled = false;
-                S_BW_EFF03_Textbox.Enabled = false;
-                S_BW_Sound_Textbox.Enabled = false;
-                S_BO_EFF01_Textbox.Enabled = false;
-                S_BO_EFF02_Textbox.Enabled = false;
-                S_BO_EFF03_Textbox.Enabled = false;
-                S_BO_EFF01_spd.Enabled = false;
-                S_BO_EFF02_spd.Enabled = false;
-                S_BO_EFF03_spd.Enabled = false;
-                S_BO_Path_Textbox.Enabled = false;
-                S_BW_sound_volume.Enabled = false;
-                numericUpDown1.Enabled = false;
-                numericUpDown2.Enabled = false;
-            }
-            else if (TypeEntry_combobox.SelectedIndex == 4)
-            {
-                SpeedAnimationValue.Enabled = true;
-                S_BW_EFF01_Textbox.Enabled = false;
-                S_BW_EFF02_Textbox.Enabled = false;
-                S_BW_EFF03_Textbox.Enabled = false;
-                S_BW_Sound_Textbox.Enabled = false;
-                S_BO_EFF01_Textbox.Enabled = false;
-                S_BO_EFF02_Textbox.Enabled = false;
-                S_BO_EFF03_Textbox.Enabled = false;
-                S_BO_EFF01_spd.Enabled = false;
-                S_BO_EFF02_spd.Enabled = false;
-                S_BO_EFF03_spd.Enabled = false;
-                S_BO_Path_Textbox.Enabled = false;
-                S_BW_sound_volume.Enabled = false;
-                numericUpDown1.Enabled = false;
-                numericUpDown2.Enabled = false;
-            }
-            else if (TypeEntry_combobox.SelectedIndex == 7)
-            {
-                SpeedAnimationValue.Enabled = true;
-                S_BW_EFF01_Textbox.Enabled = true;
-                S_BW_EFF02_Textbox.Enabled = true;
-                S_BW_EFF03_Textbox.Enabled = true;
-                S_BW_Sound_Textbox.Enabled = true;
-                S_BO_EFF01_Textbox.Enabled = false;
-                S_BO_EFF02_Textbox.Enabled = false;
-                S_BO_EFF03_Textbox.Enabled = false;
-                S_BO_EFF01_spd.Enabled = false;
-                S_BO_EFF02_spd.Enabled = false;
-                S_BO_EFF03_spd.Enabled = false;
-                S_BO_Path_Textbox.Enabled = false;
-                S_BW_sound_volume.Enabled = true;
-                numericUpDown1.Enabled = true;
-                numericUpDown2.Enabled = true;
-            }
-            else if (TypeEntry_combobox.SelectedIndex == 10)
-            {
-                SpeedAnimationValue.Enabled = false;
-                S_BW_EFF01_Textbox.Enabled = false;
-                S_BW_EFF02_Textbox.Enabled = false;
-                S_BW_EFF03_Textbox.Enabled = false;
-                S_BW_Sound_Textbox.Enabled = false;
-                S_BO_EFF01_Textbox.Enabled = false;
-                S_BO_EFF02_Textbox.Enabled = false;
-                S_BO_EFF03_Textbox.Enabled = false;
-                S_BO_EFF01_spd.Enabled = false;
-                S_BO_EFF02_spd.Enabled = false;
-                S_BO_EFF03_spd.Enabled = false;
-                S_BO_Path_Textbox.Enabled = false;
-                S_BW_sound_volume.Enabled = false;
-                numericUpDown1.Enabled = false;
-                numericUpDown2.Enabled = false;
-            }
-            else if (TypeEntry_combobox.SelectedIndex == 11)
-            {
-                SpeedAnimationValue.Enabled = true;
-                S_BW_EFF01_Textbox.Enabled = false;
-                S_BW_EFF02_Textbox.Enabled = false;
-                S_BW_EFF03_Textbox.Enabled = false;
-                S_BW_Sound_Textbox.Enabled = false;
-                S_BO_EFF01_Textbox.Enabled = true;
-                S_BO_EFF02_Textbox.Enabled = true;
-                S_BO_EFF03_Textbox.Enabled = true;
-                S_BO_EFF01_spd.Enabled = true;
-                S_BO_EFF02_spd.Enabled = true;
-                S_BO_EFF03_spd.Enabled = true;
-                S_BO_Path_Textbox.Enabled = true;
-                S_BW_sound_volume.Enabled = false;
-                numericUpDown1.Enabled = false;
-                numericUpDown2.Enabled = false;
-            }
-            else
-            {
-                S_BW_EFF01_Textbox.Enabled = true;
-                S_BW_EFF02_Textbox.Enabled = true;
-                S_BW_EFF03_Textbox.Enabled = true;
-                S_BW_Sound_Textbox.Enabled = true;
-                S_BO_EFF01_Textbox.Enabled = true;
-                S_BO_EFF02_Textbox.Enabled = true;
-                S_BO_EFF03_Textbox.Enabled = true;
-                S_BO_EFF01_spd.Enabled = true;
-                S_BO_EFF02_spd.Enabled = true;
-                S_BO_EFF03_spd.Enabled = true;
-                S_BO_Path_Textbox.Enabled = true;
-                numericUpDown1.Enabled = true;
-                numericUpDown2.Enabled = true;
-            }
-        }
-
-        private void button18_Click(object sender, EventArgs e)
-        {
-            int x = listBox1.SelectedIndex;
-            if (FileOpen)
-            {
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    SecondarySectionLoadPath[x].Add(S_LoadPath_Textbox.Text);
-                    SecondarySectionLoadMesh[x].Add(S_LoadMesh_Textbox.Text);
-                    SecondarySectionPositionFilePath[x].Add(S_LoadPathPos_Textbox.Text);
-                    SecondarySectionPosition[x].Add(S_LoadPos_Textbox.Text);
-                    if (Camera_list_combobox.SelectedIndex == 0)
-                    {
-                        SecondarySectionCameraValue[x].Add(1);
-                    }
-                    else
-                    {
-                        SecondarySectionCameraValue[x].Add(0);
-                    }
-                    if (TypeEntry_combobox.SelectedIndex == 0)
-                    {
-                        SecondaryTypeSection[x].Add(0);
-                        SecondaryConstBreakableWallValue1[x].Add(0);
-                        SecondaryConstBreakableWallValue2[x].Add(0);
-                        SecondarySectionMysteriousValue[x].Add(0);
-                        SecondaryConst3C[x].Add(0);
-                        SecondaryConst78[x].Add(0);
-                    }
-                    else if (TypeEntry_combobox.SelectedIndex == 1)
-                    {
-                        SecondaryTypeSection[x].Add(1);
-                        SecondaryConstBreakableWallValue1[x].Add(0);
-                        SecondaryConstBreakableWallValue2[x].Add(0);
-                        SecondarySectionMysteriousValue[x].Add(0);
-                        SecondaryConst3C[x].Add(0x3C);
-                        SecondaryConst78[x].Add(0x78);
-                    }
-                    else if (TypeEntry_combobox.SelectedIndex == 4)
-                    {
-                        SecondaryTypeSection[x].Add(4);
-                        SecondaryConstBreakableWallValue1[x].Add(0);
-                        SecondaryConstBreakableWallValue2[x].Add(0);
-                        SecondarySectionMysteriousValue[x].Add(0);
-                        SecondaryConst3C[x].Add(0);
-                        SecondaryConst78[x].Add(0);
-                    }
-                    else if (TypeEntry_combobox.SelectedIndex == 7)
-                    {
-                        SecondaryTypeSection[x].Add(7);
-                        SecondaryConstBreakableWallValue1[x].Add((int)numericUpDown1.Value);
-                        SecondaryConstBreakableWallValue2[x].Add((int)numericUpDown2.Value);
-                        SecondarySectionMysteriousValue[x].Add(0);
-                        SecondaryConst3C[x].Add(0x3C);
-                        SecondaryConst78[x].Add(0x78);
-                    }
-                    else if (TypeEntry_combobox.SelectedIndex == 10)
-                    {
-                        SecondaryTypeSection[x].Add(10);
-                        SecondaryConstBreakableWallValue1[x].Add(0);
-                        SecondaryConstBreakableWallValue2[x].Add(0);
-                        SecondarySectionMysteriousValue[x].Add(1);
-                        SecondaryConst3C[x].Add(0x3C);
-                        SecondaryConst78[x].Add(0x78);
-                    }
-                    else if (TypeEntry_combobox.SelectedIndex == 11)
-                    {
-                        SecondaryTypeSection[x].Add(11);
-                        SecondaryConstBreakableWallValue1[x].Add(0);
-                        SecondaryConstBreakableWallValue2[x].Add(0);
-                        SecondarySectionMysteriousValue[x].Add(0);
-                        SecondaryConst3C[x].Add(0x3C);
-                        SecondaryConst78[x].Add(0x78);
-                    }
-                    else
-                    {
-                        SecondaryTypeSection[x].Add(TypeEntry_combobox.SelectedIndex);
-                        SecondaryConstBreakableWallValue1[x].Add(0);
-                        SecondaryConstBreakableWallValue2[x].Add(0);
-                        SecondarySectionMysteriousValue[x].Add(0);
-                        SecondaryConst3C[x].Add(0);
-                        SecondaryConst78[x].Add(0);
-                    }
-
-                    SecondaryTypeAnimationSection_speed[x].Add((float)SpeedAnimationValue.Value);
-                    SecondaryTypeBreakableWall_Effect01[x].Add(S_BW_EFF01_Textbox.Text);
-                    SecondaryTypeBreakableWall_Effect02[x].Add(S_BW_EFF02_Textbox.Text);
-                    SecondaryTypeBreakableWall_Effect03[x].Add(S_BW_EFF03_Textbox.Text);
-                    SecondaryTypeBreakableWall_Sound[x].Add(S_BW_Sound_Textbox.Text);
-                    SecondaryTypeBreakableObject_path[x].Add(S_BO_Path_Textbox.Text);
-                    SecondaryTypeBreakableObject_Effect01[x].Add(S_BO_EFF01_Textbox.Text);
-                    SecondaryTypeBreakableObject_Effect02[x].Add(S_BO_EFF02_Textbox.Text);
-                    SecondaryTypeBreakableObject_Effect03[x].Add(S_BO_EFF03_Textbox.Text);
-                    SecondaryTypeBreakableObject_Speed01[x].Add((float)S_BO_EFF01_spd.Value);
-                    SecondaryTypeBreakableObject_Speed02[x].Add((float)S_BO_EFF02_spd.Value);
-                    SecondaryTypeBreakableObject_Speed03[x].Add((float)S_BO_EFF03_spd.Value);
-                    SecondaryTypeBreakableWall_volume[x].Add((float)S_BW_sound_volume.Value);
-                    listBox3.Items.Add((listBox3.Items.Count + 1).ToString() + " - " + S_LoadMesh_Textbox.Text);
-                    listBox3.SelectedIndex = listBox3.Items.Count - 1;
-                    CountOfMeshes[x]++;
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-        public void RemoveIDMesh(int Index)
-        {
-            int x = listBox1.SelectedIndex;
-            if (listBox3.Items.Count > Index)
-            {
-                if (listBox3.SelectedIndex > 0)
-                {
-                    listBox3.SelectedIndex--;
-                }
-                else
-                {
-                    listBox3.ClearSelected();
-                }
-
-                SecondarySectionLoadPath[x].RemoveAt(Index);
-                SecondarySectionLoadMesh[x].RemoveAt(Index);
-                SecondarySectionPositionFilePath[x].RemoveAt(Index);
-                SecondarySectionPosition[x].RemoveAt(Index);
-                SecondarySectionCameraValue[x].RemoveAt(Index);
-                SecondaryTypeSection[x].RemoveAt(Index);
-                SecondaryTypeAnimationSection_speed[x].RemoveAt(Index);
-                SecondarySectionMysteriousValue[x].RemoveAt(Index);
-                SecondaryTypeBreakableWall_Effect01[x].RemoveAt(Index);
-                SecondaryTypeBreakableWall_Effect02[x].RemoveAt(Index);
-                SecondaryTypeBreakableWall_Effect03[x].RemoveAt(Index);
-                SecondaryTypeBreakableWall_Sound[x].RemoveAt(Index);
-                SecondaryTypeBreakableObject_path[x].RemoveAt(Index);
-                SecondaryTypeBreakableObject_Effect01[x].RemoveAt(Index);
-                SecondaryTypeBreakableObject_Effect02[x].RemoveAt(Index);
-                SecondaryTypeBreakableObject_Effect03[x].RemoveAt(Index);
-                SecondaryTypeBreakableObject_Speed01[x].RemoveAt(Index);
-                SecondaryTypeBreakableObject_Speed02[x].RemoveAt(Index);
-                SecondaryTypeBreakableObject_Speed03[x].RemoveAt(Index);
-                SecondaryTypeBreakableWall_volume[x].RemoveAt(Index);
-                SecondaryConstBreakableWallValue1[x].RemoveAt(Index);
-                SecondaryConstBreakableWallValue2[x].RemoveAt(Index);
-                CountOfMeshes[x]--;
-                listBox3.Items.RemoveAt(Index);
-
-                MessageBox.Show("Entry deleted.");
-            }
-            else
-            {
-                MessageBox.Show("No item to delete...");
-            }
-        }
-        private void button22_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                int x3 = listBox3.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    if (x3 > -1 && x3 < listBox3.Items.Count)
-                    {
-                        RemoveIDMesh(listBox3.SelectedIndex);
-                    }
-                    else
-                    {
-                        MessageBox.Show("No mesh selected...", "Warning");
-                    }
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void button1_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    MainSection_WeatherSettings[x] = 2;
-                    weather.Text = "rain";
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void button2_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    MainSection_WeatherSettings[x] = 1;
-                    weather.Text = "snow";
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void button3_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    MainSection_WeatherSettings[x] = 0;
-                    weather.Text = "No weather settings";
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void button4_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    MainSection_EnablelensFlareSettings[x] = 1;
-                    if (LensFlare_combobox.SelectedIndex == 0)
-                    {
-                        MainSection_lensFlareSettings[x] = 0;
-                        lensFlareEnabledText.Text = "uviolet_lensFlare";
-                    }
-                    else if (LensFlare_combobox.SelectedIndex == 1)
-                    {
-                        MainSection_lensFlareSettings[x] = 1;
-                        lensFlareEnabledText.Text = "oprism_lensFlare";
-                    }
-                    else if (LensFlare_combobox.SelectedIndex == 2)
-                    {
-                        MainSection_lensFlareSettings[x] = 2;
-                        lensFlareEnabledText.Text = "phalo_lensFlare";
-                    }
-                    else if (LensFlare_combobox.SelectedIndex == 3)
-                    {
-                        MainSection_lensFlareSettings[x] = 3;
-                        lensFlareEnabledText.Text = "gpurpose_lensFlare";
-                    }
-                    else if (LensFlare_combobox.SelectedIndex == 4)
-                    {
-                        MainSection_lensFlareSettings[x] = 4;
-                        lensFlareEnabledText.Text = "mlight_lensFlare";
-                    }
-                    else if (LensFlare_combobox.SelectedIndex == 5)
-                    {
-                        MainSection_lensFlareSettings[x] = 5;
-                        lensFlareEnabledText.Text = "sunset_lensFlare";
-                    }
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void button5_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    MainSection_EnablelensFlareSettings[x] = 0;
-                    lensFlareEnabledText.Text = "Disabled";
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void button11_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    MainSection_EnableGlareSettingValue1[x] = 1;
-                    glare1_cb.Checked = true;
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void button14_Click_1(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    MainSection_EnableGlareSettingValue2[x] = 1;
-                    glare2_cb.Checked = true;
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void button20_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    MainSection_EnableGlareSettingValue3[x] = 1;
-                    glare3_cb.Checked = true;
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void button9_Click_1(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    MainSection_EnableGlareSettingValue1[x] = 0;
-                    glare1_cb.Checked = false;
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void button21_Click_1(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    MainSection_EnableGlareSettingValue2[x] = 0;
-                    glare2_cb.Checked = false;
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void button33_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    MainSection_EnableGlareSettingValue3[x] = 0;
-                    glare3_cb.Checked = false;
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void button30_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    MainSection_PowerGlare[x] = (float)Glare_power_value.Value;
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void button7_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    MainSectionGlareVagueness[x] = (float)Vagueness_glare.Value;
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void button31_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    MainSection_PowerLight[x] = (float)Light_power_value.Value;
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void button40_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    MainSection_blur[x] = (float)BlurValue.Value;
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void button16_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    MainSection_X_PositionShadow[x] = (float)Shadow_X_Pos.Value;
-                    MainSection_Y_PositionShadow[x] = (float)Shadow_Y_Pos.Value;
-                    MainSection_Z_PositionShadow[x] = (float)Shadow_Z_Pos.Value;
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void button38_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    MainSection_X_PositionLightPoint[x] = (float)Light_X_Pos.Value;
-                    MainSection_Y_PositionLightPoint[x] = (float)Light_Y_Pos.Value;
-                    MainSection_Z_PositionLightPoint[x] = (float)Light_Z_Pos.Value;
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void button26_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    MainSection_X_PositionGlarePoint[x] = (float)lensFlare_X_Pos.Value;
-                    MainSection_Y_PositionGlarePoint[x] = (float)lensFlare_Y_Pos.Value;
-                    MainSection_Z_PositionGlarePoint[x] = (float)lensFlare_Z_Pos.Value;
-
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void button15_Click(object sender, EventArgs e)
+        public Tool_StageInfoEditor()
         {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    MainSection_X_MysteriousPosition[x] = (float)Glare_X_Pos.Value;
-                    MainSection_Y_MysteriousPosition[x] = (float)Glare_Y_Pos.Value;
-                    MainSection_Z_MysteriousPosition[x] = (float)Glare_Z_Pos.Value;
-
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
+            InitializeComponent();
+            DoubleBuffered = true;
+            if (LicenseManager.UsageMode != LicenseUsageMode.Designtime)
+                RefreshCommandState();
         }
 
-        private void BlurValue_ValueChanged(object sender, EventArgs e)
-        {
-
-        }
+        #region Selection, list and editing commands
 
-        private void button39_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    MainSection_X_MysteriousPosition[x] = (float)Glare_X_Pos.Value;
-                    MainSection_Y_MysteriousPosition[x] = (float)Glare_Y_Pos.Value;
-                    MainSection_Z_MysteriousPosition[x] = (float)Glare_Z_Pos.Value;
-                    MainSection_X_PositionGlarePoint[x] = (float)lensFlare_X_Pos.Value;
-                    MainSection_Y_PositionGlarePoint[x] = (float)lensFlare_Y_Pos.Value;
-                    MainSection_Z_PositionGlarePoint[x] = (float)lensFlare_Z_Pos.Value;
-                    MainSection_X_PositionLightPoint[x] = (float)Light_X_Pos.Value;
-                    MainSection_Y_PositionLightPoint[x] = (float)Light_Y_Pos.Value;
-                    MainSection_Z_PositionLightPoint[x] = (float)Light_Z_Pos.Value;
-                    MainSection_X_PositionShadow[x] = (float)Shadow_X_Pos.Value;
-                    MainSection_Y_PositionShadow[x] = (float)Shadow_Y_Pos.Value;
-                    MainSection_Z_PositionShadow[x] = (float)Shadow_Z_Pos.Value;
-                    MainSection_PowerGlare[x] = (float)Glare_power_value.Value;
-                    MainSection_blur[x] = (float)BlurValue.Value;
-                    MainSection_PowerLight[x] = (float)Light_power_value.Value;
-                    MainSectionGlareVagueness[x] = (float)Vagueness_glare.Value;
-                    MainSection_MysteriousGlareValue1[x] = (float)M_Glare_Value1.Value;
-                    MainSection_MysteriousGlareValue2[x] = (float)M_Glare_Value2.Value;
-                    MainSection_MysteriousGlareValue3[x] = (float)M_Glare_Value3.Value;
-                    MainSection_UnknownValue1[x] = (float)unknown1_v.Value;
-                    MainSection_UnknownValue2[x] = (float)unknown2_v.Value;
-                    MainSection_UnknownValue3[x] = (float)unknown3_v.Value;
-                    MainSection_PowerSkyColor[x] = (float)Sky_light_strength.Value;
-                    MainSection_unk1[x] = (float)unk1_v.Value;
-                    MessageBox.Show("Settings for " + StageNameList[x] + " were saved!");
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
+        // These named handlers are intentionally wired by InitializeComponent so
+        // Visual Studio can load and edit the complete form in the WinForms designer.
+        private void OpenCommand_Click(object sender, EventArgs e) { OpenFile(); }
+        private void SaveCommand_Click(object sender, EventArgs e) { SaveFile(); }
+        private void SaveAsCommand_Click(object sender, EventArgs e) { SaveFileAs(); }
+        private void CloseDocumentCommand_Click(object sender, EventArgs e) { CloseFile(); }
+        private void ExitCommand_Click(object sender, EventArgs e) { Close(); }
+        private void AddStageCommand_Click(object sender, EventArgs e) { AddStage(false); }
+        private void DuplicateStageCommand_Click(object sender, EventArgs e) { AddStage(true); }
+        private void DeleteStageCommand_Click(object sender, EventArgs e) { DeleteStage(); }
+        private void CopySettingsCommand_Click(object sender, EventArgs e) { CopyStageProperties(); }
+        private void PasteSettingsCommand_Click(object sender, EventArgs e) { PasteStageProperties(); }
+        private void SyncResourcesCommand_Click(object sender, EventArgs e) { SyncCurrentManagedResources(); }
+        private void ValidateCommand_Click(object sender, EventArgs e) { ValidateDocumentWithMessage(); }
+        private void MoveStageUpCommand_Click(object sender, EventArgs e) { MoveStage(-1); }
+        private void MoveStageDownCommand_Click(object sender, EventArgs e) { MoveStage(1); }
+        private void AddPathCommand_Click(object sender, EventArgs e) { AddPath(); }
+        private void DeletePathCommand_Click(object sender, EventArgs e) { DeletePath(); }
+        private void MovePathUpCommand_Click(object sender, EventArgs e) { MovePath(-1); }
+        private void MovePathDownCommand_Click(object sender, EventArgs e) { MovePath(1); }
+        private void AddObjectCommand_Click(object sender, EventArgs e) { AddObject(); }
+        private void DuplicateObjectCommand_Click(object sender, EventArgs e) { DuplicateObject(); }
+        private void DeleteObjectCommand_Click(object sender, EventArgs e) { DeleteObject(); }
+        private void MoveObjectUpCommand_Click(object sender, EventArgs e) { MoveObject(-1); }
+        private void MoveObjectDownCommand_Click(object sender, EventArgs e) { MoveObject(1); }
+        private void SaveStageEntryCommand_Click(object sender, EventArgs e) { SaveStageEntry(); }
+        private void SavePathCommand_Click(object sender, EventArgs e) { SavePathEntry(); }
+        private void SaveObjectCommand_Click(object sender, EventArgs e) { SaveObjectEntry(); }
 
-        private void button24_Click(object sender, EventArgs e)
+        private void StageSearchBox_TextChanged(object sender, EventArgs e)
         {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    MainStageSection.Add(MainStageSection[x]);
-                    StageNameList.Add(StageNameList[x]+ "_DUB");
-                    c_sta_List.Add(c_sta_List[x]);
-                    BTL_NSX_List.Add(BTL_NSX_List[x]);
-
-                    CountOfFiles.Add(CountOfFiles[x]);
-                    CountOfMeshes.Add(CountOfMeshes[x]);
-
-                    float new_copied_MainSection_unk1 = (float)unk1_v.Value;
-                    float new_copied_MainSection_X_MysteriousPosition = (float)Glare_X_Pos.Value;
-                    float new_copied_MainSection_Y_MysteriousPosition = (float)Glare_Y_Pos.Value;
-                    float new_copied_MainSection_Z_MysteriousPosition = (float)Glare_Z_Pos.Value;
-                    float new_copied_MainSection_X_PositionGlarePoint = (float)lensFlare_X_Pos.Value;
-                    float new_copied_MainSection_Y_PositionGlarePoint = (float)lensFlare_Y_Pos.Value;
-                    float new_copied_MainSection_Z_PositionGlarePoint = (float)lensFlare_Z_Pos.Value;
-                    float new_copied_MainSection_X_PositionLightPoint = (float)Light_X_Pos.Value;
-                    float new_copied_MainSection_Y_PositionLightPoint = (float)Light_Y_Pos.Value;
-                    float new_copied_MainSection_Z_PositionLightPoint = (float)Light_Z_Pos.Value;
-                    float new_copied_MainSection_X_PositionShadow = (float)Shadow_X_Pos.Value;
-                    float new_copied_MainSection_Y_PositionShadow = (float)Shadow_Y_Pos.Value;
-                    float new_copied_MainSection_Z_PositionShadow = (float)Shadow_Z_Pos.Value;
-                    float new_copied_MainSection_PowerGlare = (float)Glare_power_value.Value;
-                    float new_copied_MainSection_blur = (float)BlurValue.Value;
-                    float new_copied_MainSection_PowerLight = (float)Light_power_value.Value;
-                    float new_copied_MainSectionGlareVagueness = (float)Vagueness_glare.Value;
-                    float new_copied_MainSection_MysteriousGlareValue1 = (float)M_Glare_Value1.Value;
-                    float new_copied_MainSection_MysteriousGlareValue2 = (float)M_Glare_Value2.Value;
-                    float new_copied_MainSection_MysteriousGlareValue3 = (float)M_Glare_Value3.Value;
-                    float new_copied_MainSection_UnknownValue1 = (float)unknown1_v.Value;
-                    float new_copied_MainSection_UnknownValue2 = (float)unknown2_v.Value;
-                    float new_copied_MainSection_UnknownValue3 = (float)unknown3_v.Value;
-                    float new_copied_MainSection_PowerSkyColor = (float)Sky_light_strength.Value;
-
-                    int ColorGlare = Main.b_byteArrayToInt(MainSection_ColorGlare[x]);
-                    byte[] new_copied_MainSection_ColorGlare = BitConverter.GetBytes(ColorGlare);
-
-                    int ColorSky = Main.b_byteArrayToInt(MainSection_ColorSky[x]);
-                    byte[] new_copied_MainSection_ColorSky = BitConverter.GetBytes(ColorSky);
-
-                    int ColorRock = Main.b_byteArrayToInt(MainSection_ColorRock[x]);
-                    byte[] new_copied_MainSection_ColorRock = BitConverter.GetBytes(ColorRock);
-
-                    int ColorGroundEffect = Main.b_byteArrayToInt(MainSection_ColorGroundEffect[x]);
-                    byte[] new_copied_MainSection_ColorGroundEffect = BitConverter.GetBytes(ColorGroundEffect);
-
-                    int ColorPlayerLight = Main.b_byteArrayToInt(MainSection_ColorPlayerLight[x]);
-                    byte[] new_copied_MainSection_ColorPlayerLight = BitConverter.GetBytes(ColorPlayerLight);
-
-                    int ColorLight = Main.b_byteArrayToInt(MainSection_ColorLight[x]);
-                    byte[] new_copied_MainSection_ColorLight = BitConverter.GetBytes(ColorLight);
-
-                    int ColorShadow = Main.b_byteArrayToInt(MainSection_ColorShadow[x]);
-                    byte[] new_copied_MainSection_ColorShadow = BitConverter.GetBytes(ColorShadow);
-
-                    int ColorUnknown = Main.b_byteArrayToInt(MainSection_ColorUnknown[x]);
-                    byte[] new_copied_MainSection_ColorUnknown = BitConverter.GetBytes(ColorUnknown);
-
-                    int ColorUnknown2 = Main.b_byteArrayToInt(MainSection_ColorUnknown2[x]);
-                    byte[] new_copied_MainSection_ColorUnknown2 = BitConverter.GetBytes(ColorUnknown2);
-                    int new_copied_MainSection_WeatherSettings = 0;
-                    if (weather.Text == "snow")
-                        new_copied_MainSection_WeatherSettings = 1;
-                    else if (weather.Text == "rain")
-                        new_copied_MainSection_WeatherSettings = 2;
-                    else
-                        new_copied_MainSection_WeatherSettings = 0;
-                    int new_copied_MainSection_lensFlareSettings = 0;
-                    if (LensFlare_combobox.SelectedIndex == 0)
-                        new_copied_MainSection_lensFlareSettings = 0;
-                    else if (LensFlare_combobox.SelectedIndex == 1)
-                        new_copied_MainSection_lensFlareSettings = 1;
-                    else if (LensFlare_combobox.SelectedIndex == 2)
-                        new_copied_MainSection_lensFlareSettings = 2;
-                    else if (LensFlare_combobox.SelectedIndex == 3)
-                        new_copied_MainSection_lensFlareSettings = 3;
-                    else if (LensFlare_combobox.SelectedIndex == 4)
-                        new_copied_MainSection_lensFlareSettings = 4;
-                    else if (LensFlare_combobox.SelectedIndex == 5)
-                        new_copied_MainSection_lensFlareSettings = 5;
-                    int new_copied_MainSection_EnablelensFlareSettings = 0;
-                    if (lensFlareEnabledText.Text == "Disabled")
-                        new_copied_MainSection_EnablelensFlareSettings = 0;
-                    else
-                        new_copied_MainSection_EnablelensFlareSettings = 1;
-                    int new_copied_MainSection_EnableGlareSettingValue1 = 0;
-                    if (glare1_cb.Checked == false)
-                        new_copied_MainSection_EnableGlareSettingValue1 = 0;
-                    else
-                        new_copied_MainSection_EnableGlareSettingValue1 = 1;
-                    int new_copied_MainSection_EnableGlareSettingValue2 = 0;
-                    if (glare2_cb.Checked == false)
-                        new_copied_MainSection_EnableGlareSettingValue2 = 0;
-                    else
-                        new_copied_MainSection_EnableGlareSettingValue2 = 1;
-                    int new_copied_MainSection_EnableGlareSettingValue3 = 0;
-                    if (glare3_cb.Checked == false)
-                        new_copied_MainSection_EnableGlareSettingValue3 = 0;
-                    else
-                        new_copied_MainSection_EnableGlareSettingValue3 = 1;
-                    int new_copied_MainSection_ShadowSetting_value1 = 0;
-                    int new_copied_MainSection_ShadowSetting_value2 = 0;
-                    if (shadow1_cb.Checked == false)
-                        new_copied_MainSection_ShadowSetting_value1 = 0;
-                    else
-                        new_copied_MainSection_ShadowSetting_value1 = 1;
-
-                    if (shadow2_cb.Checked == false)
-                        new_copied_MainSection_ShadowSetting_value2 = 0;
-                    else
-                        new_copied_MainSection_ShadowSetting_value2 = 1;
-
-                    MainSection_unk1.Add(new_copied_MainSection_unk1);
-                    MainSection_WeatherSettings.Add(new_copied_MainSection_WeatherSettings);
-                    MainSection_EnablelensFlareSettings.Add(new_copied_MainSection_EnablelensFlareSettings);
-                    MainSection_lensFlareSettings.Add(new_copied_MainSection_lensFlareSettings);
-                    MainSection_ShadowSetting_value1.Add(new_copied_MainSection_ShadowSetting_value1);
-                    MainSection_ShadowSetting_value2.Add(new_copied_MainSection_ShadowSetting_value2);
-                    MainSection_ColorGroundEffect.Add(new_copied_MainSection_ColorGroundEffect);
-                    MainSection_ColorPlayerLight.Add(new_copied_MainSection_ColorPlayerLight);
-                    MainSection_ColorLight.Add(new_copied_MainSection_ColorLight);
-                    MainSection_ColorShadow.Add(new_copied_MainSection_ColorShadow);
-                    MainSection_ColorGlare.Add(new_copied_MainSection_ColorGlare);
-                    MainSection_ColorRock.Add(new_copied_MainSection_ColorRock);
-                    MainSection_ColorSky.Add(new_copied_MainSection_ColorSky);
-                    MainSection_ColorUnknown.Add(new_copied_MainSection_ColorUnknown);
-                    MainSection_ColorUnknown2.Add(new_copied_MainSection_ColorUnknown2);
-                    MainSection_X_PositionLightPoint.Add(new_copied_MainSection_X_PositionLightPoint);
-                    MainSection_Y_PositionLightPoint.Add(new_copied_MainSection_Y_PositionLightPoint);
-                    MainSection_Z_PositionLightPoint.Add(new_copied_MainSection_Z_PositionLightPoint);
-                    MainSection_X_PositionShadow.Add(new_copied_MainSection_X_PositionShadow);
-                    MainSection_Y_PositionShadow.Add(new_copied_MainSection_Y_PositionShadow);
-                    MainSection_Z_PositionShadow.Add(new_copied_MainSection_Z_PositionShadow);
-                    MainSection_X_PositionGlarePoint.Add(new_copied_MainSection_X_PositionGlarePoint);
-                    MainSection_Y_PositionGlarePoint.Add(new_copied_MainSection_Y_PositionGlarePoint);
-                    MainSection_Z_PositionGlarePoint.Add(new_copied_MainSection_Z_PositionGlarePoint);
-                    MainSection_PowerLight.Add(new_copied_MainSection_PowerLight);
-                    MainSection_PowerGlare.Add(new_copied_MainSection_PowerGlare);
-                    MainSection_blur.Add(new_copied_MainSection_blur);
-                    MainSection_EnableGlareSettingValue1.Add(new_copied_MainSection_EnableGlareSettingValue1);
-                    MainSection_EnableGlareSettingValue2.Add(new_copied_MainSection_EnableGlareSettingValue2);
-                    MainSection_EnableGlareSettingValue3.Add(new_copied_MainSection_EnableGlareSettingValue3);
-                    MainSection_X_MysteriousPosition.Add(new_copied_MainSection_X_MysteriousPosition);
-                    MainSection_Y_MysteriousPosition.Add(new_copied_MainSection_Y_MysteriousPosition);
-                    MainSection_Z_MysteriousPosition.Add(new_copied_MainSection_Z_MysteriousPosition);
-                    MainSection_MysteriousGlareValue1.Add(new_copied_MainSection_MysteriousGlareValue1);
-                    MainSection_MysteriousGlareValue2.Add(new_copied_MainSection_MysteriousGlareValue2);
-                    MainSection_MysteriousGlareValue3.Add(new_copied_MainSection_MysteriousGlareValue3);
-                    MainSection_UnknownValue1.Add(new_copied_MainSection_UnknownValue1);
-                    MainSection_UnknownValue2.Add(new_copied_MainSection_UnknownValue2);
-                    MainSection_UnknownValue3.Add(new_copied_MainSection_UnknownValue3);
-                    MainSectionGlareVagueness.Add(new_copied_MainSectionGlareVagueness);
-                    MainSection_PowerSkyColor.Add(new_copied_MainSection_PowerSkyColor);
-                    GlareEnabled.Add(GlareEnabled[x]);
-
-                    for (int x3 = 0; x3<CountOfFiles[x]; x3++)
-                    {
-                        One_SecondarySectionFilePathString.Add(SecondarySectionFilePath[x][x3]);
-                        
-                    }
-                    SecondarySectionFilePath.Add(One_SecondarySectionFilePathString);
-
-                    for (int x4 = 0; x4 < CountOfMeshes[x]; x4++)
-                    {
-                        One_SecondarySectionLoadPathString.Add(SecondarySectionLoadPath[x][x4]);
-                        One_SecondarySectionLoadMeshString.Add(SecondarySectionLoadMesh[x][x4]);
-                        One_SecondarySectionLoadPathDmyString.Add(SecondarySectionPositionFilePath[x][x4]);
-                        One_SecondarySectionLoadDmyString.Add(SecondarySectionPosition[x][x4]);
-                        One_SecondaryTypeSection.Add(SecondaryTypeSection[x][x4]);
-                        One_SecondarySectionMysteriousValue.Add(SecondarySectionMysteriousValue[x][x4]);
-                        One_SecondaryTypeAnimationSection_speed.Add(SecondaryTypeAnimationSection_speed[x][x4]);
-                        One_SecondarySectionCameraValue.Add(SecondarySectionCameraValue[x][x4]);
-                        One_SecondaryConstBreakableWallValue1.Add(SecondaryConstBreakableWallValue1[x][x4]);
-                        One_SecondaryConstBreakableWallValue2.Add(SecondaryConstBreakableWallValue2[x][x4]);
-                        One_SecondaryTypeBreakableWall_Effect01.Add(SecondaryTypeBreakableWall_Effect01[x][x4]);
-                        One_SecondaryTypeBreakableWall_Effect02.Add(SecondaryTypeBreakableWall_Effect02[x][x4]);
-                        One_SecondaryTypeBreakableWall_Effect03.Add(SecondaryTypeBreakableWall_Effect03[x][x4]);
-                        One_SecondaryTypeBreakableWall_Sound.Add(SecondaryTypeBreakableWall_Sound[x][x4]);
-                        One_SecondaryTypeBreakableObject_path.Add(SecondaryTypeBreakableObject_path[x][x4]);
-                        One_SecondaryTypeBreakableObject_Effect01.Add(SecondaryTypeBreakableObject_Effect01[x][x4]);
-                        One_SecondaryTypeBreakableObject_Effect02.Add(SecondaryTypeBreakableObject_Effect02[x][x4]);
-                        One_SecondaryTypeBreakableObject_Effect03.Add(SecondaryTypeBreakableObject_Effect03[x][x4]);
-                        One_SecondaryTypeBreakableObject_Speed01.Add(SecondaryTypeBreakableObject_Speed01[x][x4]);
-                        One_SecondaryTypeBreakableObject_Speed02.Add(SecondaryTypeBreakableObject_Speed02[x][x4]);
-                        One_SecondaryTypeBreakableObject_Speed03.Add(SecondaryTypeBreakableObject_Speed03[x][x4]);
-                        One_SecondaryConst3C.Add(SecondaryConst3C[x][x4]);
-                        One_SecondaryConst78.Add(SecondaryConst78[x][x4]);
-                        One_SecondaryTypeBreakableWall_volume.Add(SecondaryTypeBreakableWall_volume[x][x4]);
-                    }
-                    SecondarySectionLoadPath.Add(One_SecondarySectionLoadPathString);
-                    SecondarySectionLoadMesh.Add(One_SecondarySectionLoadMeshString);
-                    SecondarySectionPositionFilePath.Add(One_SecondarySectionLoadPathDmyString);
-                    SecondarySectionPosition.Add(One_SecondarySectionLoadDmyString);
-                    SecondaryTypeSection.Add(One_SecondaryTypeSection);
-                    SecondaryTypeAnimationSection_speed.Add(One_SecondaryTypeAnimationSection_speed);
-                    SecondarySectionCameraValue.Add(One_SecondarySectionCameraValue);
-                    SecondarySectionMysteriousValue.Add(One_SecondarySectionMysteriousValue);
-                    SecondaryConst3C.Add(One_SecondaryConst3C);
-                    SecondaryConst78.Add(One_SecondaryConst78);
-                    SecondaryConstBreakableWallValue1.Add(One_SecondaryConstBreakableWallValue1);
-                    SecondaryConstBreakableWallValue2.Add(One_SecondaryConstBreakableWallValue2);
-                    SecondaryTypeBreakableWall_Effect01.Add(One_SecondaryTypeBreakableWall_Effect01);
-                    SecondaryTypeBreakableWall_Effect02.Add(One_SecondaryTypeBreakableWall_Effect02);
-                    SecondaryTypeBreakableWall_Effect03.Add(One_SecondaryTypeBreakableWall_Effect03);
-                    SecondaryTypeBreakableWall_Sound.Add(One_SecondaryTypeBreakableWall_Sound);
-                    SecondaryTypeBreakableWall_volume.Add(One_SecondaryTypeBreakableWall_volume);
-                    SecondaryTypeBreakableObject_path.Add(One_SecondaryTypeBreakableObject_path);
-                    SecondaryTypeBreakableObject_Effect01.Add(One_SecondaryTypeBreakableObject_Effect01);
-                    SecondaryTypeBreakableObject_Effect02.Add(One_SecondaryTypeBreakableObject_Effect02);
-                    SecondaryTypeBreakableObject_Effect03.Add(One_SecondaryTypeBreakableObject_Effect03);
-                    SecondaryTypeBreakableObject_Speed01.Add(One_SecondaryTypeBreakableObject_Speed01);
-                    SecondaryTypeBreakableObject_Speed02.Add(One_SecondaryTypeBreakableObject_Speed02);
-                    SecondaryTypeBreakableObject_Speed03.Add(One_SecondaryTypeBreakableObject_Speed03);
-                    One_SecondarySectionFilePathString = new List<string>();
-                    One_SecondarySectionLoadPathString = new List<string>();
-                    One_SecondarySectionLoadMeshString = new List<string>();
-                    One_SecondarySectionLoadPathDmyString = new List<string>();
-                    One_SecondarySectionLoadDmyString = new List<string>();
-                    One_SecondaryTypeSection = new List<int>();
-                    One_SecondarySectionCameraValue = new List<int>();
-                    One_SecondarySectionMysteriousValue = new List<int>();
-                    One_SecondaryTypeAnimationSection_speed = new List<float>();
-                    One_SecondaryConst3C = new List<int>();
-                    One_SecondaryConst78 = new List<int>();
-                    One_SecondaryConstBreakableWallValue1 = new List<int>();
-                    One_SecondaryConstBreakableWallValue2 = new List<int>();
-                    One_SecondaryTypeBreakableWall_Effect01 = new List<string>();
-                    One_SecondaryTypeBreakableWall_Effect02 = new List<string>();
-                    One_SecondaryTypeBreakableWall_Effect03 = new List<string>();
-                    One_SecondaryTypeBreakableWall_Sound = new List<string>();
-                    One_SecondaryTypeBreakableWall_volume = new List<float>();
-                    One_SecondaryTypeBreakableObject_path = new List<string>();
-                    One_SecondaryTypeBreakableObject_Effect01 = new List<string>();
-                    One_SecondaryTypeBreakableObject_Effect02 = new List<string>();
-                    One_SecondaryTypeBreakableObject_Effect03 = new List<string>();
-                    One_SecondaryTypeBreakableObject_Speed01 = new List<float>();
-                    One_SecondaryTypeBreakableObject_Speed02 = new List<float>();
-                    One_SecondaryTypeBreakableObject_Speed03 = new List<float>();
-
-                    listBox1.Items.Add(StageNameList[x] + "_DUB");
-                    listBox1.SelectedIndex = listBox1.Items.Count - 1;
-                    EntryCount++;
-                    StageCount.Text = listBox1.Items.Count.ToString() + " or 0x" + listBox1.Items.Count.ToString("X2");
-                    MessageBox.Show("Stage added!");
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
+            if (!_loadingUi) RefreshStageList(_currentStage);
         }
-        public void RemoveIDStage(int Index)
-        {
-            if (listBox1.Items.Count > Index)
-            {
-                if (listBox1.SelectedIndex > 0)
-                {
-                    listBox1.SelectedIndex--;
-                }
-                else
-                {
-                    listBox1.ClearSelected();
-                }
-
-                MainStageSection.RemoveAt(Index);
-                StageNameList.RemoveAt(Index);
-                c_sta_List.RemoveAt(Index);
-                BTL_NSX_List.RemoveAt(Index);
 
-                CountOfFiles.RemoveAt(Index);
-                CountOfMeshes.RemoveAt(Index);
-                MainSection_unk1.RemoveAt(Index);
-                MainSection_ColorUnknown.RemoveAt(Index);
-                MainSection_ColorUnknown2.RemoveAt(Index);
-                MainSection_WeatherSettings.RemoveAt(Index);
-                MainSection_EnablelensFlareSettings.RemoveAt(Index);
-                MainSection_lensFlareSettings.RemoveAt(Index);
-                MainSection_ShadowSetting_value1.RemoveAt(Index);
-                MainSection_ShadowSetting_value2.RemoveAt(Index);
-                MainSection_ColorGroundEffect.RemoveAt(Index);
-                MainSection_ColorPlayerLight.RemoveAt(Index);
-                MainSection_ColorLight.RemoveAt(Index);
-                MainSection_ColorShadow.RemoveAt(Index);
-                MainSection_ColorGlare.RemoveAt(Index);
-                MainSection_ColorRock.RemoveAt(Index);
-                MainSection_X_PositionLightPoint.RemoveAt(Index);
-                MainSection_Y_PositionLightPoint.RemoveAt(Index);
-                MainSection_Z_PositionLightPoint.RemoveAt(Index);
-                MainSection_X_PositionShadow.RemoveAt(Index);
-                MainSection_Y_PositionShadow.RemoveAt(Index);
-                MainSection_Z_PositionShadow.RemoveAt(Index);
-                MainSection_X_PositionGlarePoint.RemoveAt(Index);
-                MainSection_Y_PositionGlarePoint.RemoveAt(Index);
-                MainSection_Z_PositionGlarePoint.RemoveAt(Index);
-                MainSection_PowerLight.RemoveAt(Index);
-                MainSection_PowerGlare.RemoveAt(Index);
-                MainSection_blur.RemoveAt(Index);
-                MainSection_EnableGlareSettingValue1.RemoveAt(Index);
-                MainSection_EnableGlareSettingValue2.RemoveAt(Index);
-                MainSection_EnableGlareSettingValue3.RemoveAt(Index);
-                MainSection_X_MysteriousPosition.RemoveAt(Index);
-                MainSection_Y_MysteriousPosition.RemoveAt(Index);
-                MainSection_Z_MysteriousPosition.RemoveAt(Index);
-                MainSection_MysteriousGlareValue1.RemoveAt(Index);
-                MainSection_MysteriousGlareValue2.RemoveAt(Index);
-                MainSection_MysteriousGlareValue3.RemoveAt(Index);
-                MainSection_UnknownValue1.RemoveAt(Index);
-                MainSection_UnknownValue2.RemoveAt(Index);
-                MainSection_UnknownValue3.RemoveAt(Index);
-                MainSectionGlareVagueness.RemoveAt(Index);
-                GlareEnabled.RemoveAt(Index);
-                SecondarySectionFilePath.RemoveAt(Index);
-                SecondarySectionLoadPath.RemoveAt(Index);
-                SecondarySectionLoadMesh.RemoveAt(Index);
-                SecondarySectionPositionFilePath.RemoveAt(Index);
-                SecondarySectionPosition.RemoveAt(Index);
-                SecondaryTypeSection.RemoveAt(Index);
-                SecondaryTypeAnimationSection_speed.RemoveAt(Index);
-                SecondarySectionCameraValue.RemoveAt(Index);
-                SecondarySectionMysteriousValue.RemoveAt(Index);
-                SecondaryConst3C.RemoveAt(Index);
-                SecondaryConst78.RemoveAt(Index);
-                SecondaryConstBreakableWallValue1.RemoveAt(Index);
-                SecondaryConstBreakableWallValue2.RemoveAt(Index);
-                SecondaryTypeBreakableWall_Effect01.RemoveAt(Index);
-                SecondaryTypeBreakableWall_Effect02.RemoveAt(Index);
-                SecondaryTypeBreakableWall_Effect03.RemoveAt(Index);
-                SecondaryTypeBreakableWall_Sound.RemoveAt(Index);
-                SecondaryTypeBreakableWall_volume.RemoveAt(Index);
-                SecondaryTypeBreakableObject_path.RemoveAt(Index);
-                SecondaryTypeBreakableObject_Effect01.RemoveAt(Index);
-                SecondaryTypeBreakableObject_Effect02.RemoveAt(Index);
-                SecondaryTypeBreakableObject_Effect03.RemoveAt(Index);
-                SecondaryTypeBreakableObject_Speed01.RemoveAt(Index);
-                SecondaryTypeBreakableObject_Speed02.RemoveAt(Index);
-                SecondaryTypeBreakableObject_Speed03.RemoveAt(Index);
-                MainSection_PowerSkyColor.RemoveAt(Index);
-                MainSection_ColorSky.RemoveAt(Index);
-                listBox1.Items.RemoveAt(Index);
-                EntryCount--;
-                StageCount.Text = listBox1.Items.Count.ToString() + " or 0x" + listBox1.Items.Count.ToString("X2");
-                MessageBox.Show("Entry deleted.");
-            }
-            else
-            {
-                MessageBox.Show("No item to delete...");
-            }
-        }
-        private void button25_Click(object sender, EventArgs e)
+        private void StageNameTextBox_TextChanged(object sender, EventArgs e)
         {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    RemoveIDStage(listBox1.SelectedIndex);
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
+            if (_loadingUi || _stageEditBuffer == null) return;
+            _stageEditBuffer.StageName = _stageNameTextBox.Text;
+            SetStageEditDirty();
         }
 
-        private void button23_Click(object sender, EventArgs e)
+        private void StageMessageTextBox_TextChanged(object sender, EventArgs e)
         {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    MainSection_MysteriousGlareValue1[x] = (float)M_Glare_Value1.Value;
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
+            if (_loadingUi || _stageEditBuffer == null) return;
+            _stageEditBuffer.StageMessageID = _stageMessageTextBox.Text;
+            SetStageEditDirty();
         }
 
-        private void button36_Click(object sender, EventArgs e)
+        private void StageFilterTextBox_TextChanged(object sender, EventArgs e)
         {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    MainSection_MysteriousGlareValue2[x] = (float)M_Glare_Value2.Value;
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
+            if (_loadingUi || _stageEditBuffer == null) return;
+            _stageEditBuffer.StageFilter = _stageFilterTextBox.Text;
+            SetStageEditDirty();
         }
 
-        private void StageCount_Click(object sender, EventArgs e)
+        private void StageWeatherNumeric_ValueChanged(object sender, EventArgs e)
         {
-
+            if (_loadingUi || _stageEditBuffer == null) return;
+            _stageEditBuffer.Weather = decimal.ToInt32(_stageWeatherNumeric.Value);
+            SetStageEditDirty();
         }
 
-        private void saveToolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                SaveFileAs();
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...");
-            }
-        }
-        public void SaveFileAs(string basepath = "")
+        private void PathList_SelectedIndexChanged(object sender, EventArgs e)
         {
-            SaveFileDialog s = new SaveFileDialog();
-            {
-                s.DefaultExt = ".xfbin";
-                s.Filter = "*.xfbin|*.xfbin";
-            }
-            if (basepath == "")
-                s.ShowDialog();
-            else
-                s.FileName = basepath;
-            if (!(s.FileName != ""))
+            if (_loadingUi) return;
+            StageInfoPath selected = _pathList.SelectedItem as StageInfoPath;
+            if (!ReferenceEquals(selected, _currentPath) && _pathEditDirty && !ConfirmDiscardEdit("resource path"))
             {
+                SelectListItem(_pathList, _currentPath);
                 return;
             }
-            if (s.FileName == FilePath)
-            {
-                if (File.Exists(FilePath + ".backup"))
-                {
-                    File.Delete(FilePath + ".backup");
-                }
-                File.Copy(FilePath, FilePath + ".backup");
-            }
-            else
-            {
-                FilePath = s.FileName;
-            }
-            File.WriteAllBytes(FilePath, ConvertToFile());
-            if (basepath == "")
-                MessageBox.Show("File saved to " + FilePath + ".");
+            SetCurrentPath(selected);
         }
-        public byte[] ConvertToFile()
+
+        private void PathEditorTextBox_TextChanged(object sender, EventArgs e)
         {
-            byte[] fileBytes36 = new byte[0];
-            int SectionTotalLength = 0;
-            fileBytes36 = header;
-            int LengthOfStuff = 0;
-            for (int y = 0; y < EntryCount; y++)
+            if (_loadingUi || _currentPath == null) return;
+            _pathEditDirty = !string.Equals(_pathEditorTextBox.Text, _currentPath.FilePath ?? "", StringComparison.Ordinal);
+            RefreshCommandState();
+            UpdatePendingStatus();
+        }
+
+        private void ObjectList_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (_loadingUi) return;
+            StageInfoObject selected = _objectList.SelectedItem as StageInfoObject;
+            if (!ReferenceEquals(selected, _currentObject) && _objectEditDirty && !ConfirmDiscardEdit("object entry"))
             {
-                LengthOfStuff = LengthOfStuff + 0x130;
-                for (int x2 = 0; x2 < CountOfFiles[y]; x2++)
+                SelectListItem(_objectList, _currentObject);
+                return;
+            }
+            SetCurrentObject(selected);
+        }
+
+        private void StagePropertyGrid_PropertyValueChanged(object s, PropertyValueChangedEventArgs e)
+        {
+            if (_loadingUi || _stageEditBuffer == null) return;
+            RefreshStagePropertyGrids();
+            SetStageEditDirty();
+        }
+
+        private void ObjectPropertyGrid_PropertyValueChanged(object s, PropertyValueChangedEventArgs e)
+        {
+            if (_loadingUi || _objectEditBuffer == null) return;
+            RefreshObjectPropertyGrids();
+            _objectEditDirty = true;
+            RefreshCommandState();
+            UpdatePendingStatus();
+        }
+
+        private void Tool_StageInfoEditor_Shown(object sender, EventArgs e)
+        {
+            if (_initialFileLoadAttempted) return;
+            _initialFileLoadAttempted = true;
+            if (!string.IsNullOrWhiteSpace(Main.stageInfoPath) && File.Exists(Main.stageInfoPath))
+                OpenFile(Main.stageInfoPath);
+        }
+
+        private void Tool_StageInfoEditor_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Control && e.KeyCode == Keys.F)
+            {
+                _stageSearchBox.Focus();
+                _stageSearchBox.SelectAll();
+                e.Handled = true;
+            }
+            else if (e.KeyCode == Keys.Delete && _stageList.Focused)
+            {
+                DeleteStage();
+                e.Handled = true;
+            }
+        }
+
+        private void Tool_StageInfoEditor_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (!ConfirmDiscardAllEntryEdits() || !PromptSaveIfDirty())
+                e.Cancel = true;
+        }
+
+        private void StageList_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (_loadingUi) return;
+            StageListItem item = _stageList.SelectedItem as StageListItem;
+            StageInfoStage selected = item == null ? null : item.Stage;
+            if (!ReferenceEquals(selected, _currentStage) && HasPendingEntryEdits && !ConfirmDiscardAllEntryEdits())
+            {
+                SelectStageInList(_currentStage);
+                return;
+            }
+            SetCurrentStage(selected);
+        }
+
+        private void SetCurrentStage(StageInfoStage stage)
+        {
+            _loadingUi = true;
+            try
+            {
+                _currentStage = stage;
+                _stageEditBuffer = stage == null ? null : stage.DeepClone();
+                _stageEditDirty = false;
+                _currentPath = null;
+                _currentObject = null;
+                _objectEditBuffer = null;
+                _pathEditDirty = false;
+                _objectEditDirty = false;
+                RefreshStageIdentityFields(_stageEditBuffer);
+                BindStagePropertyGrids(_stageEditBuffer);
+                RefreshPathList(stage != null && stage.FilePaths.Count > 0 ? stage.FilePaths[0] : null);
+                RefreshObjectList(stage != null && stage.Objects.Count > 0 ? stage.Objects[0] : null);
+                UpdateRawInformation();
+            }
+            finally
+            {
+                _loadingUi = false;
+            }
+            RefreshCommandState();
+            UpdateStatus();
+        }
+
+        private void SetCurrentObject(StageInfoObject stageObject)
+        {
+            bool previousLoading = _loadingUi;
+            _loadingUi = true;
+            try
+            {
+                _currentObject = stageObject;
+                _objectEditBuffer = stageObject == null ? null : stageObject.DeepClone();
+                _objectEditDirty = false;
+                BindObjectPropertyGrids(_objectEditBuffer);
+                UpdateRawInformation();
+            }
+            finally
+            {
+                _loadingUi = previousLoading;
+            }
+            RefreshCommandState();
+            UpdateStatus();
+        }
+
+        private void SetCurrentPath(StageInfoPath path)
+        {
+            bool previousLoading = _loadingUi;
+            _loadingUi = true;
+            try
+            {
+                _currentPath = path;
+                _pathEditDirty = false;
+                _pathEditorTextBox.Text = path == null ? "" : path.FilePath ?? "";
+            }
+            finally { _loadingUi = previousLoading; }
+            RefreshCommandState();
+        }
+
+        private void RefreshStageIdentityFields(StageInfoStage stage)
+        {
+            _stageNameTextBox.Text = stage == null ? "" : stage.StageName ?? "";
+            _stageMessageTextBox.Text = stage == null ? "" : stage.StageMessageID ?? "";
+            _stageFilterTextBox.Text = stage == null ? "" : stage.StageFilter ?? "";
+            SetNumericValue(_stageWeatherNumeric, stage == null ? 0 : stage.Weather);
+        }
+
+        private void BindStagePropertyGrids(StageInfoStage stage)
+        {
+            SetPropertySubset(_fogMonoGrid, stage,
+                "EnableFog", "FogStartDistance", "FogEndDistance", "FogStrength", "FogColor",
+                "EnableMonoColorFilter", "MonoBlueTone", "MonoRedTone", "MonoAlpha");
+            SetPropertySubset(_glareSoftFocusGrid, stage,
+                "EnableGlareEffect", "GlareLuminanceThreshold", "GlareSubtracted", "GlareCompositionStrength",
+                "EnableSoftFocus", "SoftFocusStrength");
+            SetPropertySubset(_sunShaftGrid, stage,
+                "EnableSunShaft", "SunShaftStartDistance", "SunShaftEndDistance", "SunShaftAlpha", "SunShaftColor",
+                "SunShaftDirectionX", "SunShaftDirectionY", "SunShaftDirectionZ", "SunShaftBlurWidth", "SunShaftAttenuationCoefficient");
+            SetPropertySubset(_depthOfFieldGrid, stage,
+                "EnableDOFBlur", "DOFFocalLength", "DOFShortDistance", "DOFLongDistance", "DOFAlpha", "EnableDOFEdgeBlur");
+            SetPropertySubset(_lightPointGrid, stage,
+                "LightPointDirectionX", "LightPointDirectionY", "LightPointDirectionZ", "EnableShadowColor");
+            SetPropertySubset(_colorsGrid, stage,
+                "PlayerAmbientColor", "RayCutOffShadeColor", "EffectAmbientColor", "UnknownColor",
+                "ParallelAmbientColor", "RayCutOffNormalColor", "ShadowColor", "RockColor");
+            SetPropertySubset(_lensExposureGrid, stage,
+                "EnableBrightnessAdjustment", "Brightness", "Contrast", "EnableLensFlare", "LensFlare",
+                "LensFlarePositionX", "LensFlarePositionY", "LensFlarePositionZ", "LensFlareAlpha");
+        }
+
+        private void BindObjectPropertyGrids(StageInfoObject stageObject)
+        {
+            SetPropertySubset(_objectSettingsGrid, stageObject,
+                "ObjectFilePath", "ObjectName", "PositionFilePath", "PositionBoneName",
+                "EntryType", "AnimationSpeed", "EnableCameraHideObject", "IsRigidBody");
+            SetPropertySubset(_breakableObjectGrid, stageObject,
+                "BreakableObjectPath", "BreakableObjectEffect01", "BreakableObjectSpeed01",
+                "BreakableObjectEffect02", "BreakableObjectSpeed02", "BreakableObjectEffect03", "BreakableObjectSpeed03");
+            SetPropertySubset(_breakableWallGrid, stageObject,
+                "BreakableWallEffect01", "BreakableWallValue1", "BreakableWallValue2", "BreakableWallEffect02",
+                "BreakableWallEffect03", "BreakableWallVolume", "BreakableWallSound");
+            SetPropertySubset(_objectAdvancedGrid, stageObject, "BreakableConstantA", "BreakableConstantB");
+        }
+
+        private static void SetPropertySubset(PropertyGrid grid, object target, params string[] propertyNames)
+        {
+            grid.SelectedObject = target == null ? null : new PropertySubsetView(target, propertyNames);
+        }
+
+        private void RefreshStagePropertyGrids()
+        {
+            foreach (PropertyGrid grid in new[] { _fogMonoGrid, _glareSoftFocusGrid, _sunShaftGrid, _depthOfFieldGrid, _lightPointGrid, _colorsGrid, _lensExposureGrid })
+                grid.Refresh();
+        }
+
+        private void RefreshObjectPropertyGrids()
+        {
+            foreach (PropertyGrid grid in new[] { _objectSettingsGrid, _breakableObjectGrid, _breakableWallGrid, _objectAdvancedGrid })
+                grid.Refresh();
+        }
+
+        private void RefreshStageList(StageInfoStage preferred)
+        {
+            string filter = (_stageSearchBox.Text ?? "").Trim();
+            _loadingUi = true;
+            try
+            {
+                _stageList.BeginUpdate();
+                _stageList.Items.Clear();
+                for (int i = 0; i < _stages.Count; i++)
                 {
-                    LengthOfStuff = 0x130+ LengthOfStuff + 8 + 8 + SecondarySectionFilePath[y][x2].Length;
+                    StageInfoStage stage = _stages[i];
+                    if (!StageMatches(stage, filter)) continue;
+                    _stageList.Items.Add(new StageListItem(stage, i));
+                }
+                _stageList.EndUpdate();
+
+                int selectedIndex = -1;
+                if (preferred != null)
+                {
+                    for (int i = 0; i < _stageList.Items.Count; i++)
+                    {
+                        StageListItem item = (StageListItem)_stageList.Items[i];
+                        if (ReferenceEquals(item.Stage, preferred)) { selectedIndex = i; break; }
+                    }
+                }
+                if (selectedIndex < 0 && _stageList.Items.Count > 0)
+                    selectedIndex = 0;
+                _stageList.SelectedIndex = selectedIndex;
+            }
+            finally
+            {
+                _loadingUi = false;
+            }
+
+            StageListItem selected = _stageList.SelectedItem as StageListItem;
+            StageInfoStage selectedStage = selected == null ? null : selected.Stage;
+            if (!ReferenceEquals(selectedStage, _currentStage))
+                SetCurrentStage(selectedStage);
+            UpdateStatus();
+        }
+
+        private static bool StageMatches(StageInfoStage stage, string filter)
+        {
+            if (string.IsNullOrEmpty(filter)) return true;
+            return ContainsIgnoreCase(stage.StageName, filter) ||
+                   ContainsIgnoreCase(stage.StageMessageID, filter) ||
+                   ContainsIgnoreCase(stage.StageFilter, filter);
+        }
+
+        private static bool ContainsIgnoreCase(string value, string search)
+        {
+            return !string.IsNullOrEmpty(value) && value.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private void AddStage(bool duplicate)
+        {
+            if (!ConfirmDiscardAllEntryEdits()) return;
+            StageInfoStage stage = duplicate && _currentStage != null ? _currentStage.DeepClone() : StageInfoStage.CreateDefault();
+            if (duplicate)
+                stage.StageName = MakeUniqueStageName(stage.StageName + "_copy");
+            else
+                stage.StageName = MakeUniqueStageName("STAGE_");
+            _stages.Add(stage);
+            EntryCount = _stages.Count;
+            MarkDirty();
+            RefreshStageList(stage);
+        }
+
+        private string MakeUniqueStageName(string baseName)
+        {
+            string candidate = baseName;
+            int suffix = 2;
+            while (_stages.Any(stage => string.Equals(stage.StageName, candidate, StringComparison.OrdinalIgnoreCase)))
+                candidate = baseName + suffix++;
+            return candidate;
+        }
+
+        private void DeleteStage()
+        {
+            if (_currentStage == null) return;
+            if (!ConfirmDiscardAllEntryEdits()) return;
+            if (MessageBox.Show(this, "Delete stage '" + _currentStage.StageName + "' and all of its paths/objects?", "Delete stage",
+                    MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes)
+                return;
+            int index = _stages.IndexOf(_currentStage);
+            _stages.Remove(_currentStage);
+            EntryCount = _stages.Count;
+            StageInfoStage next = _stages.Count == 0 ? null : _stages[Math.Min(index, _stages.Count - 1)];
+            MarkDirty();
+            RefreshStageList(next);
+        }
+
+        private void MoveStage(int delta)
+        {
+            if (_currentStage == null) return;
+            if (!ConfirmDiscardAllEntryEdits()) return;
+            int oldIndex = _stages.IndexOf(_currentStage);
+            int newIndex = oldIndex + delta;
+            if (newIndex < 0 || newIndex >= _stages.Count) return;
+            _stages.RaiseListChangedEvents = false;
+            _stages.RemoveAt(oldIndex);
+            _stages.Insert(newIndex, _currentStage);
+            _stages.RaiseListChangedEvents = true;
+            _stages.ResetBindings();
+            MarkDirty();
+            RefreshStageList(_currentStage);
+            SetCurrentStage(_currentStage);
+        }
+
+        private void CopyStageProperties()
+        {
+            if (_stageEditBuffer == null) return;
+            _copiedStageProperties = _stageEditBuffer.DeepClone();
+            RefreshCommandState();
+            SetStatusMessage("Copied the displayed stage properties. No entry was saved.");
+        }
+
+        private void PasteStageProperties()
+        {
+            if (_stageEditBuffer == null || _copiedStageProperties == null) return;
+            _stageEditBuffer.CopySettingsFrom(_copiedStageProperties);
+            RefreshStageEditors();
+            SetStageEditDirty();
+            SetStatusMessage("Pasted into the stage edit buffer. Click the stage Save button to apply.");
+        }
+
+        private void SaveStageEntry()
+        {
+            if (_currentStage == null || _stageEditBuffer == null) return;
+            if (_pathEditDirty)
+            {
+                MessageBox.Show(this, "Save or discard the current resource-path edit before saving the stage entry.",
+                    "Pending path edit", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            _currentStage.StageName = _stageEditBuffer.StageName ?? "";
+            _currentStage.StageMessageID = _stageEditBuffer.StageMessageID ?? "";
+            _currentStage.StageFilter = _stageEditBuffer.StageFilter ?? "";
+            _currentStage.CopySettingsFrom(_stageEditBuffer);
+            _stageEditDirty = false;
+            SyncManagedResources(_currentStage, false);
+            _stageEditBuffer = _currentStage.DeepClone();
+            BindStagePropertyGrids(_stageEditBuffer);
+            _stageList.Refresh();
+            MarkDirty();
+            RefreshCommandState();
+            SetStatusMessage("Stage entry applied. Use File > Save to write the document.");
+        }
+
+        private void AddPath()
+        {
+            if (_currentStage == null) return;
+            if (_pathEditDirty && !ConfirmDiscardEdit("resource path")) return;
+            StageInfoPath path = new StageInfoPath { FilePath = "data/stage/" };
+            _currentStage.FilePaths.Add(path);
+            RefreshPathList(path);
+            _pathEditorTextBox.Focus();
+            _pathEditorTextBox.SelectAll();
+            MarkDirty();
+            RefreshCommandState();
+        }
+
+        private void SavePathEntry()
+        {
+            if (_currentPath == null) return;
+            _currentPath.FilePath = _pathEditorTextBox.Text ?? "";
+            _pathEditDirty = false;
+            RefreshPathList(_currentPath);
+            MarkDirty();
+            SetStatusMessage("Resource-path entry applied. Use File > Save to write the document.");
+        }
+
+        private void DeletePath()
+        {
+            if (_currentStage == null || _currentPath == null) return;
+            if (_pathEditDirty && !ConfirmDiscardEdit("resource path")) return;
+            int index = _currentStage.FilePaths.IndexOf(_currentPath);
+            _currentStage.FilePaths.Remove(_currentPath);
+            StageInfoPath next = _currentStage.FilePaths.Count == 0 ? null : _currentStage.FilePaths[Math.Min(index, _currentStage.FilePaths.Count - 1)];
+            RefreshPathList(next);
+            MarkDirty();
+            RefreshCommandState();
+        }
+
+        private void MovePath(int delta)
+        {
+            if (_currentStage == null || _currentPath == null) return;
+            if (_pathEditDirty && !ConfirmDiscardEdit("resource path")) return;
+            StageInfoPath path = _currentPath;
+            int oldIndex = _currentStage.FilePaths.IndexOf(path);
+            int newIndex = oldIndex + delta;
+            if (oldIndex < 0 || newIndex < 0 || newIndex >= _currentStage.FilePaths.Count) return;
+            _currentStage.FilePaths.RaiseListChangedEvents = false;
+            _currentStage.FilePaths.RemoveAt(oldIndex);
+            _currentStage.FilePaths.Insert(newIndex, path);
+            _currentStage.FilePaths.RaiseListChangedEvents = true;
+            _currentStage.FilePaths.ResetBindings();
+            RefreshPathList(path);
+            MarkDirty();
+            RefreshCommandState();
+        }
+
+        private void RefreshPathList(StageInfoPath preferred)
+        {
+            bool previousLoading = _loadingUi;
+            _loadingUi = true;
+            try
+            {
+                _pathList.BeginUpdate();
+                _pathList.Items.Clear();
+                if (_currentStage != null)
+                    foreach (StageInfoPath path in _currentStage.FilePaths) _pathList.Items.Add(path);
+                _pathList.EndUpdate();
+                SelectListItemCore(_pathList, preferred);
+            }
+            finally { _loadingUi = previousLoading; }
+            SetCurrentPath(_pathList.SelectedItem as StageInfoPath);
+        }
+
+        private void AddObject()
+        {
+            if (_currentStage == null) return;
+            if (_objectEditDirty && !ConfirmDiscardEdit("object entry")) return;
+            StageInfoObject stageObject = StageInfoObject.CreateDefault();
+            _currentStage.Objects.Add(stageObject);
+            RefreshObjectList(stageObject);
+            MarkDirty();
+        }
+
+        private void DuplicateObject()
+        {
+            if (_currentStage == null || _currentObject == null) return;
+            if (_objectEditDirty && !ConfirmDiscardEdit("object entry")) return;
+            StageInfoObject clone = _currentObject.DeepClone();
+            clone.ObjectName = string.IsNullOrEmpty(clone.ObjectName) ? "object_copy" : clone.ObjectName + "_copy";
+            int insertAt = _currentStage.Objects.IndexOf(_currentObject) + 1;
+            _currentStage.Objects.Insert(insertAt, clone);
+            RefreshObjectList(clone);
+            MarkDirty();
+        }
+
+        private void SaveObjectEntry()
+        {
+            if (_currentStage == null || _currentObject == null || _objectEditBuffer == null) return;
+            int index = _currentStage.Objects.IndexOf(_currentObject);
+            if (index < 0) return;
+            StageInfoObject saved = _objectEditBuffer.DeepClone();
+            _currentStage.Objects[index] = saved;
+            _objectEditDirty = false;
+            RefreshObjectList(saved);
+            MarkDirty();
+            SetStatusMessage("Object entry applied. Use File > Save to write the document.");
+        }
+
+        private void DeleteObject()
+        {
+            if (_currentStage == null || _currentObject == null) return;
+            if (_objectEditDirty && !ConfirmDiscardEdit("object entry")) return;
+            if (MessageBox.Show(this, "Delete object '" + _currentObject.ObjectName + "'?", "Delete object",
+                    MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes)
+                return;
+            int index = _currentStage.Objects.IndexOf(_currentObject);
+            _currentStage.Objects.Remove(_currentObject);
+            StageInfoObject next = _currentStage.Objects.Count == 0 ? null : _currentStage.Objects[Math.Min(index, _currentStage.Objects.Count - 1)];
+            RefreshObjectList(next);
+            MarkDirty();
+        }
+
+        private void MoveObject(int delta)
+        {
+            if (_currentStage == null || _currentObject == null) return;
+            if (_objectEditDirty && !ConfirmDiscardEdit("object entry")) return;
+            int oldIndex = _currentStage.Objects.IndexOf(_currentObject);
+            int newIndex = oldIndex + delta;
+            if (newIndex < 0 || newIndex >= _currentStage.Objects.Count) return;
+            StageInfoObject item = _currentObject;
+            _currentStage.Objects.RaiseListChangedEvents = false;
+            _currentStage.Objects.RemoveAt(oldIndex);
+            _currentStage.Objects.Insert(newIndex, item);
+            _currentStage.Objects.RaiseListChangedEvents = true;
+            _currentStage.Objects.ResetBindings();
+            RefreshObjectList(item);
+            MarkDirty();
+        }
+
+        private void RefreshObjectList(StageInfoObject preferred)
+        {
+            bool previousLoading = _loadingUi;
+            _loadingUi = true;
+            try
+            {
+                _objectList.BeginUpdate();
+                _objectList.Items.Clear();
+                if (_currentStage != null)
+                    foreach (StageInfoObject stageObject in _currentStage.Objects) _objectList.Items.Add(stageObject);
+                _objectList.EndUpdate();
+                SelectListItemCore(_objectList, preferred);
+            }
+            finally { _loadingUi = previousLoading; }
+            SetCurrentObject(_objectList.SelectedItem as StageInfoObject);
+        }
+
+        private bool HasPendingEntryEdits
+        {
+            get { return _stageEditDirty || _pathEditDirty || _objectEditDirty; }
+        }
+
+        private void SetStageEditDirty()
+        {
+            _stageEditDirty = true;
+            RefreshCommandState();
+            UpdatePendingStatus();
+        }
+
+        private bool ConfirmDiscardEdit(string entryName)
+        {
+            return MessageBox.Show(this,
+                "The selected " + entryName + " has changes that have not been applied. Discard those changes?",
+                "Unsaved entry changes", MessageBoxButtons.YesNo, MessageBoxIcon.Warning,
+                MessageBoxDefaultButton.Button2) == DialogResult.Yes;
+        }
+
+        private bool ConfirmDiscardAllEntryEdits()
+        {
+            if (!HasPendingEntryEdits) return true;
+            if (MessageBox.Show(this,
+                    "One or more entries have unapplied changes. Discard all unapplied entry changes?",
+                    "Unsaved entry changes", MessageBoxButtons.YesNo, MessageBoxIcon.Warning,
+                    MessageBoxDefaultButton.Button2) != DialogResult.Yes)
+                return false;
+            _stageEditDirty = false;
+            _pathEditDirty = false;
+            _objectEditDirty = false;
+            return true;
+        }
+
+        private void SelectStageInList(StageInfoStage stage)
+        {
+            bool previousLoading = _loadingUi;
+            _loadingUi = true;
+            try
+            {
+                _stageList.SelectedIndex = -1;
+                for (int i = 0; i < _stageList.Items.Count; i++)
+                {
+                    StageListItem item = _stageList.Items[i] as StageListItem;
+                    if (item != null && ReferenceEquals(item.Stage, stage))
+                    {
+                        _stageList.SelectedIndex = i;
+                        break;
+                    }
                 }
             }
-            for (int x = 0; x < EntryCount; x++)
+            finally { _loadingUi = previousLoading; }
+        }
+
+        private void SelectListItem(ListBox list, object item)
+        {
+            bool previousLoading = _loadingUi;
+            _loadingUi = true;
+            try { SelectListItemCore(list, item); }
+            finally { _loadingUi = previousLoading; }
+        }
+
+        private static void SelectListItemCore(ListBox list, object item)
+        {
+            list.SelectedIndex = -1;
+            if (item == null) return;
+            for (int i = 0; i < list.Items.Count; i++)
             {
-                fileBytes36 = Main.b_AddBytes(fileBytes36, MainStageSection[x]);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(CountOfFiles[x]), fileBytes36.Length - 0x118);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(CountOfMeshes[x]), fileBytes36.Length - 0x108);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(MainSection_WeatherSettings[x]), fileBytes36.Length - 0xF8);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, MainSection_ColorGroundEffect[x], fileBytes36.Length - 0xF4);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, MainSection_ColorUnknown2[x], fileBytes36.Length - 0xF0);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, MainSection_ColorPlayerLight[x], fileBytes36.Length - 0xEC);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(MainSection_EnablelensFlareSettings[x]), fileBytes36.Length - 0xD8);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(MainSection_lensFlareSettings[x]), fileBytes36.Length - 0xD4);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(MainSection_X_PositionLightPoint[x]), fileBytes36.Length - 0xCC);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(MainSection_Y_PositionLightPoint[x]), fileBytes36.Length - 0xC8);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(MainSection_Z_PositionLightPoint[x]), fileBytes36.Length - 0xC4);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, MainSection_ColorLight[x], fileBytes36.Length - 0xC0);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, MainSection_ColorUnknown[x], fileBytes36.Length - 0xBC);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(MainSection_X_PositionShadow[x]), fileBytes36.Length - 0xB8);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(MainSection_Y_PositionShadow[x]), fileBytes36.Length - 0xB4);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(MainSection_Z_PositionShadow[x]), fileBytes36.Length - 0xB0);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(MainSection_ShadowSetting_value1[x]), fileBytes36.Length - 0xAC);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, MainSection_ColorShadow[x], fileBytes36.Length - 0xA8);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(MainSection_ShadowSetting_value2[x]), fileBytes36.Length - 0xA4);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(MainSection_unk1[x]), fileBytes36.Length - 0xA0);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(MainSection_PowerLight[x]), fileBytes36.Length - 0x9C);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(MainSection_PowerSkyColor[x]), fileBytes36.Length - 0x98);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, MainSection_ColorSky[x], fileBytes36.Length - 0x94);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(MainSection_blur[x]), fileBytes36.Length - 0x68);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(MainSection_X_MysteriousPosition[x]), fileBytes36.Length - 0x5C);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(MainSection_Y_MysteriousPosition[x]), fileBytes36.Length - 0x58);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(MainSection_Z_MysteriousPosition[x]), fileBytes36.Length - 0x54);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(MainSection_EnableGlareSettingValue1[x]), fileBytes36.Length - 0x64);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(MainSection_EnableGlareSettingValue2[x]), fileBytes36.Length - 0x50);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(MainSection_EnableGlareSettingValue3[x]), fileBytes36.Length - 0x4C);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(MainSection_MysteriousGlareValue3[x]), fileBytes36.Length - 0x48);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(MainSection_UnknownValue1[x]), fileBytes36.Length - 0x8C);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(MainSection_UnknownValue2[x]), fileBytes36.Length - 0x88);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(MainSection_UnknownValue3[x]), fileBytes36.Length - 0x84);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(MainSection_MysteriousGlareValue1[x]), fileBytes36.Length - 0x44);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(MainSection_PowerGlare[x]), fileBytes36.Length - 0x40);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, MainSection_ColorGlare[x], fileBytes36.Length - 0x3C);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(MainSection_X_PositionGlarePoint[x]), fileBytes36.Length - 0x38);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(MainSection_Y_PositionGlarePoint[x]), fileBytes36.Length - 0x34);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(MainSection_Z_PositionGlarePoint[x]), fileBytes36.Length - 0x30);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(MainSectionGlareVagueness[x]), fileBytes36.Length - 0x2C);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(MainSection_MysteriousGlareValue2[x]), fileBytes36.Length - 0x28);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, MainSection_ColorRock[x], fileBytes36.Length - 0x24);
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(LengthOfStuff), fileBytes36.Length - 0x100);
-                SectionTotalLength = SectionTotalLength + 0x130;
+                if (!ReferenceEquals(list.Items[i], item)) continue;
+                list.SelectedIndex = i;
+                break;
+            }
+        }
+
+        private void UpdatePendingStatus()
+        {
+            UpdateStatus();
+        }
+
+        private void SyncCurrentManagedResources()
+        {
+            if (_currentStage == null) return;
+            if (_stageEditDirty || _pathEditDirty)
+            {
+                MessageBox.Show(this, "Save or discard the pending stage/path entry edit before synchronizing resources.",
+                    "Pending entry edit", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            SyncManagedResources(_currentStage, true);
+        }
+
+        private void SyncManagedResources(StageInfoStage stage, bool report)
+        {
+            if (stage == null) return;
+            string[] managed =
+            {
+                "data/stage/sae_snow.xfbin",
+                "data/stage/sae_rain.xfbin",
+                "data/stage/lensFlare/uviolet_lensFlare.xfbin",
+                "data/stage/lensFlare/oprism_lensFlare.xfbin",
+                "data/stage/lensFlare/phalo_lensFlare.xfbin",
+                "data/stage/lensFlare/gpurpose_lensFlare.xfbin",
+                "data/stage/lensFlare/mlight_lensFlare.xfbin",
+                "data/stage/lensFlare/sunset_lensFlare.xfbin"
             };
-            int LengthFromSection = 0;
-            int extra = 0;
-            int TotalLengthOfMeshes = 0;
-            for (int x = 0; x < EntryCount; x++)
+            List<StageInfoPath> retained = stage.FilePaths
+                .Where(path => !managed.Contains(path.FilePath ?? "", StringComparer.OrdinalIgnoreCase))
+                .Select(path => path.DeepClone()).ToList();
+
+            if (stage.Weather == 1)
+                retained.Add(new StageInfoPath { FilePath = managed[0] });
+            else if (stage.Weather == 2)
+                retained.Add(new StageInfoPath { FilePath = managed[1] });
+
+            if (stage.EnableLensFlare && stage.LensFlare >= 0 && stage.LensFlare < Program.lensFlareList.Length)
+                retained.Add(new StageInfoPath { FilePath = managed[2 + stage.LensFlare] });
+
+            bool changed = retained.Count != stage.FilePaths.Count ||
+                           retained.Where((path, index) => !string.Equals(path.FilePath, stage.FilePaths[index].FilePath, StringComparison.OrdinalIgnoreCase)).Any();
+            if (!changed) return;
+
+            stage.FilePaths.RaiseListChangedEvents = false;
+            stage.FilePaths.Clear();
+            foreach (StageInfoPath path in retained)
+                stage.FilePaths.Add(path);
+            stage.FilePaths.RaiseListChangedEvents = true;
+            stage.FilePaths.ResetBindings();
+
+            if (ReferenceEquals(stage, _currentStage))
+                RefreshPathList(stage.FilePaths.Count > 0 ? stage.FilePaths[0] : null);
+            MarkDirty();
+            if (report)
+                SetStatusMessage("Weather/lens flare resource paths synchronized.");
+        }
+
+        private void RefreshStageEditors()
+        {
+            _loadingUi = true;
+            try
             {
-                int LengthFromPath = 0;
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes((EntryCount*0x130)-0x20-(x*0x130)+ LengthFromSection+ extra), FilePos+0x10+0x20+(x*0x130));
-                extra = extra+ 8 * CountOfFiles[x];
-                for (int x2 = 0; x2 < CountOfFiles[x]; x2++)
-                {
-                    LengthFromSection = LengthFromSection + SecondarySectionFilePath[x][x2].Length + 8;
-                }
-                for (int x2 = 0; x2 < CountOfFiles[x]; x2++)
-                {
-                    int _ptr = fileBytes36.Length;
-                    fileBytes36 = Main.b_AddBytes(fileBytes36, new byte[8] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 });
-                    fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(LengthFromPath+ 8 * CountOfFiles[x]), _ptr);
-                    LengthFromPath = LengthFromPath + SecondarySectionFilePath[x][x2].Length;
-                }
-                for (int x2 = 0; x2 < CountOfFiles[x]; x2++)
-                {
-                    fileBytes36 = Main.b_AddString(fileBytes36, SecondarySectionFilePath[x][x2]);
-                    fileBytes36 = Main.b_AddBytes(fileBytes36, new byte[8] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 });
-                }
+                RefreshStageIdentityFields(_stageEditBuffer);
+                BindStagePropertyGrids(_stageEditBuffer);
+                RefreshStagePropertyGrids();
+                UpdateRawInformation();
             }
-            int _ptrMeshes = fileBytes36.Length;
-            for (int x = 0; x < EntryCount; x++)
+            finally { _loadingUi = false; }
+            _stageList.Refresh();
+        }
+
+        #endregion
+
+        #region File operations
+
+        public void OpenFile(string FileName = "")
+        {
+            if (!ConfirmDiscardAllEntryEdits() || !PromptSaveIfDirty()) return;
+            if (string.IsNullOrEmpty(FileName))
             {
-                for (int x2 = 0; x2 < CountOfMeshes[x]; x2++)
+                using (OpenFileDialog dialog = new OpenFileDialog
                 {
-                    fileBytes36 = Main.b_AddBytes(fileBytes36, new byte[0xB0] { Convert.ToByte(x), Convert.ToByte(x2), 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 });
-                    TotalLengthOfMeshes = TotalLengthOfMeshes + 0xB0;
-                }
-            }
-            int _ptrLastSection = 0;
-            for (int x = 0; x<EntryCount; x++)
-            {
-                
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(_ptrMeshes - header.Length - 0x30 - (x*0x130) + _ptrLastSection), header.Length+0x30+(x*0x130));
-                
-                for (int x3 = 0; x3<CountOfMeshes[x]; x3++)
+                    DefaultExt = "xfbin",
+                    Filter = "XFBIN StageInfo (*.xfbin)|*.xfbin|All files (*.*)|*.*",
+                    CheckFileExists = true,
+                    Multiselect = false,
+                    Title = "Open StageInfo"
+                })
                 {
-                    _ptrLastSection = _ptrLastSection + 0xB0;
-                }
-            }
-            int TotalLengthOfSection = 0;
-            int TotalLengthOfLoadedPaths = 0;
-            for (int x = 0; x < EntryCount; x++)
-            {
-                for (int x2 = 0; x2 < CountOfMeshes[x]; x2++)
-                {
-                    //path
-                    fileBytes36 = Main.b_AddString(fileBytes36, SecondarySectionLoadPath[x][x2]);
-                    fileBytes36 = Main.b_AddBytes(fileBytes36, new byte[4] { 0x00, 0x00, 0x00, 0x00 });
-                    fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(TotalLengthOfMeshes + TotalLengthOfLoadedPaths- TotalLengthOfSection), _ptrMeshes + TotalLengthOfSection);
-                    TotalLengthOfLoadedPaths = TotalLengthOfLoadedPaths + SecondarySectionLoadPath[x][x2].Length + 4;
-                    //mesh
-                    fileBytes36 = Main.b_AddString(fileBytes36, SecondarySectionLoadMesh[x][x2]);
-                    fileBytes36 = Main.b_AddBytes(fileBytes36, new byte[4] { 0x00, 0x00, 0x00, 0x00 });
-                    fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(TotalLengthOfMeshes + TotalLengthOfLoadedPaths - TotalLengthOfSection -0x08), _ptrMeshes + 0x08+ TotalLengthOfSection);
-                    TotalLengthOfLoadedPaths = TotalLengthOfLoadedPaths + SecondarySectionLoadMesh[x][x2].Length + 4;
-                    //dmypath
-                    //if (SecondarySectionPositionFilePath[x][x2].Length > 1) //BIG BRAIN CC2 MADE IT BUG CAMERA VALUE IF YOU DONT USING IT ALL TIME
-                   // {
-                        fileBytes36 = Main.b_AddString(fileBytes36, SecondarySectionPositionFilePath[x][x2]);
-                        fileBytes36 = Main.b_AddBytes(fileBytes36, new byte[4] { 0x00, 0x00, 0x00, 0x00 });
-                        fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(TotalLengthOfMeshes + TotalLengthOfLoadedPaths - TotalLengthOfSection - 0x10), _ptrMeshes + 0x10 + TotalLengthOfSection);
-                        TotalLengthOfLoadedPaths = TotalLengthOfLoadedPaths + SecondarySectionPositionFilePath[x][x2].Length + 4;
-                    //}
-                    //else
-                    //{
-                    //    fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(0), _ptrMeshes + 0x10 + TotalLengthOfSection);
-                    //}
-                    //dmypos
-                    //if (SecondarySectionPosition[x][x2].Length > 1 && SecondarySectionPositionFilePath[x][x2].Length > 1)
-                    //{
-                        fileBytes36 = Main.b_AddString(fileBytes36, SecondarySectionPosition[x][x2]);
-                        fileBytes36 = Main.b_AddBytes(fileBytes36, new byte[4] { 0x00, 0x00, 0x00, 0x00 });
-                        fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(TotalLengthOfMeshes + TotalLengthOfLoadedPaths - TotalLengthOfSection - 0x18), _ptrMeshes + 0x18 + TotalLengthOfSection);
-                        TotalLengthOfLoadedPaths = TotalLengthOfLoadedPaths + SecondarySectionPosition[x][x2].Length + 4;
-                    //}
-                    //else
-                    //{
-                    //    fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(0), _ptrMeshes + 0x18 + TotalLengthOfSection);
-                    //}
-                    //TypeSection
-                    fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(SecondaryTypeSection[x][x2]), _ptrMeshes + 0x20 + TotalLengthOfSection);
-                    //Speed of animation
-                    if (SecondaryTypeSection[x][x2]!=00 && SecondaryTypeSection[x][x2] != 04)
-                    {
-                        fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(SecondaryTypeAnimationSection_speed[x][x2]), _ptrMeshes + 0x24 + TotalLengthOfSection);
-                    }
-                    else
-                    {
-                        fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(0), _ptrMeshes + 0x24 + TotalLengthOfSection);
-                    }
-                    //Camera value
-                    fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(SecondarySectionCameraValue[x][x2]), _ptrMeshes + 0x28 + TotalLengthOfSection);
-                    //RigidBody value
-                    fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(SecondarySectionMysteriousValue[x][x2]), _ptrMeshes + 0x2C + TotalLengthOfSection);
-                    //Breakable object
-                    if (SecondaryTypeSection[x][x2] == 0x0B)
-                    {
-                        //path
-                        fileBytes36 = Main.b_AddString(fileBytes36, SecondaryTypeBreakableObject_path[x][x2]);
-                        fileBytes36 = Main.b_AddBytes(fileBytes36, new byte[4] { 0x00, 0x00, 0x00, 0x00 });
-                        fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(TotalLengthOfMeshes + TotalLengthOfLoadedPaths - TotalLengthOfSection - 0x38), _ptrMeshes + 0x38 + TotalLengthOfSection);
-                        TotalLengthOfLoadedPaths = TotalLengthOfLoadedPaths + SecondaryTypeBreakableObject_path[x][x2].Length + 4;
-
-                        if (SecondaryTypeBreakableObject_Effect01[x][x2].Length > 1 && SecondaryTypeBreakableObject_path[x][x2].Length > 1)
-                        {
-                            //effect1
-                            fileBytes36 = Main.b_AddString(fileBytes36, SecondaryTypeBreakableObject_Effect01[x][x2]);
-                            fileBytes36 = Main.b_AddBytes(fileBytes36, new byte[4] { 0x00, 0x00, 0x00, 0x00 });
-                            fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(TotalLengthOfMeshes + TotalLengthOfLoadedPaths - TotalLengthOfSection - 0x40), _ptrMeshes + 0x40 + TotalLengthOfSection);
-                            TotalLengthOfLoadedPaths = TotalLengthOfLoadedPaths + SecondaryTypeBreakableObject_Effect01[x][x2].Length + 4;
-
-                            //effect1_speed
-                            fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(SecondaryTypeBreakableObject_Speed01[x][x2]), _ptrMeshes + 0x48 + TotalLengthOfSection);
-                        }
-                        else
-                        {
-                            fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(0), _ptrMeshes + 0x40 + TotalLengthOfSection);
-                            fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(0), _ptrMeshes + 0x48 + TotalLengthOfSection);
-                        }
-                        if (SecondaryTypeBreakableObject_Effect02[x][x2].Length > 1 && SecondaryTypeBreakableObject_path[x][x2].Length > 1)
-                        {
-                            //effect2
-                            fileBytes36 = Main.b_AddString(fileBytes36, SecondaryTypeBreakableObject_Effect02[x][x2]);
-                            fileBytes36 = Main.b_AddBytes(fileBytes36, new byte[4] { 0x00, 0x00, 0x00, 0x00 });
-                            fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(TotalLengthOfMeshes + TotalLengthOfLoadedPaths - TotalLengthOfSection - 0x50), _ptrMeshes + 0x50 + TotalLengthOfSection);
-                            TotalLengthOfLoadedPaths = TotalLengthOfLoadedPaths + SecondaryTypeBreakableObject_Effect02[x][x2].Length + 4;
-
-                            //effect2_speed
-                            fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(SecondaryTypeBreakableObject_Speed02[x][x2]), _ptrMeshes + 0x58 + TotalLengthOfSection);
-                        }
-                        else
-                        {
-                            fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(0), _ptrMeshes + 0x50 + TotalLengthOfSection);
-                            fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(0), _ptrMeshes + 0x58 + TotalLengthOfSection);
-                        }
-                        if (SecondaryTypeBreakableObject_Effect03[x][x2].Length > 1 && SecondaryTypeBreakableObject_path[x][x2].Length > 1)
-                        {
-                            //effect3
-                            fileBytes36 = Main.b_AddString(fileBytes36, SecondaryTypeBreakableObject_Effect03[x][x2]);
-                            fileBytes36 = Main.b_AddBytes(fileBytes36, new byte[4] { 0x00, 0x00, 0x00, 0x00 });
-                            fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(TotalLengthOfMeshes + TotalLengthOfLoadedPaths - TotalLengthOfSection - 0x60), _ptrMeshes + 0x60 + TotalLengthOfSection);
-                            TotalLengthOfLoadedPaths = TotalLengthOfLoadedPaths + SecondaryTypeBreakableObject_Effect03[x][x2].Length + 4;
-
-                            //effect3_speed
-                            fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(SecondaryTypeBreakableObject_Speed03[x][x2]), _ptrMeshes + 0x68 + TotalLengthOfSection);
-                        }
-                        else
-                        {
-                            fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(0), _ptrMeshes + 0x60 + TotalLengthOfSection);
-                            fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(0), _ptrMeshes + 0x68 + TotalLengthOfSection);
-                        }
-                        
-                    }
-                    else
-                    {
-                        fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(0), _ptrMeshes + 0x38 + TotalLengthOfSection);
-                    }
-                        fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(0x3C), _ptrMeshes + 0x70 + TotalLengthOfSection);
-                        fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(0x78), _ptrMeshes + 0x74 + TotalLengthOfSection);
-                        //const_values
-                        fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(SecondaryConstBreakableWallValue1[x][x2]), _ptrMeshes + 0x80 + TotalLengthOfSection);
-                        fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(SecondaryConstBreakableWallValue2[x][x2]), _ptrMeshes + 0x84 + TotalLengthOfSection);
-
-                    //breakable wall
-                    if (SecondaryTypeSection[x][x2] == 7)
-                    {
-                        //effect1
-                        fileBytes36 = Main.b_AddString(fileBytes36, SecondaryTypeBreakableWall_Effect01[x][x2]);
-                        fileBytes36 = Main.b_AddBytes(fileBytes36, new byte[4] { 0x00, 0x00, 0x00, 0x00 });
-                        fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(TotalLengthOfMeshes + TotalLengthOfLoadedPaths - TotalLengthOfSection - 0x78), _ptrMeshes + 0x78 + TotalLengthOfSection);
-                        TotalLengthOfLoadedPaths = TotalLengthOfLoadedPaths + SecondaryTypeBreakableWall_Effect01[x][x2].Length + 4;
-
-                        //const_values
-                        //fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(SecondaryConstBreakableWallValue1[x][x2]), _ptrMeshes + 0x80 + TotalLengthOfSection);
-                        //fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(SecondaryConstBreakableWallValue2[x][x2]), _ptrMeshes + 0x84 + TotalLengthOfSection);
-
-                        //effect2
-                        fileBytes36 = Main.b_AddString(fileBytes36, SecondaryTypeBreakableWall_Effect02[x][x2]);
-                        fileBytes36 = Main.b_AddBytes(fileBytes36, new byte[4] { 0x00, 0x00, 0x00, 0x00 });
-                        fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(TotalLengthOfMeshes + TotalLengthOfLoadedPaths - TotalLengthOfSection - 0x88), _ptrMeshes + 0x88 + TotalLengthOfSection);
-                        TotalLengthOfLoadedPaths = TotalLengthOfLoadedPaths + SecondaryTypeBreakableWall_Effect02[x][x2].Length + 4;
-
-                        //effect3
-                        fileBytes36 = Main.b_AddString(fileBytes36, SecondaryTypeBreakableWall_Effect03[x][x2]);
-                        fileBytes36 = Main.b_AddBytes(fileBytes36, new byte[4] { 0x00, 0x00, 0x00, 0x00 });
-                        fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(TotalLengthOfMeshes + TotalLengthOfLoadedPaths - TotalLengthOfSection - 0x90), _ptrMeshes + 0x90 + TotalLengthOfSection);
-                        TotalLengthOfLoadedPaths = TotalLengthOfLoadedPaths + SecondaryTypeBreakableWall_Effect03[x][x2].Length + 4;
-
-                        //sound_volume
-                        fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(SecondaryTypeBreakableWall_volume[x][x2]), _ptrMeshes + 0x98 + TotalLengthOfSection);
-
-                        //sound
-                        fileBytes36 = Main.b_AddString(fileBytes36, SecondaryTypeBreakableWall_Sound[x][x2]);
-                        fileBytes36 = Main.b_AddBytes(fileBytes36, new byte[4] { 0x00, 0x00, 0x00, 0x00 });
-                        fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(TotalLengthOfMeshes + TotalLengthOfLoadedPaths - TotalLengthOfSection - 0xA0), _ptrMeshes + 0xA0 + TotalLengthOfSection);
-                        TotalLengthOfLoadedPaths = TotalLengthOfLoadedPaths + SecondaryTypeBreakableWall_Sound[x][x2].Length + 4;
-
-                    }
-                    TotalLengthOfSection = TotalLengthOfSection + 0xB0;
+                    if (dialog.ShowDialog(this) != DialogResult.OK) return;
+                    FileName = dialog.FileName;
                 }
             }
 
-            int NamePos = fileBytes36.Length - header.Length-0x10;
-            int _ptrName = header.Length;
-            for (int x = 0; x < EntryCount; x++)
+            try
             {
-                //StageName
-                fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(NamePos+0x10), _ptrName + (x*0x130));
-                fileBytes36 = Main.b_AddString(fileBytes36, StageNameList[x]);
-                fileBytes36 = Main.b_AddBytes(fileBytes36, new byte[4] { 0x00, 0x00, 0x00, 0x00 });
-                NamePos = (NamePos + StageNameList[x].Length + 4);
-                if (c_sta_List[x].Length>1)
-                {
-                    //c_sta_x
-                    fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(NamePos + 0x08), _ptrName + 0x08 + (x * 0x130));
-                    fileBytes36 = Main.b_AddString(fileBytes36, c_sta_List[x]);
-                    fileBytes36 = Main.b_AddBytes(fileBytes36, new byte[4] { 0x00, 0x00, 0x00, 0x00 });
-                    NamePos = (NamePos + c_sta_List[x].Length + 4);
-                }
+                byte[] bytes = File.ReadAllBytes(FileName);
+                StageInfoDocument document = StageInfoSerializer.Read(bytes);
+                LoadDocument(document, bytes, FileName);
+                SetStatusMessage("Opened " + Path.GetFileName(FileName) + ".");
+            }
+            catch (Exception ex)
+            {
+                if (Visible)
+                    MessageBox.Show(this, "Could not open StageInfo:\n\n" + ex.Message, "StageInfo error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
                 else
-                {
-                    fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(0), _ptrName + 0x08 + (x * 0x130));
-                }
-                if (BTL_NSX_List[x].Length > 1)
-                {
-                    //BTL_NSX_XXXXX
-                    fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(NamePos), _ptrName + 0x10 + (x * 0x130));
-                    fileBytes36 = Main.b_AddString(fileBytes36, BTL_NSX_List[x]);
-                    fileBytes36 = Main.b_AddBytes(fileBytes36, new byte[4] { 0x00, 0x00, 0x00, 0x00 });
-                    NamePos = (NamePos + BTL_NSX_List[x].Length + 4);
-                }
-                else if (BTL_NSX_List[x].Length == 0)
-                {
-                    fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(NamePos), _ptrName + 0x10 + (x * 0x130));
-                    fileBytes36 = Main.b_AddBytes(fileBytes36, new byte[4] { 0x00, 0x00, 0x00, 0x00 });
-                    NamePos = (NamePos + 4);
-
-                }
-                NamePos = NamePos - 0x130;
-            }
-            fileBytes36 = Main.b_AddBytes(fileBytes36, new byte[0x14] { 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x02, 0x00, 0x79, 0x18, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00 });
-
-            byte[] Size1 = BitConverter.GetBytes(fileBytes36.Length - header.Length - 0x4);
-            byte[] Size2 = BitConverter.GetBytes(fileBytes36.Length - header.Length);
-            byte[] Size1Reverse = new byte[4]
-            {
-                Size1[3],
-                Size1[2],
-                Size1[1],
-                Size1[0]
-            };
-            byte[] Size2Reverse = new byte[4]
-            {
-                Size2[3],
-                Size2[2],
-                Size2[1],
-                Size2[0]
-            };
-            fileBytes36 = Main.b_ReplaceBytes(fileBytes36, Size1Reverse, header.Length - 0x14);
-            fileBytes36 = Main.b_ReplaceBytes(fileBytes36, Size2Reverse, header.Length - 0x20);
-
-            fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(EntryCount), header.Length - 0xC);
-            return fileBytes36;
-        }
-
-        private void SkyColor_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    ColorDialog MyDialog = new ColorDialog();
-                    MyDialog.AllowFullOpen = true;
-                    MyDialog.ShowHelp = true;
-                    MyDialog.AnyColor = true;
-                    byte[] Color = new byte[4]
-                         {
-                    MainSection_ColorSky[x][3],
-                    MainSection_ColorSky[x][2],
-                    MainSection_ColorSky[x][1],
-                    0x00
-                         };
-                    int color_int = Main.b_byteArrayToInt(Color);
-                    MyDialog.CustomColors = new int[] { color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, };
-                    if (MyDialog.ShowDialog() == DialogResult.OK)
-                    {
-                        byte[] ColorReverse = new byte[4]
-                        {
-                    MyDialog.Color.A,
-                    MyDialog.Color.B,
-                    MyDialog.Color.G,
-                    MyDialog.Color.R
-                        };
-                        MainSection_ColorSky[x] = Main.b_ReplaceBytes(MainSection_ColorSky[x], ColorReverse, 0, 0);
-                        SkyColorInfo_tb.Text = BitConverter.ToString(MainSection_ColorSky[x]);
-                    };
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-                
+                    SetStatusMessage("Could not open StageInfo: " + ex.Message);
             }
         }
 
-        private void button42_Click(object sender, EventArgs e)
+        private void LoadDocument(StageInfoDocument document, byte[] bytes, string path)
         {
-
+            _loadingUi = true;
+            try
+            {
+                _stages.Clear();
+                foreach (StageInfoStage stage in document.Stages)
+                    _stages.Add(stage);
+                fileBytes = bytes;
+                FilePath = path ?? "";
+                FileOpen = true;
+                EntryCount = _stages.Count;
+                _fileBinName = string.IsNullOrWhiteSpace(document.BinName) ? "stageInfo" : document.BinName;
+                header = document.MarkerOffset >= 0
+                    ? bytes.Take(Math.Min(bytes.Length, document.MarkerOffset + 0x10)).ToArray()
+                    : new byte[0];
+                _stageSearchBox.Text = "";
+                SetDirty(false);
+            }
+            finally
+            {
+                _loadingUi = false;
+            }
+            RefreshStageList(_stages.Count > 0 ? _stages[0] : null);
+            RefreshCommandState();
+            UpdateStatus();
         }
 
-        private void button37_Click_1(object sender, EventArgs e)
+        public void CloseFile()
         {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    MainSection_ColorSky[x] = Main.b_ReplaceBytes(MainSection_ColorSky[x], new byte[4] { 0x00, 0x00, 0x00, 0x00 }, 0, 0);
-                    SkyColorInfo_tb.Text = BitConverter.ToString(MainSection_ColorSky[x]);
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-                
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
+            if (!ConfirmDiscardAllEntryEdits() || !PromptSaveIfDirty()) return;
+            ClearDocument();
         }
 
-        private void Search_Click(object sender, EventArgs e)
+        private void ClearDocument()
         {
-            if (FileOpen)
-            {
-                if (Search_TB.Text != "")
-                {
-                    if (Main.SearchStringIndex(StageNameList, Search_TB.Text, EntryCount, listBox1.SelectedIndex) != -1)
-                    {
-                        listBox1.SelectedIndex = Main.SearchStringIndex(StageNameList, Search_TB.Text, EntryCount, listBox1.SelectedIndex);
-                    }
-                    else
-                    {
-                        if (Main.SearchStringIndex(StageNameList, Search_TB.Text, EntryCount, -1) != -1)
-                        {
-                            listBox1.SelectedIndex = Main.SearchStringIndex(StageNameList, Search_TB.Text, EntryCount, -1);
-                        }
-                        else
-                        {
-                            MessageBox.Show("Section with that name doesn't exist in file");
-                        }
-                    }
-                }
-                else
-                {
-                    MessageBox.Show("Write name of section in textbox");
-                }
-            }
-            else
-            {
-                MessageBox.Show("Open file before trying to search section");
-            }
-        }
-
-        private void progressBar1_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void button41_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    copied_MainSection_unk1 = (float)unk1_v.Value;
-                    copied_MainSection_X_MysteriousPosition = (float)Glare_X_Pos.Value;
-                    copied_MainSection_Y_MysteriousPosition = (float)Glare_Y_Pos.Value;
-                    copied_MainSection_Z_MysteriousPosition = (float)Glare_Z_Pos.Value;
-                    copied_MainSection_X_PositionGlarePoint = (float)lensFlare_X_Pos.Value;
-                    copied_MainSection_Y_PositionGlarePoint = (float)lensFlare_Y_Pos.Value;
-                    copied_MainSection_Z_PositionGlarePoint = (float)lensFlare_Z_Pos.Value;
-                    copied_MainSection_X_PositionLightPoint = (float)Light_X_Pos.Value;
-                    copied_MainSection_Y_PositionLightPoint = (float)Light_Y_Pos.Value;
-                    copied_MainSection_Z_PositionLightPoint = (float)Light_Z_Pos.Value;
-                    copied_MainSection_X_PositionShadow = (float)Shadow_X_Pos.Value;
-                    copied_MainSection_Y_PositionShadow = (float)Shadow_Y_Pos.Value;
-                    copied_MainSection_Z_PositionShadow = (float)Shadow_Z_Pos.Value;
-                    copied_MainSection_PowerGlare = (float)Glare_power_value.Value;
-                    copied_MainSection_blur = (float)BlurValue.Value;
-                    copied_MainSection_PowerLight = (float)Light_power_value.Value;
-                    copied_MainSectionGlareVagueness = (float)Vagueness_glare.Value;
-                    copied_MainSection_MysteriousGlareValue1 = (float)M_Glare_Value1.Value;
-                    copied_MainSection_MysteriousGlareValue2 = (float)M_Glare_Value2.Value;
-                    copied_MainSection_MysteriousGlareValue2 = (float)M_Glare_Value3.Value;
-                    copied_MainSection_UnknownValue1 = (float)unknown1_v.Value;
-                    copied_MainSection_UnknownValue2 = (float)unknown2_v.Value;
-                    copied_MainSection_UnknownValue3 = (float)unknown3_v.Value;
-                    copied_MainSection_PowerSkyColor = (float)Sky_light_strength.Value;
-
-                    int ColorGlare = Main.b_byteArrayToInt(MainSection_ColorGlare[x]);
-                    copied_MainSection_ColorGlare = BitConverter.GetBytes(ColorGlare);
-
-                    int ColorSky = Main.b_byteArrayToInt(MainSection_ColorSky[x]);
-                    copied_MainSection_ColorSky = BitConverter.GetBytes(ColorSky);
-
-                    int ColorRock = Main.b_byteArrayToInt(MainSection_ColorRock[x]);
-                    copied_MainSection_ColorRock = BitConverter.GetBytes(ColorRock);
-
-                    int ColorGroundEffect = Main.b_byteArrayToInt(MainSection_ColorGroundEffect[x]);
-                    copied_MainSection_ColorGroundEffect = BitConverter.GetBytes(ColorGroundEffect);
-
-                    int ColorPlayerLight = Main.b_byteArrayToInt(MainSection_ColorPlayerLight[x]);
-                    copied_MainSection_ColorPlayerLight = BitConverter.GetBytes(ColorPlayerLight);
-
-                    int ColorLight = Main.b_byteArrayToInt(MainSection_ColorLight[x]);
-                    copied_MainSection_ColorLight = BitConverter.GetBytes(ColorLight);
-
-                    int ColorShadow = Main.b_byteArrayToInt(MainSection_ColorShadow[x]);
-                    copied_MainSection_ColorShadow = BitConverter.GetBytes(ColorShadow);
-
-                    int ColorUnknown = Main.b_byteArrayToInt(MainSection_ColorUnknown[x]);
-                    copied_MainSection_ColorUnknown = BitConverter.GetBytes(ColorUnknown);
-
-                    int ColorUnknown2 = Main.b_byteArrayToInt(MainSection_ColorUnknown2[x]);
-                    copied_MainSection_ColorUnknown2 = BitConverter.GetBytes(ColorUnknown2);
-
-                    if (weather.Text == "snow")
-                        copied_MainSection_WeatherSettings = 1;
-                    else if (weather.Text == "rain")
-                        copied_MainSection_WeatherSettings = 2;
-                    else
-                        copied_MainSection_WeatherSettings = 0;
-
-                    if (LensFlare_combobox.SelectedIndex == 0)
-                        copied_MainSection_lensFlareSettings = 0;
-                    else if (LensFlare_combobox.SelectedIndex == 1)
-                        copied_MainSection_lensFlareSettings = 1;
-                    else if (LensFlare_combobox.SelectedIndex == 2)
-                        copied_MainSection_lensFlareSettings = 2;
-                    else if (LensFlare_combobox.SelectedIndex == 3)
-                        copied_MainSection_lensFlareSettings = 3;
-                    else if (LensFlare_combobox.SelectedIndex == 4)
-                        copied_MainSection_lensFlareSettings = 4;
-                    else if (LensFlare_combobox.SelectedIndex == 5)
-                        copied_MainSection_lensFlareSettings = 5;
-
-                    if (lensFlareEnabledText.Text == "Disabled")
-                        copied_MainSection_EnablelensFlareSettings = 0;
-                    else
-                        copied_MainSection_EnablelensFlareSettings = 1;
-
-                    if (glare1_cb.Checked == false)
-                        copied_MainSection_EnableGlareSettingValue1 = 0;
-                    else
-                        copied_MainSection_EnableGlareSettingValue1 = 1;
-
-                    if (glare2_cb.Checked == false)
-                        copied_MainSection_EnableGlareSettingValue2 = 0;
-                    else
-                        copied_MainSection_EnableGlareSettingValue2 = 1;
-
-                    if (glare3_cb.Checked == false)
-                        copied_MainSection_EnableGlareSettingValue3 = 0;
-                    else
-                        copied_MainSection_EnableGlareSettingValue3 = 1;
-
-                    if (shadow1_cb.Checked == false)
-                        copied_MainSection_ShadowSetting_value1 = 0;
-                    else
-                        copied_MainSection_ShadowSetting_value1 = 1;
-
-                    if (shadow2_cb.Checked == false)
-                        copied_MainSection_ShadowSetting_value2 = 0;
-                    else
-                        copied_MainSection_ShadowSetting_value2 = 1;
-
-                    copied_settings = true;
-                    MessageBox.Show("Settings of " + StageNameList[x] + " were copied!");
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void button43_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {   
-                    if (copied_settings==true)
-                    {
-                        float new_MainSection_unk1 = copied_MainSection_unk1;
-                        float new_MainSection_X_MysteriousPosition = copied_MainSection_X_MysteriousPosition;
-                        float new_MainSection_Y_MysteriousPosition = copied_MainSection_Y_MysteriousPosition;
-                        float new_MainSection_Z_MysteriousPosition = copied_MainSection_Z_MysteriousPosition;
-                        float new_MainSection_X_PositionGlarePoint = copied_MainSection_X_PositionGlarePoint;
-                        float new_MainSection_Y_PositionGlarePoint = copied_MainSection_Y_PositionGlarePoint;
-                        float new_MainSection_Z_PositionGlarePoint = copied_MainSection_Z_PositionGlarePoint;
-                        float new_MainSection_X_PositionLightPoint = copied_MainSection_X_PositionLightPoint;
-                        float new_MainSection_Y_PositionLightPoint = copied_MainSection_Y_PositionLightPoint;
-                        float new_MainSection_Z_PositionLightPoint = copied_MainSection_Z_PositionLightPoint;
-                        float new_MainSection_X_PositionShadow = copied_MainSection_X_PositionShadow;
-                        float new_MainSection_Y_PositionShadow = copied_MainSection_Y_PositionShadow;
-                        float new_MainSection_Z_PositionShadow = copied_MainSection_Z_PositionShadow;
-                        float new_MainSection_PowerGlare = copied_MainSection_PowerGlare;
-                        float new_MainSection_blur = copied_MainSection_blur;
-                        float new_MainSection_PowerLight = copied_MainSection_PowerLight;
-                        float new_MainSectionGlareVagueness = copied_MainSectionGlareVagueness;
-                        float new_MainSection_MysteriousGlareValue1 = copied_MainSection_MysteriousGlareValue1;
-                        float new_MainSection_MysteriousGlareValue2 = copied_MainSection_MysteriousGlareValue2;
-                        float new_MainSection_MysteriousGlareValue3 = copied_MainSection_MysteriousGlareValue3;
-                        float new_MainSection_UnknownValue1 = copied_MainSection_UnknownValue1;
-                        float new_MainSection_UnknownValue2 = copied_MainSection_UnknownValue2;
-                        float new_MainSection_UnknownValue3 = copied_MainSection_UnknownValue3;
-
-                        float new_MainSection_PowerSkyColor = copied_MainSection_PowerSkyColor;
-                        byte[] new_MainSection_ColorGlare = copied_MainSection_ColorGlare;
-                        byte[] new_MainSection_ColorSky = copied_MainSection_ColorSky;
-                        byte[] new_MainSection_ColorRock = copied_MainSection_ColorRock;
-                        byte[] new_MainSection_ColorGroundEffect = copied_MainSection_ColorGroundEffect;
-                        byte[] new_MainSection_ColorPlayerLight = copied_MainSection_ColorPlayerLight;
-                        byte[] new_MainSection_ColorLight = copied_MainSection_ColorLight;
-                        byte[] new_MainSection_ColorShadow = copied_MainSection_ColorShadow;
-                        byte[] new_MainSection_ColorUnknown = copied_MainSection_ColorUnknown;
-                        byte[] new_MainSection_ColorUnknown2 = copied_MainSection_ColorUnknown2;
-                        int new_MainSection_WeatherSettings = copied_MainSection_WeatherSettings;
-                        int new_MainSection_lensFlareSettings = copied_MainSection_lensFlareSettings;
-                        int new_MainSection_EnablelensFlareSettings = copied_MainSection_EnablelensFlareSettings;
-                        int new_MainSection_EnableGlareSettingValue1 = copied_MainSection_EnableGlareSettingValue1;
-                        int new_MainSection_EnableGlareSettingValue2 = copied_MainSection_EnableGlareSettingValue2;
-                        int new_MainSection_EnableGlareSettingValue3 = copied_MainSection_EnableGlareSettingValue3;
-                        int new_MainSection_ShadowSetting_value1 = copied_MainSection_ShadowSetting_value1;
-                        int new_MainSection_ShadowSetting_value2 = copied_MainSection_ShadowSetting_value2;
-
-                        MainSection_unk1[x] = new_MainSection_unk1;
-                        MainSection_X_MysteriousPosition[x] = new_MainSection_X_MysteriousPosition;
-                        MainSection_Y_MysteriousPosition[x] = new_MainSection_Y_MysteriousPosition;
-                        MainSection_Z_MysteriousPosition[x] = new_MainSection_Z_MysteriousPosition;
-                        MainSection_X_PositionGlarePoint[x] = new_MainSection_X_PositionGlarePoint;
-                        MainSection_Y_PositionGlarePoint[x] = new_MainSection_Y_PositionGlarePoint;
-                        MainSection_Z_PositionGlarePoint[x] = new_MainSection_Z_PositionGlarePoint;
-                        MainSection_X_PositionLightPoint[x] = new_MainSection_X_PositionLightPoint;
-                        MainSection_Y_PositionLightPoint[x] = new_MainSection_Y_PositionLightPoint;
-                        MainSection_Z_PositionLightPoint[x] = new_MainSection_Z_PositionLightPoint;
-                        MainSection_X_PositionShadow[x] = new_MainSection_X_PositionShadow;
-                        MainSection_Y_PositionShadow[x] = new_MainSection_Y_PositionShadow;
-                        MainSection_Z_PositionShadow[x] = new_MainSection_Z_PositionShadow;
-                        MainSection_PowerGlare[x] = new_MainSection_PowerGlare;
-                        MainSection_blur[x] = new_MainSection_blur;
-                        MainSection_PowerLight[x] = new_MainSection_PowerLight;
-                        MainSectionGlareVagueness[x] = new_MainSectionGlareVagueness;
-                        MainSection_MysteriousGlareValue1[x] = new_MainSection_MysteriousGlareValue1;
-                        MainSection_MysteriousGlareValue2[x] = new_MainSection_MysteriousGlareValue2;
-                        MainSection_MysteriousGlareValue3[x] = new_MainSection_MysteriousGlareValue3;
-                        MainSection_UnknownValue1[x] = new_MainSection_UnknownValue1;
-                        MainSection_UnknownValue2[x] = new_MainSection_UnknownValue2;
-                        MainSection_UnknownValue3[x] = new_MainSection_UnknownValue3;
-                        MainSection_PowerSkyColor[x] = new_MainSection_PowerSkyColor;
-                        MainSection_ColorGlare[x] = new_MainSection_ColorGlare;
-                        MainSection_ColorSky[x] = new_MainSection_ColorSky;
-                        MainSection_ColorRock[x] = new_MainSection_ColorRock;
-                        MainSection_ColorGroundEffect[x] = new_MainSection_ColorGroundEffect;
-                        MainSection_ColorPlayerLight[x] = new_MainSection_ColorPlayerLight;
-                        MainSection_ColorLight[x] = new_MainSection_ColorLight;
-                        MainSection_ColorShadow[x] = new_MainSection_ColorShadow;
-                        MainSection_ColorUnknown[x] = new_MainSection_ColorUnknown;
-                        MainSection_ColorUnknown2[x] = new_MainSection_ColorUnknown2;
-                        MainSection_WeatherSettings[x] = new_MainSection_WeatherSettings;
-                        MainSection_lensFlareSettings[x] = new_MainSection_lensFlareSettings;
-                        MainSection_EnablelensFlareSettings[x] = new_MainSection_EnablelensFlareSettings;
-                        MainSection_EnableGlareSettingValue1[x] = new_MainSection_EnableGlareSettingValue1;
-                        MainSection_EnableGlareSettingValue2[x] = new_MainSection_EnableGlareSettingValue2;
-                        MainSection_EnableGlareSettingValue3[x] = new_MainSection_EnableGlareSettingValue3;
-                        MainSection_ShadowSetting_value1[x] = new_MainSection_ShadowSetting_value1;
-                        MainSection_ShadowSetting_value2[x] = new_MainSection_ShadowSetting_value2;
-
-                        unk1_v.Value = (decimal)copied_MainSection_unk1;
-                        Glare_X_Pos.Value = (decimal)copied_MainSection_X_MysteriousPosition;
-                        Glare_Y_Pos.Value = (decimal)copied_MainSection_Y_MysteriousPosition;
-                        Glare_Z_Pos.Value = (decimal)copied_MainSection_Z_MysteriousPosition;
-                        lensFlare_X_Pos.Value = (decimal)copied_MainSection_X_PositionGlarePoint;
-                        lensFlare_Y_Pos.Value = (decimal)copied_MainSection_Y_PositionGlarePoint;
-                        lensFlare_Z_Pos.Value = (decimal)copied_MainSection_Z_PositionGlarePoint;
-                        Light_X_Pos.Value = (decimal)copied_MainSection_X_PositionLightPoint;
-                        Light_Y_Pos.Value = (decimal)copied_MainSection_Y_PositionLightPoint;
-                        Light_Z_Pos.Value = (decimal)copied_MainSection_Z_PositionLightPoint;
-                        Shadow_X_Pos.Value = (decimal)copied_MainSection_X_PositionShadow;
-                        Shadow_Y_Pos.Value = (decimal)copied_MainSection_Y_PositionShadow;
-                        Shadow_Z_Pos.Value = (decimal)copied_MainSection_Z_PositionShadow;
-                        Glare_power_value.Value = (decimal)copied_MainSection_PowerGlare;
-                        BlurValue.Value = (decimal)copied_MainSection_blur;
-                        Light_power_value.Value = (decimal)copied_MainSection_PowerLight;
-                        Vagueness_glare.Value = (decimal)copied_MainSectionGlareVagueness;
-                        M_Glare_Value1.Value = (decimal)copied_MainSection_MysteriousGlareValue1;
-                        M_Glare_Value2.Value = (decimal)copied_MainSection_MysteriousGlareValue2;
-                        M_Glare_Value3.Value = (decimal)copied_MainSection_MysteriousGlareValue3;
-                        unknown1_v.Value = (decimal)copied_MainSection_UnknownValue1;
-                        unknown2_v.Value = (decimal)copied_MainSection_UnknownValue2;
-                        unknown3_v.Value = (decimal)copied_MainSection_UnknownValue3;
-                        Sky_light_strength.Value = (decimal)copied_MainSection_PowerSkyColor;
-                        GlareColorInfo_tb.Text = BitConverter.ToString(copied_MainSection_ColorGlare);
-                        SkyColorInfo_tb.Text = BitConverter.ToString(copied_MainSection_ColorSky);
-                        RockColorInfo_tb.Text = BitConverter.ToString(copied_MainSection_ColorRock);
-                        GroundEffectColorInfo_tb.Text = BitConverter.ToString(copied_MainSection_ColorGroundEffect);
-                        PlayerLightColorInfo_tb.Text = BitConverter.ToString(copied_MainSection_ColorPlayerLight);
-                        LightColorInfo_tb.Text = BitConverter.ToString(copied_MainSection_ColorLight);
-                        ShadowColorInfo_tb.Text = BitConverter.ToString(copied_MainSection_ColorShadow);
-                        UnknownColorInfo_tb.Text = BitConverter.ToString(copied_MainSection_ColorUnknown);
-                        Unknown2ColorInfo_tb.Text = BitConverter.ToString(copied_MainSection_ColorUnknown2);
-
-                        if (copied_MainSection_WeatherSettings == 1)
-                            weather.Text = "snow";
-                        else if (copied_MainSection_WeatherSettings == 2)
-                            weather.Text = "rain";
-                        else
-                            weather.Text = "No weather settings";
-
-                        if (copied_MainSection_lensFlareSettings == 0)
-                        {
-                            lensFlareEnabledText.Text = "uviolet_lensFlare";
-                        }
-                        else if (copied_MainSection_lensFlareSettings == 1)
-                        {
-                            lensFlareEnabledText.Text = "oprism_lensFlare";
-                        }
-                        else if (copied_MainSection_lensFlareSettings == 2)
-                        {
-                            lensFlareEnabledText.Text = "phalo_lensFlare";
-                        }
-                        else if (copied_MainSection_lensFlareSettings == 3)
-                        {
-                            lensFlareEnabledText.Text = "gpurpose_lensFlare";
-                        }
-                        else if (copied_MainSection_lensFlareSettings == 4)
-                        {
-                            lensFlareEnabledText.Text = "mlight_lensFlare";
-                        }
-                        else if (copied_MainSection_lensFlareSettings == 5)
-                        {
-                            lensFlareEnabledText.Text = "sunset_lensFlare";
-                        }
-
-                        if (copied_MainSection_EnablelensFlareSettings == 0)
-                            lensFlareEnabledText.Text = "Disabled";
-
-                        if (copied_MainSection_EnableGlareSettingValue1 == 0)
-                            glare1_cb.Checked = false;
-                        else
-                            glare1_cb.Checked = true;
-
-                        if (copied_MainSection_EnableGlareSettingValue2 == 0)
-                            glare2_cb.Checked = false;
-                        else
-                            glare2_cb.Checked = true;
-
-                        if (copied_MainSection_EnableGlareSettingValue3 == 0)
-                            glare3_cb.Checked = false;
-                        else
-                            glare3_cb.Checked = true;
-                        if (copied_MainSection_ShadowSetting_value1 == 0)
-                            shadow1_cb.Checked = false;
-                        else
-                            shadow1_cb.Checked = true;
-                        if (copied_MainSection_ShadowSetting_value2 == 0)
-                            shadow2_cb.Checked = false;
-                        else
-                            shadow2_cb.Checked = true;
-                        MessageBox.Show("Settings of " + StageNameList[x] + " were changed and saved!");
-                    }
-                    else
-                    {
-                        MessageBox.Show("Settings weren't copied!");
-                    }
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void SkyColorInfo_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void GlareColorInfo_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void RockColorInfo_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void button45_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    ColorDialog MyDialog = new ColorDialog();
-                    MyDialog.AllowFullOpen = true;
-                    MyDialog.ShowHelp = true;
-                    MyDialog.AnyColor = true;
-                    byte[] Color = new byte[4]
-                         {
-                    MainSection_ColorUnknown[x][3],
-                    MainSection_ColorUnknown[x][2],
-                    MainSection_ColorUnknown[x][1],
-                    0x00
-                         };
-                    int color_int = Main.b_byteArrayToInt(Color);
-                    MyDialog.CustomColors = new int[] { color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, };
-                    if (MyDialog.ShowDialog() == DialogResult.OK)
-                    {
-                        byte[] ColorReverse = new byte[4]
-                        {
-                    MyDialog.Color.A,
-                    MyDialog.Color.B,
-                    MyDialog.Color.G,
-                    MyDialog.Color.R
-                        };
-                        MainSection_ColorUnknown[x] = Main.b_ReplaceBytes(MainSection_ColorUnknown[x], ColorReverse, 0, 0);
-                        UnknownColorInfo_tb.Text = BitConverter.ToString(MainSection_ColorUnknown[x]);
-                    };
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-                
-            }
-        }
-
-        private void button44_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    MainSection_ColorUnknown[x] = Main.b_ReplaceBytes(MainSection_ColorUnknown[x], new byte[4] { 0x00, 0x00, 0x00, 0x00 }, 0, 0);
-                    UnknownColorInfo_tb.Text = BitConverter.ToString(MainSection_ColorUnknown[x]);
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-                
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void button46_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    MainSection_unk1[x] = (float)unk1_v.Value;
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void button48_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    ColorDialog MyDialog = new ColorDialog();
-                    MyDialog.AllowFullOpen = true;
-                    MyDialog.ShowHelp = true;
-                    MyDialog.AnyColor = true;
-                    byte[] Color = new byte[4]
-                         {
-                    MainSection_ColorUnknown2[x][3],
-                    MainSection_ColorUnknown2[x][2],
-                    MainSection_ColorUnknown2[x][1],
-                    0x00
-                         };
-                    int color_int = Main.b_byteArrayToInt(Color);
-                    MyDialog.CustomColors = new int[] { color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, color_int, };
-                    if (MyDialog.ShowDialog() == DialogResult.OK)
-                    {
-                        byte[] ColorReverse = new byte[4]
-                        {
-                    MyDialog.Color.A,
-                    MyDialog.Color.B,
-                    MyDialog.Color.G,
-                    MyDialog.Color.R
-                        };
-                        MainSection_ColorUnknown2[x] = Main.b_ReplaceBytes(MainSection_ColorUnknown2[x], ColorReverse, 0, 0);
-                        Unknown2ColorInfo_tb.Text = BitConverter.ToString(MainSection_ColorUnknown2[x]);
-                    };
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-                
-            }
-        }
-
-        private void button47_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    MainSection_ColorUnknown2[x] = Main.b_ReplaceBytes(MainSection_ColorUnknown2[x], new byte[4] { 0x00, 0x00, 0x00, 0x00 }, 0, 0);
-                    Unknown2ColorInfo_tb.Text = BitConverter.ToString(MainSection_ColorUnknown2[x]);
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-                
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void checkBox1_CheckedChanged(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    if (shadow1_cb.Checked == true)
-                        MainSection_ShadowSetting_value1[x] = 1;
-                    else
-                        MainSection_ShadowSetting_value1[x] = 0;
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void glare1_cb_CheckedChanged(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    if (glare1_cb.Checked == true)
-                        MainSection_EnableGlareSettingValue1[x] = 1;
-                    else
-                        MainSection_EnableGlareSettingValue1[x] = 0;
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void glare2_cb_CheckedChanged(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    if (glare2_cb.Checked == true)
-                        MainSection_EnableGlareSettingValue2[x] = 1;
-                    else
-                        MainSection_EnableGlareSettingValue2[x] = 0;
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void glare3_cb_CheckedChanged(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    if (glare3_cb.Checked == true)
-                        MainSection_EnableGlareSettingValue3[x] = 1;
-                    else
-                        MainSection_EnableGlareSettingValue3[x] = 0;
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void shadow2_cb_CheckedChanged(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                int x = listBox1.SelectedIndex;
-                if (x > -1 && x < listBox1.Items.Count)
-                {
-                    if (shadow2_cb.Checked == true)
-                        MainSection_ShadowSetting_value2[x] = 1;
-                    else
-                        MainSection_ShadowSetting_value2[x] = 0;
-                }
-                else
-                {
-                    MessageBox.Show("No stage selected...", "Warning");
-                }
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...", "Warning");
-            }
-        }
-
-        private void saveToolStripMenuItem2_Click(object sender, EventArgs e)
-        {
-            if (FileOpen)
-            {
-                SaveFile();
-            }
-            else
-            {
-                MessageBox.Show("No file loaded...");
-            }
+            _stages.Clear();
+            fileBytes = new byte[0];
+            header = new byte[0];
+            FilePath = "";
+            FileOpen = false;
+            EntryCount = 0;
+            _fileBinName = "stageInfo";
+            _copiedStageProperties = null;
+            _stageEditBuffer = null;
+            _objectEditBuffer = null;
+            _currentPath = null;
+            _stageEditDirty = false;
+            _pathEditDirty = false;
+            _objectEditDirty = false;
+            SetDirty(false);
+            RefreshStageList(null);
+            SetStatusMessage("Document closed.");
         }
 
         public void SaveFile()
         {
-            if (FilePath != "")
+            SaveDocument(false, "");
+        }
+
+        public void SaveFileAs(string basepath = "")
+        {
+            SaveDocument(true, basepath);
+        }
+
+        private bool SaveDocument(bool saveAs, string requestedPath)
+        {
+            if (!EnsureEntriesAppliedBeforeFileSave()) return false;
+            string outputPath = requestedPath;
+            if (!saveAs && string.IsNullOrEmpty(outputPath))
+                outputPath = FilePath;
+
+            if (string.IsNullOrEmpty(outputPath))
             {
-                if (File.Exists(FilePath + ".backup"))
+                using (SaveFileDialog dialog = new SaveFileDialog
                 {
-                    File.Delete(FilePath + ".backup");
+                    DefaultExt = "xfbin",
+                    Filter = "XFBIN StageInfo (*.xfbin)|*.xfbin|All files (*.*)|*.*",
+                    AddExtension = true,
+                    OverwritePrompt = true,
+                    FileName = string.IsNullOrEmpty(outputPath) ? (string.IsNullOrEmpty(FilePath) ? _fileBinName + ".bin.xfbin" : Path.GetFileName(FilePath)) : Path.GetFileName(outputPath),
+                    InitialDirectory = string.IsNullOrEmpty(outputPath) ? (string.IsNullOrEmpty(FilePath) ? "" : Path.GetDirectoryName(FilePath)) : Path.GetDirectoryName(outputPath),
+                    Title = "Save StageInfo"
+                })
+                {
+                    if (!string.IsNullOrEmpty(outputPath)) dialog.FileName = outputPath;
+                    if (dialog.ShowDialog(this) != DialogResult.OK) return false;
+                    outputPath = dialog.FileName;
                 }
-                File.Copy(FilePath, FilePath + ".backup");
-                File.WriteAllBytes(FilePath, ConvertToFile());
-                if (this.Visible) MessageBox.Show("File saved to " + FilePath + ".");
             }
-            else
+
+            try
             {
-                SaveFileAs();
+                List<string> problems = ValidateDocument();
+                if (problems.Count > 0)
+                    throw new InvalidDataException(string.Join(Environment.NewLine, problems));
+
+                byte[] converted = ConvertToFile();
+                StageInfoDocument validation = StageInfoSerializer.Read(converted);
+                if (validation.Stages.Count != _stages.Count)
+                    throw new InvalidDataException("Round-trip validation returned a different stage count.");
+
+                bool backupCreated = File.Exists(outputPath);
+                if (backupCreated)
+                    File.Copy(outputPath, outputPath + ".backup", true);
+                File.WriteAllBytes(outputPath, converted);
+
+                fileBytes = converted;
+                FilePath = outputPath;
+                FileOpen = true;
+                EntryCount = _stages.Count;
+                StageInfoDocument savedDocument = StageInfoSerializer.Read(converted);
+                header = converted.Take(savedDocument.MarkerOffset + 0x10).ToArray();
+                SetDirty(false);
+                UpdateRawRecordsFrom(savedDocument);
+                UpdateRawInformation();
+                SetStatusMessage("Saved " + Path.GetFileName(outputPath) + " (round-trip validated)." +
+                    (backupCreated ? " Backup: " + Path.GetFileName(outputPath) + ".backup" : ""));
+                return true;
+            }
+            catch (Exception ex)
+            {
+                if (Visible)
+                    MessageBox.Show(this, "Could not save StageInfo:\n\n" + ex.Message, "StageInfo save error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                else
+                    SetStatusMessage("Could not save StageInfo: " + ex.Message);
+                return false;
             }
         }
 
-        private void unk1_v_ValueChanged(object sender, EventArgs e)
+        public byte[] ConvertToFile()
+        {
+            return StageInfoSerializer.Write(_stages, _fileBinName);
+        }
+
+        private bool EnsureEntriesAppliedBeforeFileSave()
+        {
+            if (!HasPendingEntryEdits) return true;
+            string message = "One or more entries have unapplied edits. Click the Save button for each edited stage, path, or object before saving the file.";
+            if (Visible)
+                MessageBox.Show(this, message, "Unapplied entry edits", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            else
+                SetStatusMessage(message);
+            return false;
+        }
+
+        private void UpdateRawRecordsFrom(StageInfoDocument savedDocument)
+        {
+            for (int i = 0; i < Math.Min(_stages.Count, savedDocument.Stages.Count); i++)
+            {
+                _stages[i].RawRecord = (byte[])savedDocument.Stages[i].RawRecord.Clone();
+                for (int j = 0; j < Math.Min(_stages[i].Objects.Count, savedDocument.Stages[i].Objects.Count); j++)
+                    _stages[i].Objects[j].RawRecord = (byte[])savedDocument.Stages[i].Objects[j].RawRecord.Clone();
+            }
+        }
+
+        private bool PromptSaveIfDirty()
+        {
+            if (!_dirty) return true;
+            DialogResult result = MessageBox.Show(this, "Save changes to the current StageInfo document?", "Unsaved changes",
+                MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+            if (result == DialogResult.Cancel) return false;
+            if (result == DialogResult.No) return true;
+            return SaveDocument(false, "");
+        }
+
+        private List<string> ValidateDocument()
+        {
+            List<string> problems = new List<string>();
+            for (int i = 0; i < _stages.Count; i++)
+            {
+                StageInfoStage stage = _stages[i];
+                if (stage.StageName == null) problems.Add("Stage " + i + " has a null name.");
+                if (stage.StageMessageID == null) problems.Add("Stage " + i + " has a null message ID.");
+                if (stage.StageFilter == null) problems.Add("Stage " + i + " has a null filter.");
+                if (stage.FilePaths.Any(path => path == null || path.FilePath == null)) problems.Add("Stage " + i + " contains a null resource path.");
+                if (stage.Objects.Any(stageObject => stageObject == null)) problems.Add("Stage " + i + " contains a null object.");
+            }
+            return problems;
+        }
+
+        private void ValidateDocumentWithMessage()
+        {
+            try
+            {
+                if (!EnsureEntriesAppliedBeforeFileSave()) return;
+                List<string> problems = ValidateDocument();
+                if (problems.Count > 0)
+                {
+                    MessageBox.Show(this, string.Join(Environment.NewLine, problems), "Validation problems",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+                byte[] bytes = ConvertToFile();
+                StageInfoDocument roundTrip = StageInfoSerializer.Read(bytes);
+                MessageBox.Show(this,
+                    "Validation passed.\n\n" + roundTrip.Stages.Count + " stages\n" +
+                    roundTrip.Stages.Sum(stage => stage.FilePaths.Count) + " resource paths\n" +
+                    roundTrip.Stages.Sum(stage => stage.Objects.Count) + " objects\n" +
+                    bytes.Length.ToString("N0", CultureInfo.InvariantCulture) + " generated bytes",
+                    "StageInfo validation", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, "Validation failed:\n\n" + ex.Message, "StageInfo validation",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        #endregion
+
+        #region Status and display helpers
+
+        private void MarkDirty()
+        {
+            if (_loadingUi) return;
+            SetDirty(true);
+        }
+
+        private void SetDirty(bool value)
+        {
+            _dirty = value;
+            UpdateStatus();
+        }
+
+        private void SetStatusMessage(string message)
+        {
+            _fileStatusLabel.Text = message;
+            UpdateTitle();
+        }
+
+        private void UpdateStatus()
+        {
+            if (_fileStatusLabel == null) return;
+            if (string.IsNullOrEmpty(_fileStatusLabel.Text) || _fileStatusLabel.Text == "No file open" || _fileStatusLabel.Text.StartsWith("File: ", StringComparison.Ordinal))
+                _fileStatusLabel.Text = FileOpen ? "File: " + FilePath : "No file open";
+
+            int shown = _stageList == null ? 0 : _stageList.Items.Count;
+            int selectedIndex = _currentStage == null ? -1 : _stages.IndexOf(_currentStage);
+            string selected = selectedIndex >= 0 ? "  |  selected " + (selectedIndex + 1) + "/" + _stages.Count : "";
+            _selectionStatusLabel.Text = shown == _stages.Count
+                ? _stages.Count + " stages" + selected
+                : shown + " of " + _stages.Count + " stages" + selected;
+            _stageCountLabel.Text = _stages.Count + " total  •  " + shown + " shown";
+            _dirtyStatusLabel.Text = HasPendingEntryEdits ? "Entry edit pending" : (_dirty ? "Modified" : "Saved");
+            UpdateTitle();
+            UpdateFormatSummary();
+        }
+
+        private void UpdateTitle()
+        {
+            Text = "StageInfo Editor" + (_dirty ? " *" : "") + (HasPendingEntryEdits ? " [entry edit]" : "") +
+                   (string.IsNullOrEmpty(FilePath) ? "" : " — " + Path.GetFileName(FilePath));
+        }
+
+        private void RefreshCommandState()
+        {
+            bool hasDocument = FileOpen || _stages.Count > 0;
+            bool hasStage = _currentStage != null;
+            bool hasPath = _currentPath != null;
+            bool hasObject = _currentObject != null;
+            bool canMoveStageUp = hasStage && _stages.IndexOf(_currentStage) > 0;
+            bool canMoveStageDown = hasStage && _stages.IndexOf(_currentStage) >= 0 && _stages.IndexOf(_currentStage) < _stages.Count - 1;
+            bool canMoveObjectUp = hasObject && _currentStage.Objects.IndexOf(_currentObject) > 0;
+            bool canMoveObjectDown = hasObject && _currentStage.Objects.IndexOf(_currentObject) >= 0 && _currentStage.Objects.IndexOf(_currentObject) < _currentStage.Objects.Count - 1;
+
+            _stageIdentityGroup.Enabled = hasStage;
+            _resourcePathsGroup.Enabled = hasStage;
+            _objectsGroup.Enabled = hasStage;
+            _stageTabs.Enabled = hasStage;
+            _objectTabs.Enabled = hasObject;
+            _saveMenuItem.Enabled = hasDocument;
+            _saveAsMenuItem.Enabled = hasDocument;
+            _closeDocumentMenuItem.Enabled = hasDocument;
+            _saveStageButton.Enabled = hasStage && _stageEditDirty;
+            _validateMenuItem.Enabled = hasDocument;
+            _validateButton.Enabled = hasDocument;
+
+            _duplicateStageMenuItem.Enabled = hasStage;
+            _deleteStageMenuItem.Enabled = hasStage;
+            _copySettingsMenuItem.Enabled = hasStage;
+            _pasteSettingsMenuItem.Enabled = hasStage && _copiedStageProperties != null;
+            _syncResourcesMenuItem.Enabled = hasStage;
+            _deleteStageButton.Enabled = hasStage;
+            _duplicateStageButton.Enabled = hasStage;
+            _moveStageUpButton.Enabled = canMoveStageUp;
+            _moveStageDownButton.Enabled = canMoveStageDown;
+            _copySettingsButton.Enabled = hasStage;
+            _pasteSettingsButton.Enabled = hasStage && _copiedStageProperties != null;
+
+            _addPathButton.Enabled = hasStage;
+            _savePathButton.Enabled = hasPath && _pathEditDirty;
+            _deletePathButton.Enabled = hasPath;
+            _movePathUpButton.Enabled = hasPath && _currentStage.FilePaths.IndexOf(_currentPath) > 0;
+            _movePathDownButton.Enabled = hasPath && _currentStage.FilePaths.IndexOf(_currentPath) < _currentStage.FilePaths.Count - 1;
+            _syncPathButton.Enabled = hasStage;
+
+            _addObjectButton.Enabled = hasStage;
+            _duplicateObjectButton.Enabled = hasObject;
+            _saveObjectButton.Enabled = hasObject && _objectEditDirty;
+            _deleteObjectButton.Enabled = hasObject;
+            _moveObjectUpButton.Enabled = canMoveObjectUp;
+            _moveObjectDownButton.Enabled = canMoveObjectDown;
+        }
+
+        private void UpdateRawInformation()
+        {
+            if (_rawStageText != null)
+                _rawStageText.Text = _currentStage == null ? "" : FormatHex(_currentStage.RawRecord, 16);
+            if (_rawObjectText != null)
+                _rawObjectText.Text = _currentObject == null ? "" : FormatHex(_currentObject.RawRecord, 16);
+            UpdateFormatSummary();
+        }
+
+        private void UpdateFormatSummary()
+        {
+            if (_formatSummaryLabel == null) return;
+            int stageIndex = _currentStage == null ? -1 : _stages.IndexOf(_currentStage);
+            int objectIndex = _currentStage == null || _currentObject == null ? -1 : _currentStage.Objects.IndexOf(_currentObject);
+            _formatSummaryLabel.Text =
+                "Binary name: " + _fileBinName + Environment.NewLine +
+                "Container: " + (string.IsNullOrEmpty(FilePath) ? "unsaved/new" : FilePath) + Environment.NewLine +
+                "Stages: " + _stages.Count + "   Resource paths: " + _stages.Sum(stage => stage.FilePaths.Count) + "   Objects: " + _stages.Sum(stage => stage.Objects.Count) + Environment.NewLine +
+                "Selected stage index: " + (stageIndex < 0 ? "none" : stageIndex + " (record offset = chunk + 0x10 + index × 0x130)") + Environment.NewLine +
+                "Selected object index: " + (objectIndex < 0 ? "none" : objectIndex + " (record size 0xB0)");
+        }
+
+        private static void SetNumericValue(NumericUpDown numeric, float value)
+        {
+            if (float.IsNaN(value) || float.IsInfinity(value)) value = 0F;
+            decimal converted;
+            try { converted = (decimal)value; }
+            catch { converted = 0M; }
+            numeric.Value = Math.Max(numeric.Minimum, Math.Min(numeric.Maximum, converted));
+        }
+
+        private static void SetNumericValue(NumericUpDown numeric, int value)
+        {
+            numeric.Value = Math.Max(numeric.Minimum, Math.Min(numeric.Maximum, value));
+        }
+
+        private static string FormatHex(byte[] bytes, int columns)
+        {
+            if (bytes == null || bytes.Length == 0) return "No source record (new entry).";
+            StringBuilder result = new StringBuilder(bytes.Length * 3 + bytes.Length / columns * 10);
+            for (int i = 0; i < bytes.Length; i += columns)
+            {
+                result.Append(i.ToString("X4")).Append(":  ");
+                int end = Math.Min(bytes.Length, i + columns);
+                for (int j = i; j < end; j++) result.Append(bytes[j].ToString("X2")).Append(' ');
+                result.AppendLine();
+            }
+            return result.ToString();
+        }
+
+        private static string GetObjectTypeLabel(int value)
+        {
+            if (value >= 0 && value < Program.TypeSectionList.Length)
+                return Program.TypeSectionList[value];
+            return value.ToString("X2") + " Unknown / custom";
+        }
+
+        #endregion
+
+        #region Property-grid subsets
+
+        /// <summary>
+        /// Presents a focused set of properties from a model to a standard
+        /// PropertyGrid.  This keeps the reference-style category tabs compact
+        /// without creating a second copy of the StageInfo data.
+        /// </summary>
+        private sealed class PropertySubsetView : ICustomTypeDescriptor
+        {
+            private readonly object _target;
+            private readonly string[] _propertyNames;
+
+            public PropertySubsetView(object target, string[] propertyNames)
+            {
+                _target = target ?? throw new ArgumentNullException("target");
+                _propertyNames = propertyNames ?? new string[0];
+            }
+
+            public AttributeCollection GetAttributes() { return TypeDescriptor.GetAttributes(_target, true); }
+            public string GetClassName() { return TypeDescriptor.GetClassName(_target, true); }
+            public string GetComponentName() { return TypeDescriptor.GetComponentName(_target, true); }
+            public TypeConverter GetConverter() { return TypeDescriptor.GetConverter(_target, true); }
+            public EventDescriptor GetDefaultEvent() { return TypeDescriptor.GetDefaultEvent(_target, true); }
+            public PropertyDescriptor GetDefaultProperty() { return null; }
+            public object GetEditor(Type editorBaseType) { return TypeDescriptor.GetEditor(_target, editorBaseType, true); }
+            public EventDescriptorCollection GetEvents() { return TypeDescriptor.GetEvents(_target, true); }
+            public EventDescriptorCollection GetEvents(Attribute[] attributes) { return TypeDescriptor.GetEvents(_target, attributes, true); }
+            public PropertyDescriptorCollection GetProperties() { return GetProperties(new Attribute[0]); }
+
+            public PropertyDescriptorCollection GetProperties(Attribute[] attributes)
+            {
+                PropertyDescriptorCollection allProperties = TypeDescriptor.GetProperties(_target, attributes, true);
+                List<PropertyDescriptor> selected = new List<PropertyDescriptor>();
+                foreach (string propertyName in _propertyNames)
+                {
+                    PropertyDescriptor property = allProperties[propertyName];
+                    if (property != null)
+                        selected.Add(new ForwardingPropertyDescriptor(_target, property));
+                }
+                return new PropertyDescriptorCollection(selected.ToArray(), true);
+            }
+
+            public object GetPropertyOwner(PropertyDescriptor propertyDescriptor) { return this; }
+        }
+
+        private sealed class ForwardingPropertyDescriptor : PropertyDescriptor
+        {
+            private readonly object _target;
+            private readonly PropertyDescriptor _property;
+
+            public ForwardingPropertyDescriptor(object target, PropertyDescriptor property)
+                : base(property)
+            {
+                _target = target;
+                _property = property;
+            }
+
+            public override Type ComponentType { get { return typeof(PropertySubsetView); } }
+            public override bool IsReadOnly { get { return _property.IsReadOnly; } }
+            public override Type PropertyType { get { return _property.PropertyType; } }
+            public override bool CanResetValue(object component) { return _property.CanResetValue(_target); }
+            public override object GetValue(object component) { return _property.GetValue(_target); }
+            public override void ResetValue(object component) { _property.ResetValue(_target); }
+            public override bool ShouldSerializeValue(object component) { return _property.ShouldSerializeValue(_target); }
+
+            public override void SetValue(object component, object value)
+            {
+                _property.SetValue(_target, value);
+                OnValueChanged(component, EventArgs.Empty);
+            }
+        }
+
+        #endregion
+
+        #region Typed models
+
+        private sealed class StageInfoDocument
+        {
+            public string BinName = "stageInfo";
+            public int MarkerOffset;
+            public readonly List<StageInfoStage> Stages = new List<StageInfoStage>();
+        }
+
+        private sealed class StageInfoPath
+        {
+            [DisplayName("Resource path")]
+            [Description("XFBIN resource path referenced by this stage. Managed entries can be regenerated from the stage settings.")]
+            public string FilePath { get; set; } = "";
+            public StageInfoPath DeepClone() { return new StageInfoPath { FilePath = FilePath ?? "" }; }
+            public override string ToString() { return string.IsNullOrWhiteSpace(FilePath) ? "<empty resource path>" : FilePath; }
+        }
+
+        private sealed class StageInfoObject
+        {
+            [Category("Object identity")]
+            [DisplayName("Object file path  [0x00]")]
+            [Description("Pointer to the object's XFBIN resource path in the 0xB0-byte object record.")]
+            public string ObjectFilePath { get; set; } = "";
+
+            [Category("Object identity")]
+            [DisplayName("Object name  [0x08]")]
+            [Description("Object/model name stored by pointer in the object record.")]
+            public string ObjectName { get; set; } = "";
+
+            [Category("Placement")]
+            [DisplayName("Position file path  [0x10]")]
+            [Description("Optional resource that supplies the object's placement transform.")]
+            public string PositionFilePath { get; set; } = "";
+
+            [Category("Placement")]
+            [DisplayName("Position bone name  [0x18]")]
+            [Description("Optional bone or locator used when attaching the object.")]
+            public string PositionBoneName { get; set; } = "";
+
+            [Category("Object identity")]
+            [DisplayName("Entry type  [0x20]")]
+            [Description("Integer object-entry discriminator used by the game.")]
+            public int EntryType { get; set; }
+
+            [Category("Rendering and physics")]
+            [DisplayName("Camera-hide object  [0x28]")]
+            [Description("When enabled, the object can be hidden by the camera visibility system.")]
+            public bool EnableCameraHideObject { get; set; }
+
+            [Category("Rendering and physics")]
+            [DisplayName("Rigid body  [0x2C]")]
+            [Description("Marks the object as using rigid-body behavior.")]
+            public bool IsRigidBody { get; set; }
+
+            [Category("Animation")]
+            [DisplayName("Animation speed  [0x24]")]
+            [Description("Playback speed multiplier. A value of 1.0 is normal speed.")]
+            public float AnimationSpeed { get; set; }
+
+            [Category("Breakable wall")]
+            [DisplayName("Value 1  [0x80]")]
+            [Description("Unknown signed 32-bit breakable-wall parameter preserved at object offset 0x80.")]
+            public int BreakableWallValue1 { get; set; }
+
+            [Category("Breakable wall")]
+            [DisplayName("Value 2  [0x84]")]
+            [Description("Unknown signed 32-bit breakable-wall parameter preserved at object offset 0x84.")]
+            public int BreakableWallValue2 { get; set; }
+
+            [Category("Breakable wall")]
+            [DisplayName("Effect 1  [0x78]")]
+            [Description("Primary breakable-wall effect resource/name.")]
+            public string BreakableWallEffect01 { get; set; } = "";
+
+            [Category("Breakable wall")]
+            [DisplayName("Effect 2  [0x88]")]
+            [Description("Secondary breakable-wall effect resource/name.")]
+            public string BreakableWallEffect02 { get; set; } = "";
+
+            [Category("Breakable wall")]
+            [DisplayName("Effect 3  [0x90]")]
+            [Description("Tertiary breakable-wall effect resource/name.")]
+            public string BreakableWallEffect03 { get; set; } = "";
+
+            [Category("Breakable wall")]
+            [DisplayName("Sound  [0xA0]")]
+            [Description("Sound cue or resource used when the wall breaks.")]
+            public string BreakableWallSound { get; set; } = "";
+
+            [Category("Breakable wall")]
+            [DisplayName("Volume  [0x98]")]
+            [Description("Break sound volume multiplier.")]
+            public float BreakableWallVolume { get; set; }
+
+            [Category("Breakable object")]
+            [DisplayName("Object path  [0x38]")]
+            [Description("Resource path used for breakable-object behavior.")]
+            public string BreakableObjectPath { get; set; } = "";
+
+            [Category("Breakable object")]
+            [DisplayName("Effect 1  [0x40]")]
+            [Description("First breakable-object effect resource/name.")]
+            public string BreakableObjectEffect01 { get; set; } = "";
+
+            [Category("Breakable object")]
+            [DisplayName("Effect 2  [0x50]")]
+            [Description("Second breakable-object effect resource/name.")]
+            public string BreakableObjectEffect02 { get; set; } = "";
+
+            [Category("Breakable object")]
+            [DisplayName("Effect 3  [0x60]")]
+            [Description("Third breakable-object effect resource/name.")]
+            public string BreakableObjectEffect03 { get; set; } = "";
+
+            [Category("Breakable object")]
+            [DisplayName("Effect 1 speed  [0x48]")]
+            [Description("Speed/intensity paired with breakable-object effect 1.")]
+            public float BreakableObjectSpeed01 { get; set; }
+
+            [Category("Breakable object")]
+            [DisplayName("Effect 2 speed  [0x58]")]
+            [Description("Speed/intensity paired with breakable-object effect 2.")]
+            public float BreakableObjectSpeed02 { get; set; }
+
+            [Category("Breakable object")]
+            [DisplayName("Effect 3 speed  [0x68]")]
+            [Description("Speed/intensity paired with breakable-object effect 3.")]
+            public float BreakableObjectSpeed03 { get; set; }
+
+            [Category("Advanced / preserved")]
+            [DisplayName("Breakable constant A  [0x70]")]
+            [Description("Preserved integer normally equal to 0x3C (60). Change only when the target format requires it.")]
+            public int BreakableConstantA { get; set; } = 0x3C;
+
+            [Category("Advanced / preserved")]
+            [DisplayName("Breakable constant B  [0x74]")]
+            [Description("Preserved integer normally equal to 0x78 (120). Change only when the target format requires it.")]
+            public int BreakableConstantB { get; set; } = 0x78;
+
+            [Browsable(false)]
+            public byte[] RawRecord { get; set; } = new byte[0xB0];
+
+            public static StageInfoObject CreateDefault()
+            {
+                return new StageInfoObject { AnimationSpeed = 1F, BreakableConstantA = 0x3C, BreakableConstantB = 0x78 };
+            }
+
+            public StageInfoObject DeepClone()
+            {
+                return new StageInfoObject
+                {
+                    ObjectFilePath = ObjectFilePath ?? "",
+                    ObjectName = ObjectName ?? "",
+                    PositionFilePath = PositionFilePath ?? "",
+                    PositionBoneName = PositionBoneName ?? "",
+                    EntryType = EntryType,
+                    EnableCameraHideObject = EnableCameraHideObject,
+                    IsRigidBody = IsRigidBody,
+                    AnimationSpeed = AnimationSpeed,
+                    BreakableWallValue1 = BreakableWallValue1,
+                    BreakableWallValue2 = BreakableWallValue2,
+                    BreakableWallEffect01 = BreakableWallEffect01 ?? "",
+                    BreakableWallEffect02 = BreakableWallEffect02 ?? "",
+                    BreakableWallEffect03 = BreakableWallEffect03 ?? "",
+                    BreakableWallSound = BreakableWallSound ?? "",
+                    BreakableWallVolume = BreakableWallVolume,
+                    BreakableObjectPath = BreakableObjectPath ?? "",
+                    BreakableObjectEffect01 = BreakableObjectEffect01 ?? "",
+                    BreakableObjectEffect02 = BreakableObjectEffect02 ?? "",
+                    BreakableObjectEffect03 = BreakableObjectEffect03 ?? "",
+                    BreakableObjectSpeed01 = BreakableObjectSpeed01,
+                    BreakableObjectSpeed02 = BreakableObjectSpeed02,
+                    BreakableObjectSpeed03 = BreakableObjectSpeed03,
+                    BreakableConstantA = BreakableConstantA,
+                    BreakableConstantB = BreakableConstantB,
+                    RawRecord = RawRecord == null ? new byte[0xB0] : (byte[])RawRecord.Clone()
+                };
+            }
+
+            public override string ToString()
+            {
+                string name = string.IsNullOrWhiteSpace(ObjectName) ? "<unnamed object>" : ObjectName;
+                return GetObjectTypeLabel(EntryType) + "  " + name;
+            }
+        }
+
+        private sealed class StageInfoStage
+        {
+            [Category("Identity and environment")]
+            [DisplayName("Stage name  [0x00]")]
+            [Description("Stage identifier stored as an 8-byte string pointer in the 0x130-byte stage record.")]
+            public string StageName { get; set; } = "";
+
+            [Category("Identity and environment")]
+            [DisplayName("Stage message ID  [0x08]")]
+            [Description("Message/localization identifier associated with the stage.")]
+            public string StageMessageID { get; set; } = "";
+
+            [Category("Identity and environment")]
+            [DisplayName("Stage filter  [0x10]")]
+            [Description("Optional post-processing stage-filter resource or identifier.")]
+            public string StageFilter { get; set; } = "";
+
+            [Category("Identity and environment")]
+            [DisplayName("Weather  [0x38]")]
+            [Description("Weather preset index. Resource synchronization uses this value to maintain weather-related paths.")]
+            public int Weather { get; set; }
+
+            [Category("Lighting colors")]
+            [DisplayName("Player ambient color  [0x3C]")]
+            [Description("Packed ARGB player ambient-light color.")]
+            public Color PlayerAmbientColor { get; set; }
+
+            [Category("Lighting colors")]
+            [DisplayName("Ray cutoff shade color  [0x40]")]
+            [Description("Packed ARGB shade color used by ray cutoff lighting.")]
+            public Color RayCutOffShadeColor { get; set; }
+
+            [Category("Lighting colors")]
+            [DisplayName("Effect ambient color  [0x44]")]
+            [Description("Packed ARGB ambient color applied to effects.")]
+            public Color EffectAmbientColor { get; set; }
+
+            [Category("Lighting colors")]
+            [DisplayName("Unknown color  [0x48]")]
+            [Description("Preserved packed ARGB color at stage offset 0x48; its game-facing purpose is not yet confirmed.")]
+            public Color UnknownColor { get; set; }
+
+            [Category("Brightness and contrast")]
+            [DisplayName("Enable adjustment  [0x4C]")]
+            [Description("Enables the stage brightness/contrast adjustment block.")]
+            public bool EnableBrightnessAdjustment { get; set; }
+
+            [Category("Brightness and contrast")]
+            [DisplayName("Brightness  [0x50]")]
+            [Description("Stage brightness adjustment value.")]
+            public float Brightness { get; set; }
+
+            [Category("Brightness and contrast")]
+            [DisplayName("Contrast  [0x54]")]
+            [Description("Stage contrast adjustment value.")]
+            public float Contrast { get; set; }
+
+            [Category("Lens flare")]
+            [DisplayName("Enable lens flare  [0x58]")]
+            [Description("Enables the lens-flare effect and its managed resource path.")]
+            public bool EnableLensFlare { get; set; }
+
+            [Category("Lens flare")]
+            [DisplayName("Preset  [0x5C]")]
+            [Description("Lens-flare preset/index. Resource synchronization derives the flare resource from this value.")]
+            public int LensFlare { get; set; }
+
+            [Category("Lens flare")]
+            [DisplayName("Position X  [0x60]")]
+            [Description("Lens-flare position or direction X component.")]
+            public float LensFlarePositionX { get; set; }
+
+            [Category("Lens flare")]
+            [DisplayName("Position Y  [0x64]")]
+            [Description("Lens-flare position or direction Y component.")]
+            public float LensFlarePositionY { get; set; }
+
+            [Category("Lens flare")]
+            [DisplayName("Position Z  [0x68]")]
+            [Description("Lens-flare position or direction Z component.")]
+            public float LensFlarePositionZ { get; set; }
+
+            [Category("Lens flare")]
+            [DisplayName("Alpha  [0x6C]")]
+            [Description("Lens-flare opacity/intensity multiplier.")]
+            public float LensFlareAlpha { get; set; }
+
+            [Category("Lighting colors")]
+            [DisplayName("Parallel ambient color  [0x70]")]
+            [Description("Packed ARGB parallel/directional ambient-light color.")]
+            public Color ParallelAmbientColor { get; set; }
+
+            [Category("Lighting colors")]
+            [DisplayName("Ray cutoff normal color  [0x74]")]
+            [Description("Packed ARGB normal color used by ray cutoff lighting.")]
+            public Color RayCutOffNormalColor { get; set; }
+
+            [Category("Light direction and shadow")]
+            [DisplayName("Light direction X  [0x78]")]
+            [Description("Main light direction X component.")]
+            public float LightPointDirectionX { get; set; }
+
+            [Category("Light direction and shadow")]
+            [DisplayName("Light direction Y  [0x7C]")]
+            [Description("Main light direction Y component.")]
+            public float LightPointDirectionY { get; set; }
+
+            [Category("Light direction and shadow")]
+            [DisplayName("Light direction Z  [0x80]")]
+            [Description("Main light direction Z component.")]
+            public float LightPointDirectionZ { get; set; }
+
+            [Category("Light direction and shadow")]
+            [DisplayName("Enable shadow color  [0x84]")]
+            [Description("Enables the custom packed shadow color.")]
+            public bool EnableShadowColor { get; set; }
+
+            [Category("Light direction and shadow")]
+            [DisplayName("Shadow color  [0x88]")]
+            [Description("Packed ARGB custom shadow color.")]
+            public Color ShadowColor { get; set; }
+
+            [Category("Fog")]
+            [DisplayName("Enable fog  [0x8C]")]
+            [Description("Enables the stage fog block.")]
+            public bool EnableFog { get; set; }
+
+            [Category("Fog")]
+            [DisplayName("Start distance  [0x90]")]
+            [Description("Distance at which fog begins.")]
+            public float FogStartDistance { get; set; }
+
+            [Category("Fog")]
+            [DisplayName("End distance  [0x94]")]
+            [Description("Distance at which fog reaches its configured extent.")]
+            public float FogEndDistance { get; set; }
+
+            [Category("Fog")]
+            [DisplayName("Strength  [0x98]")]
+            [Description("Fog density/strength value.")]
+            public float FogStrength { get; set; }
+
+            [Category("Fog")]
+            [DisplayName("Color  [0x9C]")]
+            [Description("Packed ARGB fog color.")]
+            public Color FogColor { get; set; }
+
+            [Category("Monochrome filter")]
+            [DisplayName("Enable mono filter  [0xA0]")]
+            [Description("Enables the monochrome color-filter block.")]
+            public bool EnableMonoColorFilter { get; set; }
+
+            [Category("Monochrome filter")]
+            [DisplayName("Blue tone  [0xA4]")]
+            [Description("Blue contribution to the monochrome filter.")]
+            public float MonoBlueTone { get; set; }
+
+            [Category("Monochrome filter")]
+            [DisplayName("Red tone  [0xA8]")]
+            [Description("Red contribution to the monochrome filter.")]
+            public float MonoRedTone { get; set; }
+
+            [Category("Monochrome filter")]
+            [DisplayName("Alpha  [0xAC]")]
+            [Description("Monochrome filter blend amount.")]
+            public float MonoAlpha { get; set; }
+
+            [Category("Glare")]
+            [DisplayName("Enable glare  [0xB0]")]
+            [Description("Enables the glare/bloom block.")]
+            public bool EnableGlareEffect { get; set; }
+
+            [Category("Glare")]
+            [DisplayName("Luminance threshold  [0xB4]")]
+            [Description("Minimum luminance used to generate glare.")]
+            public float GlareLuminanceThreshold { get; set; }
+
+            [Category("Glare")]
+            [DisplayName("Subtracted amount  [0xB8]")]
+            [Description("Amount subtracted during glare extraction.")]
+            public float GlareSubtracted { get; set; }
+
+            [Category("Glare")]
+            [DisplayName("Composition strength  [0xBC]")]
+            [Description("Strength used when compositing glare back into the scene.")]
+            public float GlareCompositionStrength { get; set; }
+
+            [Category("Soft focus")]
+            [DisplayName("Enable soft focus  [0xC4]")]
+            [Description("Enables the soft-focus post-processing block.")]
+            public bool EnableSoftFocus { get; set; }
+
+            [Category("Soft focus")]
+            [DisplayName("Strength  [0xC8]")]
+            [Description("Soft-focus intensity.")]
+            public float SoftFocusStrength { get; set; }
+
+            [Category("Depth of field")]
+            [DisplayName("Enable DOF blur  [0xCC]")]
+            [Description("Enables depth-of-field blur.")]
+            public bool EnableDOFBlur { get; set; }
+
+            [Category("Depth of field")]
+            [DisplayName("Focal length  [0xD0]")]
+            [Description("Depth-of-field focal length/focus point.")]
+            public float DOFFocalLength { get; set; }
+
+            [Category("Depth of field")]
+            [DisplayName("Short distance  [0xD4]")]
+            [Description("Near depth-of-field distance.")]
+            public float DOFShortDistance { get; set; }
+
+            [Category("Depth of field")]
+            [DisplayName("Long distance  [0xD8]")]
+            [Description("Far depth-of-field distance.")]
+            public float DOFLongDistance { get; set; }
+
+            [Category("Depth of field")]
+            [DisplayName("Alpha  [0xDC]")]
+            [Description("Depth-of-field blend/opacity amount.")]
+            public float DOFAlpha { get; set; }
+
+            [Category("Depth of field")]
+            [DisplayName("Enable edge blur  [0xE0]")]
+            [Description("Enables the depth-of-field edge-blur option.")]
+            public bool EnableDOFEdgeBlur { get; set; }
+
+            [Category("Sun shaft")]
+            [DisplayName("Enable sun shaft  [0xE4]")]
+            [Description("Enables the sun-shaft/god-ray block.")]
+            public bool EnableSunShaft { get; set; }
+
+            [Category("Sun shaft")]
+            [DisplayName("Start distance  [0xE8]")]
+            [Description("Sun-shaft start distance.")]
+            public float SunShaftStartDistance { get; set; }
+
+            [Category("Sun shaft")]
+            [DisplayName("End distance  [0xEC]")]
+            [Description("Sun-shaft end distance.")]
+            public float SunShaftEndDistance { get; set; }
+
+            [Category("Sun shaft")]
+            [DisplayName("Alpha  [0xF0]")]
+            [Description("Sun-shaft opacity/intensity multiplier.")]
+            public float SunShaftAlpha { get; set; }
+
+            [Category("Sun shaft")]
+            [DisplayName("Color  [0xF4]")]
+            [Description("Packed ARGB sun-shaft color.")]
+            public Color SunShaftColor { get; set; }
+
+            [Category("Sun shaft")]
+            [DisplayName("Direction X  [0xF8]")]
+            [Description("Sun-shaft direction X component.")]
+            public float SunShaftDirectionX { get; set; }
+
+            [Category("Sun shaft")]
+            [DisplayName("Direction Y  [0xFC]")]
+            [Description("Sun-shaft direction Y component.")]
+            public float SunShaftDirectionY { get; set; }
+
+            [Category("Sun shaft")]
+            [DisplayName("Direction Z  [0x100]")]
+            [Description("Sun-shaft direction Z component.")]
+            public float SunShaftDirectionZ { get; set; }
+
+            [Category("Sun shaft")]
+            [DisplayName("Blur width  [0x104]")]
+            [Description("Width/radius of the sun-shaft blur.")]
+            public float SunShaftBlurWidth { get; set; }
+
+            [Category("Sun shaft")]
+            [DisplayName("Attenuation coefficient  [0x108]")]
+            [Description("Distance attenuation coefficient for sun shafts.")]
+            public float SunShaftAttenuationCoefficient { get; set; }
+
+            [Category("Lighting colors")]
+            [DisplayName("Rock color  [0x10C]")]
+            [Description("Packed ARGB color adjustment applied to rock/environment rendering.")]
+            public Color RockColor { get; set; }
+
+            [Browsable(false)]
+            public BindingList<StageInfoPath> FilePaths { get; private set; } = new BindingList<StageInfoPath>();
+
+            [Browsable(false)]
+            public BindingList<StageInfoObject> Objects { get; private set; } = new BindingList<StageInfoObject>();
+
+            [Browsable(false)]
+            public byte[] RawRecord { get; set; } = new byte[0x130];
+
+            public static StageInfoStage CreateDefault()
+            {
+                return new StageInfoStage
+                {
+                    StageName = "STAGE_",
+                    PlayerAmbientColor = Color.FromArgb(255, 0, 0, 0),
+                    RayCutOffShadeColor = Color.FromArgb(255, 0, 0, 0),
+                    EffectAmbientColor = Color.FromArgb(255, 0, 0, 0),
+                    UnknownColor = Color.FromArgb(255, 255, 255, 255),
+                    LensFlareAlpha = 1F,
+                    ParallelAmbientColor = Color.FromArgb(255, 0, 0, 0),
+                    RayCutOffNormalColor = Color.FromArgb(255, 0, 0, 0),
+                    ShadowColor = Color.FromArgb(255, 0, 0, 0),
+                    FogColor = Color.FromArgb(255, 0, 0, 0),
+                    MonoAlpha = 0.3F,
+                    SunShaftColor = Color.FromArgb(255, 0, 0, 0),
+                    RockColor = Color.FromArgb(255, 0, 0, 0)
+                };
+            }
+
+            public StageInfoStage DeepClone()
+            {
+                StageInfoStage clone = CreateDefault();
+                clone.StageName = StageName ?? "";
+                clone.StageMessageID = StageMessageID ?? "";
+                clone.StageFilter = StageFilter ?? "";
+                clone.CopySettingsFrom(this);
+                clone.RawRecord = RawRecord == null ? new byte[0x130] : (byte[])RawRecord.Clone();
+                foreach (StageInfoPath path in FilePaths) clone.FilePaths.Add(path.DeepClone());
+                foreach (StageInfoObject stageObject in Objects) clone.Objects.Add(stageObject.DeepClone());
+                return clone;
+            }
+
+            public void CopySettingsFrom(StageInfoStage source)
+            {
+                Weather = source.Weather;
+                PlayerAmbientColor = source.PlayerAmbientColor;
+                RayCutOffShadeColor = source.RayCutOffShadeColor;
+                EffectAmbientColor = source.EffectAmbientColor;
+                UnknownColor = source.UnknownColor;
+                EnableBrightnessAdjustment = source.EnableBrightnessAdjustment;
+                Brightness = source.Brightness;
+                Contrast = source.Contrast;
+                EnableLensFlare = source.EnableLensFlare;
+                LensFlare = source.LensFlare;
+                LensFlarePositionX = source.LensFlarePositionX;
+                LensFlarePositionY = source.LensFlarePositionY;
+                LensFlarePositionZ = source.LensFlarePositionZ;
+                LensFlareAlpha = source.LensFlareAlpha;
+                ParallelAmbientColor = source.ParallelAmbientColor;
+                RayCutOffNormalColor = source.RayCutOffNormalColor;
+                LightPointDirectionX = source.LightPointDirectionX;
+                LightPointDirectionY = source.LightPointDirectionY;
+                LightPointDirectionZ = source.LightPointDirectionZ;
+                EnableShadowColor = source.EnableShadowColor;
+                ShadowColor = source.ShadowColor;
+                EnableFog = source.EnableFog;
+                FogStartDistance = source.FogStartDistance;
+                FogEndDistance = source.FogEndDistance;
+                FogStrength = source.FogStrength;
+                FogColor = source.FogColor;
+                EnableMonoColorFilter = source.EnableMonoColorFilter;
+                MonoBlueTone = source.MonoBlueTone;
+                MonoRedTone = source.MonoRedTone;
+                MonoAlpha = source.MonoAlpha;
+                EnableGlareEffect = source.EnableGlareEffect;
+                GlareLuminanceThreshold = source.GlareLuminanceThreshold;
+                GlareSubtracted = source.GlareSubtracted;
+                GlareCompositionStrength = source.GlareCompositionStrength;
+                EnableSoftFocus = source.EnableSoftFocus;
+                SoftFocusStrength = source.SoftFocusStrength;
+                EnableDOFBlur = source.EnableDOFBlur;
+                DOFFocalLength = source.DOFFocalLength;
+                DOFShortDistance = source.DOFShortDistance;
+                DOFLongDistance = source.DOFLongDistance;
+                DOFAlpha = source.DOFAlpha;
+                EnableDOFEdgeBlur = source.EnableDOFEdgeBlur;
+                EnableSunShaft = source.EnableSunShaft;
+                SunShaftStartDistance = source.SunShaftStartDistance;
+                SunShaftEndDistance = source.SunShaftEndDistance;
+                SunShaftAlpha = source.SunShaftAlpha;
+                SunShaftColor = source.SunShaftColor;
+                SunShaftDirectionX = source.SunShaftDirectionX;
+                SunShaftDirectionY = source.SunShaftDirectionY;
+                SunShaftDirectionZ = source.SunShaftDirectionZ;
+                SunShaftBlurWidth = source.SunShaftBlurWidth;
+                SunShaftAttenuationCoefficient = source.SunShaftAttenuationCoefficient;
+                RockColor = source.RockColor;
+            }
+        }
+
+        private sealed class StageListItem
+        {
+            public readonly StageInfoStage Stage;
+            public readonly int OriginalIndex;
+            public StageListItem(StageInfoStage stage, int originalIndex) { Stage = stage; OriginalIndex = originalIndex; }
+            public override string ToString()
+            {
+                string name = string.IsNullOrWhiteSpace(Stage.StageName) ? "<unnamed stage>" : Stage.StageName;
+                return OriginalIndex.ToString("D3") + "  " + name;
+            }
+        }
+
+        #endregion
+
+        #region Binary codec
+
+        private static class StageInfoSerializer
+        {
+            private const int StageRecordSize = 0x130;
+            private const int ObjectRecordSize = 0xB0;
+            private static readonly byte[] Marker = { 0xF2, 0x03, 0x00, 0x00 };
+
+            public static StageInfoDocument Read(byte[] data)
+            {
+                if (data == null || data.Length < 0x80)
+                    throw new InvalidDataException("The file is too small to be a StageInfo XFBIN.");
+                if (data[0] != 0x4E || data[1] != 0x55 || data[2] != 0x43 || data[3] != 0x43)
+                    throw new InvalidDataException("Missing NUCC XFBIN signature.");
+
+                int marker = FindMarker(data);
+                if (marker < 0)
+                    throw new InvalidDataException("Could not locate the StageInfo binary marker F2 03 00 00.");
+
+                int count = ReadInt32(data, marker + 4);
+                if (count < 0 || count > 100000)
+                    throw new InvalidDataException("Invalid stage count: " + count + ".");
+                int tableStart = checked(marker + 0x10);
+                EnsureRange(data, tableStart, checked(count * StageRecordSize), "stage record table");
+
+                StageInfoDocument document = new StageInfoDocument
+                {
+                    MarkerOffset = marker,
+                    BinName = ReadBinName(data)
+                };
+
+                for (int index = 0; index < count; index++)
+                {
+                    int entry = checked(tableStart + index * StageRecordSize);
+                    StageInfoStage stage = StageInfoStage.CreateDefault();
+                    stage.RawRecord = Slice(data, entry, StageRecordSize);
+                    stage.StageName = ReadRelativeString(data, entry + 0x00);
+                    stage.StageMessageID = ReadRelativeString(data, entry + 0x08);
+                    stage.StageFilter = ReadRelativeString(data, entry + 0x10);
+
+                    int pathCount = ReadCount(data, entry + 0x18, "resource path", index);
+                    int pathListBase = CheckedRelative(data, entry + 0x20, "resource path list");
+                    EnsureRange(data, pathListBase, checked(pathCount * 0x08), "resource path list");
+                    for (int pathIndex = 0; pathIndex < pathCount; pathIndex++)
+                    {
+                        int slot = checked(pathListBase + pathIndex * 0x08);
+                        stage.FilePaths.Add(new StageInfoPath { FilePath = ReadRelativeString(data, slot) });
+                    }
+
+                    int objectCount = ReadCount(data, entry + 0x28, "object", index);
+                    int objectListBase = CheckedRelative(data, entry + 0x30, "object list");
+                    EnsureRange(data, objectListBase, checked(objectCount * ObjectRecordSize), "object list");
+                    for (int objectIndex = 0; objectIndex < objectCount; objectIndex++)
+                    {
+                        int objectEntry = checked(objectListBase + objectIndex * ObjectRecordSize);
+                        StageInfoObject stageObject = StageInfoObject.CreateDefault();
+                        stageObject.RawRecord = Slice(data, objectEntry, ObjectRecordSize);
+                        stageObject.ObjectFilePath = ReadRelativeString(data, objectEntry + 0x00);
+                        stageObject.ObjectName = ReadRelativeString(data, objectEntry + 0x08);
+                        stageObject.PositionFilePath = ReadRelativeString(data, objectEntry + 0x10);
+                        stageObject.PositionBoneName = ReadRelativeString(data, objectEntry + 0x18);
+                        stageObject.EntryType = ReadInt32(data, objectEntry + 0x20);
+                        stageObject.AnimationSpeed = ReadSingle(data, objectEntry + 0x24);
+                        stageObject.EnableCameraHideObject = ReadInt32(data, objectEntry + 0x28) != 0;
+                        stageObject.IsRigidBody = ReadInt32(data, objectEntry + 0x2C) != 0;
+                        stageObject.BreakableObjectPath = ReadRelativeString(data, objectEntry + 0x38);
+                        stageObject.BreakableObjectEffect01 = ReadRelativeString(data, objectEntry + 0x40);
+                        stageObject.BreakableObjectSpeed01 = ReadSingle(data, objectEntry + 0x48);
+                        stageObject.BreakableObjectEffect02 = ReadRelativeString(data, objectEntry + 0x50);
+                        stageObject.BreakableObjectSpeed02 = ReadSingle(data, objectEntry + 0x58);
+                        stageObject.BreakableObjectEffect03 = ReadRelativeString(data, objectEntry + 0x60);
+                        stageObject.BreakableObjectSpeed03 = ReadSingle(data, objectEntry + 0x68);
+                        stageObject.BreakableConstantA = ReadInt32(data, objectEntry + 0x70);
+                        stageObject.BreakableConstantB = ReadInt32(data, objectEntry + 0x74);
+                        stageObject.BreakableWallEffect01 = ReadRelativeString(data, objectEntry + 0x78);
+                        stageObject.BreakableWallValue1 = ReadInt32(data, objectEntry + 0x80);
+                        stageObject.BreakableWallValue2 = ReadInt32(data, objectEntry + 0x84);
+                        stageObject.BreakableWallEffect02 = ReadRelativeString(data, objectEntry + 0x88);
+                        stageObject.BreakableWallEffect03 = ReadRelativeString(data, objectEntry + 0x90);
+                        stageObject.BreakableWallVolume = ReadSingle(data, objectEntry + 0x98);
+                        stageObject.BreakableWallSound = ReadRelativeString(data, objectEntry + 0xA0);
+                        stage.Objects.Add(stageObject);
+                    }
+
+                    stage.Weather = ReadInt32(data, entry + 0x38);
+                    stage.PlayerAmbientColor = ReadColor(data, entry + 0x3C);
+                    stage.RayCutOffShadeColor = ReadColor(data, entry + 0x40);
+                    stage.EffectAmbientColor = ReadColor(data, entry + 0x44);
+                    stage.UnknownColor = ReadColor(data, entry + 0x48);
+                    stage.EnableBrightnessAdjustment = ReadInt32(data, entry + 0x4C) != 0;
+                    stage.Brightness = ReadSingle(data, entry + 0x50);
+                    stage.Contrast = ReadSingle(data, entry + 0x54);
+                    stage.EnableLensFlare = ReadInt32(data, entry + 0x58) != 0;
+                    stage.LensFlare = ReadInt32(data, entry + 0x5C);
+                    stage.LensFlarePositionX = ReadSingle(data, entry + 0x60);
+                    stage.LensFlarePositionY = ReadSingle(data, entry + 0x64);
+                    stage.LensFlarePositionZ = ReadSingle(data, entry + 0x68);
+                    stage.LensFlareAlpha = ReadSingle(data, entry + 0x6C);
+                    stage.ParallelAmbientColor = ReadColor(data, entry + 0x70);
+                    stage.RayCutOffNormalColor = ReadColor(data, entry + 0x74);
+                    stage.LightPointDirectionX = ReadSingle(data, entry + 0x78);
+                    stage.LightPointDirectionY = ReadSingle(data, entry + 0x7C);
+                    stage.LightPointDirectionZ = ReadSingle(data, entry + 0x80);
+                    stage.EnableShadowColor = ReadInt32(data, entry + 0x84) != 0;
+                    stage.ShadowColor = ReadColor(data, entry + 0x88);
+                    stage.EnableFog = ReadInt32(data, entry + 0x8C) != 0;
+                    stage.FogStartDistance = ReadSingle(data, entry + 0x90);
+                    stage.FogEndDistance = ReadSingle(data, entry + 0x94);
+                    stage.FogStrength = ReadSingle(data, entry + 0x98);
+                    stage.FogColor = ReadColor(data, entry + 0x9C);
+                    stage.EnableMonoColorFilter = ReadInt32(data, entry + 0xA0) != 0;
+                    stage.MonoBlueTone = ReadSingle(data, entry + 0xA4);
+                    stage.MonoRedTone = ReadSingle(data, entry + 0xA8);
+                    stage.MonoAlpha = ReadSingle(data, entry + 0xAC);
+                    stage.EnableGlareEffect = ReadInt32(data, entry + 0xB0) != 0;
+                    stage.GlareLuminanceThreshold = ReadSingle(data, entry + 0xB4);
+                    stage.GlareSubtracted = ReadSingle(data, entry + 0xB8);
+                    stage.GlareCompositionStrength = ReadSingle(data, entry + 0xBC);
+                    stage.EnableSoftFocus = ReadInt32(data, entry + 0xC4) != 0;
+                    stage.SoftFocusStrength = ReadSingle(data, entry + 0xC8);
+                    stage.EnableDOFBlur = ReadInt32(data, entry + 0xCC) != 0;
+                    stage.DOFFocalLength = ReadSingle(data, entry + 0xD0);
+                    stage.DOFShortDistance = ReadSingle(data, entry + 0xD4);
+                    stage.DOFLongDistance = ReadSingle(data, entry + 0xD8);
+                    stage.DOFAlpha = ReadSingle(data, entry + 0xDC);
+                    stage.EnableDOFEdgeBlur = ReadInt32(data, entry + 0xE0) != 0;
+                    stage.EnableSunShaft = ReadInt32(data, entry + 0xE4) != 0;
+                    stage.SunShaftStartDistance = ReadSingle(data, entry + 0xE8);
+                    stage.SunShaftEndDistance = ReadSingle(data, entry + 0xEC);
+                    stage.SunShaftAlpha = ReadSingle(data, entry + 0xF0);
+                    stage.SunShaftColor = ReadColor(data, entry + 0xF4);
+                    stage.SunShaftDirectionX = ReadSingle(data, entry + 0xF8);
+                    stage.SunShaftDirectionY = ReadSingle(data, entry + 0xFC);
+                    stage.SunShaftDirectionZ = ReadSingle(data, entry + 0x100);
+                    stage.SunShaftBlurWidth = ReadSingle(data, entry + 0x104);
+                    stage.SunShaftAttenuationCoefficient = ReadSingle(data, entry + 0x108);
+                    stage.RockColor = ReadColor(data, entry + 0x10C);
+                    document.Stages.Add(stage);
+                }
+                return document;
+            }
+
+            public static byte[] Write(IList<StageInfoStage> stages, string fileBinName)
+            {
+                string binName = string.IsNullOrWhiteSpace(fileBinName) ? "stageInfo" : fileBinName;
+                string binPath = "bin_le/x64/" + binName + ".bin";
+                ByteBuilder writer = new ByteBuilder(8192);
+                writer.Write(ContainerHeader);
+                writer.WriteByte(0);
+                writer.WriteCString(binPath);
+
+                int pathPointer = writer.Length;
+                writer.WriteByte(0);
+                writer.WriteCString(binName);
+                writer.WriteCString("Page0");
+                writer.WriteCString("index");
+
+                int namePointer = writer.Length;
+                int beforeAlign = writer.Length;
+                writer.Align4();
+                int addedBytes = writer.Length - beforeAlign;
+
+                writer.Write(new byte[48]
+                {
+                    0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,1,
+                    0,0,0,1, 0,0,0,1, 0,0,0,2, 0,0,0,0,
+                    0,0,0,2, 0,0,0,3, 0,0,0,0, 0,0,0,3
+                });
+                int sectionPointer = writer.Length;
+                writer.Write(new byte[16] { 0,0,0,0, 0,0,0,1, 0,0,0,2, 0,0,0,3 });
+
+                int totalLength = writer.Length;
+                int pathLength = pathPointer - 127;
+                int nameLength = namePointer - pathPointer;
+                int sectionLength = sectionPointer - namePointer - addedBytes;
+                int fullLength = totalLength - 68 + 40;
+                writer.WriteBE32At(16, fullLength);
+                writer.WriteBE32At(36, 2);
+                writer.WriteBE32At(40, pathLength);
+                writer.WriteBE32At(44, 4);
+                writer.WriteBE32At(48, nameLength);
+                writer.WriteBE32At(52, 4);
+                writer.WriteBE32At(56, sectionLength);
+                writer.WriteBE32At(60, 4);
+
+                writer.Write(new byte[40]
+                {
+                    0,0,0,0, 0,0,0,0, 0,0x79,0,0, 0,0,0,0,
+                    0,0,0,0, 0,0x79,0,0, 0,0,0,0, 0,0,0,1,
+                    0,0x79,0,0, 0,0,0,0
+                });
+                int size1Index = writer.Length - 0x10;
+                int size2Index = writer.Length - 0x04;
+                int countIndex = writer.Length + 0x04;
+                writer.Write(new byte[0x10] { 0xF2,0x03,0,0, 0,0,0,0, 0x08,0,0,0, 0,0,0,0 });
+
+                int start = writer.Length;
+                writer.WriteZeros(checked(stages.Count * StageRecordSize));
+                int[] pathBases = new int[stages.Count];
+                int[] objectBases = new int[stages.Count];
+
+                for (int stageIndex = 0; stageIndex < stages.Count; stageIndex++)
+                {
+                    StageInfoStage stage = stages[stageIndex];
+                    int entry = start + stageIndex * StageRecordSize;
+                    if (stage.RawRecord != null && stage.RawRecord.Length == StageRecordSize)
+                        writer.WriteAt(entry, stage.RawRecord);
+
+                    int stageNamePosition = writer.Length; writer.WriteCString(stage.StageName);
+                    int messagePosition = writer.Length; writer.WriteCString(stage.StageMessageID);
+                    int filterPosition = writer.Length; writer.WriteCString(stage.StageFilter);
+                    pathBases[stageIndex] = writer.Length; writer.WriteZeros(checked(stage.FilePaths.Count * 0x08));
+                    objectBases[stageIndex] = writer.Length; writer.WriteZeros(checked(stage.Objects.Count * ObjectRecordSize));
+
+                    writer.WriteLE32At(entry + 0x00, stageNamePosition - (entry + 0x00));
+                    writer.WriteLE32At(entry + 0x08, messagePosition - (entry + 0x08));
+                    writer.WriteLE32At(entry + 0x10, filterPosition - (entry + 0x10));
+                    writer.WriteLE32At(entry + 0x18, stage.FilePaths.Count);
+                    writer.WriteLE32At(entry + 0x20, pathBases[stageIndex] - (entry + 0x20));
+                    writer.WriteLE32At(entry + 0x28, stage.Objects.Count);
+                    writer.WriteLE32At(entry + 0x30, objectBases[stageIndex] - (entry + 0x30));
+                    writer.WriteLE32At(entry + 0x38, stage.Weather);
+                    writer.WriteColorAt(entry + 0x3C, stage.PlayerAmbientColor);
+                    writer.WriteColorAt(entry + 0x40, stage.RayCutOffShadeColor);
+                    writer.WriteColorAt(entry + 0x44, stage.EffectAmbientColor);
+                    writer.WriteColorAt(entry + 0x48, stage.UnknownColor);
+                    writer.WriteBool32At(entry + 0x4C, stage.EnableBrightnessAdjustment);
+                    writer.WriteSingleAt(entry + 0x50, stage.Brightness);
+                    writer.WriteSingleAt(entry + 0x54, stage.Contrast);
+                    writer.WriteBool32At(entry + 0x58, stage.EnableLensFlare);
+                    writer.WriteLE32At(entry + 0x5C, stage.LensFlare);
+                    writer.WriteSingleAt(entry + 0x60, stage.LensFlarePositionX);
+                    writer.WriteSingleAt(entry + 0x64, stage.LensFlarePositionY);
+                    writer.WriteSingleAt(entry + 0x68, stage.LensFlarePositionZ);
+                    writer.WriteSingleAt(entry + 0x6C, stage.LensFlareAlpha);
+                    writer.WriteColorAt(entry + 0x70, stage.ParallelAmbientColor);
+                    writer.WriteColorAt(entry + 0x74, stage.RayCutOffNormalColor);
+                    writer.WriteSingleAt(entry + 0x78, stage.LightPointDirectionX);
+                    writer.WriteSingleAt(entry + 0x7C, stage.LightPointDirectionY);
+                    writer.WriteSingleAt(entry + 0x80, stage.LightPointDirectionZ);
+                    writer.WriteBool32At(entry + 0x84, stage.EnableShadowColor);
+                    writer.WriteColorAt(entry + 0x88, stage.ShadowColor);
+                    writer.WriteBool32At(entry + 0x8C, stage.EnableFog);
+                    writer.WriteSingleAt(entry + 0x90, stage.FogStartDistance);
+                    writer.WriteSingleAt(entry + 0x94, stage.FogEndDistance);
+                    writer.WriteSingleAt(entry + 0x98, stage.FogStrength);
+                    writer.WriteColorAt(entry + 0x9C, stage.FogColor);
+                    writer.WriteBool32At(entry + 0xA0, stage.EnableMonoColorFilter);
+                    writer.WriteSingleAt(entry + 0xA4, stage.MonoBlueTone);
+                    writer.WriteSingleAt(entry + 0xA8, stage.MonoRedTone);
+                    writer.WriteSingleAt(entry + 0xAC, stage.MonoAlpha);
+                    writer.WriteBool32At(entry + 0xB0, stage.EnableGlareEffect);
+                    writer.WriteSingleAt(entry + 0xB4, stage.GlareLuminanceThreshold);
+                    writer.WriteSingleAt(entry + 0xB8, stage.GlareSubtracted);
+                    writer.WriteSingleAt(entry + 0xBC, stage.GlareCompositionStrength);
+                    writer.WriteBool32At(entry + 0xC4, stage.EnableSoftFocus);
+                    writer.WriteSingleAt(entry + 0xC8, stage.SoftFocusStrength);
+                    writer.WriteBool32At(entry + 0xCC, stage.EnableDOFBlur);
+                    writer.WriteSingleAt(entry + 0xD0, stage.DOFFocalLength);
+                    writer.WriteSingleAt(entry + 0xD4, stage.DOFShortDistance);
+                    writer.WriteSingleAt(entry + 0xD8, stage.DOFLongDistance);
+                    writer.WriteSingleAt(entry + 0xDC, stage.DOFAlpha);
+                    writer.WriteBool32At(entry + 0xE0, stage.EnableDOFEdgeBlur);
+                    writer.WriteBool32At(entry + 0xE4, stage.EnableSunShaft);
+                    writer.WriteSingleAt(entry + 0xE8, stage.SunShaftStartDistance);
+                    writer.WriteSingleAt(entry + 0xEC, stage.SunShaftEndDistance);
+                    writer.WriteSingleAt(entry + 0xF0, stage.SunShaftAlpha);
+                    writer.WriteColorAt(entry + 0xF4, stage.SunShaftColor);
+                    writer.WriteSingleAt(entry + 0xF8, stage.SunShaftDirectionX);
+                    writer.WriteSingleAt(entry + 0xFC, stage.SunShaftDirectionY);
+                    writer.WriteSingleAt(entry + 0x100, stage.SunShaftDirectionZ);
+                    writer.WriteSingleAt(entry + 0x104, stage.SunShaftBlurWidth);
+                    writer.WriteSingleAt(entry + 0x108, stage.SunShaftAttenuationCoefficient);
+                    writer.WriteColorAt(entry + 0x10C, stage.RockColor);
+
+                    for (int pathIndex = 0; pathIndex < stage.FilePaths.Count; pathIndex++)
+                    {
+                        int slot = pathBases[stageIndex] + pathIndex * 0x08;
+                        writer.WriteLE32At(slot, writer.Length - slot);
+                        writer.WriteCString(stage.FilePaths[pathIndex].FilePath);
+                    }
+
+                    for (int objectIndex = 0; objectIndex < stage.Objects.Count; objectIndex++)
+                    {
+                        StageInfoObject stageObject = stage.Objects[objectIndex];
+                        int objectEntry = objectBases[stageIndex] + objectIndex * ObjectRecordSize;
+                        if (stageObject.RawRecord != null && stageObject.RawRecord.Length == ObjectRecordSize)
+                            writer.WriteAt(objectEntry, stageObject.RawRecord);
+
+                        WriteRelativeString(writer, objectEntry + 0x00, stageObject.ObjectFilePath);
+                        WriteRelativeString(writer, objectEntry + 0x08, stageObject.ObjectName);
+                        WriteRelativeString(writer, objectEntry + 0x10, stageObject.PositionFilePath);
+                        WriteRelativeString(writer, objectEntry + 0x18, stageObject.PositionBoneName);
+                        writer.WriteLE32At(objectEntry + 0x20, stageObject.EntryType);
+                        writer.WriteSingleAt(objectEntry + 0x24, stageObject.AnimationSpeed);
+                        writer.WriteBool32At(objectEntry + 0x28, stageObject.EnableCameraHideObject);
+                        writer.WriteBool32At(objectEntry + 0x2C, stageObject.IsRigidBody);
+                        WriteRelativeString(writer, objectEntry + 0x38, stageObject.BreakableObjectPath);
+                        WriteRelativeString(writer, objectEntry + 0x40, stageObject.BreakableObjectEffect01);
+                        writer.WriteSingleAt(objectEntry + 0x48, stageObject.BreakableObjectSpeed01);
+                        WriteRelativeString(writer, objectEntry + 0x50, stageObject.BreakableObjectEffect02);
+                        writer.WriteSingleAt(objectEntry + 0x58, stageObject.BreakableObjectSpeed02);
+                        WriteRelativeString(writer, objectEntry + 0x60, stageObject.BreakableObjectEffect03);
+                        writer.WriteSingleAt(objectEntry + 0x68, stageObject.BreakableObjectSpeed03);
+                        writer.WriteLE32At(objectEntry + 0x70, stageObject.BreakableConstantA);
+                        writer.WriteLE32At(objectEntry + 0x74, stageObject.BreakableConstantB);
+                        WriteRelativeString(writer, objectEntry + 0x78, stageObject.BreakableWallEffect01);
+                        writer.WriteLE32At(objectEntry + 0x80, stageObject.BreakableWallValue1);
+                        writer.WriteLE32At(objectEntry + 0x84, stageObject.BreakableWallValue2);
+                        WriteRelativeString(writer, objectEntry + 0x88, stageObject.BreakableWallEffect02);
+                        WriteRelativeString(writer, objectEntry + 0x90, stageObject.BreakableWallEffect03);
+                        writer.WriteSingleAt(objectEntry + 0x98, stageObject.BreakableWallVolume);
+                        WriteRelativeString(writer, objectEntry + 0xA0, stageObject.BreakableWallSound);
+                    }
+                }
+
+                writer.WriteBE32At(size1Index, writer.Length - start + 0x14);
+                writer.WriteBE32At(size2Index, writer.Length - start + 0x10);
+                writer.WriteLE32At(countIndex, stages.Count);
+                writer.Write(new byte[20] { 0,0,0,8, 0,0,0,2, 0,0x79,0xE9,0x77, 0,0,0,4, 0,0,0,0 });
+                return writer.ToArray();
+            }
+
+            private static void WriteRelativeString(ByteBuilder writer, int pointerSlot, string value)
+            {
+                writer.WriteLE32At(pointerSlot, writer.Length - pointerSlot);
+                writer.WriteCString(value);
+            }
+
+            private static int FindMarker(byte[] data)
+            {
+                int headerCandidate = -1;
+                if (data.Length >= 20)
+                {
+                    int sectionSize = ReadInt32BigEndian(data, 16);
+                    long candidate = 0x44L + sectionSize;
+                    if (candidate >= 0 && candidate <= int.MaxValue && IsMarkerAt(data, (int)candidate))
+                        headerCandidate = (int)candidate;
+                }
+                if (headerCandidate >= 0 && IsPlausibleMarker(data, headerCandidate)) return headerCandidate;
+                for (int i = 0; i <= data.Length - Marker.Length; i++)
+                    if (IsMarkerAt(data, i) && IsPlausibleMarker(data, i)) return i;
+                return -1;
+            }
+
+            private static bool IsMarkerAt(byte[] data, int index)
+            {
+                return index >= 0 && index + 4 <= data.Length && data[index] == Marker[0] && data[index + 1] == Marker[1] && data[index + 2] == 0 && data[index + 3] == 0;
+            }
+
+            private static bool IsPlausibleMarker(byte[] data, int index)
+            {
+                if (index + 0x10 > data.Length) return false;
+                int count = ReadInt32(data, index + 4);
+                if (count < 0 || count > 100000) return false;
+                long end = index + 0x10L + count * (long)StageRecordSize;
+                return end <= data.Length;
+            }
+
+            private static string ReadBinName(byte[] data)
+            {
+                try
+                {
+                    if (data.Length <= 128) return "stageInfo";
+                    int pathEnd;
+                    ReadCString(data, 128, out pathEnd);
+                    int nameStart = pathEnd + 1;
+                    while (nameStart < data.Length && data[nameStart] == 0) nameStart++;
+                    int ignored;
+                    string name = ReadCString(data, nameStart, out ignored);
+                    return string.IsNullOrWhiteSpace(name) ? "stageInfo" : name;
+                }
+                catch { return "stageInfo"; }
+            }
+
+            private static int ReadCount(byte[] data, int offset, string label, int stageIndex)
+            {
+                int count = ReadInt32(data, offset);
+                if (count < 0 || count > 100000)
+                    throw new InvalidDataException("Invalid " + label + " count " + count + " in stage " + stageIndex + ".");
+                return count;
+            }
+
+            private static int CheckedRelative(byte[] data, int pointerSlot, string label)
+            {
+                int relative = ReadInt32(data, pointerSlot);
+                long target = pointerSlot + (long)relative;
+                if (target < 0 || target > data.Length)
+                    throw new InvalidDataException("The " + label + " pointer at 0x" + pointerSlot.ToString("X") + " points outside the file.");
+                return (int)target;
+            }
+
+            private static string ReadRelativeString(byte[] data, int pointerSlot)
+            {
+                int target = CheckedRelative(data, pointerSlot, "string");
+                int ignored;
+                return ReadCString(data, target, out ignored);
+            }
+
+            private static string ReadCString(byte[] data, int offset, out int terminator)
+            {
+                if (offset < 0 || offset >= data.Length)
+                    throw new InvalidDataException("String offset 0x" + offset.ToString("X") + " is outside the file.");
+                terminator = offset;
+                while (terminator < data.Length && data[terminator] != 0) terminator++;
+                if (terminator >= data.Length)
+                    throw new InvalidDataException("Unterminated string at 0x" + offset.ToString("X") + ".");
+                return Encoding.UTF8.GetString(data, offset, terminator - offset);
+            }
+
+            private static Color ReadColor(byte[] data, int offset)
+            {
+                EnsureRange(data, offset, 4, "color");
+                return Color.FromArgb(data[offset], data[offset + 1], data[offset + 2], data[offset + 3]);
+            }
+
+            private static float ReadSingle(byte[] data, int offset)
+            {
+                EnsureRange(data, offset, 4, "float");
+                return BitConverter.ToSingle(data, offset);
+            }
+
+            private static int ReadInt32(byte[] data, int offset)
+            {
+                EnsureRange(data, offset, 4, "int32");
+                return data[offset] | data[offset + 1] << 8 | data[offset + 2] << 16 | data[offset + 3] << 24;
+            }
+
+            private static int ReadInt32BigEndian(byte[] data, int offset)
+            {
+                EnsureRange(data, offset, 4, "big-endian int32");
+                return data[offset] << 24 | data[offset + 1] << 16 | data[offset + 2] << 8 | data[offset + 3];
+            }
+
+            private static byte[] Slice(byte[] data, int offset, int count)
+            {
+                EnsureRange(data, offset, count, "record");
+                byte[] result = new byte[count];
+                Buffer.BlockCopy(data, offset, result, 0, count);
+                return result;
+            }
+
+            private static void EnsureRange(byte[] data, int offset, int count, string label)
+            {
+                if (offset < 0 || count < 0 || (long)offset + count > data.Length)
+                    throw new InvalidDataException("The " + label + " range at 0x" + offset.ToString("X") + " is outside the file.");
+            }
+
+            private static readonly byte[] ContainerHeader =
+            {
+                0x4E,0x55,0x43,0x43,0,0,0,0x79,0,0,0,0,0,0,0,0,
+                0,0,0x80,0xBC,0,0,0,3,0,0x79,0,0,0,0,4,
+                0,0,0,0x3B,0,0,1,0x49,0,0,0x4C,0xE3,0,0,1,0x4B,
+                0,0,0x0F,0x6F,0,0,1,0x4B,0,0,0x0F,0x84,0,0,5,0x20,
+                0,0,0,0,0x6E,0x75,0x63,0x63,0x43,0x68,0x75,0x6E,0x6B,0x4E,0x75,0x6C,
+                0x6C,0,0x6E,0x75,0x63,0x63,0x43,0x68,0x75,0x6E,0x6B,0x42,0x69,0x6E,0x61,0x72,
+                0x79,0,0x6E,0x75,0x63,0x63,0x43,0x68,0x75,0x6E,0x6B,0x50,0x61,0x67,0x65,0,
+                0x6E,0x75,0x63,0x63,0x43,0x68,0x75,0x6E,0x6B,0x49,0x6E,0x64,0x65,0x78,0
+            };
+        }
+
+        private sealed class ByteBuilder
+        {
+            private byte[] _buffer;
+            public int Length { get; private set; }
+
+            public ByteBuilder(int capacity) { _buffer = new byte[Math.Max(256, capacity)]; }
+
+            public void Write(byte[] bytes)
+            {
+                if (bytes == null || bytes.Length == 0) return;
+                EnsureCapacity(checked(Length + bytes.Length));
+                Buffer.BlockCopy(bytes, 0, _buffer, Length, bytes.Length);
+                Length += bytes.Length;
+            }
+
+            public void WriteByte(byte value)
+            {
+                EnsureCapacity(Length + 1);
+                _buffer[Length++] = value;
+            }
+
+            public void WriteZeros(int count)
+            {
+                if (count < 0) throw new ArgumentOutOfRangeException("count");
+                EnsureCapacity(checked(Length + count));
+                Array.Clear(_buffer, Length, count);
+                Length += count;
+            }
+
+            public void WriteCString(string value)
+            {
+                Write(Encoding.UTF8.GetBytes(value ?? ""));
+                WriteByte(0);
+            }
+
+            public void Align4()
+            {
+                while ((Length & 3) != 0) WriteByte(0);
+            }
+
+            public void WriteAt(int offset, byte[] bytes)
+            {
+                if (offset < 0 || bytes == null || (long)offset + bytes.Length > Length)
+                    throw new ArgumentOutOfRangeException("offset");
+                Buffer.BlockCopy(bytes, 0, _buffer, offset, bytes.Length);
+            }
+
+            public void WriteLE32At(int offset, int value)
+            {
+                EnsurePatch(offset, 4);
+                _buffer[offset] = (byte)value;
+                _buffer[offset + 1] = (byte)(value >> 8);
+                _buffer[offset + 2] = (byte)(value >> 16);
+                _buffer[offset + 3] = (byte)(value >> 24);
+            }
+
+            public void WriteBE32At(int offset, int value)
+            {
+                EnsurePatch(offset, 4);
+                _buffer[offset] = (byte)(value >> 24);
+                _buffer[offset + 1] = (byte)(value >> 16);
+                _buffer[offset + 2] = (byte)(value >> 8);
+                _buffer[offset + 3] = (byte)value;
+            }
+
+            public void WriteSingleAt(int offset, float value)
+            {
+                WriteAt(offset, BitConverter.GetBytes(value));
+            }
+
+            public void WriteBool32At(int offset, bool value)
+            {
+                WriteLE32At(offset, value ? 1 : 0);
+            }
+
+            public void WriteColorAt(int offset, Color color)
+            {
+                WriteAt(offset, new[] { color.A, color.R, color.G, color.B });
+            }
+
+            public byte[] ToArray()
+            {
+                byte[] result = new byte[Length];
+                Buffer.BlockCopy(_buffer, 0, result, 0, Length);
+                return result;
+            }
+
+            private void EnsurePatch(int offset, int count)
+            {
+                if (offset < 0 || count < 0 || (long)offset + count > Length)
+                    throw new ArgumentOutOfRangeException("offset");
+            }
+
+            private void EnsureCapacity(int required)
+            {
+                if (required <= _buffer.Length) return;
+                int next = _buffer.Length;
+                while (next < required) next = checked(next * 2);
+                Array.Resize(ref _buffer, next);
+            }
+        }
+
+        #endregion
+
+        private void Tool_StageInfoEditor_Load(object sender, EventArgs e)
         {
 
         }
 
-        private void Light_power_value_ValueChanged(object sender, EventArgs e)
+        private void _objectsGroup_Enter(object sender, EventArgs e)
         {
 
-        }
-
-        private void MysteriousValue_ValueChanged(object sender, EventArgs e) {
-
-        }
-
-        private void exportStageToolStripMenuItem_Click(object sender, EventArgs e) {
-            int x = listBox1.SelectedIndex;
-            if (x != -1) {
-                string data_win32path = Path.GetDirectoryName(Path.GetDirectoryName(Path.GetDirectoryName(FilePath)));
-                Tool_StageInfoEditor stageInfoEditor = new Tool_StageInfoEditor();
-                stageInfoEditor.OpenFile(Directory.GetCurrentDirectory() + "\\systemFiles\\stageInfo.bin.empty.xfbin");
-                stageInfoEditor.MainStageSection.Add(MainStageSection[x]);
-                stageInfoEditor.StageNameList.Add(StageNameList[x]);
-                stageInfoEditor.c_sta_List.Add(c_sta_List[x]);
-                stageInfoEditor.BTL_NSX_List.Add(BTL_NSX_List[x]);
-                stageInfoEditor.CountOfFiles.Add(CountOfFiles[x]);
-                stageInfoEditor.CountOfMeshes.Add(CountOfMeshes[x]);
-                stageInfoEditor.MainSection_WeatherSettings.Add(MainSection_WeatherSettings[x]);
-                stageInfoEditor.MainSection_lensFlareSettings.Add(MainSection_lensFlareSettings[x]);
-                stageInfoEditor.MainSection_EnablelensFlareSettings.Add(MainSection_EnablelensFlareSettings[x]);
-                stageInfoEditor.MainSection_X_PositionLightPoint.Add(MainSection_X_PositionLightPoint[x]);
-                stageInfoEditor.MainSection_Y_PositionLightPoint.Add(MainSection_Y_PositionLightPoint[x]);
-                stageInfoEditor.MainSection_Z_PositionLightPoint.Add(MainSection_Z_PositionLightPoint[x]);
-                stageInfoEditor.MainSection_X_PositionShadow.Add(MainSection_X_PositionShadow[x]);
-                stageInfoEditor.MainSection_Y_PositionShadow.Add(MainSection_Y_PositionShadow[x]);
-                stageInfoEditor.MainSection_Z_PositionShadow.Add(MainSection_Z_PositionShadow[x]);
-                stageInfoEditor.MainSection_unk1.Add(MainSection_unk1[x]);
-                stageInfoEditor.MainSection_ShadowSetting_value1.Add(MainSection_ShadowSetting_value1[x]);
-                stageInfoEditor.MainSection_ShadowSetting_value2.Add(MainSection_ShadowSetting_value2[x]);
-                stageInfoEditor.MainSection_PowerLight.Add(MainSection_PowerLight[x]);
-                stageInfoEditor.MainSection_PowerSkyColor.Add(MainSection_PowerSkyColor[x]);
-                stageInfoEditor.MainSection_PowerGlare.Add(MainSection_PowerGlare[x]);
-                stageInfoEditor.MainSection_blur.Add(MainSection_blur[x]);
-                stageInfoEditor.MainSection_X_PositionGlarePoint.Add(MainSection_X_PositionGlarePoint[x]);
-                stageInfoEditor.MainSection_Y_PositionGlarePoint.Add(MainSection_Y_PositionGlarePoint[x]);
-                stageInfoEditor.MainSection_Z_PositionGlarePoint.Add(MainSection_Z_PositionGlarePoint[x]);
-                stageInfoEditor.MainSectionGlareVagueness.Add(MainSectionGlareVagueness[x]);
-                stageInfoEditor.MainSection_ColorGlare.Add(MainSection_ColorGlare[x]);
-                stageInfoEditor.MainSection_ColorSky.Add(MainSection_ColorSky[x]);
-                stageInfoEditor.MainSection_ColorRock.Add(MainSection_ColorRock[x]);
-                stageInfoEditor.MainSection_ColorGroundEffect.Add(MainSection_ColorGroundEffect[x]);
-                stageInfoEditor.MainSection_ColorPlayerLight.Add(MainSection_ColorPlayerLight[x]);
-                stageInfoEditor.MainSection_ColorLight.Add(MainSection_ColorLight[x]);
-                stageInfoEditor.MainSection_ColorShadow.Add(MainSection_ColorShadow[x]);
-                stageInfoEditor.MainSection_ColorUnknown.Add(MainSection_ColorUnknown[x]);
-                stageInfoEditor.MainSection_ColorUnknown2.Add(MainSection_ColorUnknown2[x]);
-                stageInfoEditor.MainSection_EnableGlareSettingValue1.Add(MainSection_EnableGlareSettingValue1[x]);
-                stageInfoEditor.MainSection_EnableGlareSettingValue2.Add(MainSection_EnableGlareSettingValue2[x]);
-                stageInfoEditor.MainSection_EnableGlareSettingValue3.Add(MainSection_EnableGlareSettingValue3[x]);
-                stageInfoEditor.GlareEnabled.Add(GlareEnabled[x]);
-                stageInfoEditor.MainSection_X_MysteriousPosition.Add(MainSection_X_MysteriousPosition[x]);
-                stageInfoEditor.MainSection_Y_MysteriousPosition.Add(MainSection_Y_MysteriousPosition[x]);
-                stageInfoEditor.MainSection_Z_MysteriousPosition.Add(MainSection_Z_MysteriousPosition[x]);
-                stageInfoEditor.MainSection_MysteriousGlareValue1.Add(MainSection_MysteriousGlareValue1[x]);
-                stageInfoEditor.MainSection_MysteriousGlareValue2.Add(MainSection_MysteriousGlareValue2[x]);
-                stageInfoEditor.MainSection_MysteriousGlareValue3.Add(MainSection_MysteriousGlareValue3[x]);
-                stageInfoEditor.MainSection_UnknownValue1.Add(MainSection_UnknownValue1[x]);
-                stageInfoEditor.MainSection_UnknownValue2.Add(MainSection_UnknownValue2[x]);
-                stageInfoEditor.MainSection_UnknownValue3.Add(MainSection_UnknownValue3[x]);
-                stageInfoEditor.SecondarySectionFilePath.Add(SecondarySectionFilePath[x]);
-                stageInfoEditor.SecondarySectionLoadPath.Add(SecondarySectionLoadPath[x]);
-                stageInfoEditor.SecondarySectionLoadMesh.Add(SecondarySectionLoadMesh[x]);
-                stageInfoEditor.SecondarySectionPositionFilePath.Add(SecondarySectionPositionFilePath[x]);
-                stageInfoEditor.SecondarySectionPosition.Add(SecondarySectionPosition[x]);
-                stageInfoEditor.SecondaryTypeSection.Add(SecondaryTypeSection[x]);
-                stageInfoEditor.SecondaryTypeAnimationSection_speed.Add(SecondaryTypeAnimationSection_speed[x]);
-                stageInfoEditor.SecondarySectionCameraValue.Add(SecondarySectionCameraValue[x]);
-                stageInfoEditor.SecondarySectionMysteriousValue.Add(SecondarySectionMysteriousValue[x]);
-                stageInfoEditor.SecondaryConst3C.Add(SecondaryConst3C[x]);
-                stageInfoEditor.SecondaryConst78.Add(SecondaryConst78[x]);
-                stageInfoEditor.SecondaryConstBreakableWallValue1.Add(SecondaryConstBreakableWallValue1[x]);
-                stageInfoEditor.SecondaryConstBreakableWallValue2.Add(SecondaryConstBreakableWallValue2[x]);
-                stageInfoEditor.SecondaryTypeBreakableWall_Effect01.Add(SecondaryTypeBreakableWall_Effect01[x]);
-                stageInfoEditor.SecondaryTypeBreakableWall_Effect02.Add(SecondaryTypeBreakableWall_Effect02[x]);
-                stageInfoEditor.SecondaryTypeBreakableWall_Effect03.Add(SecondaryTypeBreakableWall_Effect03[x]);
-                stageInfoEditor.SecondaryTypeBreakableWall_Sound.Add(SecondaryTypeBreakableWall_Sound[x]);
-                stageInfoEditor.SecondaryTypeBreakableObject_Effect01.Add(SecondaryTypeBreakableObject_Effect01[x]);
-                stageInfoEditor.SecondaryTypeBreakableObject_Effect02.Add(SecondaryTypeBreakableObject_Effect02[x]);
-                stageInfoEditor.SecondaryTypeBreakableObject_Effect03.Add(SecondaryTypeBreakableObject_Effect03[x]);
-                stageInfoEditor.SecondaryTypeBreakableObject_path.Add(SecondaryTypeBreakableObject_path[x]);
-                stageInfoEditor.SecondaryTypeBreakableObject_Speed01.Add(SecondaryTypeBreakableObject_Speed01[x]);
-                stageInfoEditor.SecondaryTypeBreakableObject_Speed02.Add(SecondaryTypeBreakableObject_Speed02[x]);
-                stageInfoEditor.SecondaryTypeBreakableObject_Speed03.Add(SecondaryTypeBreakableObject_Speed03[x]);
-                stageInfoEditor.SecondaryTypeBreakableWall_volume.Add(SecondaryTypeBreakableWall_volume[x]);
-                stageInfoEditor.EntryCount++;
-
-                Microsoft.WindowsAPICodePack.Dialogs.CommonOpenFileDialog c = new Microsoft.WindowsAPICodePack.Dialogs.CommonOpenFileDialog();
-                c.IsFolderPicker = true;
-
-                if (c.ShowDialog() == Microsoft.WindowsAPICodePack.Dialogs.CommonFileDialogResult.Ok) {
-                    string stageModPath = c.FileName +"\\" + StageNameList[x] + " - mod\\" + StageNameList[x]+"\\";
-                    if (!Directory.Exists(stageModPath)) {
-                        Directory.CreateDirectory(stageModPath);
-                    }
-                    if (data_win32path.Contains("data_win32")) {
-                        for (int v = 0; v< SecondarySectionFilePath[x].Count; v++) {
-                            if (File.Exists(data_win32path + SecondarySectionFilePath[x][v].Replace("data/", "\\").Replace("/", "\\"))){
-                                CopyFiles(data_win32path + SecondarySectionFilePath[x][v].Replace("data/", "\\").Replace("/", "\\"), stageModPath + SecondarySectionFilePath[x][v].Replace("data/", "data_win32\\").Replace("/", "\\"));
-                            }
-                        }
-                    }
-                    if (!Directory.Exists(stageModPath + "data_win32\\stage\\WIN64\\")) {
-                        Directory.CreateDirectory(stageModPath + "data_win32\\stage\\WIN64\\");
-                    }
-                    Directory.CreateDirectory(stageModPath + "moddingapi\\mods\\"+ StageNameList[x]);
-                    stageInfoEditor.SaveFileAs(stageModPath + "data_win32\\stage\\WIN64\\stageInfo.bin.xfbin");
-                    byte[] image = File.ReadAllBytes(Directory.GetCurrentDirectory() + "\\systemFiles\\stage_tex.png");
-                    byte[] image_mod = File.ReadAllBytes(Directory.GetCurrentDirectory() + "\\systemFiles\\template_icon.png");
-                    File.WriteAllBytes(stageModPath + "stage_tex.png", image);
-                    File.WriteAllText(stageModPath + "BGM_ID.txt", "69");
-                    List<string> lang = new List<string>();
-                    lang.Add("arae=Stage without name");
-                    lang.Add("chi=Stage without name");
-                    lang.Add("eng=Stage without name");
-                    lang.Add("esmx=Stage without name");
-                    lang.Add("fre=Stage without name");
-                    lang.Add("ger=Stage without name");
-                    lang.Add("ita=Stage without name");
-                    lang.Add("kokr=Stage without name");
-                    lang.Add("pol=Stage without name");
-                    lang.Add("por=Stage without name");
-                    lang.Add("rus=Карта без названия");
-                    lang.Add("spa=Stage without name");
-                    File.WriteAllLines(stageModPath + "stageMessage.txt", lang.ToArray());
-                    File.WriteAllText(c.FileName + "\\" + StageNameList[x] + " - mod\\" + "Author.txt", "Unknown");
-                    File.WriteAllText(c.FileName + "\\" + StageNameList[x] + " - mod\\" + "ModdingAPI.txt", "true");
-                    File.WriteAllText(c.FileName + "\\" + StageNameList[x] + " - mod\\" + "Description.txt", "");
-                    File.WriteAllBytes(c.FileName + "\\" + StageNameList[x] + " - mod\\" + "Icon.png", image_mod);
-                    MessageBox.Show(StageNameList[x] + " was exported successfully!");
-                }
-            } else {
-                MessageBox.Show("Select stage which you want to export");
-            }
-        }
-        public void CopyFiles(string originalDataWin32, string newDataWin32) {
-            if (File.Exists(originalDataWin32)) {
-                if (!Directory.Exists(Path.GetDirectoryName(newDataWin32))) {
-                    Directory.CreateDirectory(Path.GetDirectoryName(newDataWin32));
-                }
-                File.Copy(originalDataWin32, newDataWin32, true);
-            }
         }
     }
 }
