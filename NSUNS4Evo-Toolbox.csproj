@@ -244,6 +244,13 @@
     <Compile Include="NSUNS4_Character_Manager\Tools\Tool_CommandListCloneDialog.Designer.cs">
       <DependentUpon>Tool_CommandListCloneDialog.cs</DependentUpon>
     </Compile>
+    <Compile Include="NSUNS4_Character_Manager\Tools\CpuParamCodec.cs" />
+    <Compile Include="NSUNS4_Character_Manager\Tools\Tool_CpuParamEditor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="NSUNS4_Character_Manager\Tools\Tool_CpuParamEditor.Designer.cs">
+      <DependentUpon>Tool_CpuParamEditor.cs</DependentUpon>
+    </Compile>
     <Compile Include="NSUNS4_Character_Manager\Tools\Tool_CommandListCostumeDialog.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -482,6 +489,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="NSUNS4_Character_Manager\Tools\Tool_CommandListParamEditor.resx">
       <DependentUpon>Tool_CommandListParamEditor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="NSUNS4_Character_Manager\Tools\Tool_CpuParamEditor.resx">
+      <DependentUpon>Tool_CpuParamEditor.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="NSUNS4_Character_Manager\Tools\Tool_damageeffEditor.resx">
       <DependentUpon>Tool_damageeffEditor.cs</DependentUpon>

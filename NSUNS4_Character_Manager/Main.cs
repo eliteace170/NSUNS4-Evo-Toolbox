@@ -60,6 +60,7 @@ namespace NSUNS4_Character_Manager
         public static string finalSpSkillCutInPath = "[null]";
         public static string costumeBreakParamPath = "[null]";
         public static string commandListParamPath = "[null]";
+        public static string cpuParamPath = "[null]";
         private Button button9;
         private Button button10;
         private Button button11;
@@ -114,6 +115,7 @@ namespace NSUNS4_Character_Manager
         private Button button38;
         private Button button39;
         private Button button40;
+        private Button button41;
         private FlowLayoutPanel extraToolsPanel;
         private Button extraToolsButtonTemplate;
         private TabPage tabPage7;
@@ -147,6 +149,7 @@ namespace NSUNS4_Character_Manager
         void CreateConfig()
         {
             List<string> cfg = new List<string>();
+            cfg.Add("[null]");
             cfg.Add("[null]");
             cfg.Add("[null]");
             cfg.Add("[null]");
@@ -212,6 +215,7 @@ namespace NSUNS4_Character_Manager
             cfg.Add(finalSpSkillCutInPath);
             cfg.Add(costumeBreakParamPath);
             cfg.Add(commandListParamPath);
+            cfg.Add(cpuParamPath);
             File.WriteAllLines(ConfigPath, cfg.ToArray());
             MessageBox.Show("Config file saved.");
         }
@@ -248,6 +252,7 @@ namespace NSUNS4_Character_Manager
             if (cfg.Length > 26) finalSpSkillCutInPath = cfg[26];
             if (cfg.Length > 27) costumeBreakParamPath = cfg[27];
             if (cfg.Length > 28) commandListParamPath = cfg[28];
+            if (cfg.Length > 29) cpuParamPath = cfg[29];
             BackfillDefaultPaths();
             //MessageBox.Show("Loaded paths.");
         }
@@ -275,6 +280,10 @@ namespace NSUNS4_Character_Manager
             if (!File.Exists(commandListParamPath))
                 commandListParamPath = ResolveDataWin32File("commandListParam.bin.xfbin",
                     "duel\\WIN64\\commandListParam.bin.xfbin");
+
+            if (!File.Exists(cpuParamPath))
+                cpuParamPath = ResolveDataWin32File("cpuparam.xfbin",
+                    "duel\\WIN64\\cpuparam.xfbin");
         }
 
         private static string ResolveDataWin32File(string fileName, params string[] relativeCandidates)
@@ -1158,6 +1167,7 @@ namespace NSUNS4_Character_Manager
             this.button27 = new System.Windows.Forms.Button();
             this.button26 = new System.Windows.Forms.Button();
             this.button40 = new System.Windows.Forms.Button();
+            this.button41 = new System.Windows.Forms.Button();
             this.tabPage4 = new System.Windows.Forms.TabPage();
             this.tabPage5 = new System.Windows.Forms.TabPage();
             this.button24 = new System.Windows.Forms.Button();
@@ -1578,6 +1588,7 @@ namespace NSUNS4_Character_Manager
             this.tabPage3.Controls.Add(this.button8);
             this.tabPage3.Controls.Add(this.button21);
             this.tabPage3.Controls.Add(this.button40);
+            this.tabPage3.Controls.Add(this.button41);
             this.tabPage3.Location = new System.Drawing.Point(4, 22);
             this.tabPage3.Name = "tabPage3";
             this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
@@ -1707,6 +1718,17 @@ namespace NSUNS4_Character_Manager
             this.button40.Text = "Command List Param Editor\r\n(commandListParam.bin.xfbin)";
             this.button40.UseVisualStyleBackColor = true;
             this.button40.Click += new System.EventHandler(this.button40_Click);
+            // 
+            // button41
+            // 
+            this.button41.Font = new System.Drawing.Font("Segoe UI", 8.5F);
+            this.button41.Location = new System.Drawing.Point(301, 448);
+            this.button41.Name = "button41";
+            this.button41.Size = new System.Drawing.Size(299, 38);
+            this.button41.TabIndex = 49;
+            this.button41.Text = "CPU Param Editor\r\n(cpuparam.xfbin)";
+            this.button41.UseVisualStyleBackColor = true;
+            this.button41.Click += new System.EventHandler(this.button41_Click);
             // 
             // tabPage4
             // 
@@ -2049,7 +2071,7 @@ namespace NSUNS4_Character_Manager
             this.MaximizeBox = false;
             this.Name = "Main";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Naruto: Storm 4 Evo Toolbox v6.8.8 (Ace\'s build)";
+            this.Text = "Naruto: Storm 4 Evo Toolbox v6.8.9 (Ace\'s build)";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.Main_FormClosed);
             this.Load += new System.EventHandler(this.Main_Load);
             this.menuStrip1.ResumeLayout(false);
@@ -2370,6 +2392,8 @@ namespace NSUNS4_Character_Manager
                 "spc\\WIN64\\x64\\costumeBreakParam.xfbin");
             commandListParamPath = ResolveDataWin32File("commandListParam.bin.xfbin",
                 "duel\\WIN64\\commandListParam.bin.xfbin");
+            cpuParamPath = ResolveDataWin32File("cpuparam.xfbin",
+                "duel\\WIN64\\cpuparam.xfbin");
 
             SaveConfig();
         }
@@ -2408,6 +2432,8 @@ namespace NSUNS4_Character_Manager
                     "spc\\WIN64\\x64\\costumeBreakParam.xfbin");
                 commandListParamPath = ResolveDataWin32File("commandListParam.bin.xfbin",
                     "duel\\WIN64\\commandListParam.bin.xfbin");
+                cpuParamPath = ResolveDataWin32File("cpuparam.xfbin",
+                    "duel\\WIN64\\cpuparam.xfbin");
             }
                 
             else {
@@ -2569,6 +2595,12 @@ namespace NSUNS4_Character_Manager
         private void button40_Click(object sender, EventArgs e)
         {
             Tool_CommandListParamEditor t = new Tool_CommandListParamEditor();
+            t.Show();
+        }
+
+        private void button41_Click(object sender, EventArgs e)
+        {
+            Tool_CpuParamEditor t = new Tool_CpuParamEditor();
             t.Show();
         }
     }
