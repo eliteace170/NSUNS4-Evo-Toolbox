@@ -39,6 +39,59 @@ namespace NSUNS4_Character_Manager.Tools
         None = ushort.MaxValue
     }
 
+    internal enum CpuScriptTarget
+    {
+        Self = 0,
+        Enemy = 1
+    }
+
+    internal enum CpuGaugeType
+    {
+        Life = 0,
+        Chakra = 1,
+        GuardPower = 2,
+        TeamPower = 3
+    }
+
+    internal enum CpuSituationId
+    {
+        Unused00 = 0,
+        Unused01 = 1,
+        Unused02 = 2,
+        IsSupportSkillL = 3,
+        IsSupportSkillR = 4,
+        IsAttackTypeSupportL = 5,
+        IsAttackTypeSupportR = 6,
+        IsAwake = 7,
+        IsHugeAwake08 = 8,
+        IsHugeAwake09 = 9,
+        IsEnableConditionLifeDecrease = 10,
+        IsEnableConditionSleep = 11,
+        IsEnableConditionSeal = 12,
+        IsEnableConditionAutoDodge = 13,
+        Unused14 = 14,
+        IsSuperArmor = 15,
+        Unused16 = 16,
+        IsEnableChakraInfinity = 17,
+        IsInvincibleAbove30 = 18,
+        IsSpecialSupportL = 19,
+        IsSpecialSupportR = 20
+    }
+
+    internal enum CpuActionId
+    {
+        IsActionFree = 0,
+        IsActionNinjaMove = 1,
+        IsActionGuard = 2,
+        IsActionDamage = 3,
+        IsActionDown = 4,
+        IsActionCharge = 5,
+        IsActionAwake = 6,
+        IsActionSkill = 7,
+        IsActionDefenseless = 8,
+        IsAwakeNow = 9
+    }
+
     internal enum CpuCompareOperation
     {
         Equal = 0,
@@ -61,9 +114,9 @@ namespace NSUNS4_Character_Manager.Tools
         UnobservedType01 = 1,
         ProjectileType = 2,
         UnobservedType03 = 3,
-        PossibleGroundedSpecialType = 4,
-        NormalAwakening = 5,
-        ProjectileAwakeningType = 6,
+        UnobservedType04 = 4,
+        AwakenMoveset = 5,
+        ProjectileAwakenType = 6,
         PuppetType = 7,
         UnobservedType08 = 8,
         UnobservedType09 = 9,
@@ -161,7 +214,7 @@ namespace NSUNS4_Character_Manager.Tools
     {
         public ushort Type = (ushort)CpuScriptType.CtrlCommand;
         public ushort CommandNumber = (ushort)CpuScriptCommand.SetParam;
-        public int ParameterIndex;
+        public int ParamId;
         public int Value;
         public int[] UnusedArguments = CreateFilledIntArray(6, -1);
 
@@ -171,7 +224,7 @@ namespace NSUNS4_Character_Manager.Tools
             {
                 Type = Type,
                 CommandNumber = CommandNumber,
-                ParameterIndex = ParameterIndex,
+                ParamId = ParamId,
                 Value = Value,
                 UnusedArguments = (int[])UnusedArguments.Clone()
             };
@@ -226,10 +279,10 @@ namespace NSUNS4_Character_Manager.Tools
         public int Characode;
         public int Type;
         public string[] ActionSlots = CreateStringArray(32);
-        public uint ScriptGroupIndexA;
-        public uint ScriptGroupFlagA;
-        public uint ReservedGroupLikeIndexB;
-        public uint ReservedGroupLikeFlagB;
+        public uint AwakeningScriptType;
+        public uint AwakeningScriptTypeFlag;
+        public uint InstantAwakeningScriptType;
+        public uint InstantAwakeningScriptTypeFlag;
 
         public CpuPlayerEntry Clone()
         {
@@ -238,10 +291,10 @@ namespace NSUNS4_Character_Manager.Tools
                 Characode = Characode,
                 Type = Type,
                 ActionSlots = (string[])ActionSlots.Clone(),
-                ScriptGroupIndexA = ScriptGroupIndexA,
-                ScriptGroupFlagA = ScriptGroupFlagA,
-                ReservedGroupLikeIndexB = ReservedGroupLikeIndexB,
-                ReservedGroupLikeFlagB = ReservedGroupLikeFlagB
+                AwakeningScriptType = AwakeningScriptType,
+                AwakeningScriptTypeFlag = AwakeningScriptTypeFlag,
+                InstantAwakeningScriptType = InstantAwakeningScriptType,
+                InstantAwakeningScriptTypeFlag = InstantAwakeningScriptTypeFlag
             };
         }
 
@@ -416,7 +469,7 @@ namespace NSUNS4_Character_Manager.Tools
                     {
                         Type = ReadUInt16LE(bytes, offset),
                         CommandNumber = ReadUInt16LE(bytes, offset + 2),
-                        ParameterIndex = ReadInt32LE(bytes, offset + 4),
+                        ParamId = ReadInt32LE(bytes, offset + 4),
                         Value = ReadInt32LE(bytes, offset + 8),
                         UnusedArguments = new int[6]
                     };
@@ -496,10 +549,10 @@ namespace NSUNS4_Character_Manager.Tools
                     entry.ActionSlots[slot] = ReadSequentialRelativeString(bytes, fieldOffset, stringTableStart, ref nextExpectedString, true, "cpuPlayerParam action slot");
                 }
 
-                entry.ScriptGroupIndexA = ReadUInt32LE(bytes, entryOffset + 152);
-                entry.ScriptGroupFlagA = ReadUInt32LE(bytes, entryOffset + 156);
-                entry.ReservedGroupLikeIndexB = ReadUInt32LE(bytes, entryOffset + 200);
-                entry.ReservedGroupLikeFlagB = ReadUInt32LE(bytes, entryOffset + 204);
+                entry.AwakeningScriptType = ReadUInt32LE(bytes, entryOffset + 152);
+                entry.AwakeningScriptTypeFlag = ReadUInt32LE(bytes, entryOffset + 156);
+                entry.InstantAwakeningScriptType = ReadUInt32LE(bytes, entryOffset + 200);
+                entry.InstantAwakeningScriptTypeFlag = ReadUInt32LE(bytes, entryOffset + 204);
                 state.Entries.Add(entry);
             }
 
@@ -562,7 +615,7 @@ namespace NSUNS4_Character_Manager.Tools
                     ValidateArrayLength(entry.UnusedArguments, 6, "cpu_strength unused arguments");
                     WriteUInt16LE(output, offset, entry.Type);
                     WriteUInt16LE(output, offset + 2, entry.CommandNumber);
-                    WriteInt32LE(output, offset + 4, entry.ParameterIndex);
+                    WriteInt32LE(output, offset + 4, entry.ParamId);
                     WriteInt32LE(output, offset + 8, entry.Value);
                     for (int argument = 0; argument < 6; argument++)
                         WriteInt32LE(output, offset + 12 + (argument * 4), entry.UnusedArguments[argument]);
@@ -657,10 +710,10 @@ namespace NSUNS4_Character_Manager.Tools
                     nextString += stringBytes.Length;
                 }
 
-                WriteUInt32LE(output, entryOffset + 152, entry.ScriptGroupIndexA);
-                WriteUInt32LE(output, entryOffset + 156, entry.ScriptGroupFlagA);
-                WriteUInt32LE(output, entryOffset + 200, entry.ReservedGroupLikeIndexB);
-                WriteUInt32LE(output, entryOffset + 204, entry.ReservedGroupLikeFlagB);
+                WriteUInt32LE(output, entryOffset + 152, entry.AwakeningScriptType);
+                WriteUInt32LE(output, entryOffset + 156, entry.AwakeningScriptTypeFlag);
+                WriteUInt32LE(output, entryOffset + 200, entry.InstantAwakeningScriptType);
+                WriteUInt32LE(output, entryOffset + 204, entry.InstantAwakeningScriptTypeFlag);
             }
             return output;
         }

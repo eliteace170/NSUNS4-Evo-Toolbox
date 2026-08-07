@@ -36,7 +36,9 @@ namespace NSUNS4_Character_Manager.Tools
         private System.Windows.Forms.Label scriptCommandLabel;
         private System.Windows.Forms.ComboBox scriptCommandComboBox;
         private System.Windows.Forms.NumericUpDown scriptArgument0Value;
+        private System.Windows.Forms.ComboBox scriptArgument0EnumComboBox;
         private System.Windows.Forms.NumericUpDown scriptArgument1Value;
+        private System.Windows.Forms.ComboBox scriptArgument1EnumComboBox;
         private System.Windows.Forms.NumericUpDown scriptArgument2Value;
         private System.Windows.Forms.NumericUpDown scriptArgument3Value;
         private System.Windows.Forms.ComboBox scriptArgument2EnumComboBox;
@@ -259,8 +261,10 @@ namespace NSUNS4_Character_Manager.Tools
             this.scriptCommandLabel = new System.Windows.Forms.Label();
             this.scriptArgument0Label = new System.Windows.Forms.Label();
             this.scriptArgument0Value = new System.Windows.Forms.NumericUpDown();
+            this.scriptArgument0EnumComboBox = new System.Windows.Forms.ComboBox();
             this.scriptArgument1Label = new System.Windows.Forms.Label();
             this.scriptArgument1Value = new System.Windows.Forms.NumericUpDown();
+            this.scriptArgument1EnumComboBox = new System.Windows.Forms.ComboBox();
             this.scriptArgument2Label = new System.Windows.Forms.Label();
             this.scriptArgument2Value = new System.Windows.Forms.NumericUpDown();
             this.scriptArgument2EnumComboBox = new System.Windows.Forms.ComboBox();
@@ -373,9 +377,9 @@ namespace NSUNS4_Character_Manager.Tools
             this.scriptGroupListBox.HorizontalScrollbar = true;
             this.scriptGroupListBox.IntegralHeight = false;
             this.scriptGroupListBox.ItemHeight = 15;
-            this.scriptGroupListBox.Location = new System.Drawing.Point(9, 22);
+            this.scriptGroupListBox.Location = new System.Drawing.Point(6, 22);
             this.scriptGroupListBox.Name = "scriptGroupListBox";
-            this.scriptGroupListBox.Size = new System.Drawing.Size(208, 537);
+            this.scriptGroupListBox.Size = new System.Drawing.Size(150, 516);
             this.scriptGroupListBox.TabIndex = 0;
             this.cpuParamToolTip.SetToolTip(this.scriptGroupListBox, "CPU script group indices are referenced by Player Type and Script Group Index A.");
             this.scriptGroupListBox.SelectedIndexChanged += new System.EventHandler(this.scriptGroupListBox_SelectedIndexChanged);
@@ -383,9 +387,9 @@ namespace NSUNS4_Character_Manager.Tools
             // scriptAddGroupButton
             // 
             this.scriptAddGroupButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.scriptAddGroupButton.Location = new System.Drawing.Point(9, 573);
+            this.scriptAddGroupButton.Location = new System.Drawing.Point(9, 544);
             this.scriptAddGroupButton.Name = "scriptAddGroupButton";
-            this.scriptAddGroupButton.Size = new System.Drawing.Size(55, 27);
+            this.scriptAddGroupButton.Size = new System.Drawing.Size(68, 27);
             this.scriptAddGroupButton.TabIndex = 1;
             this.scriptAddGroupButton.Text = "Add";
             this.cpuParamToolTip.SetToolTip(this.scriptAddGroupButton, "Add a new CPU script group.");
@@ -394,9 +398,9 @@ namespace NSUNS4_Character_Manager.Tools
             // scriptDuplicateGroupButton
             // 
             this.scriptDuplicateGroupButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.scriptDuplicateGroupButton.Location = new System.Drawing.Point(68, 573);
+            this.scriptDuplicateGroupButton.Location = new System.Drawing.Point(9, 577);
             this.scriptDuplicateGroupButton.Name = "scriptDuplicateGroupButton";
-            this.scriptDuplicateGroupButton.Size = new System.Drawing.Size(86, 27);
+            this.scriptDuplicateGroupButton.Size = new System.Drawing.Size(147, 27);
             this.scriptDuplicateGroupButton.TabIndex = 2;
             this.scriptDuplicateGroupButton.Text = "Duplicate";
             this.cpuParamToolTip.SetToolTip(this.scriptDuplicateGroupButton, "Duplicate the selected CPU script group and all of its instructions.");
@@ -405,9 +409,9 @@ namespace NSUNS4_Character_Manager.Tools
             // scriptDeleteGroupButton
             // 
             this.scriptDeleteGroupButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.scriptDeleteGroupButton.Location = new System.Drawing.Point(158, 573);
+            this.scriptDeleteGroupButton.Location = new System.Drawing.Point(83, 544);
             this.scriptDeleteGroupButton.Name = "scriptDeleteGroupButton";
-            this.scriptDeleteGroupButton.Size = new System.Drawing.Size(59, 27);
+            this.scriptDeleteGroupButton.Size = new System.Drawing.Size(73, 27);
             this.scriptDeleteGroupButton.TabIndex = 3;
             this.scriptDeleteGroupButton.Text = "Delete";
             this.cpuParamToolTip.SetToolTip(this.scriptDeleteGroupButton, "Delete the selected CPU script group. At least one group must remain.");
@@ -424,7 +428,7 @@ namespace NSUNS4_Character_Manager.Tools
             this.scriptEntryListBox.ItemHeight = 15;
             this.scriptEntryListBox.Location = new System.Drawing.Point(9, 22);
             this.scriptEntryListBox.Name = "scriptEntryListBox";
-            this.scriptEntryListBox.Size = new System.Drawing.Size(332, 537);
+            this.scriptEntryListBox.Size = new System.Drawing.Size(446, 537);
             this.scriptEntryListBox.TabIndex = 0;
             this.cpuParamToolTip.SetToolTip(this.scriptEntryListBox, "Instructions executed by the selected CPU script group.");
             this.scriptEntryListBox.SelectedIndexChanged += new System.EventHandler(this.scriptEntryListBox_SelectedIndexChanged);
@@ -486,7 +490,7 @@ namespace NSUNS4_Character_Manager.Tools
             // scriptApplyEntryButton
             // 
             this.scriptApplyEntryButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.scriptApplyEntryButton.Location = new System.Drawing.Point(486, 567);
+            this.scriptApplyEntryButton.Location = new System.Drawing.Point(433, 567);
             this.scriptApplyEntryButton.Name = "scriptApplyEntryButton";
             this.scriptApplyEntryButton.Size = new System.Drawing.Size(125, 32);
             this.scriptApplyEntryButton.TabIndex = 20;
@@ -504,7 +508,7 @@ namespace NSUNS4_Character_Manager.Tools
             this.strengthGroupListBox.ItemHeight = 15;
             this.strengthGroupListBox.Location = new System.Drawing.Point(9, 22);
             this.strengthGroupListBox.Name = "strengthGroupListBox";
-            this.strengthGroupListBox.Size = new System.Drawing.Size(208, 537);
+            this.strengthGroupListBox.Size = new System.Drawing.Size(165, 516);
             this.strengthGroupListBox.TabIndex = 0;
             this.cpuParamToolTip.SetToolTip(this.strengthGroupListBox, "Difficulty/strength level. The bundled sample contains eleven strength groups.");
             this.strengthGroupListBox.SelectedIndexChanged += new System.EventHandler(this.strengthGroupListBox_SelectedIndexChanged);
@@ -512,9 +516,9 @@ namespace NSUNS4_Character_Manager.Tools
             // strengthAddGroupButton
             // 
             this.strengthAddGroupButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.strengthAddGroupButton.Location = new System.Drawing.Point(9, 573);
+            this.strengthAddGroupButton.Location = new System.Drawing.Point(9, 544);
             this.strengthAddGroupButton.Name = "strengthAddGroupButton";
-            this.strengthAddGroupButton.Size = new System.Drawing.Size(55, 27);
+            this.strengthAddGroupButton.Size = new System.Drawing.Size(84, 27);
             this.strengthAddGroupButton.TabIndex = 1;
             this.strengthAddGroupButton.Text = "Add";
             this.cpuParamToolTip.SetToolTip(this.strengthAddGroupButton, "Add a new CPU strength/difficulty group.");
@@ -523,9 +527,9 @@ namespace NSUNS4_Character_Manager.Tools
             // strengthDuplicateGroupButton
             // 
             this.strengthDuplicateGroupButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.strengthDuplicateGroupButton.Location = new System.Drawing.Point(68, 573);
+            this.strengthDuplicateGroupButton.Location = new System.Drawing.Point(9, 577);
             this.strengthDuplicateGroupButton.Name = "strengthDuplicateGroupButton";
-            this.strengthDuplicateGroupButton.Size = new System.Drawing.Size(86, 27);
+            this.strengthDuplicateGroupButton.Size = new System.Drawing.Size(165, 27);
             this.strengthDuplicateGroupButton.TabIndex = 2;
             this.strengthDuplicateGroupButton.Text = "Duplicate";
             this.cpuParamToolTip.SetToolTip(this.strengthDuplicateGroupButton, "Duplicate the selected strength group and its entries.");
@@ -534,9 +538,9 @@ namespace NSUNS4_Character_Manager.Tools
             // strengthDeleteGroupButton
             // 
             this.strengthDeleteGroupButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.strengthDeleteGroupButton.Location = new System.Drawing.Point(158, 573);
+            this.strengthDeleteGroupButton.Location = new System.Drawing.Point(99, 544);
             this.strengthDeleteGroupButton.Name = "strengthDeleteGroupButton";
-            this.strengthDeleteGroupButton.Size = new System.Drawing.Size(59, 27);
+            this.strengthDeleteGroupButton.Size = new System.Drawing.Size(75, 27);
             this.strengthDeleteGroupButton.TabIndex = 3;
             this.strengthDeleteGroupButton.Text = "Delete";
             this.cpuParamToolTip.SetToolTip(this.strengthDeleteGroupButton, "Delete the selected strength group. At least one group must remain.");
@@ -552,7 +556,7 @@ namespace NSUNS4_Character_Manager.Tools
             this.strengthEntryListBox.ItemHeight = 15;
             this.strengthEntryListBox.Location = new System.Drawing.Point(9, 22);
             this.strengthEntryListBox.Name = "strengthEntryListBox";
-            this.strengthEntryListBox.Size = new System.Drawing.Size(332, 537);
+            this.strengthEntryListBox.Size = new System.Drawing.Size(425, 537);
             this.strengthEntryListBox.TabIndex = 0;
             this.cpuParamToolTip.SetToolTip(this.strengthEntryListBox, "SetParam records used by the selected strength level.");
             this.strengthEntryListBox.SelectedIndexChanged += new System.EventHandler(this.strengthEntryListBox_SelectedIndexChanged);
@@ -582,7 +586,7 @@ namespace NSUNS4_Character_Manager.Tools
             // strengthDeleteEntryButton
             // 
             this.strengthDeleteEntryButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.strengthDeleteEntryButton.Location = new System.Drawing.Point(181, 573);
+            this.strengthDeleteEntryButton.Location = new System.Drawing.Point(224, 572);
             this.strengthDeleteEntryButton.Name = "strengthDeleteEntryButton";
             this.strengthDeleteEntryButton.Size = new System.Drawing.Size(70, 27);
             this.strengthDeleteEntryButton.TabIndex = 3;
@@ -611,12 +615,13 @@ namespace NSUNS4_Character_Manager.Tools
             // strengthParameterLabel
             // 
             this.strengthParameterLabel.AutoSize = true;
-            this.strengthParameterLabel.Location = new System.Drawing.Point(300, 100);
+            this.strengthParameterLabel.Location = new System.Drawing.Point(18, 100);
             this.strengthParameterLabel.Name = "strengthParameterLabel";
-            this.strengthParameterLabel.Size = new System.Drawing.Size(96, 15);
+            this.strengthParameterLabel.Size = new System.Drawing.Size(58, 15);
             this.strengthParameterLabel.TabIndex = 4;
-            this.strengthParameterLabel.Text = "Parameter Index:";
-            this.cpuParamToolTip.SetToolTip(this.strengthParameterLabel, "Parameter index written into the CPU player\'s parameter array.");
+            this.strengthParameterLabel.Text = "Param ID:";
+            this.cpuParamToolTip.SetToolTip(this.strengthParameterLabel, "ParamId written into the CPU player parameter array at player + 0x1918 + ParamId " +
+        "* 4.");
             // 
             // strengthParameterValue
             // 
@@ -634,7 +639,7 @@ namespace NSUNS4_Character_Manager.Tools
             // strengthValueLabel
             // 
             this.strengthValueLabel.AutoSize = true;
-            this.strengthValueLabel.Location = new System.Drawing.Point(18, 100);
+            this.strengthValueLabel.Location = new System.Drawing.Point(300, 100);
             this.strengthValueLabel.Name = "strengthValueLabel";
             this.strengthValueLabel.Size = new System.Drawing.Size(38, 15);
             this.strengthValueLabel.TabIndex = 6;
@@ -770,7 +775,7 @@ namespace NSUNS4_Character_Manager.Tools
             // strengthApplyEntryButton
             // 
             this.strengthApplyEntryButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.strengthApplyEntryButton.Location = new System.Drawing.Point(486, 567);
+            this.strengthApplyEntryButton.Location = new System.Drawing.Point(436, 567);
             this.strengthApplyEntryButton.Name = "strengthApplyEntryButton";
             this.strengthApplyEntryButton.Size = new System.Drawing.Size(125, 32);
             this.strengthApplyEntryButton.TabIndex = 20;
@@ -1278,37 +1283,40 @@ namespace NSUNS4_Character_Manager.Tools
             this.playerScriptGroupALabel.AutoSize = true;
             this.playerScriptGroupALabel.Location = new System.Drawing.Point(308, 31);
             this.playerScriptGroupALabel.Name = "playerScriptGroupALabel";
-            this.playerScriptGroupALabel.Size = new System.Drawing.Size(119, 15);
+            this.playerScriptGroupALabel.Size = new System.Drawing.Size(129, 15);
             this.playerScriptGroupALabel.TabIndex = 4;
-            this.playerScriptGroupALabel.Text = "Script Group Index A:";
-            this.cpuParamToolTip.SetToolTip(this.playerScriptGroupALabel, "Proven CPU script group selector used by ccCpuPlayerLeader.");
+            this.playerScriptGroupALabel.Text = "Awakening Script Type:";
+            this.cpuParamToolTip.SetToolTip(this.playerScriptGroupALabel, "AwakeningScriptType: proven ccSimpleScript group selector copied to runtime offse" +
+        "t +0xA0.");
             // 
             // playerScriptGroupAValue
             // 
-            this.playerScriptGroupAValue.Location = new System.Drawing.Point(433, 27);
+            this.playerScriptGroupAValue.Location = new System.Drawing.Point(449, 27);
             this.playerScriptGroupAValue.Maximum = new decimal(new int[] {
             -1,
             0,
             0,
             0});
             this.playerScriptGroupAValue.Name = "playerScriptGroupAValue";
-            this.playerScriptGroupAValue.Size = new System.Drawing.Size(80, 23);
+            this.playerScriptGroupAValue.Size = new System.Drawing.Size(64, 23);
             this.playerScriptGroupAValue.TabIndex = 5;
-            this.cpuParamToolTip.SetToolTip(this.playerScriptGroupAValue, "Raw uint32 script group index A.");
+            this.cpuParamToolTip.SetToolTip(this.playerScriptGroupAValue, "AwakeningScriptType: uint32 selector for the same script-group table used by Type" +
+        ".");
             // 
             // playerScriptGroupAFlagLabel
             // 
             this.playerScriptGroupAFlagLabel.AutoSize = true;
             this.playerScriptGroupAFlagLabel.Location = new System.Drawing.Point(519, 31);
             this.playerScriptGroupAFlagLabel.Name = "playerScriptGroupAFlagLabel";
-            this.playerScriptGroupAFlagLabel.Size = new System.Drawing.Size(75, 15);
+            this.playerScriptGroupAFlagLabel.Size = new System.Drawing.Size(32, 15);
             this.playerScriptGroupAFlagLabel.TabIndex = 6;
-            this.playerScriptGroupAFlagLabel.Text = "Index A Flag:";
-            this.cpuParamToolTip.SetToolTip(this.playerScriptGroupAFlagLabel, "Raw uint32 flag A. Supplied files use 0 or 1; its meaning remains unknown.");
+            this.playerScriptGroupAFlagLabel.Text = "Flag:";
+            this.cpuParamToolTip.SetToolTip(this.playerScriptGroupAFlagLabel, "AwakeningScriptTypeFlag: uint32 value observed as 0 or 1; its meaning remains unk" +
+        "nown.");
             // 
             // playerScriptGroupAFlagValue
             // 
-            this.playerScriptGroupAFlagValue.Location = new System.Drawing.Point(600, 29);
+            this.playerScriptGroupAFlagValue.Location = new System.Drawing.Point(561, 24);
             this.playerScriptGroupAFlagValue.Maximum = new decimal(new int[] {
             -1,
             0,
@@ -1317,44 +1325,47 @@ namespace NSUNS4_Character_Manager.Tools
             this.playerScriptGroupAFlagValue.Name = "playerScriptGroupAFlagValue";
             this.playerScriptGroupAFlagValue.Size = new System.Drawing.Size(56, 23);
             this.playerScriptGroupAFlagValue.TabIndex = 7;
-            this.cpuParamToolTip.SetToolTip(this.playerScriptGroupAFlagValue, "Raw uint32 flag A. Supplied files use 0 or 1; its meaning remains unknown.");
+            this.cpuParamToolTip.SetToolTip(this.playerScriptGroupAFlagValue, "AwakeningScriptTypeFlag: uint32 value observed as 0 or 1; its meaning remains unk" +
+        "nown.");
             // 
             // playerReservedGroupLikeIndexBLabel
             // 
             this.playerReservedGroupLikeIndexBLabel.AutoSize = true;
             this.playerReservedGroupLikeIndexBLabel.Location = new System.Drawing.Point(308, 58);
             this.playerReservedGroupLikeIndexBLabel.Name = "playerReservedGroupLikeIndexBLabel";
-            this.playerReservedGroupLikeIndexBLabel.Size = new System.Drawing.Size(118, 15);
+            this.playerReservedGroupLikeIndexBLabel.Size = new System.Drawing.Size(117, 15);
             this.playerReservedGroupLikeIndexBLabel.TabIndex = 7;
-            this.playerReservedGroupLikeIndexBLabel.Text = "Script Group Index B:";
-            this.cpuParamToolTip.SetToolTip(this.playerReservedGroupLikeIndexBLabel, "Group-like uint32 index B. Its runtime consumer has not been proven.");
+            this.playerReservedGroupLikeIndexBLabel.Text = "Instant Awake Script:";
+            this.cpuParamToolTip.SetToolTip(this.playerReservedGroupLikeIndexBLabel, "InstantAwakeningScriptType: group-like uint32 scalar. No direct runtime consumer " +
+        "has been proven.");
             // 
             // playerReservedGroupLikeIndexBValue
             // 
-            this.playerReservedGroupLikeIndexBValue.Location = new System.Drawing.Point(433, 56);
+            this.playerReservedGroupLikeIndexBValue.Location = new System.Drawing.Point(449, 56);
             this.playerReservedGroupLikeIndexBValue.Maximum = new decimal(new int[] {
             -1,
             0,
             0,
             0});
             this.playerReservedGroupLikeIndexBValue.Name = "playerReservedGroupLikeIndexBValue";
-            this.playerReservedGroupLikeIndexBValue.Size = new System.Drawing.Size(80, 23);
+            this.playerReservedGroupLikeIndexBValue.Size = new System.Drawing.Size(64, 23);
             this.playerReservedGroupLikeIndexBValue.TabIndex = 8;
-            this.cpuParamToolTip.SetToolTip(this.playerReservedGroupLikeIndexBValue, "Raw group-like uint32 index B. Its runtime consumer has not been proven.");
+            this.cpuParamToolTip.SetToolTip(this.playerReservedGroupLikeIndexBValue, "InstantAwakeningScriptType: group-like uint32 scalar. No direct runtime consumer " +
+        "has been proven.");
             // 
             // playerReservedGroupLikeFlagBLabel
             // 
             this.playerReservedGroupLikeFlagBLabel.AutoSize = true;
             this.playerReservedGroupLikeFlagBLabel.Location = new System.Drawing.Point(520, 58);
             this.playerReservedGroupLikeFlagBLabel.Name = "playerReservedGroupLikeFlagBLabel";
-            this.playerReservedGroupLikeFlagBLabel.Size = new System.Drawing.Size(74, 15);
+            this.playerReservedGroupLikeFlagBLabel.Size = new System.Drawing.Size(32, 15);
             this.playerReservedGroupLikeFlagBLabel.TabIndex = 9;
-            this.playerReservedGroupLikeFlagBLabel.Text = "Index B Flag:";
-            this.cpuParamToolTip.SetToolTip(this.playerReservedGroupLikeFlagBLabel, "Raw uint32 flag B. Its meaning remains unknown.");
+            this.playerReservedGroupLikeFlagBLabel.Text = "Flag:";
+            this.cpuParamToolTip.SetToolTip(this.playerReservedGroupLikeFlagBLabel, "InstantAwakeningScriptTypeFlag: raw uint32 flag with unknown meaning.");
             // 
             // playerReservedGroupLikeFlagBValue
             // 
-            this.playerReservedGroupLikeFlagBValue.Location = new System.Drawing.Point(600, 58);
+            this.playerReservedGroupLikeFlagBValue.Location = new System.Drawing.Point(561, 53);
             this.playerReservedGroupLikeFlagBValue.Maximum = new decimal(new int[] {
             -1,
             0,
@@ -1363,7 +1374,7 @@ namespace NSUNS4_Character_Manager.Tools
             this.playerReservedGroupLikeFlagBValue.Name = "playerReservedGroupLikeFlagBValue";
             this.playerReservedGroupLikeFlagBValue.Size = new System.Drawing.Size(56, 23);
             this.playerReservedGroupLikeFlagBValue.TabIndex = 10;
-            this.cpuParamToolTip.SetToolTip(this.playerReservedGroupLikeFlagBValue, "Raw uint32 flag B. Its meaning remains unknown.");
+            this.cpuParamToolTip.SetToolTip(this.playerReservedGroupLikeFlagBValue, "InstantAwakeningScriptTypeFlag: raw uint32 flag with unknown meaning.");
             // 
             // playerActionSlotsGrid
             // 
@@ -1554,7 +1565,7 @@ namespace NSUNS4_Character_Manager.Tools
             this.scriptGroupsGroupBox.Controls.Add(this.scriptDeleteGroupButton);
             this.scriptGroupsGroupBox.Location = new System.Drawing.Point(7, 7);
             this.scriptGroupsGroupBox.Name = "scriptGroupsGroupBox";
-            this.scriptGroupsGroupBox.Size = new System.Drawing.Size(226, 610);
+            this.scriptGroupsGroupBox.Size = new System.Drawing.Size(165, 610);
             this.scriptGroupsGroupBox.TabIndex = 0;
             this.scriptGroupsGroupBox.TabStop = false;
             this.scriptGroupsGroupBox.Text = "Groups";
@@ -1567,9 +1578,9 @@ namespace NSUNS4_Character_Manager.Tools
             this.scriptEntriesGroupBox.Controls.Add(this.scriptAddEntryButton);
             this.scriptEntriesGroupBox.Controls.Add(this.scriptDuplicateEntryButton);
             this.scriptEntriesGroupBox.Controls.Add(this.scriptDeleteEntryButton);
-            this.scriptEntriesGroupBox.Location = new System.Drawing.Point(239, 7);
+            this.scriptEntriesGroupBox.Location = new System.Drawing.Point(178, 7);
             this.scriptEntriesGroupBox.Name = "scriptEntriesGroupBox";
-            this.scriptEntriesGroupBox.Size = new System.Drawing.Size(350, 610);
+            this.scriptEntriesGroupBox.Size = new System.Drawing.Size(464, 610);
             this.scriptEntriesGroupBox.TabIndex = 1;
             this.scriptEntriesGroupBox.TabStop = false;
             this.scriptEntriesGroupBox.Text = "Instructions";
@@ -1585,8 +1596,10 @@ namespace NSUNS4_Character_Manager.Tools
             this.scriptEditorGroupBox.Controls.Add(this.scriptCommandComboBox);
             this.scriptEditorGroupBox.Controls.Add(this.scriptArgument0Label);
             this.scriptEditorGroupBox.Controls.Add(this.scriptArgument0Value);
+            this.scriptEditorGroupBox.Controls.Add(this.scriptArgument0EnumComboBox);
             this.scriptEditorGroupBox.Controls.Add(this.scriptArgument1Label);
             this.scriptEditorGroupBox.Controls.Add(this.scriptArgument1Value);
+            this.scriptEditorGroupBox.Controls.Add(this.scriptArgument1EnumComboBox);
             this.scriptEditorGroupBox.Controls.Add(this.scriptArgument2Label);
             this.scriptEditorGroupBox.Controls.Add(this.scriptArgument2Value);
             this.scriptEditorGroupBox.Controls.Add(this.scriptArgument2EnumComboBox);
@@ -1602,9 +1615,9 @@ namespace NSUNS4_Character_Manager.Tools
             this.scriptEditorGroupBox.Controls.Add(this.scriptArgument7Label);
             this.scriptEditorGroupBox.Controls.Add(this.scriptArgument7Value);
             this.scriptEditorGroupBox.Controls.Add(this.scriptApplyEntryButton);
-            this.scriptEditorGroupBox.Location = new System.Drawing.Point(595, 7);
+            this.scriptEditorGroupBox.Location = new System.Drawing.Point(648, 7);
             this.scriptEditorGroupBox.Name = "scriptEditorGroupBox";
-            this.scriptEditorGroupBox.Size = new System.Drawing.Size(626, 610);
+            this.scriptEditorGroupBox.Size = new System.Drawing.Size(573, 610);
             this.scriptEditorGroupBox.TabIndex = 2;
             this.scriptEditorGroupBox.TabStop = false;
             this.scriptEditorGroupBox.Text = "Instruction Fields";
@@ -1653,6 +1666,15 @@ namespace NSUNS4_Character_Manager.Tools
             this.scriptArgument0Value.Size = new System.Drawing.Size(170, 23);
             this.scriptArgument0Value.TabIndex = 5;
             // 
+            // scriptArgument0EnumComboBox
+            // 
+            this.scriptArgument0EnumComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.scriptArgument0EnumComboBox.Location = new System.Drawing.Point(105, 107);
+            this.scriptArgument0EnumComboBox.Name = "scriptArgument0EnumComboBox";
+            this.scriptArgument0EnumComboBox.Size = new System.Drawing.Size(170, 23);
+            this.scriptArgument0EnumComboBox.TabIndex = 5;
+            this.scriptArgument0EnumComboBox.Visible = false;
+            // 
             // scriptArgument1Label
             // 
             this.scriptArgument1Label.AutoSize = true;
@@ -1678,6 +1700,15 @@ namespace NSUNS4_Character_Manager.Tools
             this.scriptArgument1Value.Name = "scriptArgument1Value";
             this.scriptArgument1Value.Size = new System.Drawing.Size(170, 23);
             this.scriptArgument1Value.TabIndex = 7;
+            // 
+            // scriptArgument1EnumComboBox
+            // 
+            this.scriptArgument1EnumComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.scriptArgument1EnumComboBox.Location = new System.Drawing.Point(105, 141);
+            this.scriptArgument1EnumComboBox.Name = "scriptArgument1EnumComboBox";
+            this.scriptArgument1EnumComboBox.Size = new System.Drawing.Size(170, 23);
+            this.scriptArgument1EnumComboBox.TabIndex = 7;
+            this.scriptArgument1EnumComboBox.Visible = false;
             // 
             // scriptArgument2Label
             // 
@@ -1885,7 +1916,7 @@ namespace NSUNS4_Character_Manager.Tools
             this.strengthGroupsGroupBox.Controls.Add(this.strengthDeleteGroupButton);
             this.strengthGroupsGroupBox.Location = new System.Drawing.Point(7, 7);
             this.strengthGroupsGroupBox.Name = "strengthGroupsGroupBox";
-            this.strengthGroupsGroupBox.Size = new System.Drawing.Size(226, 610);
+            this.strengthGroupsGroupBox.Size = new System.Drawing.Size(183, 610);
             this.strengthGroupsGroupBox.TabIndex = 0;
             this.strengthGroupsGroupBox.TabStop = false;
             this.strengthGroupsGroupBox.Text = "Strength Levels";
@@ -1898,9 +1929,9 @@ namespace NSUNS4_Character_Manager.Tools
             this.strengthEntriesGroupBox.Controls.Add(this.strengthAddEntryButton);
             this.strengthEntriesGroupBox.Controls.Add(this.strengthDuplicateEntryButton);
             this.strengthEntriesGroupBox.Controls.Add(this.strengthDeleteEntryButton);
-            this.strengthEntriesGroupBox.Location = new System.Drawing.Point(239, 7);
+            this.strengthEntriesGroupBox.Location = new System.Drawing.Point(196, 7);
             this.strengthEntriesGroupBox.Name = "strengthEntriesGroupBox";
-            this.strengthEntriesGroupBox.Size = new System.Drawing.Size(350, 610);
+            this.strengthEntriesGroupBox.Size = new System.Drawing.Size(443, 610);
             this.strengthEntriesGroupBox.TabIndex = 1;
             this.strengthEntriesGroupBox.TabStop = false;
             this.strengthEntriesGroupBox.Text = "Entries";
@@ -1931,9 +1962,9 @@ namespace NSUNS4_Character_Manager.Tools
             this.strengthEditorGroupBox.Controls.Add(this.strengthUnused5Label);
             this.strengthEditorGroupBox.Controls.Add(this.strengthUnused5Value);
             this.strengthEditorGroupBox.Controls.Add(this.strengthApplyEntryButton);
-            this.strengthEditorGroupBox.Location = new System.Drawing.Point(595, 7);
+            this.strengthEditorGroupBox.Location = new System.Drawing.Point(645, 7);
             this.strengthEditorGroupBox.Name = "strengthEditorGroupBox";
-            this.strengthEditorGroupBox.Size = new System.Drawing.Size(626, 610);
+            this.strengthEditorGroupBox.Size = new System.Drawing.Size(576, 610);
             this.strengthEditorGroupBox.TabIndex = 2;
             this.strengthEditorGroupBox.TabStop = false;
             this.strengthEditorGroupBox.Text = "Strength Entry Fields";

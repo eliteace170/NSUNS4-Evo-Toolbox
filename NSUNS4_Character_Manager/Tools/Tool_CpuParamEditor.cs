@@ -15,6 +15,8 @@ namespace NSUNS4_Character_Manager.Tools
         private string filePath = string.Empty;
         private string characodeReferencePath = string.Empty;
         private bool updatingUi;
+        private bool scriptArgument0UsesEnum;
+        private bool scriptArgument1UsesEnum;
         private bool scriptArgument2UsesEnum;
         private bool scriptArgument3UsesEnum;
         private CpuParamChunkKind currentKind = CpuParamChunkKind.Script;
@@ -55,11 +57,11 @@ namespace NSUNS4_Character_Manager.Tools
             "21 - AwakeSkill",
             "22 - AwakeSkillAir",
             "23 - AwakeSkillReinforce",
-            "25 - Unknown",
-            "26 - Unknown",
-            "27 - Unknown",
-            "28 - Unknown",
-            "29 - Unknown",
+            "25 - InstantAwakeCategory0Action",
+            "26 - InstantAwakeCategory1Action",
+            "27 - InstantAwakeSkill",
+            "28 - InstantAwakeSkillAir",
+            "29 - InstantAwakeSkillReinforce",
             "30 - SupportL",
             "31 - SupportR"
             
@@ -128,9 +130,9 @@ namespace NSUNS4_Character_Manager.Tools
             AddChoice(playerTypeComboBox, (int)CpuPlayerType.UnobservedType01, "1 - Script Group 1");
             AddChoice(playerTypeComboBox, (int)CpuPlayerType.ProjectileType, "2 - Projectile Type");
             AddChoice(playerTypeComboBox, (int)CpuPlayerType.UnobservedType03, "3 - Script Group 3");
-            AddChoice(playerTypeComboBox, (int)CpuPlayerType.PossibleGroundedSpecialType, "4 - Possible Grounded / Special");
-            AddChoice(playerTypeComboBox, (int)CpuPlayerType.NormalAwakening, "5 - Normal Awakening");
-            AddChoice(playerTypeComboBox, (int)CpuPlayerType.ProjectileAwakeningType, "6 - Projectile Awakening");
+            AddChoice(playerTypeComboBox, (int)CpuPlayerType.UnobservedType04, "4 - Unobserved / Possible Grounded Special");
+            AddChoice(playerTypeComboBox, (int)CpuPlayerType.AwakenMoveset, "5 - Awaken Moveset");
+            AddChoice(playerTypeComboBox, (int)CpuPlayerType.ProjectileAwakenType, "6 - Projectile Awaken Type");
             AddChoice(playerTypeComboBox, (int)CpuPlayerType.PuppetType, "7 - Puppet Type");
             AddChoice(playerTypeComboBox, (int)CpuPlayerType.UnobservedType08, "8 - Script Group 8");
             AddChoice(playerTypeComboBox, (int)CpuPlayerType.UnobservedType09, "9 - Script Group 9");
@@ -228,6 +230,8 @@ namespace NSUNS4_Character_Manager.Tools
 
         private void RefreshScriptArgumentDefinitions()
         {
+            SyncScriptArgumentEnumValue(scriptArgument0UsesEnum, scriptArgument0EnumComboBox, scriptArgument0Value);
+            SyncScriptArgumentEnumValue(scriptArgument1UsesEnum, scriptArgument1EnumComboBox, scriptArgument1Value);
             SyncScriptArgumentEnumValue(scriptArgument2UsesEnum, scriptArgument2EnumComboBox, scriptArgument2Value);
             SyncScriptArgumentEnumValue(scriptArgument3UsesEnum, scriptArgument3EnumComboBox, scriptArgument3Value);
 
@@ -241,10 +245,16 @@ namespace NSUNS4_Character_Manager.Tools
             }
             toolTips[7] = "Possible VM-flow metadata. Predicate records in supplied files commonly store 2 here.";
 
+            scriptArgument0EnumComboBox.Visible = false;
+            scriptArgument1EnumComboBox.Visible = false;
             scriptArgument2EnumComboBox.Visible = false;
             scriptArgument3EnumComboBox.Visible = false;
+            scriptArgument0Value.Visible = true;
+            scriptArgument1Value.Visible = true;
             scriptArgument2Value.Visible = true;
             scriptArgument3Value.Visible = true;
+            scriptArgument0UsesEnum = false;
+            scriptArgument1UsesEnum = false;
             scriptArgument2UsesEnum = false;
             scriptArgument3UsesEnum = false;
 
@@ -254,37 +264,45 @@ namespace NSUNS4_Character_Manager.Tools
                 switch ((CpuScriptCommand)commandChoice.Value)
                 {
                     case CpuScriptCommand.SetProb:
-                        labels[0].Text = "Action #:";
+                        labels[0].Text = "Probability ID:";
                         labels[1].Text = "Probability:";
-                        toolTips[0] = "Action number whose probability is assigned.";
-                        toolTips[1] = "Probability assigned to the selected action number.";
+                        toolTips[0] = "Probability-array ID whose value is assigned by SetProb.";
+                        toolTips[1] = "Value assigned to the selected probability ID.";
                         break;
                     case CpuScriptCommand.AddProb:
-                        labels[0].Text = "Action #:";
+                        labels[0].Text = "Probability ID:";
                         labels[1].Text = "Signed Delta:";
-                        toolTips[0] = "Action number whose probability is adjusted.";
-                        toolTips[1] = "Signed value added to the selected action probability.";
+                        toolTips[0] = "Probability-array ID adjusted by AddProb.";
+                        toolTips[1] = "Signed value added to the selected probability ID.";
                         break;
                     case CpuScriptCommand.JudgeGauge:
-                        labels[0].Text = "Player / Ctx:";
-                        labels[1].Text = "Gauge Index:";
+                        labels[0].Text = "Target:";
+                        labels[1].Text = "Gauge:";
                         labels[2].Text = "Threshold %:";
                         labels[3].Text = "Comparison:";
-                        toolTips[0] = "Player or runtime context tested by JudgeGauge.";
-                        toolTips[1] = "Gauge index tested by JudgeGauge.";
+                        toolTips[0] = "Character tested by JudgeGauge: Self or Enemy.";
+                        toolTips[1] = "Gauge tested: Life, Chakra, Guard Power, or Team Power.";
                         toolTips[2] = "Percentage threshold used by the gauge comparison.";
                         toolTips[3] = "Comparison operation: equal, not equal, greater, greater/equal, less, or less/equal.";
+                        ConfigureTargetEditor(scriptArgument0EnumComboBox, scriptArgument0Value);
+                        ConfigureGaugeEditor(scriptArgument1EnumComboBox, scriptArgument1Value);
                         ConfigureComparisonEditor(scriptArgument3EnumComboBox, scriptArgument3Value);
+                        scriptArgument0UsesEnum = true;
+                        scriptArgument1UsesEnum = true;
                         scriptArgument3UsesEnum = true;
                         break;
                     case CpuScriptCommand.JudgeSituation:
-                        labels[0].Text = "Player / Ctx:";
-                        labels[1].Text = "Situation Bit:";
+                        labels[0].Text = "Target:";
+                        labels[1].Text = "Situation:";
                         labels[2].Text = "Bit Test:";
-                        toolTips[0] = "Player or runtime context tested by JudgeSituation.";
-                        toolTips[1] = "Situation-state bit index to test.";
-                        toolTips[2] = "Whether the situation bit must be set or clear.";
+                        toolTips[0] = "Character tested by JudgeSituation: Self or Enemy.";
+                        toolTips[1] = "Named situation-state ID tested by JudgeSituation.";
+                        toolTips[2] = "TRUE requires the situation bit to be set; FALSE requires it to be clear.";
+                        ConfigureTargetEditor(scriptArgument0EnumComboBox, scriptArgument0Value);
+                        ConfigureSituationEditor(scriptArgument1EnumComboBox, scriptArgument1Value);
                         ConfigureBitTestEditor(scriptArgument2EnumComboBox, scriptArgument2Value);
+                        scriptArgument0UsesEnum = true;
+                        scriptArgument1UsesEnum = true;
                         scriptArgument2UsesEnum = true;
                         break;
                     case CpuScriptCommand.JudgeDistance:
@@ -298,19 +316,23 @@ namespace NSUNS4_Character_Manager.Tools
                         scriptArgument2UsesEnum = true;
                         break;
                     case CpuScriptCommand.SetParam:
-                        labels[0].Text = "Param Index:";
+                        labels[0].Text = "Param ID:";
                         labels[1].Text = "Value:";
                         toolTips[0] = "CPU player parameter-array index written by SetParam.";
                         toolTips[1] = "Value written to the selected CPU player parameter.";
                         break;
                     case CpuScriptCommand.JudgeAction:
-                        labels[0].Text = "Player / Ctx:";
-                        labels[1].Text = "Action Bit:";
+                        labels[0].Text = "Target:";
+                        labels[1].Text = "Action State:";
                         labels[2].Text = "Bit Test:";
-                        toolTips[0] = "Player or runtime context tested by JudgeAction.";
-                        toolTips[1] = "Action-state bit index to test.";
-                        toolTips[2] = "Whether the action-state bit must be set or clear.";
+                        toolTips[0] = "Character tested by JudgeAction: Self or Enemy.";
+                        toolTips[1] = "Named action-state ID tested by JudgeAction.";
+                        toolTips[2] = "TRUE requires the action-state bit to be set; FALSE requires it to be clear.";
+                        ConfigureTargetEditor(scriptArgument0EnumComboBox, scriptArgument0Value);
+                        ConfigureActionEditor(scriptArgument1EnumComboBox, scriptArgument1Value);
                         ConfigureBitTestEditor(scriptArgument2EnumComboBox, scriptArgument2Value);
+                        scriptArgument0UsesEnum = true;
+                        scriptArgument1UsesEnum = true;
                         scriptArgument2UsesEnum = true;
                         break;
                 }
@@ -321,6 +343,8 @@ namespace NSUNS4_Character_Manager.Tools
                 cpuParamToolTip.SetToolTip(labels[i], toolTips[i]);
                 cpuParamToolTip.SetToolTip(numericControls[i], toolTips[i]);
             }
+            cpuParamToolTip.SetToolTip(scriptArgument0EnumComboBox, toolTips[0]);
+            cpuParamToolTip.SetToolTip(scriptArgument1EnumComboBox, toolTips[1]);
             cpuParamToolTip.SetToolTip(scriptArgument2EnumComboBox, toolTips[2]);
             cpuParamToolTip.SetToolTip(scriptArgument3EnumComboBox, toolTips[3]);
         }
@@ -344,6 +368,74 @@ namespace NSUNS4_Character_Manager.Tools
                 numericValue.Value = choice.Value;
         }
 
+        private static void ConfigureTargetEditor(ComboBox comboBox, NumericUpDown numericValue)
+        {
+            comboBox.Items.Clear();
+            AddChoice(comboBox, (int)CpuScriptTarget.Self, "0 - Self");
+            AddChoice(comboBox, (int)CpuScriptTarget.Enemy, "1 - Enemy");
+            ShowScriptArgumentEnum(comboBox, numericValue);
+        }
+
+        private static void ConfigureGaugeEditor(ComboBox comboBox, NumericUpDown numericValue)
+        {
+            comboBox.Items.Clear();
+            AddChoice(comboBox, (int)CpuGaugeType.Life, "0 - Life");
+            AddChoice(comboBox, (int)CpuGaugeType.Chakra, "1 - Chakra");
+            AddChoice(comboBox, (int)CpuGaugeType.GuardPower, "2 - Guard Power");
+            AddChoice(comboBox, (int)CpuGaugeType.TeamPower, "3 - Team Power");
+            ShowScriptArgumentEnum(comboBox, numericValue);
+        }
+
+        private static void ConfigureSituationEditor(ComboBox comboBox, NumericUpDown numericValue)
+        {
+            comboBox.Items.Clear();
+            AddChoice(comboBox, (int)CpuSituationId.Unused00, "0 - Unused 00");
+            AddChoice(comboBox, (int)CpuSituationId.Unused01, "1 - Unused 01");
+            AddChoice(comboBox, (int)CpuSituationId.Unused02, "2 - Unused 02");
+            AddChoice(comboBox, (int)CpuSituationId.IsSupportSkillL, "3 - Is Support Skill L");
+            AddChoice(comboBox, (int)CpuSituationId.IsSupportSkillR, "4 - Is Support Skill R");
+            AddChoice(comboBox, (int)CpuSituationId.IsAttackTypeSupportL, "5 - Is Attack-Type Support L");
+            AddChoice(comboBox, (int)CpuSituationId.IsAttackTypeSupportR, "6 - Is Attack-Type Support R");
+            AddChoice(comboBox, (int)CpuSituationId.IsAwake, "7 - Is Awake");
+            AddChoice(comboBox, (int)CpuSituationId.IsHugeAwake08, "8 - Is Huge Awake [8]");
+            AddChoice(comboBox, (int)CpuSituationId.IsHugeAwake09, "9 - Is Huge Awake [9]");
+            AddChoice(comboBox, (int)CpuSituationId.IsEnableConditionLifeDecrease, "10 - Enable Condition: Life Decrease");
+            AddChoice(comboBox, (int)CpuSituationId.IsEnableConditionSleep, "11 - Enable Condition: Sleep");
+            AddChoice(comboBox, (int)CpuSituationId.IsEnableConditionSeal, "12 - Enable Condition: Seal");
+            AddChoice(comboBox, (int)CpuSituationId.IsEnableConditionAutoDodge, "13 - Enable Condition: Auto Dodge");
+            AddChoice(comboBox, (int)CpuSituationId.Unused14, "14 - Unused 14");
+            AddChoice(comboBox, (int)CpuSituationId.IsSuperArmor, "15 - Is Super Armor");
+            AddChoice(comboBox, (int)CpuSituationId.Unused16, "16 - Unused 16");
+            AddChoice(comboBox, (int)CpuSituationId.IsEnableChakraInfinity, "17 - Enable Chakra Infinity");
+            AddChoice(comboBox, (int)CpuSituationId.IsInvincibleAbove30, "18 - Is Invincible Above 30");
+            AddChoice(comboBox, (int)CpuSituationId.IsSpecialSupportL, "19 - Is Special Support L");
+            AddChoice(comboBox, (int)CpuSituationId.IsSpecialSupportR, "20 - Is Special Support R");
+            ShowScriptArgumentEnum(comboBox, numericValue);
+        }
+
+        private static void ConfigureActionEditor(ComboBox comboBox, NumericUpDown numericValue)
+        {
+            comboBox.Items.Clear();
+            AddChoice(comboBox, (int)CpuActionId.IsActionFree, "0 - Is Action Free");
+            AddChoice(comboBox, (int)CpuActionId.IsActionNinjaMove, "1 - Is Action Ninja Move");
+            AddChoice(comboBox, (int)CpuActionId.IsActionGuard, "2 - Is Action Guard");
+            AddChoice(comboBox, (int)CpuActionId.IsActionDamage, "3 - Is Action Damage");
+            AddChoice(comboBox, (int)CpuActionId.IsActionDown, "4 - Is Action Down");
+            AddChoice(comboBox, (int)CpuActionId.IsActionCharge, "5 - Is Action Charge");
+            AddChoice(comboBox, (int)CpuActionId.IsActionAwake, "6 - Is Action Awake");
+            AddChoice(comboBox, (int)CpuActionId.IsActionSkill, "7 - Is Action Skill");
+            AddChoice(comboBox, (int)CpuActionId.IsActionDefenseless, "8 - Is Action Defenseless");
+            AddChoice(comboBox, (int)CpuActionId.IsAwakeNow, "9 - Is Awake Now");
+            ShowScriptArgumentEnum(comboBox, numericValue);
+        }
+
+        private static void ShowScriptArgumentEnum(ComboBox comboBox, NumericUpDown numericValue)
+        {
+            SelectChoice(comboBox, decimal.ToInt32(numericValue.Value));
+            numericValue.Visible = false;
+            comboBox.Visible = true;
+        }
+
         private static void ConfigureComparisonEditor(ComboBox comboBox, NumericUpDown numericValue)
         {
             comboBox.Items.Clear();
@@ -353,19 +445,15 @@ namespace NSUNS4_Character_Manager.Tools
             AddChoice(comboBox, (int)CpuCompareOperation.GreaterEqual, "3 - Greater or Equal (>=)");
             AddChoice(comboBox, (int)CpuCompareOperation.Less, "4 - Less (<)");
             AddChoice(comboBox, (int)CpuCompareOperation.LessEqual, "5 - Less or Equal (<=)");
-            SelectChoice(comboBox, decimal.ToInt32(numericValue.Value));
-            numericValue.Visible = false;
-            comboBox.Visible = true;
+            ShowScriptArgumentEnum(comboBox, numericValue);
         }
 
         private static void ConfigureBitTestEditor(ComboBox comboBox, NumericUpDown numericValue)
         {
             comboBox.Items.Clear();
-            AddChoice(comboBox, (int)CpuBitTestMode.MustBeSet, "0 - Bit Must Be Set");
-            AddChoice(comboBox, (int)CpuBitTestMode.MustBeClear, "1 - Bit Must Be Clear");
-            SelectChoice(comboBox, decimal.ToInt32(numericValue.Value));
-            numericValue.Visible = false;
-            comboBox.Visible = true;
+            AddChoice(comboBox, (int)CpuBitTestMode.MustBeSet, "0 - TRUE (Bit Must Be Set)");
+            AddChoice(comboBox, (int)CpuBitTestMode.MustBeClear, "1 - FALSE (Bit Must Be Clear)");
+            ShowScriptArgumentEnum(comboBox, numericValue);
         }
 
         private void ClearFileState()
@@ -724,7 +812,7 @@ namespace NSUNS4_Character_Manager.Tools
             }
             List<CpuScriptInstruction> entries = chunk.Groups[groupIndex].Instructions;
             for (int i = 0; i < entries.Count; i++)
-                scriptEntryListBox.Items.Add(i + ": " + DescribeInstruction(entries[i]));
+                scriptEntryListBox.Items.Add(BuildScriptEntryLabel(i, entries[i]));
             if (entries.Count > 0)
             {
                 scriptEntryListBox.SelectedIndex = Math.Max(0, Math.Min(requestedIndex, entries.Count - 1));
@@ -739,26 +827,68 @@ namespace NSUNS4_Character_Manager.Tools
             switch ((CpuScriptCommand)entry.CommandNumber)
             {
                 case CpuScriptCommand.SetProb:
-                    return "SetProb action " + entry.Arguments[0] + " = " + entry.Arguments[1];
+                    return "SetProb: Probability[" + entry.Arguments[0] + "] = " + entry.Arguments[1];
                 case CpuScriptCommand.AddProb:
-                    return "AddProb action " + entry.Arguments[0] + " += " + entry.Arguments[1];
+                    return "AddProb: Probability[" + entry.Arguments[0] + "] += " + entry.Arguments[1];
                 case CpuScriptCommand.JudgeGauge:
-                    return "JudgeGauge player " + entry.Arguments[0] + ", gauge[" + entry.Arguments[1] + "] " +
+                    return "JudgeGauge: " + DescribeTarget(entry.Arguments[0]) + "." + DescribeGauge(entry.Arguments[1]) + " " +
                            DescribeComparison(entry.Arguments[3]) + " " + entry.Arguments[2] + "%";
                 case CpuScriptCommand.JudgeSituation:
-                    return "JudgeSituation player " + entry.Arguments[0] + ", bit " + entry.Arguments[1] +
-                           ", " + DescribeBitTest(entry.Arguments[2]);
+                    return "JudgeSituation: " + DescribeTarget(entry.Arguments[0]) + "." + DescribeSituation(entry.Arguments[1]) +
+                           " == " + DescribeBitTest(entry.Arguments[2]);
                 case CpuScriptCommand.JudgeDistance:
-                    return "JudgeDistance " + DescribeComparison(entry.Arguments[2]) + " " + entry.Arguments[1];
+                    return "JudgeDistance: distance " + DescribeComparison(entry.Arguments[2]) + " " + entry.Arguments[1];
                 case CpuScriptCommand.SetParam:
-                    return "SetParam " + entry.Arguments[0] + " = " + entry.Arguments[1];
+                    return "SetParam: Param[" + entry.Arguments[0] + "] = " + entry.Arguments[1];
                 case CpuScriptCommand.JudgeAction:
-                    return "JudgeAction player " + entry.Arguments[0] + ", bit " + entry.Arguments[1] +
-                           ", " + DescribeBitTest(entry.Arguments[2]);
+                    return "JudgeAction: " + DescribeTarget(entry.Arguments[0]) + "." + DescribeAction(entry.Arguments[1]) +
+                           " == " + DescribeBitTest(entry.Arguments[2]);
                 case CpuScriptCommand.None:
                     return "Control marker, type " + entry.Type;
                 default:
                     return "Type " + entry.Type + ", Command " + entry.CommandNumber;
+            }
+        }
+
+        private static string BuildScriptEntryLabel(int index, CpuScriptInstruction entry)
+        {
+            return index + ": Type " + entry.Type + " (" + DescribeScriptType(entry.Type) + ")" +
+                   " | Command " + entry.CommandNumber + " (" + DescribeScriptCommand(entry.CommandNumber) + ")" +
+                   " | " + DescribeInstruction(entry);
+        }
+
+        private static string DescribeScriptType(ushort value)
+        {
+            switch ((CpuScriptType)value)
+            {
+                case CpuScriptType.CtrlIf: return "Control If";
+                case CpuScriptType.NextProcessIf: return "Next Process If";
+                case CpuScriptType.Skip2: return "Skip / Deprecated";
+                case CpuScriptType.CtrlSwitch: return "Control Switch";
+                case CpuScriptType.NextProcessSwitch: return "Next Process Switch";
+                case CpuScriptType.Skip5: return "Skip / Deprecated";
+                case CpuScriptType.CtrlJump: return "Control Jump";
+                case CpuScriptType.Skip7: return "Skip / Deprecated";
+                case CpuScriptType.End: return "End";
+                case CpuScriptType.CtrlCommand: return "Control Command";
+                case CpuScriptType.Unknown10: return "Unknown";
+                default: return "Unknown";
+            }
+        }
+
+        private static string DescribeScriptCommand(ushort value)
+        {
+            switch ((CpuScriptCommand)value)
+            {
+                case CpuScriptCommand.SetProb: return "Set Probability";
+                case CpuScriptCommand.AddProb: return "Add Probability";
+                case CpuScriptCommand.JudgeGauge: return "Judge Gauge";
+                case CpuScriptCommand.JudgeSituation: return "Judge Situation";
+                case CpuScriptCommand.JudgeDistance: return "Judge Distance";
+                case CpuScriptCommand.SetParam: return "Set Parameter";
+                case CpuScriptCommand.JudgeAction: return "Judge Action";
+                case CpuScriptCommand.None: return "None / Control Marker";
+                default: return "Unknown";
             }
         }
 
@@ -780,9 +910,78 @@ namespace NSUNS4_Character_Manager.Tools
         {
             switch ((CpuBitTestMode)value)
             {
-                case CpuBitTestMode.MustBeSet: return "bit must be set";
-                case CpuBitTestMode.MustBeClear: return "bit must be clear";
-                default: return "bit-test mode " + value;
+                case CpuBitTestMode.MustBeSet: return "TRUE";
+                case CpuBitTestMode.MustBeClear: return "FALSE";
+                default: return "bit-test " + value;
+            }
+        }
+
+        private static string DescribeTarget(int value)
+        {
+            switch ((CpuScriptTarget)value)
+            {
+                case CpuScriptTarget.Self: return "Self";
+                case CpuScriptTarget.Enemy: return "Enemy";
+                default: return "Target[" + value + "]";
+            }
+        }
+
+        private static string DescribeGauge(int value)
+        {
+            switch ((CpuGaugeType)value)
+            {
+                case CpuGaugeType.Life: return "Life";
+                case CpuGaugeType.Chakra: return "Chakra";
+                case CpuGaugeType.GuardPower: return "GuardPower";
+                case CpuGaugeType.TeamPower: return "TeamPower";
+                default: return "Gauge[" + value + "]";
+            }
+        }
+
+        private static string DescribeSituation(int value)
+        {
+            switch ((CpuSituationId)value)
+            {
+                case CpuSituationId.Unused00: return "Unused00";
+                case CpuSituationId.Unused01: return "Unused01";
+                case CpuSituationId.Unused02: return "Unused02";
+                case CpuSituationId.IsSupportSkillL: return "IsSupportSkillL";
+                case CpuSituationId.IsSupportSkillR: return "IsSupportSkillR";
+                case CpuSituationId.IsAttackTypeSupportL: return "IsAttackTypeSupportL";
+                case CpuSituationId.IsAttackTypeSupportR: return "IsAttackTypeSupportR";
+                case CpuSituationId.IsAwake: return "IsAwake";
+                case CpuSituationId.IsHugeAwake08: return "IsHugeAwake[8]";
+                case CpuSituationId.IsHugeAwake09: return "IsHugeAwake[9]";
+                case CpuSituationId.IsEnableConditionLifeDecrease: return "IsEnableConditionLifeDecrease";
+                case CpuSituationId.IsEnableConditionSleep: return "IsEnableConditionSleep";
+                case CpuSituationId.IsEnableConditionSeal: return "IsEnableConditionSeal";
+                case CpuSituationId.IsEnableConditionAutoDodge: return "IsEnableConditionAutoDodge";
+                case CpuSituationId.Unused14: return "Unused14";
+                case CpuSituationId.IsSuperArmor: return "IsSuperArmor";
+                case CpuSituationId.Unused16: return "Unused16";
+                case CpuSituationId.IsEnableChakraInfinity: return "IsEnableChakraInfinity";
+                case CpuSituationId.IsInvincibleAbove30: return "IsInvincibleAbove30";
+                case CpuSituationId.IsSpecialSupportL: return "IsSpecialSupportL";
+                case CpuSituationId.IsSpecialSupportR: return "IsSpecialSupportR";
+                default: return "Situation[" + value + "]";
+            }
+        }
+
+        private static string DescribeAction(int value)
+        {
+            switch ((CpuActionId)value)
+            {
+                case CpuActionId.IsActionFree: return "IsActionFree";
+                case CpuActionId.IsActionNinjaMove: return "IsActionNinjaMove";
+                case CpuActionId.IsActionGuard: return "IsActionGuard";
+                case CpuActionId.IsActionDamage: return "IsActionDamage";
+                case CpuActionId.IsActionDown: return "IsActionDown";
+                case CpuActionId.IsActionCharge: return "IsActionCharge";
+                case CpuActionId.IsActionAwake: return "IsActionAwake";
+                case CpuActionId.IsActionSkill: return "IsActionSkill";
+                case CpuActionId.IsActionDefenseless: return "IsActionDefenseless";
+                case CpuActionId.IsAwakeNow: return "IsAwakeNow";
+                default: return "Action[" + value + "]";
             }
         }
 
@@ -826,6 +1025,10 @@ namespace NSUNS4_Character_Manager.Tools
             NumericUpDown[] controls = GetScriptArgumentControls();
             for (int i = 0; i < controls.Length; i++)
                 entry.Arguments[i] = decimal.ToInt32(controls[i].Value);
+            if (scriptArgument0UsesEnum)
+                entry.Arguments[0] = GetChoice(scriptArgument0EnumComboBox);
+            if (scriptArgument1UsesEnum)
+                entry.Arguments[1] = GetChoice(scriptArgument1EnumComboBox);
             if (scriptArgument2UsesEnum)
                 entry.Arguments[2] = GetChoice(scriptArgument2EnumComboBox);
             if (scriptArgument3UsesEnum)
@@ -932,7 +1135,7 @@ namespace NSUNS4_Character_Manager.Tools
                 return;
             }
             chunk.Groups[groupIndex].Instructions[entryIndex] = BuildScriptEntryFromEditor();
-            scriptEntryListBox.Items[entryIndex] = entryIndex + ": " + DescribeInstruction(chunk.Groups[groupIndex].Instructions[entryIndex]);
+            scriptEntryListBox.Items[entryIndex] = BuildScriptEntryLabel(entryIndex, chunk.Groups[groupIndex].Instructions[entryIndex]);
         }
 
         private void RefreshStrengthGroups(int requestedIndex)
@@ -968,7 +1171,7 @@ namespace NSUNS4_Character_Manager.Tools
             }
             List<CpuStrengthEntry> entries = chunk.Groups[groupIndex].Entries;
             for (int i = 0; i < entries.Count; i++)
-                strengthEntryListBox.Items.Add(i + ": Parameter " + entries[i].ParameterIndex + " = " + entries[i].Value);
+                strengthEntryListBox.Items.Add(BuildStrengthEntryLabel(i, entries[i]));
             if (entries.Count > 0)
             {
                 strengthEntryListBox.SelectedIndex = Math.Max(0, Math.Min(requestedIndex, entries.Count - 1));
@@ -1000,7 +1203,7 @@ namespace NSUNS4_Character_Manager.Tools
             }
             SelectChoice(strengthTypeComboBox, entry.Type);
             SelectChoice(strengthCommandComboBox, entry.CommandNumber);
-            strengthParameterValue.Value = entry.ParameterIndex;
+            strengthParameterValue.Value = entry.ParamId;
             strengthValueValue.Value = entry.Value;
             NumericUpDown[] controls = GetStrengthUnusedArgumentControls();
             for (int i = 0; i < controls.Length; i++)
@@ -1014,7 +1217,7 @@ namespace NSUNS4_Character_Manager.Tools
             {
                 Type = checked((ushort)GetChoice(strengthTypeComboBox)),
                 CommandNumber = checked((ushort)GetChoice(strengthCommandComboBox)),
-                ParameterIndex = decimal.ToInt32(strengthParameterValue.Value),
+                ParamId = decimal.ToInt32(strengthParameterValue.Value),
                 Value = decimal.ToInt32(strengthValueValue.Value),
                 UnusedArguments = new int[6]
             };
@@ -1022,6 +1225,13 @@ namespace NSUNS4_Character_Manager.Tools
             for (int i = 0; i < controls.Length; i++)
                 entry.UnusedArguments[i] = decimal.ToInt32(controls[i].Value);
             return entry;
+        }
+
+        private static string BuildStrengthEntryLabel(int index, CpuStrengthEntry entry)
+        {
+            return index + ": Type " + entry.Type + " (" + DescribeScriptType(entry.Type) + ")" +
+                   " | Command " + entry.CommandNumber + " (" + DescribeScriptCommand(entry.CommandNumber) + ")" +
+                   " | Param[" + entry.ParamId + "] = " + entry.Value;
         }
 
         private NumericUpDown[] GetStrengthUnusedArgumentControls()
@@ -1120,7 +1330,7 @@ namespace NSUNS4_Character_Manager.Tools
             }
             chunk.Groups[groupIndex].Entries[entryIndex] = BuildStrengthEntryFromEditor();
             CpuStrengthEntry entry = chunk.Groups[groupIndex].Entries[entryIndex];
-            strengthEntryListBox.Items[entryIndex] = entryIndex + ": Parameter " + entry.ParameterIndex + " = " + entry.Value;
+            strengthEntryListBox.Items[entryIndex] = BuildStrengthEntryLabel(entryIndex, entry);
         }
 
         private void RefreshActionEntries(int requestedIndex)
@@ -1303,9 +1513,9 @@ namespace NSUNS4_Character_Manager.Tools
                 case (int)CpuPlayerType.UnobservedType01: return "Group 1";
                 case (int)CpuPlayerType.ProjectileType: return "Projectile Type";
                 case (int)CpuPlayerType.UnobservedType03: return "Group 3";
-                case (int)CpuPlayerType.PossibleGroundedSpecialType: return "Possible Grounded / Special";
-                case (int)CpuPlayerType.NormalAwakening: return "Normal Awakening";
-                case (int)CpuPlayerType.ProjectileAwakeningType: return "Projectile Awakening";
+                case (int)CpuPlayerType.UnobservedType04: return "Unobserved / Possible Grounded Special";
+                case (int)CpuPlayerType.AwakenMoveset: return "Awaken Moveset";
+                case (int)CpuPlayerType.ProjectileAwakenType: return "Projectile Awaken Type";
                 case (int)CpuPlayerType.PuppetType: return "Puppet Type";
                 case (int)CpuPlayerType.UnobservedType08: return "Group 8";
                 case (int)CpuPlayerType.UnobservedType09: return "Group 9";
@@ -1321,8 +1531,8 @@ namespace NSUNS4_Character_Manager.Tools
                 ? "[Entry " + entry.Characode + "] " + characterId
                 : "Characode Entry " + entry.Characode;
             return entryIndex + ": " + character + " | " + GetPlayerTypeLabel(entry.Type) +
-                   " | Script Group A " + entry.ScriptGroupIndexA +
-                   " | Reserved B " + entry.ReservedGroupLikeIndexB;
+                   " | Awakening Script " + entry.AwakeningScriptType +
+                   " | Instant Awakening Script " + entry.InstantAwakeningScriptType;
         }
 
         private bool IsKnownCharacodeEntry(int characodeEntry)
@@ -1376,10 +1586,10 @@ namespace NSUNS4_Character_Manager.Tools
             playerCharacodeValue.Value = entry.Characode;
             RefreshSelectedCharacterId();
             SelectChoice(playerTypeComboBox, entry.Type);
-            playerScriptGroupAValue.Value = entry.ScriptGroupIndexA;
-            playerScriptGroupAFlagValue.Value = entry.ScriptGroupFlagA;
-            playerReservedGroupLikeIndexBValue.Value = entry.ReservedGroupLikeIndexB;
-            playerReservedGroupLikeFlagBValue.Value = entry.ReservedGroupLikeFlagB;
+            playerScriptGroupAValue.Value = entry.AwakeningScriptType;
+            playerScriptGroupAFlagValue.Value = entry.AwakeningScriptTypeFlag;
+            playerReservedGroupLikeIndexBValue.Value = entry.InstantAwakeningScriptType;
+            playerReservedGroupLikeFlagBValue.Value = entry.InstantAwakeningScriptTypeFlag;
             for (int i = 0; i < CpuParamCodec.PlayerStringSlotIndices.Length; i++)
                 playerActionSlotsGrid.Rows[i].Cells[1].Value = entry.ActionSlots[CpuParamCodec.PlayerStringSlotIndices[i]] ?? string.Empty;
             playerEditorGroupBox.Enabled = true;
@@ -1392,10 +1602,10 @@ namespace NSUNS4_Character_Manager.Tools
             {
                 Characode = decimal.ToInt32(playerCharacodeValue.Value),
                 Type = GetChoice(playerTypeComboBox),
-                ScriptGroupIndexA = decimal.ToUInt32(playerScriptGroupAValue.Value),
-                ScriptGroupFlagA = decimal.ToUInt32(playerScriptGroupAFlagValue.Value),
-                ReservedGroupLikeIndexB = decimal.ToUInt32(playerReservedGroupLikeIndexBValue.Value),
-                ReservedGroupLikeFlagB = decimal.ToUInt32(playerReservedGroupLikeFlagBValue.Value)
+                AwakeningScriptType = decimal.ToUInt32(playerScriptGroupAValue.Value),
+                AwakeningScriptTypeFlag = decimal.ToUInt32(playerScriptGroupAFlagValue.Value),
+                InstantAwakeningScriptType = decimal.ToUInt32(playerReservedGroupLikeIndexBValue.Value),
+                InstantAwakeningScriptTypeFlag = decimal.ToUInt32(playerReservedGroupLikeFlagBValue.Value)
             };
             for (int i = 0; i < CpuParamCodec.PlayerStringSlotIndices.Length; i++)
             {
