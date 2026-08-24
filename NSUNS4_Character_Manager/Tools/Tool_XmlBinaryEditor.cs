@@ -14,6 +14,10 @@ namespace NSUNS4_Character_Manager
     public partial class Tool_XmlBinaryEditor : Form
     {
         private static readonly Encoding ShiftJisEncoding = Encoding.GetEncoding("shift_jis");
+        private static readonly Encoding StrictShiftJisEncoding = Encoding.GetEncoding(
+            "shift_jis",
+            EncoderFallback.ExceptionFallback,
+            DecoderFallback.ExceptionFallback);
         private static readonly string[] CommandSuggestions =
         {
             "SKILL_EVENT_COMMAND_CHANGE_ACTION",
@@ -70,12 +74,16 @@ namespace NSUNS4_Character_Manager
         };
         private static readonly string[] AllSuggestions = BuildAllSuggestions();
         private readonly XmlBinaryFileState fileState = new XmlBinaryFileState();
+        private readonly Timer syntaxHighlightTimer = new Timer();
         private bool loadingEditor;
+        private bool editorDirty;
+        private bool fileDirty;
         private bool highlightingXml;
         private bool suppressSuggestionPopup;
         private bool suggestionValueNeedsQuotes;
         private int suggestionReplaceStart;
         private int suggestionReplaceLength;
+        private int loadedEntryIndex = -1;
         private XmlBinaryChunkEntry copiedChunkEntry;
         private const int WmSetRedraw = 0x000B;
 
@@ -111,6 +119,11 @@ namespace NSUNS4_Character_Manager
         public Tool_XmlBinaryEditor()
         {
             InitializeComponent();
+            syntaxHighlightTimer.Interval = 150;
+            syntaxHighlightTimer.Tick += syntaxHighlightTimer_Tick;
+            chunkNameTextBox.TextChanged += editorField_TextChanged;
+            chunkPathTextBox.TextChanged += editorField_TextChanged;
+            FormClosing += Tool_XmlBinaryEditor_FormClosing;
             suggestionListBox.Visible = false;
             suggestionListBox.BringToFront();
             ResetUi();
@@ -118,12 +131,23 @@ namespace NSUNS4_Character_Manager
 
         private void ResetUi()
         {
-            chunkListBox.Items.Clear();
-            chunkListBox.Items.Add("No XML binary chunks loaded...");
-            chunkListBox.SelectedIndex = -1;
-            chunkNameTextBox.Text = "";
-            chunkPathTextBox.Text = "";
-            xmlTextBox.Text = "";
+            syntaxHighlightTimer.Stop();
+            loadingEditor = true;
+            try
+            {
+                chunkListBox.Items.Clear();
+                chunkListBox.Items.Add("No XML binary chunks loaded...");
+                chunkListBox.SelectedIndex = -1;
+                chunkNameTextBox.Text = "";
+                chunkPathTextBox.Text = "";
+                xmlTextBox.Text = "";
+            }
+            finally
+            {
+                loadedEntryIndex = -1;
+                editorDirty = false;
+                loadingEditor = false;
+            }
             SetEditorEnabled(false);
             UpdateStatus("Open an XFBIN that contains XML binary chunks.");
         }
@@ -134,6 +158,7 @@ namespace NSUNS4_Character_Manager
             fileState.FilePath = "";
             fileState.Entries.Clear();
             fileState.DeletedOriginalChunkNames.Clear();
+            fileDirty = false;
             ResetUi();
         }
 
@@ -162,7 +187,8 @@ namespace NSUNS4_Character_Manager
                 if (dialog.ShowDialog() != DialogResult.OK)
                     return;
 
-                LoadFile(dialog.FileName);
+                if (ConfirmSaveChanges())
+                    LoadFile(dialog.FileName);
             }
         }
 
@@ -170,24 +196,33 @@ namespace NSUNS4_Character_Manager
         {
             List<XmlBinaryChunkEntry> entries = new List<XmlBinaryChunkEntry>();
 
-            using (XfbinParserBackend backend = new XfbinParserBackend(filePath))
+            try
             {
-                foreach (XfbinBinaryChunkItem chunk in backend.GetBinaryChunks())
+                using (XfbinParserBackend backend = new XfbinParserBackend(filePath))
                 {
-                    string xmlText;
-                    if (!TryParseXmlBinary(chunk.BinaryData, out xmlText))
-                        continue;
-
-                    entries.Add(new XmlBinaryChunkEntry
+                    foreach (XfbinBinaryChunkItem chunk in backend.GetBinaryChunks())
                     {
-                        OriginalChunkName = chunk.ChunkName ?? "",
-                        ChunkName = chunk.ChunkName ?? "",
-                        ChunkPath = chunk.ChunkPath ?? "",
-                        XmlText = xmlText,
-                        Version = chunk.Version,
-                        VersionAttribute = chunk.VersionAttribute
-                    });
+                        string xmlText;
+                        if (!TryParseXmlBinary(chunk.BinaryData, out xmlText))
+                            continue;
+
+                        entries.Add(new XmlBinaryChunkEntry
+                        {
+                            OriginalChunkName = chunk.ChunkName ?? "",
+                            ChunkName = chunk.ChunkName ?? "",
+                            ChunkPath = chunk.ChunkPath ?? "",
+                            XmlText = xmlText,
+                            Version = chunk.Version,
+                            VersionAttribute = chunk.VersionAttribute
+                        });
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Could not open the XFBIN: " + ex.Message);
+                UpdateStatus("Open failed.");
+                return;
             }
 
             if (entries.Count == 0)
@@ -201,6 +236,9 @@ namespace NSUNS4_Character_Manager
             fileState.Entries.Clear();
             fileState.Entries.AddRange(entries);
             fileState.DeletedOriginalChunkNames.Clear();
+            fileDirty = false;
+            editorDirty = false;
+            loadedEntryIndex = -1;
             RefreshChunkList();
             UpdateStatus("Loaded " + entries.Count + " XML binary chunk(s) from " + Path.GetFileName(filePath) + ".");
         }
@@ -208,21 +246,34 @@ namespace NSUNS4_Character_Manager
         private void RefreshChunkList()
         {
             int selectedIndex = chunkListBox.SelectedIndex;
-            chunkListBox.Items.Clear();
-
-            if (fileState.Entries.Count == 0)
+            loadingEditor = true;
+            chunkListBox.BeginUpdate();
+            try
             {
-                chunkListBox.Items.Add("No XML binary chunks loaded...");
-                chunkListBox.SelectedIndex = -1;
-                SetEditorEnabled(false);
-                return;
+                chunkListBox.Items.Clear();
+
+                if (fileState.Entries.Count == 0)
+                {
+                    chunkListBox.Items.Add("No XML binary chunks loaded...");
+                    chunkListBox.SelectedIndex = -1;
+                }
+                else
+                {
+                    foreach (XmlBinaryChunkEntry entry in fileState.Entries)
+                        chunkListBox.Items.Add(BuildChunkLabel(entry));
+
+                    chunkListBox.SelectedIndex = selectedIndex >= 0 && selectedIndex < fileState.Entries.Count
+                        ? selectedIndex
+                        : 0;
+                }
+            }
+            finally
+            {
+                chunkListBox.EndUpdate();
+                loadingEditor = false;
             }
 
-            foreach (XmlBinaryChunkEntry entry in fileState.Entries)
-                chunkListBox.Items.Add(BuildChunkLabel(entry));
-
-            chunkListBox.SelectedIndex = selectedIndex >= 0 && selectedIndex < fileState.Entries.Count ? selectedIndex : 0;
-            SetEditorEnabled(true);
+            LoadSelectedEntryToEditor();
         }
 
         private static string BuildChunkLabel(XmlBinaryChunkEntry entry)
@@ -244,6 +295,7 @@ namespace NSUNS4_Character_Manager
         private void LoadSelectedEntryToEditor()
         {
             XmlBinaryChunkEntry entry = GetSelectedEntry();
+            syntaxHighlightTimer.Stop();
             loadingEditor = true;
             try
             {
@@ -252,6 +304,8 @@ namespace NSUNS4_Character_Manager
                     chunkNameTextBox.Text = "";
                     chunkPathTextBox.Text = "";
                     xmlTextBox.Text = "";
+                    loadedEntryIndex = -1;
+                    editorDirty = false;
                     SetEditorEnabled(false);
                     return;
                 }
@@ -259,6 +313,8 @@ namespace NSUNS4_Character_Manager
                 chunkNameTextBox.Text = entry.ChunkName ?? "";
                 chunkPathTextBox.Text = entry.ChunkPath ?? "";
                 xmlTextBox.Text = entry.XmlText ?? "";
+                loadedEntryIndex = chunkListBox.SelectedIndex;
+                editorDirty = false;
                 SetEditorEnabled(true);
                 UpdateStatus("Editing " + entry.ChunkName + ".");
             }
@@ -266,17 +322,19 @@ namespace NSUNS4_Character_Manager
             {
                 loadingEditor = false;
             }
+
+            ScheduleXmlHighlight();
         }
 
         private bool ApplyEditorToSelectedEntry()
         {
-            XmlBinaryChunkEntry entry = GetSelectedEntry();
-            if (entry == null)
+            if (loadedEntryIndex < 0 || loadedEntryIndex >= fileState.Entries.Count)
             {
                 MessageBox.Show("No XML binary chunk selected.");
                 return false;
             }
 
+            XmlBinaryChunkEntry entry = fileState.Entries[loadedEntryIndex];
             string chunkName = (chunkNameTextBox.Text ?? "").Trim();
             string chunkPath = (chunkPathTextBox.Text ?? "").Trim();
             string xmlText = xmlTextBox.Text ?? "";
@@ -296,11 +354,37 @@ namespace NSUNS4_Character_Manager
             if (!ValidateXmlText(xmlText, true))
                 return false;
 
+            bool changed = !string.Equals(entry.ChunkName, chunkName, StringComparison.Ordinal) ||
+                           !string.Equals(entry.ChunkPath, chunkPath, StringComparison.Ordinal) ||
+                           !string.Equals(entry.XmlText, xmlText, StringComparison.Ordinal);
             entry.ChunkName = chunkName;
             entry.ChunkPath = chunkPath;
             entry.XmlText = xmlText;
-            chunkListBox.Items[chunkListBox.SelectedIndex] = BuildChunkLabel(entry);
+            if (loadedEntryIndex < chunkListBox.Items.Count)
+                chunkListBox.Items[loadedEntryIndex] = BuildChunkLabel(entry);
+            editorDirty = false;
+            if (changed)
+                fileDirty = true;
             UpdateStatus("Saved chunk changes to " + chunkName + ".");
+            return true;
+        }
+
+        private bool ConfirmDiscardEditorChanges(bool reloadEditor)
+        {
+            if (!editorDirty)
+                return true;
+
+            DialogResult result = MessageBox.Show(
+                "The selected entry has changes that were not saved with the entry Save button. Discard them?",
+                "Unsaved Entry Changes",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
+            if (result != DialogResult.Yes)
+                return false;
+
+            editorDirty = false;
+            if (reloadEditor)
+                LoadSelectedEntryToEditor();
             return true;
         }
 
@@ -311,6 +395,9 @@ namespace NSUNS4_Character_Manager
                 MessageBox.Show("Open an XFBIN first.");
                 return;
             }
+
+            if (!ConfirmDiscardEditorChanges(true))
+                return;
 
             string chunkName = BuildUniqueChunkName("new_skill_xml");
             XmlBinaryChunkEntry sourceEntry = fileState.Entries.FirstOrDefault();
@@ -324,12 +411,16 @@ namespace NSUNS4_Character_Manager
             };
 
             fileState.Entries.Add(entry);
+            fileDirty = true;
             RefreshChunkList();
             chunkListBox.SelectedIndex = fileState.Entries.Count - 1;
         }
 
         private void DuplicateChunk()
         {
+            if (!ConfirmDiscardEditorChanges(true))
+                return;
+
             XmlBinaryChunkEntry selected = GetSelectedEntry();
             if (selected == null)
             {
@@ -348,12 +439,16 @@ namespace NSUNS4_Character_Manager
             };
 
             fileState.Entries.Add(copy);
+            fileDirty = true;
             RefreshChunkList();
             chunkListBox.SelectedIndex = fileState.Entries.Count - 1;
         }
 
         private void DeleteChunk()
         {
+            if (!ConfirmDiscardEditorChanges(true))
+                return;
+
             int index = chunkListBox.SelectedIndex;
             if (index < 0 || index >= fileState.Entries.Count)
             {
@@ -368,7 +463,10 @@ namespace NSUNS4_Character_Manager
                 fileState.DeletedOriginalChunkNames.Add(entry.OriginalChunkName);
             }
 
+            editorDirty = false;
+            loadedEntryIndex = -1;
             fileState.Entries.RemoveAt(index);
+            fileDirty = true;
             RefreshChunkList();
             if (fileState.Entries.Count > 0)
                 chunkListBox.SelectedIndex = Math.Min(index, fileState.Entries.Count - 1);
@@ -376,6 +474,9 @@ namespace NSUNS4_Character_Manager
 
         private void CopyChunk()
         {
+            if (!ConfirmDiscardEditorChanges(true))
+                return;
+
             XmlBinaryChunkEntry selected = GetSelectedEntry();
             if (selected == null)
             {
@@ -384,8 +485,15 @@ namespace NSUNS4_Character_Manager
             }
 
             copiedChunkEntry = CloneChunkEntry(selected);
-            if (!string.IsNullOrEmpty(selected.XmlText))
-                Clipboard.SetText(selected.XmlText);
+            try
+            {
+                if (!string.IsNullOrEmpty(selected.XmlText))
+                    Clipboard.SetText(selected.XmlText);
+            }
+            catch (ExternalException ex)
+            {
+                MessageBox.Show("The chunk was copied inside the editor, but Windows clipboard access failed: " + ex.Message);
+            }
             UpdateStatus("Copied chunk " + selected.ChunkName + ".");
         }
 
@@ -397,8 +505,24 @@ namespace NSUNS4_Character_Manager
                 return;
             }
 
+            if (!ConfirmDiscardEditorChanges(true))
+                return;
+
             XmlBinaryChunkEntry pasted;
-            if (copiedChunkEntry != null)
+            string clipboardText = null;
+            try
+            {
+                if (Clipboard.ContainsText())
+                    clipboardText = Clipboard.GetText();
+            }
+            catch (ExternalException)
+            {
+                // The in-editor copy remains available when another process has the clipboard locked.
+            }
+
+            bool clipboardMatchesCopiedChunk = copiedChunkEntry != null &&
+                                               string.Equals(clipboardText, copiedChunkEntry.XmlText, StringComparison.Ordinal);
+            if (clipboardMatchesCopiedChunk || (copiedChunkEntry != null && clipboardText == null))
             {
                 pasted = CloneChunkEntry(copiedChunkEntry);
                 string oldName = pasted.ChunkName;
@@ -407,9 +531,9 @@ namespace NSUNS4_Character_Manager
                 pasted.ChunkPath = ReplacePathFileName(pasted.ChunkPath, pasted.ChunkName + ".xml");
                 pasted.XmlText = ReplaceRootSkillId(pasted.XmlText, oldName, pasted.ChunkName);
             }
-            else if (Clipboard.ContainsText())
+            else if (!string.IsNullOrWhiteSpace(clipboardText))
             {
-                string xmlText = Clipboard.GetText();
+                string xmlText = clipboardText;
                 if (!ValidateXmlText(xmlText, true))
                     return;
 
@@ -431,30 +555,31 @@ namespace NSUNS4_Character_Manager
             }
 
             fileState.Entries.Add(pasted);
+            fileDirty = true;
             RefreshChunkList();
             chunkListBox.SelectedIndex = fileState.Entries.Count - 1;
             UpdateStatus("Pasted chunk " + pasted.ChunkName + ".");
         }
 
-        private void SaveFile(bool saveAs)
+        private bool SaveFile(bool saveAs)
         {
             if (!fileState.FileOpen)
             {
                 MessageBox.Show("No file loaded.");
-                return;
+                return false;
             }
 
-            if (chunkListBox.SelectedIndex >= 0 && chunkListBox.SelectedIndex < fileState.Entries.Count)
+            if (editorDirty)
             {
-                if (!ApplyEditorToSelectedEntry())
-                    return;
+                MessageBox.Show("The selected entry has unsaved changes. Click the entry Save button before saving the XFBIN.");
+                return false;
             }
 
             string errorMessage;
             if (!ValidateEntries(out errorMessage))
             {
                 MessageBox.Show(errorMessage);
-                return;
+                return false;
             }
 
             string outputPath = fileState.FilePath;
@@ -466,48 +591,84 @@ namespace NSUNS4_Character_Manager
                     dialog.Filter = "XFBIN Files (*.xfbin)|*.xfbin";
                     dialog.FileName = Path.GetFileName(fileState.FilePath);
                     if (dialog.ShowDialog() != DialogResult.OK)
-                        return;
+                        return false;
                     outputPath = dialog.FileName;
                 }
             }
 
-            using (XfbinParserBackend backend = new XfbinParserBackend(fileState.FilePath))
+            try
             {
-                foreach (string deletedChunkName in fileState.DeletedOriginalChunkNames)
+                using (XfbinParserBackend backend = new XfbinParserBackend(fileState.FilePath))
                 {
-                    bool stillUsed = fileState.Entries.Any(x =>
-                        string.Equals(x.OriginalChunkName, deletedChunkName, StringComparison.OrdinalIgnoreCase));
-                    if (!stillUsed)
-                        backend.DeleteBinaryChunk(deletedChunkName);
-                }
+                    foreach (string deletedChunkName in fileState.DeletedOriginalChunkNames)
+                    {
+                        bool stillUsed = fileState.Entries.Any(x =>
+                            string.Equals(x.OriginalChunkName, deletedChunkName, StringComparison.OrdinalIgnoreCase));
+                        if (!stillUsed)
+                            backend.DeleteBinaryChunk(deletedChunkName);
+                    }
 
-                foreach (XmlBinaryChunkEntry entry in fileState.Entries)
-                {
-                    backend.UpsertChunk(
-                        entry.OriginalChunkName,
-                        entry.ChunkName,
-                        "nuccChunkBinary",
-                        entry.ChunkPath,
-                        ".binary",
-                        BuildXmlBinary(entry.XmlText),
-                        entry.Version,
-                        entry.VersionAttribute);
-                }
+                    foreach (XmlBinaryChunkEntry entry in fileState.Entries)
+                    {
+                        backend.UpsertChunk(
+                            entry.OriginalChunkName,
+                            entry.ChunkName,
+                            "nuccChunkBinary",
+                            entry.ChunkPath,
+                            ".binary",
+                            BuildXmlBinary(entry.XmlText),
+                            entry.Version,
+                            entry.VersionAttribute);
+                    }
 
-                backend.RepackTo(outputPath);
+                    backend.RepackTo(outputPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Could not save the XFBIN: " + ex.Message);
+                UpdateStatus("Save failed.");
+                return false;
             }
 
             if (!File.Exists(outputPath))
             {
                 MessageBox.Show("XFBIN write failed.");
-                return;
+                return false;
             }
 
             fileState.FilePath = outputPath;
             foreach (XmlBinaryChunkEntry entry in fileState.Entries)
                 entry.OriginalChunkName = entry.ChunkName;
             fileState.DeletedOriginalChunkNames.Clear();
+            fileDirty = false;
+            editorDirty = false;
             UpdateStatus("Saved " + Path.GetFileName(outputPath) + ".");
+            return true;
+        }
+
+        private bool ConfirmSaveChanges()
+        {
+            if (!fileState.FileOpen)
+                return true;
+
+            if (!ConfirmDiscardEditorChanges(true))
+                return false;
+
+            if (!fileDirty)
+                return true;
+
+            DialogResult result = MessageBox.Show(
+                "Save changes to " + Path.GetFileName(fileState.FilePath) + "?",
+                "XML Binary Editor",
+                MessageBoxButtons.YesNoCancel,
+                MessageBoxIcon.Warning);
+            if (result == DialogResult.Cancel)
+                return false;
+            if (result == DialogResult.Yes)
+                return SaveFile(false);
+
+            return true;
         }
 
         private bool ValidateEntries(out string errorMessage)
@@ -540,6 +701,17 @@ namespace NSUNS4_Character_Manager
                     errorMessage = "Invalid XML in chunk: " + entry.ChunkName;
                     return false;
                 }
+
+                try
+                {
+                    StrictShiftJisEncoding.GetByteCount(entry.XmlText ?? "");
+                }
+                catch (EncoderFallbackException ex)
+                {
+                    errorMessage = "Chunk " + entry.ChunkName +
+                                   " contains text that cannot be saved as Shift-JIS: " + ex.Message;
+                    return false;
+                }
             }
 
             return true;
@@ -549,9 +721,7 @@ namespace NSUNS4_Character_Manager
         {
             try
             {
-                XmlDocument document = new XmlDocument();
-                document.PreserveWhitespace = true;
-                document.LoadXml(xmlText ?? "");
+                LoadXmlDocument(xmlText ?? "");
                 if (showMessage)
                     UpdateStatus("XML is valid.");
                 return true;
@@ -592,15 +762,31 @@ namespace NSUNS4_Character_Manager
         {
             try
             {
-                XmlDocument document = new XmlDocument();
-                document.PreserveWhitespace = true;
-                document.LoadXml(xmlText);
+                LoadXmlDocument(xmlText);
                 return true;
             }
             catch
             {
                 return false;
             }
+        }
+
+        private static XmlDocument LoadXmlDocument(string xmlText)
+        {
+            XmlReaderSettings settings = new XmlReaderSettings
+            {
+                DtdProcessing = DtdProcessing.Prohibit,
+                XmlResolver = null
+            };
+            XmlDocument document = new XmlDocument
+            {
+                PreserveWhitespace = true,
+                XmlResolver = null
+            };
+            using (StringReader textReader = new StringReader(xmlText ?? ""))
+            using (XmlReader reader = XmlReader.Create(textReader, settings))
+                document.Load(reader);
+            return document;
         }
 
         private static byte[] BuildXmlBinary(string xmlText)
@@ -651,9 +837,7 @@ namespace NSUNS4_Character_Manager
         {
             try
             {
-                XmlDocument document = new XmlDocument();
-                document.PreserveWhitespace = true;
-                document.LoadXml(xmlText);
+                XmlDocument document = LoadXmlDocument(xmlText);
                 if (document.DocumentElement != null &&
                     string.Equals(document.DocumentElement.Name, "Skill", StringComparison.OrdinalIgnoreCase))
                 {
@@ -694,9 +878,7 @@ namespace NSUNS4_Character_Manager
         {
             try
             {
-                XmlDocument document = new XmlDocument();
-                document.PreserveWhitespace = true;
-                document.LoadXml(xmlText);
+                XmlDocument document = LoadXmlDocument(xmlText);
                 if (document.DocumentElement == null)
                     return null;
 
@@ -756,6 +938,36 @@ namespace NSUNS4_Character_Manager
             statusLabel.Text = text ?? "";
         }
 
+        private void editorField_TextChanged(object sender, EventArgs e)
+        {
+            if (!loadingEditor)
+                editorDirty = true;
+        }
+
+        private void ScheduleXmlHighlight()
+        {
+            syntaxHighlightTimer.Stop();
+            syntaxHighlightTimer.Start();
+        }
+
+        private void syntaxHighlightTimer_Tick(object sender, EventArgs e)
+        {
+            syntaxHighlightTimer.Stop();
+            HighlightXmlSyntax();
+        }
+
+        private void Tool_XmlBinaryEditor_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (!ConfirmSaveChanges())
+                e.Cancel = true;
+        }
+
+        protected override void OnFormClosed(FormClosedEventArgs e)
+        {
+            syntaxHighlightTimer.Dispose();
+            base.OnFormClosed(e);
+        }
+
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
         {
             OpenFile();
@@ -773,13 +985,33 @@ namespace NSUNS4_Character_Manager
 
         private void closeToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            ClearFileState();
+            if (ConfirmSaveChanges())
+                ClearFileState();
         }
 
         private void chunkListBox_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (!loadingEditor)
-                LoadSelectedEntryToEditor();
+            if (loadingEditor)
+                return;
+
+            int requestedIndex = chunkListBox.SelectedIndex;
+            if (requestedIndex != loadedEntryIndex && !ConfirmDiscardEditorChanges(false))
+            {
+                loadingEditor = true;
+                try
+                {
+                    chunkListBox.SelectedIndex = loadedEntryIndex >= 0 && loadedEntryIndex < fileState.Entries.Count
+                        ? loadedEntryIndex
+                        : -1;
+                }
+                finally
+                {
+                    loadingEditor = false;
+                }
+                return;
+            }
+
+            LoadSelectedEntryToEditor();
         }
 
         private void addChunkButton_Click(object sender, EventArgs e)
@@ -814,8 +1046,16 @@ namespace NSUNS4_Character_Manager
 
         private void xmlTextBox_TextChanged(object sender, EventArgs e)
         {
-            if (!highlightingXml)
-                HighlightXmlSyntax();
+            // RichTextBox raises TextChanged for syntax-color formatting changes too.
+            // Ignore those internal changes so they do not mark the file dirty or flash autocomplete.
+            if (highlightingXml)
+                return;
+
+            if (!loadingEditor)
+            {
+                editorDirty = true;
+                ScheduleXmlHighlight();
+            }
 
             if (!loadingEditor && !suppressSuggestionPopup)
                 UpdateSuggestionPopup();

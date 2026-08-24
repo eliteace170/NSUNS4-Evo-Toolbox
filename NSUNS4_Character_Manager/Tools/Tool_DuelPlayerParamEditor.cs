@@ -221,6 +221,40 @@ namespace NSUNS4_Character_Manager
 				: binName;
 		}
 
+		private void ClearEntryCollections()
+		{
+			EntryCount = 0;
+			Entries.Clear();
+			BinPath.Clear();
+			BinName.Clear();
+			Data.Clear();
+			CharaList.Clear();
+			CostumeList.Clear();
+			AwkCostumeList.Clear();
+			DefaultAssist1.Clear();
+			DefaultAssist2.Clear();
+			AwkAction.Clear();
+			ItemList.Clear();
+			ItemCount.Clear();
+			Partner.Clear();
+			SettingList.Clear();
+			AwaSettingList.Clear();
+			Setting2List.Clear();
+			EvoDupList.Clear();
+			AwaBodyPriorityList.Clear();
+			DefaultAwaSkillIndexList.Clear();
+			ConditionFlagList.Clear();
+			EnableAwaSkillList.Clear();
+			CameraDistanceList.Clear();
+			CameraUnknown1List.Clear();
+			VictoryAngleList.Clear();
+			CameraUnknown2List.Clear();
+			CameraUnknown3List.Clear();
+			CameraUnknown4List.Clear();
+			listBox1.ClearSelected();
+			listBox1.Items.Clear();
+		}
+
 		private void RebuildEntriesFromLegacyLists()
 		{
 			Entries.Clear();
@@ -858,35 +892,7 @@ namespace NSUNS4_Character_Manager
 		{
 			FileOpen = true;
 			FilePath = "";
-			EntryCount = 0;
-			BinPath.Clear();
-			BinName.Clear();
-			Data.Clear();
-			CharaList.Clear();
-			CostumeList.Clear();
-			AwkCostumeList.Clear();
-			DefaultAssist1.Clear();
-			DefaultAssist2.Clear();
-			AwkAction.Clear();
-			ItemList.Clear();
-			ItemCount.Clear();
-            Partner.Clear();
-			SettingList.Clear();
-			Setting2List.Clear();
-			EvoDupList.Clear();
-			AwaBodyPriorityList.Clear();
-			DefaultAwaSkillIndexList.Clear();
-			ConditionFlagList.Clear();
-			EnableAwaSkillList.Clear();
-			CameraDistanceList.Clear();
-			CameraUnknown1List.Clear();
-			VictoryAngleList.Clear();
-			CameraUnknown2List.Clear();
-			CameraUnknown3List.Clear();
-			CameraUnknown4List.Clear();
-			AwaSettingList.Clear();
-			listBox1.ClearSelected();
-			listBox1.Items.Clear();
+			ClearEntryCollections();
 			EntryCount = 1;
 			BinPath.Add("Z:/param/player/Converter/bin/1newprm_bas.bin");
 			BinName.Add("1newprm_bas");
@@ -1681,8 +1687,23 @@ namespace NSUNS4_Character_Manager
 				itemc[x] = 0;
 			}
 			ItemCount.Add(itemc);
-            Partner.Add("");
-			ConditionFlagList.Add(0);
+			Partner.Add("");
+
+			byte[] defaultData = Data[0];
+			SettingList.Add(Main.b_ReadByteArray(defaultData, 448, 36));
+			Setting2List.Add(Main.b_ReadByteArray(defaultData, 500, 16));
+			EvoDupList.Add(CombineEvoDup(Main.b_ReadInt(defaultData, 0x154), Main.b_ReadInt(defaultData, 0x158)));
+			AwaBodyPriorityList.Add(Main.b_ReadInt(defaultData, 0x160));
+			DefaultAwaSkillIndexList.Add(Main.b_ReadInt(defaultData, 0x164));
+			ConditionFlagList.Add(Main.b_ReadIntRev(defaultData, 0x150));
+			EnableAwaSkillList.Add(defaultData[0x153]);
+			CameraDistanceList.Add(ReadUInt16(defaultData, 0x1B4));
+			CameraUnknown1List.Add(ReadUInt16(defaultData, 0x1B6));
+			VictoryAngleList.Add(ReadUInt16(defaultData, 0x1B8));
+			CameraUnknown2List.Add(ReadUInt16(defaultData, 0x1BA));
+			CameraUnknown3List.Add(ReadUInt16(defaultData, 0x1BC));
+			CameraUnknown4List.Add(ReadUInt16(defaultData, 0x1BE));
+			AwaSettingList.Add(Main.b_ReadByteArray(defaultData, 644, 84));
 			RebuildEntriesFromLegacyLists();
 			RefreshEntryListBox();
 			if (listBox1.Items.Count > 0)
@@ -1714,27 +1735,7 @@ namespace NSUNS4_Character_Manager
 			}
 			FileOpen = true;
 
-			listBox1.Items.Clear();
-			EntryCount = 0;
-			BinPath.Clear();
-			BinName.Clear();
-			Data.Clear();
-			CharaList.Clear();
-			CostumeList.Clear();
-			AwkCostumeList.Clear();
-			DefaultAssist1.Clear();
-			DefaultAssist2.Clear();
-			AwkAction.Clear();
-			ItemList.Clear();
-			ItemCount.Clear();
-            Partner.Clear();
-			SettingList.Clear();
-			Setting2List.Clear();
-			EnableAwaSkillList.Clear();
-			VictoryAngleList.Clear();
-			VictoryPosList.Clear();
-			VictoryUnknownList.Clear();
-			AwaSettingList.Clear();
+			ClearEntryCollections();
 			FilePath = o.FileName;
 			byte[] FileBytes = File.ReadAllBytes(FilePath);
 			EntryCount = Main.b_byteArrayToIntRev(Main.b_ReadByteArray(FileBytes, 36, 4)) - 1;
@@ -2438,7 +2439,6 @@ namespace NSUNS4_Character_Manager
 				DialogResult msg = MessageBox.Show("Are you sure you want to open a new file?", "", MessageBoxButtons.OKCancel);
 				if (msg == DialogResult.OK)
 				{
-					CloseFile();
 					OpenFile();
 				}
 			}

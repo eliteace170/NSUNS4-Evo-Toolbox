@@ -360,13 +360,13 @@ namespace NSUNS4_Character_Manager
             this.listBox1.ItemHeight = 17;
             this.listBox1.Location = new System.Drawing.Point(12, 36);
             this.listBox1.Name = "listBox1";
-            this.listBox1.Size = new System.Drawing.Size(280, 667);
+            this.listBox1.Size = new System.Drawing.Size(280, 701);
             this.listBox1.TabIndex = 37;
             this.listBox1.SelectedIndexChanged += new System.EventHandler(this.listBox1_SelectedIndexChanged);
             // 
             // button3
             // 
-            this.button3.Location = new System.Drawing.Point(12, 797);
+            this.button3.Location = new System.Drawing.Point(12, 834);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(168, 26);
             this.button3.TabIndex = 36;
@@ -375,14 +375,14 @@ namespace NSUNS4_Character_Manager
             // 
             // Search_TB
             // 
-            this.Search_TB.Location = new System.Drawing.Point(12, 707);
+            this.Search_TB.Location = new System.Drawing.Point(12, 744);
             this.Search_TB.Name = "Search_TB";
             this.Search_TB.Size = new System.Drawing.Size(168, 20);
             this.Search_TB.TabIndex = 35;
             // 
             // Search
             // 
-            this.Search.Location = new System.Drawing.Point(186, 707);
+            this.Search.Location = new System.Drawing.Point(186, 744);
             this.Search.Name = "Search";
             this.Search.Size = new System.Drawing.Size(106, 23);
             this.Search.TabIndex = 34;
@@ -391,7 +391,7 @@ namespace NSUNS4_Character_Manager
             // 
             // copySettingsButton
             // 
-            this.copySettingsButton.Location = new System.Drawing.Point(186, 733);
+            this.copySettingsButton.Location = new System.Drawing.Point(186, 770);
             this.copySettingsButton.Name = "copySettingsButton";
             this.copySettingsButton.Size = new System.Drawing.Size(106, 26);
             this.copySettingsButton.TabIndex = 33;
@@ -400,7 +400,7 @@ namespace NSUNS4_Character_Manager
             // 
             // pasteSettingsButton
             // 
-            this.pasteSettingsButton.Location = new System.Drawing.Point(186, 765);
+            this.pasteSettingsButton.Location = new System.Drawing.Point(186, 802);
             this.pasteSettingsButton.Name = "pasteSettingsButton";
             this.pasteSettingsButton.Size = new System.Drawing.Size(106, 26);
             this.pasteSettingsButton.TabIndex = 32;
@@ -409,7 +409,7 @@ namespace NSUNS4_Character_Manager
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(12, 765);
+            this.button2.Location = new System.Drawing.Point(12, 802);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(168, 26);
             this.button2.TabIndex = 33;
@@ -418,7 +418,7 @@ namespace NSUNS4_Character_Manager
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(12, 733);
+            this.button1.Location = new System.Drawing.Point(12, 770);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(168, 26);
             this.button1.TabIndex = 32;
@@ -796,7 +796,7 @@ namespace NSUNS4_Character_Manager
             this.inlineSettingsPanel.Controls.Add(this.setAwakeningDebuff);
             this.inlineSettingsPanel.Location = new System.Drawing.Point(670, 54);
             this.inlineSettingsPanel.Name = "inlineSettingsPanel";
-            this.inlineSettingsPanel.Size = new System.Drawing.Size(578, 769);
+            this.inlineSettingsPanel.Size = new System.Drawing.Size(578, 800);
             this.inlineSettingsPanel.TabIndex = 0;
             // 
             // settingsTitleLabel
@@ -1508,7 +1508,7 @@ namespace NSUNS4_Character_Manager
             this.checkedListConditionFlags.CheckOnClick = true;
             this.checkedListConditionFlags.Location = new System.Drawing.Point(12, 40);
             this.checkedListConditionFlags.Name = "checkedListConditionFlags";
-            this.checkedListConditionFlags.Size = new System.Drawing.Size(320, 454);
+            this.checkedListConditionFlags.Size = new System.Drawing.Size(320, 484);
             this.checkedListConditionFlags.TabIndex = 1;
             this.checkedListConditionFlags.ItemCheck += new System.Windows.Forms.ItemCheckEventHandler(this.checkedListConditionFlags_ItemCheck);
             this.checkedListConditionFlags.SelectedIndexChanged += new System.EventHandler(this.checkedListConditionFlags_SelectedIndexChanged);
@@ -1520,7 +1520,7 @@ namespace NSUNS4_Character_Manager
             this.groupConditionFlags.Controls.Add(this.v_enableAwaSkill);
             this.groupConditionFlags.Location = new System.Drawing.Point(309, 325);
             this.groupConditionFlags.Name = "groupConditionFlags";
-            this.groupConditionFlags.Size = new System.Drawing.Size(344, 498);
+            this.groupConditionFlags.Size = new System.Drawing.Size(344, 529);
             this.groupConditionFlags.TabIndex = 1;
             this.groupConditionFlags.TabStop = false;
             this.groupConditionFlags.Enter += new System.EventHandler(this.groupConditionFlags_Enter);
@@ -1529,7 +1529,7 @@ namespace NSUNS4_Character_Manager
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1260, 828);
+            this.ClientSize = new System.Drawing.Size(1260, 866);
             this.Controls.Add(this.inlineSettingsPanel);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.w_awkaction);

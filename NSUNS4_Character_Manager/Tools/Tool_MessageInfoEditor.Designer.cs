@@ -100,6 +100,8 @@
             this.hashSearchLabel = new System.Windows.Forms.Label();
             this.hashSearchTextBox = new System.Windows.Forms.TextBox();
             this.hashSearchButton = new System.Windows.Forms.Button();
+            this.copyMainToExtraButton = new System.Windows.Forms.Button();
+            this.copyExtraToMainButton = new System.Windows.Forms.Button();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).BeginInit();
             this.SuspendLayout();
@@ -518,7 +520,7 @@
             // comboBox1
             // 
             this.comboBox1.FormattingEnabled = true;
-            this.comboBox1.Location = new System.Drawing.Point(474, 443);
+            this.comboBox1.Location = new System.Drawing.Point(474, 446);
             this.comboBox1.Name = "comboBox1";
             this.comboBox1.Size = new System.Drawing.Size(199, 21);
             this.comboBox1.TabIndex = 44;
@@ -536,7 +538,7 @@
             // 
             // numericUpDown1
             // 
-            this.numericUpDown1.Location = new System.Drawing.Point(474, 474);
+            this.numericUpDown1.Location = new System.Drawing.Point(474, 477);
             this.numericUpDown1.Maximum = new decimal(new int[] {
             65535,
             0,
@@ -565,7 +567,7 @@
             // textBox1
             // 
             this.textBox1.Enabled = false;
-            this.textBox1.Location = new System.Drawing.Point(474, 414);
+            this.textBox1.Location = new System.Drawing.Point(474, 417);
             this.textBox1.Name = "textBox1";
             this.textBox1.ReadOnly = true;
             this.textBox1.Size = new System.Drawing.Size(199, 20);
@@ -574,7 +576,7 @@
             // 
             // copyCrc32Button
             // 
-            this.copyCrc32Button.Location = new System.Drawing.Point(679, 412);
+            this.copyCrc32Button.Location = new System.Drawing.Point(679, 415);
             this.copyCrc32Button.Name = "copyCrc32Button";
             this.copyCrc32Button.Size = new System.Drawing.Size(45, 23);
             this.copyCrc32Button.TabIndex = 65;
@@ -653,7 +655,7 @@
             // checkBox1
             // 
             this.checkBox1.AutoSize = true;
-            this.checkBox1.Location = new System.Drawing.Point(679, 446);
+            this.checkBox1.Location = new System.Drawing.Point(679, 449);
             this.checkBox1.Name = "checkBox1";
             this.checkBox1.Size = new System.Drawing.Size(116, 17);
             this.checkBox1.TabIndex = 57;
@@ -663,7 +665,7 @@
             // label21
             // 
             this.label21.AutoSize = true;
-            this.label21.Location = new System.Drawing.Point(824, 418);
+            this.label21.Location = new System.Drawing.Point(824, 420);
             this.label21.Name = "label21";
             this.label21.Size = new System.Drawing.Size(151, 13);
             this.label21.TabIndex = 59;
@@ -673,7 +675,7 @@
             // 
             // textBox3
             // 
-            this.textBox3.Location = new System.Drawing.Point(981, 415);
+            this.textBox3.Location = new System.Drawing.Point(981, 417);
             this.textBox3.MaxLength = 256;
             this.textBox3.Name = "textBox3";
             this.textBox3.Size = new System.Drawing.Size(228, 20);
@@ -734,7 +736,7 @@
             // checkBox2
             // 
             this.checkBox2.AutoSize = true;
-            this.checkBox2.Location = new System.Drawing.Point(679, 477);
+            this.checkBox2.Location = new System.Drawing.Point(679, 480);
             this.checkBox2.Name = "checkBox2";
             this.checkBox2.Size = new System.Drawing.Size(45, 17);
             this.checkBox2.TabIndex = 64;
@@ -768,11 +770,33 @@
             this.hashSearchButton.UseVisualStyleBackColor = true;
             this.hashSearchButton.Click += new System.EventHandler(this.hashSearchButton_Click);
             // 
+            // copyMainToExtraButton
+            //
+            this.copyMainToExtraButton.Location = new System.Drawing.Point(474, 388);
+            this.copyMainToExtraButton.Name = "copyMainToExtraButton";
+            this.copyMainToExtraButton.Size = new System.Drawing.Size(344, 23);
+            this.copyMainToExtraButton.TabIndex = 69;
+            this.copyMainToExtraButton.Text = "Copy Main Text to Extra Text (all languages)";
+            this.copyMainToExtraButton.UseVisualStyleBackColor = true;
+            this.copyMainToExtraButton.Click += new System.EventHandler(this.copyMainToExtraButton_Click);
+            //
+            // copyExtraToMainButton
+            //
+            this.copyExtraToMainButton.Location = new System.Drawing.Point(827, 388);
+            this.copyExtraToMainButton.Name = "copyExtraToMainButton";
+            this.copyExtraToMainButton.Size = new System.Drawing.Size(382, 23);
+            this.copyExtraToMainButton.TabIndex = 70;
+            this.copyExtraToMainButton.Text = "Copy Extra Text  to Main Text (all languages)";
+            this.copyExtraToMainButton.UseVisualStyleBackColor = true;
+            this.copyExtraToMainButton.Click += new System.EventHandler(this.copyExtraToMainButton_Click);
+            //
             // Tool_MessageInfoEditor
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1221, 506);
+            this.Controls.Add(this.copyExtraToMainButton);
+            this.Controls.Add(this.copyMainToExtraButton);
             this.Controls.Add(this.hashSearchButton);
             this.Controls.Add(this.hashSearchTextBox);
             this.Controls.Add(this.hashSearchLabel);
@@ -928,5 +952,7 @@
         private System.Windows.Forms.Label hashSearchLabel;
         private System.Windows.Forms.TextBox hashSearchTextBox;
         private System.Windows.Forms.Button hashSearchButton;
+        private System.Windows.Forms.Button copyMainToExtraButton;
+        private System.Windows.Forms.Button copyExtraToMainButton;
     }
 }

@@ -12,6 +12,8 @@ namespace NSUNS4_Character_Manager
         private const int VictimCount = 50;
         private const int VictimSize = 0x18;
         private const int EntrySize = 0x4D8;
+        private const string ClipboardPrefix = "NSUNS4_FINAL_SP_SKILL_CUT_IN_ENTRY:";
+        private const int ClipboardVersion = 2;
         private readonly FinalSpSkillCutInFileState fileState = new FinalSpSkillCutInFileState();
         private bool displayHex;
 
@@ -106,6 +108,8 @@ namespace NSUNS4_Character_Manager
             saveSelectedButton.Enabled = enabled;
             sortButton.Enabled = enabled;
             displayModeButton.Enabled = enabled;
+            copyEntryButton.Enabled = enabled;
+            pasteEntryButton.Enabled = enabled;
             duplicateVictimPanel.Enabled = enabled;
         }
 
@@ -617,6 +621,93 @@ namespace NSUNS4_Character_Manager
             };
         }
 
+        private void CopyEntryToClipboard()
+        {
+            FinalSpSkillCutInEntry entry = GetSelectedEntry();
+            if (entry == null)
+            {
+                MessageBox.Show("No entry selected.");
+                return;
+            }
+
+            using (MemoryStream stream = new MemoryStream())
+            using (BinaryWriter writer = new BinaryWriter(stream, Encoding.UTF8))
+            {
+                writer.Write(ClipboardVersion);
+                writer.Write(entry.StoryModeId);
+                writer.Write(entry.TeamUltId);
+                writer.Write(entry.PlayerSettingId);
+                writer.Write(entry.CostumeSlot);
+                writer.Write(entry.OugiName1 ?? "");
+                writer.Write(entry.OugiName2 ?? "");
+                writer.Write(entry.Padding1);
+                writer.Write(entry.Padding2);
+
+                writer.Flush();
+                Clipboard.SetText(ClipboardPrefix + Convert.ToBase64String(stream.ToArray()));
+            }
+
+            MessageBox.Show("Entry copied to clipboard.");
+        }
+
+        private void PasteEntryFromClipboard()
+        {
+            if (!fileState.FileOpen)
+            {
+                MessageBox.Show("No file loaded...");
+                return;
+            }
+
+            if (!Clipboard.ContainsText())
+            {
+                MessageBox.Show("No Final Sp Skill CutIn entry found on the clipboard.");
+                return;
+            }
+
+            string clipboardText = Clipboard.GetText();
+            if (!clipboardText.StartsWith(ClipboardPrefix, StringComparison.Ordinal))
+            {
+                MessageBox.Show("No Final Sp Skill CutIn entry found on the clipboard.");
+                return;
+            }
+
+            try
+            {
+                byte[] payload = Convert.FromBase64String(clipboardText.Substring(ClipboardPrefix.Length));
+                FinalSpSkillCutInEntry entry;
+                using (MemoryStream stream = new MemoryStream(payload))
+                using (BinaryReader reader = new BinaryReader(stream, Encoding.UTF8))
+                {
+                    if (reader.ReadInt32() != ClipboardVersion)
+                        throw new InvalidDataException("Unsupported clipboard version.");
+
+                    entry = new FinalSpSkillCutInEntry
+                    {
+                        StoryModeId = reader.ReadInt32(),
+                        TeamUltId = reader.ReadInt32(),
+                        PlayerSettingId = reader.ReadInt32(),
+                        CostumeSlot = reader.ReadInt32(),
+                        OugiName1 = reader.ReadString(),
+                        OugiName2 = reader.ReadString(),
+                        Padding1 = reader.ReadInt32(),
+                        Padding2 = reader.ReadInt32()
+                    };
+
+                    if (stream.Position != stream.Length)
+                        throw new InvalidDataException("Unexpected clipboard data.");
+                }
+
+                fileState.Entries.Add(entry);
+                RefreshEntryList();
+                entryListBox.SelectedIndex = fileState.Entries.Count - 1;
+                MessageBox.Show("Entry pasted from clipboard.");
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("The Final Sp Skill CutIn clipboard entry is invalid.");
+            }
+        }
+
         private void SaveFile(bool saveAs)
         {
             if (!fileState.FileOpen)
@@ -961,6 +1052,16 @@ namespace NSUNS4_Character_Manager
                 RefreshEntryList();
                 RefreshVictimList();
             }
+        }
+
+        private void copyEntryButton_Click(object sender, EventArgs e)
+        {
+            CopyEntryToClipboard();
+        }
+
+        private void pasteEntryButton_Click(object sender, EventArgs e)
+        {
+            PasteEntryFromClipboard();
         }
     }
 }

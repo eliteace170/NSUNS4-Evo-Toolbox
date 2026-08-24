@@ -13,6 +13,8 @@ namespace NSUNS4_Character_Manager.Tools
 {
     public partial class Tool_MessageInfoEditor : Form
     {
+        private const int EnglishLanguageIndex = 2;
+
         public Tool_MessageInfoEditor()
         {
             InitializeComponent();
@@ -113,7 +115,6 @@ namespace NSUNS4_Character_Manager.Tools
                 CHI_Extra_textbox.Enabled = true;
             }
             if (OpenedFile[2]) {
-                comboBox2.SelectedIndex = 2;
                 ENG_Main_textbox.Enabled = true;
                 ENG_Extra_textbox.Enabled = true;
             }
@@ -157,11 +158,11 @@ namespace NSUNS4_Character_Manager.Tools
                 JPN_Main_textbox.Enabled = true;
                 JPN_Extra_textbox.Enabled = true;
             }
-            for (int i = 0; i < OpenedFile.Count; i++) {
-                if (OpenedFile[i]) {
-                    comboBox2.SelectedIndex = i;
-                    break;
-                }
+            int displayLanguageIndex = OpenedFile.Count > EnglishLanguageIndex && OpenedFile[EnglishLanguageIndex]
+                ? EnglishLanguageIndex
+                : OpenedFile.FindIndex(opened => opened);
+            if (displayLanguageIndex >= 0) {
+                comboBox2.SelectedIndex = displayLanguageIndex;
             }
             listBox1.SelectedIndex = -1;
         }
@@ -175,44 +176,43 @@ namespace NSUNS4_Character_Manager.Tools
         }
         public void OpenFile(string basepath)
         {
-
-            List<byte[]> CRC32Codes = new List<byte[]>();
-            List<byte[]> MainTexts = new List<byte[]>();
-            List<byte[]> ExtraTexts = new List<byte[]>();
-            List<int> ACBFiles = new List<int>();
-            List<int> CueIDs = new List<int>();
-            List<int> VoiceOnlys = new List<int>();
             if (basepath != "")
             {
                 byte[] FileBytes = File.ReadAllBytes(basepath);
                 FileBytesList.Add(FileBytes);
-                int EntryCount = FileBytes[288] + FileBytes[289] * 256 + FileBytes[290] * 65536 + FileBytes[291] * 16777216;
+                int EntryCount = BitConverter.ToInt32(FileBytes, 288);
                 EntryCounts.Add(EntryCount);
-                    for (int x2 = 0; x2 < EntryCount; x2++)
-                    {
-                        long _ptr = 300 + 40 * x2;
-                        byte[] CRC32Code = Main.b_ReadByteArray(FileBytes, (int)_ptr, 4);
-                        long _ptrIcon3 = FileBytes[_ptr + 8] + FileBytes[_ptr + 9] * 256 + FileBytes[_ptr + 10] * 65536 + FileBytes[_ptr + 11] * 16777216;
-                        byte[] ExtraText = Main.b_ReadByteArrayOfString(FileBytes, (int)(_ptr + 8 + _ptrIcon3));
-                        _ptrIcon3 = FileBytes[_ptr + 16] + FileBytes[_ptr + 17] * 256 + FileBytes[_ptr + 18] * 65536 + FileBytes[_ptr + 19] * 16777216;
-                        byte[] MainText = Main.b_ReadByteArrayOfString(FileBytes, (int)(_ptr + 16 + _ptrIcon3));
-                        int ACBFile = Main.b_ReadIntFromTwoBytes(FileBytes, (int)(_ptr + 30));
-                        int CueID = Main.b_ReadIntFromTwoBytes(FileBytes, (int)(_ptr + 32));
-                        int VoiceOnly = Main.b_ReadIntFromTwoBytes(FileBytes, (int)(_ptr + 34));
-                        CRC32Codes.Add(CRC32Code);
-                        ExtraTexts.Add(ExtraText);
-                        MainTexts.Add(MainText);
-                        ACBFiles.Add(ACBFile);
-                        CueIDs.Add(CueID);
-                        VoiceOnlys.Add(VoiceOnly);
-                    }
-                    CRC32CodesList.Add(CRC32Codes);
-                    ExtraTextsList.Add(ExtraTexts);
-                    MainTextsList.Add(MainTexts);
-                    ACBFilesList.Add(ACBFiles);
-                    CueIDsList.Add(CueIDs);
-                    VoiceOnlysList.Add(VoiceOnlys);
 
+                List<byte[]> CRC32Codes = new List<byte[]>(EntryCount);
+                List<byte[]> MainTexts = new List<byte[]>(EntryCount);
+                List<byte[]> ExtraTexts = new List<byte[]>(EntryCount);
+                List<int> ACBFiles = new List<int>(EntryCount);
+                List<int> CueIDs = new List<int>(EntryCount);
+                List<int> VoiceOnlys = new List<int>(EntryCount);
+
+                for (int entryIndex = 0; entryIndex < EntryCount; entryIndex++)
+                {
+                    int entryOffset = 300 + 40 * entryIndex;
+                    byte[] CRC32Code = new byte[4];
+                    Buffer.BlockCopy(FileBytes, entryOffset, CRC32Code, 0, CRC32Code.Length);
+
+                    int extraTextOffset = entryOffset + 8 + BitConverter.ToInt32(FileBytes, entryOffset + 8);
+                    int mainTextOffset = entryOffset + 16 + BitConverter.ToInt32(FileBytes, entryOffset + 16);
+
+                    CRC32Codes.Add(CRC32Code);
+                    ExtraTexts.Add(ReadNullTerminatedBytes(FileBytes, extraTextOffset));
+                    MainTexts.Add(ReadNullTerminatedBytes(FileBytes, mainTextOffset));
+                    ACBFiles.Add(ReadUInt16LittleEndian(FileBytes, entryOffset + 30));
+                    CueIDs.Add(ReadUInt16LittleEndian(FileBytes, entryOffset + 32));
+                    VoiceOnlys.Add(ReadUInt16LittleEndian(FileBytes, entryOffset + 34));
+                }
+
+                CRC32CodesList.Add(CRC32Codes);
+                ExtraTextsList.Add(ExtraTexts);
+                MainTextsList.Add(MainTexts);
+                ACBFilesList.Add(ACBFiles);
+                CueIDsList.Add(CueIDs);
+                VoiceOnlysList.Add(VoiceOnlys);
             }
             else
             {
@@ -227,7 +227,25 @@ namespace NSUNS4_Character_Manager.Tools
                 CueIDsList.Add(emptyIntList);
                 VoiceOnlysList.Add(emptyIntList);
             }
-            
+        }
+
+        private static byte[] ReadNullTerminatedBytes(byte[] data, int offset)
+        {
+            if (offset < 0 || offset >= data.Length)
+            {
+                return new byte[0];
+            }
+
+            int terminatorOffset = Array.IndexOf(data, (byte)0, offset);
+            int length = (terminatorOffset >= 0 ? terminatorOffset : data.Length) - offset;
+            byte[] value = new byte[length];
+            Buffer.BlockCopy(data, offset, value, 0, length);
+            return value;
+        }
+
+        private static int ReadUInt16LittleEndian(byte[] data, int offset)
+        {
+            return data[offset] | (data[offset + 1] << 8);
         }
 
         public void ClearFiles()
@@ -253,23 +271,24 @@ namespace NSUNS4_Character_Manager.Tools
                 {
                     if (OpenedFile[comboBox2.SelectedIndex])
                     {
-                        listBox1.Items.Clear();
-                        if (comboBox2.SelectedIndex != 0)
+                        int languageIndex = comboBox2.SelectedIndex;
+                        object[] entries = new object[EntryCounts[languageIndex]];
+                        for (int i = 0; i < entries.Length; i++)
                         {
-                            for (int i = 0; i < EntryCounts[comboBox2.SelectedIndex]; i++)
-                            {
-                                listBox1.Items.Add(Encoding.UTF8.GetString(MainTextsList[comboBox2.SelectedIndex][i]));
-                                listBox1.RightToLeft = RightToLeft.No;
-                            }
+                            entries[i] = Encoding.UTF8.GetString(MainTextsList[languageIndex][i]);
                         }
-                        else
+
+                        listBox1.BeginUpdate();
+                        try
                         {
-                            for (int i = 0; i < EntryCounts[comboBox2.SelectedIndex]; i++)
-                            {
-                                listBox1.Items.Add(Encoding.UTF8.GetString(MainTextsList[comboBox2.SelectedIndex][i]));
-                                listBox1.RightToLeft = RightToLeft.Yes;
-                            }
-                        };
+                            listBox1.Items.Clear();
+                            listBox1.RightToLeft = languageIndex == 0 ? RightToLeft.Yes : RightToLeft.No;
+                            listBox1.Items.AddRange(entries);
+                        }
+                        finally
+                        {
+                            listBox1.EndUpdate();
+                        }
                     }
                     else
                     {
@@ -730,6 +749,66 @@ namespace NSUNS4_Character_Manager.Tools
             {
                 Clipboard.SetText(textBox1.Text.Replace("-", ""));
             }
+        }
+
+        private void CopyLanguageTexts(bool mainToExtra)
+        {
+            if (listBox1.SelectedIndex == -1)
+            {
+                MessageBox.Show("Select an entry before copying its text.");
+                return;
+            }
+
+            TextBox[] mainTextBoxes = new TextBox[]
+            {
+                ARAE_Main_textbox,
+                CHI_Main_textbox,
+                ENG_Main_textbox,
+                ESMX_Main_textbox,
+                FRE_Main_textbox,
+                GER_Main_textbox,
+                ITA_Main_textbox,
+                KOKR_Main_textbox,
+                POL_Main_textbox,
+                POR_Main_textbox,
+                RUS_Main_textbox,
+                SPA_Main_textbox,
+                JPN_Main_textbox
+            };
+
+            TextBox[] extraTextBoxes = new TextBox[]
+            {
+                ARAE_Extra_textbox,
+                CHI_Extra_textbox,
+                ENG_Extra_textbox,
+                ESMX_Extra_textbox,
+                FRE_Extra_textbox,
+                GER_Extra_textbox,
+                ITA_Extra_textbox,
+                KOKR_Extra_textbox,
+                POL_Extra_textbox,
+                POR_Extra_textbox,
+                RUS_Extra_textbox,
+                SPA_Extra_textbox,
+                JPN_Extra_textbox
+            };
+
+            for (int i = 0; i < mainTextBoxes.Length; i++)
+            {
+                TextBox source = mainToExtra ? mainTextBoxes[i] : extraTextBoxes[i];
+                TextBox destination = mainToExtra ? extraTextBoxes[i] : mainTextBoxes[i];
+                destination.Text = source.Text;
+            }
+        }
+
+        private void copyMainToExtraButton_Click(object sender, EventArgs e)
+        {
+            CopyLanguageTexts(true);
+        }
+
+        private void copyExtraToMainButton_Click(object sender, EventArgs e)
+        {
+            CopyLanguageTexts(false);
         }
 
         private void hashSearchButton_Click(object sender, EventArgs e)

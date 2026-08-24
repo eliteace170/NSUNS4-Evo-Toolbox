@@ -12,6 +12,8 @@ namespace NSUNS4_Character_Manager.Tools
 {
     public partial class Tool_AwakeAuraEditor : Form
     {
+        private const string AwakeAuraClipboardPrefix = "NSUNS4EvoToolbox.AwakeAuraEntry:";
+
         private void Tool_AwakeAuraEditor_Load(object sender, EventArgs e)
         {
             if (File.Exists(Main.awakeAuraPath)) {
@@ -174,13 +176,121 @@ namespace NSUNS4_Character_Manager.Tools
         {
             if (FileOpen)
             {
-                AddID();
+                CopyEntryToClipboard();
             }
             else
             {
                 MessageBox.Show("No file loaded...");
             }
         }
+
+        private void CopyEntryToClipboard()
+        {
+            int index = listBox1.SelectedIndex;
+            if (index == -1)
+            {
+                MessageBox.Show("Select entry");
+                return;
+            }
+
+            using (MemoryStream stream = new MemoryStream())
+            using (BinaryWriter writer = new BinaryWriter(stream))
+            {
+                writer.Write(1);
+                writer.Write(CharacodeList[index]);
+                writer.Write(SkillFileList[index]);
+                writer.Write(EffectList[index]);
+                writer.Write(MainBoneList[index]);
+                writer.Write(SecondBoneList[index]);
+                writer.Write(AwakeModeValue_true_List[index]);
+                writer.Write(AwakeModeValue_false_List[index]);
+                writer.Write(ConstantValue_List[index]);
+                writer.Write(SecondBoneValue_1_List[index]);
+                writer.Write(SecondBoneValue_2_List[index]);
+                writer.Write(SecondBoneValue_3_List[index]);
+                writer.Flush();
+
+                Clipboard.SetText(AwakeAuraClipboardPrefix + Convert.ToBase64String(stream.ToArray()));
+            }
+
+            MessageBox.Show("Entry copied to clipboard.");
+        }
+
+        private void pasteButton_Click(object sender, EventArgs e)
+        {
+            if (!FileOpen)
+            {
+                MessageBox.Show("No file loaded...");
+                return;
+            }
+
+            if (!Clipboard.ContainsText())
+            {
+                MessageBox.Show("No AwakeAura entry found on the clipboard.");
+                return;
+            }
+
+            string clipboardText = Clipboard.GetText();
+            if (!clipboardText.StartsWith(AwakeAuraClipboardPrefix, StringComparison.Ordinal))
+            {
+                MessageBox.Show("No AwakeAura entry found on the clipboard.");
+                return;
+            }
+
+            try
+            {
+                byte[] payload = Convert.FromBase64String(clipboardText.Substring(AwakeAuraClipboardPrefix.Length));
+                using (MemoryStream stream = new MemoryStream(payload))
+                using (BinaryReader reader = new BinaryReader(stream))
+                {
+                    if (reader.ReadInt32() != 1)
+                    {
+                        MessageBox.Show("The AwakeAura clipboard entry is not supported.");
+                        return;
+                    }
+
+                    string characode = reader.ReadString();
+                    string skill = reader.ReadString();
+                    string effect = reader.ReadString();
+                    string mainBone = reader.ReadString();
+                    string secondBone = reader.ReadString();
+                    int awakeModeTrue = reader.ReadInt32();
+                    int awakeModeFalse = reader.ReadInt32();
+                    int constant = reader.ReadInt32();
+                    int secondValue1 = reader.ReadInt32();
+                    int secondValue2 = reader.ReadInt32();
+                    int secondValue3 = reader.ReadInt32();
+
+                    if (stream.Position != stream.Length)
+                    {
+                        MessageBox.Show("The AwakeAura clipboard entry is invalid.");
+                        return;
+                    }
+
+                    CharacodeList.Add(characode);
+                    SkillFileList.Add(skill);
+                    EffectList.Add(effect);
+                    MainBoneList.Add(mainBone);
+                    SecondBoneList.Add(secondBone);
+                    AwakeModeValue_true_List.Add(awakeModeTrue);
+                    AwakeModeValue_false_List.Add(awakeModeFalse);
+                    ConstantValue_List.Add(constant);
+                    SecondBoneValue_1_List.Add(secondValue1);
+                    SecondBoneValue_2_List.Add(secondValue2);
+                    SecondBoneValue_3_List.Add(secondValue3);
+                }
+
+                listBox1.Items.Add("Characode:" + CharacodeList[EntryCount]);
+                EntryCount++;
+                listBox1.SelectedIndex = listBox1.Items.Count - 1;
+                MessageBox.Show("Entry pasted from clipboard.");
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("The AwakeAura clipboard entry is invalid.");
+            }
+        }
+
         public void AddID()
         {
             // Generate new preset ID

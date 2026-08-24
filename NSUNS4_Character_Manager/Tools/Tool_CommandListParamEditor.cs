@@ -15,6 +15,8 @@ namespace NSUNS4_Character_Manager
         private const int CommandHeaderSize = 0x14;
         private const int CommandEntrySize = 0x34;
         private const int WmSetRedraw = 0x000B;
+        private const string MessageInfoFileName = "messageInfo.bin.xfbin";
+        private const string EnglishLanguageDirectory = "eng";
 
         [DllImport("user32.dll")]
         private static extern IntPtr SendMessage(IntPtr windowHandle, int message, IntPtr wordParameter, IntPtr longParameter);
@@ -646,12 +648,28 @@ namespace NSUNS4_Character_Manager
             {
                 dialog.DefaultExt = "xfbin";
                 dialog.Filter = "MessageInfo XFBIN (*.xfbin)|*.xfbin|All files (*.*)|*.*";
-                dialog.Title = "Load messageInfo.bin.xfbin";
+                dialog.Title = "Load English messageInfo.bin.xfbin";
                 if (File.Exists(messageInfoReferencePath))
                     dialog.FileName = messageInfoReferencePath;
+                else
+                {
+                    string configuredEnglishPath = ResolveEnglishMessageInfoPath(Main.messageInfoPath);
+                    if (!string.IsNullOrEmpty(configuredEnglishPath))
+                        dialog.FileName = configuredEnglishPath;
+                }
                 if (dialog.ShowDialog(this) != DialogResult.OK)
                     return;
-                LoadMessageInfoReferences(dialog.FileName, true);
+
+                string englishPath = ResolveEnglishMessageInfoPath(dialog.FileName);
+                if (string.IsNullOrEmpty(englishPath))
+                {
+                    MessageBox.Show(this,
+                        "Select the English messageInfo file from the WIN64\\eng folder.",
+                        "Command List Param Editor", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                LoadMessageInfoReferences(englishPath, true);
             }
         }
 
@@ -660,17 +678,60 @@ namespace NSUNS4_Character_Manager
             if (messageTextByHash.Count > 0 || string.IsNullOrWhiteSpace(Main.messageInfoPath))
                 return;
 
-            string configuredPath = Main.messageInfoPath;
-            string[] candidates =
+            string englishPath = ResolveEnglishMessageInfoPath(Main.messageInfoPath);
+            if (!string.IsNullOrEmpty(englishPath))
+                LoadMessageInfoReferences(englishPath, false);
+        }
+
+        private static string ResolveEnglishMessageInfoPath(string configuredPath)
+        {
+            if (string.IsNullOrWhiteSpace(configuredPath))
+                return string.Empty;
+
+            try
             {
-                configuredPath,
-                Path.Combine(configuredPath, "messageInfo.bin.xfbin"),
-                Path.Combine(configuredPath, "WIN64", "eng", "messageInfo.bin.xfbin")
-            };
-            foreach (string candidate in candidates.Distinct(StringComparer.OrdinalIgnoreCase))
+                if (File.Exists(configuredPath))
+                {
+                    FileInfo configuredFile = new FileInfo(configuredPath);
+                    if (configuredFile.Directory != null &&
+                        string.Equals(configuredFile.Directory.Name, EnglishLanguageDirectory, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return configuredFile.FullName;
+                    }
+
+                    DirectoryInfo languageDirectory = configuredFile.Directory;
+                    if (languageDirectory != null && languageDirectory.Parent != null)
+                    {
+                        string englishSibling = Path.Combine(languageDirectory.Parent.FullName,
+                            EnglishLanguageDirectory, MessageInfoFileName);
+                        if (File.Exists(englishSibling))
+                            return englishSibling;
+                    }
+
+                    return string.Empty;
+                }
+
+                if (!Directory.Exists(configuredPath))
+                    return string.Empty;
+
+                DirectoryInfo configuredDirectory = new DirectoryInfo(configuredPath);
+                string[] candidates =
+                {
+                    string.Equals(configuredDirectory.Name, EnglishLanguageDirectory, StringComparison.OrdinalIgnoreCase)
+                        ? Path.Combine(configuredDirectory.FullName, MessageInfoFileName)
+                        : string.Empty,
+                    Path.Combine(configuredDirectory.FullName, "WIN64", EnglishLanguageDirectory, MessageInfoFileName),
+                    Path.Combine(configuredDirectory.FullName, EnglishLanguageDirectory, MessageInfoFileName),
+                    configuredDirectory.Parent == null
+                        ? string.Empty
+                        : Path.Combine(configuredDirectory.Parent.FullName, EnglishLanguageDirectory, MessageInfoFileName)
+                };
+
+                return candidates.FirstOrDefault(File.Exists) ?? string.Empty;
+            }
+            catch (Exception ex) when (ex is ArgumentException || ex is NotSupportedException || ex is PathTooLongException)
             {
-                if (File.Exists(candidate) && LoadMessageInfoReferences(candidate, false))
-                    return;
+                return string.Empty;
             }
         }
 

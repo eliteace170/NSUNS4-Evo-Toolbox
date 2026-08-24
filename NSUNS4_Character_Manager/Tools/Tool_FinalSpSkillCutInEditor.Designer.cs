@@ -15,6 +15,8 @@ namespace NSUNS4_Character_Manager
         private ToolStripMenuItem closeToolStripMenuItem;
         private ToolStripButton sortButton;
         private ToolStripButton displayModeButton;
+        private Button copyEntryButton;
+        private Button pasteEntryButton;
         private ListBox entryListBox;
         private ListBox victimListBox;
         private Button addEntryButton;
@@ -74,6 +76,8 @@ namespace NSUNS4_Character_Manager
             this.closeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.sortButton = new System.Windows.Forms.ToolStripButton();
             this.displayModeButton = new System.Windows.Forms.ToolStripButton();
+            this.copyEntryButton = new System.Windows.Forms.Button();
+            this.pasteEntryButton = new System.Windows.Forms.Button();
             this.entryListBox = new System.Windows.Forms.ListBox();
             this.victimListBox = new System.Windows.Forms.ListBox();
             this.addEntryButton = new System.Windows.Forms.Button();
@@ -98,6 +102,7 @@ namespace NSUNS4_Character_Manager
             this.teamUltIdLabel = new System.Windows.Forms.Label();
             this.storyModeIdLabel = new System.Windows.Forms.Label();
             this.victimPanel = new System.Windows.Forms.Panel();
+            this.label2 = new System.Windows.Forms.Label();
             this.deleteVictimButton = new System.Windows.Forms.Button();
             this.addVictimButton = new System.Windows.Forms.Button();
             this.saveVictimButton = new System.Windows.Forms.Button();
@@ -110,13 +115,12 @@ namespace NSUNS4_Character_Manager
             this.victimFileNameLabel = new System.Windows.Forms.Label();
             this.victimPlayerSettingIdLabel = new System.Windows.Forms.Label();
             this.duplicateVictimPanel = new System.Windows.Forms.Panel();
+            this.label1 = new System.Windows.Forms.Label();
             this.duplicateVictimAcrossEntriesButton = new System.Windows.Forms.Button();
             this.duplicateVictimNewIdValue = new System.Windows.Forms.NumericUpDown();
             this.duplicateVictimSourceIdValue = new System.Windows.Forms.NumericUpDown();
             this.duplicateVictimNewIdLabel = new System.Windows.Forms.Label();
             this.duplicateVictimSourceIdLabel = new System.Windows.Forms.Label();
-            this.label1 = new System.Windows.Forms.Label();
-            this.label2 = new System.Windows.Forms.Label();
             this.menuStrip1.SuspendLayout();
             this.entryPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.padding2Value)).BeginInit();
@@ -208,7 +212,7 @@ namespace NSUNS4_Character_Manager
             this.entryListBox.FormattingEnabled = true;
             this.entryListBox.Location = new System.Drawing.Point(10, 29);
             this.entryListBox.Name = "entryListBox";
-            this.entryListBox.Size = new System.Drawing.Size(292, 498);
+            this.entryListBox.Size = new System.Drawing.Size(292, 472);
             this.entryListBox.TabIndex = 1;
             this.entryListBox.SelectedIndexChanged += new System.EventHandler(this.entryListBox_SelectedIndexChanged);
             // 
@@ -226,9 +230,9 @@ namespace NSUNS4_Character_Manager
             // addEntryButton
             // 
             this.addEntryButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.addEntryButton.Location = new System.Drawing.Point(10, 536);
+            this.addEntryButton.Location = new System.Drawing.Point(10, 507);
             this.addEntryButton.Name = "addEntryButton";
-            this.addEntryButton.Size = new System.Drawing.Size(69, 24);
+            this.addEntryButton.Size = new System.Drawing.Size(94, 24);
             this.addEntryButton.TabIndex = 3;
             this.addEntryButton.Text = "Add";
             this.addEntryButton.UseVisualStyleBackColor = true;
@@ -237,9 +241,9 @@ namespace NSUNS4_Character_Manager
             // duplicateEntryButton
             // 
             this.duplicateEntryButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.duplicateEntryButton.Location = new System.Drawing.Point(84, 536);
+            this.duplicateEntryButton.Location = new System.Drawing.Point(109, 507);
             this.duplicateEntryButton.Name = "duplicateEntryButton";
-            this.duplicateEntryButton.Size = new System.Drawing.Size(69, 24);
+            this.duplicateEntryButton.Size = new System.Drawing.Size(94, 24);
             this.duplicateEntryButton.TabIndex = 4;
             this.duplicateEntryButton.Text = "Duplicate";
             this.duplicateEntryButton.UseVisualStyleBackColor = true;
@@ -248,9 +252,9 @@ namespace NSUNS4_Character_Manager
             // deleteEntryButton
             // 
             this.deleteEntryButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.deleteEntryButton.Location = new System.Drawing.Point(232, 536);
+            this.deleteEntryButton.Location = new System.Drawing.Point(208, 507);
             this.deleteEntryButton.Name = "deleteEntryButton";
-            this.deleteEntryButton.Size = new System.Drawing.Size(69, 24);
+            this.deleteEntryButton.Size = new System.Drawing.Size(94, 24);
             this.deleteEntryButton.TabIndex = 5;
             this.deleteEntryButton.Text = "Delete";
             this.deleteEntryButton.UseVisualStyleBackColor = true;
@@ -259,14 +263,38 @@ namespace NSUNS4_Character_Manager
             // saveSelectedButton
             // 
             this.saveSelectedButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.saveSelectedButton.Location = new System.Drawing.Point(158, 536);
+            this.saveSelectedButton.Location = new System.Drawing.Point(208, 536);
             this.saveSelectedButton.Name = "saveSelectedButton";
-            this.saveSelectedButton.Size = new System.Drawing.Size(69, 24);
+            this.saveSelectedButton.Size = new System.Drawing.Size(94, 24);
             this.saveSelectedButton.TabIndex = 6;
             this.saveSelectedButton.Text = "Save";
             this.saveSelectedButton.UseVisualStyleBackColor = true;
             this.saveSelectedButton.Click += new System.EventHandler(this.saveSelectedButton_Click);
             // 
+            // copyEntryButton
+            //
+            this.copyEntryButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.copyEntryButton.Enabled = false;
+            this.copyEntryButton.Location = new System.Drawing.Point(10, 536);
+            this.copyEntryButton.Name = "copyEntryButton";
+            this.copyEntryButton.Size = new System.Drawing.Size(94, 24);
+            this.copyEntryButton.TabIndex = 7;
+            this.copyEntryButton.Text = "Copy";
+            this.copyEntryButton.UseVisualStyleBackColor = true;
+            this.copyEntryButton.Click += new System.EventHandler(this.copyEntryButton_Click);
+            //
+            // pasteEntryButton
+            //
+            this.pasteEntryButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.pasteEntryButton.Enabled = false;
+            this.pasteEntryButton.Location = new System.Drawing.Point(109, 536);
+            this.pasteEntryButton.Name = "pasteEntryButton";
+            this.pasteEntryButton.Size = new System.Drawing.Size(94, 24);
+            this.pasteEntryButton.TabIndex = 8;
+            this.pasteEntryButton.Text = "Paste";
+            this.pasteEntryButton.UseVisualStyleBackColor = true;
+            this.pasteEntryButton.Click += new System.EventHandler(this.pasteEntryButton_Click);
+            //
             // entryPanel
             // 
             this.entryPanel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
@@ -441,6 +469,16 @@ namespace NSUNS4_Character_Manager
             this.victimPanel.Size = new System.Drawing.Size(352, 208);
             this.victimPanel.TabIndex = 9;
             // 
+            // label2
+            //
+            this.label2.AutoSize = true;
+            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(254)));
+            this.label2.Location = new System.Drawing.Point(115, 9);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(104, 20);
+            this.label2.TabIndex = 11;
+            this.label2.Text = "Victims Panel";
+            //
             // deleteVictimButton
             // 
             this.deleteVictimButton.Location = new System.Drawing.Point(126, 172);
@@ -550,6 +588,16 @@ namespace NSUNS4_Character_Manager
             this.duplicateVictimPanel.Size = new System.Drawing.Size(348, 140);
             this.duplicateVictimPanel.TabIndex = 10;
             // 
+            // label1
+            //
+            this.label1.AutoSize = true;
+            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(254)));
+            this.label1.Location = new System.Drawing.Point(111, 8);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(132, 20);
+            this.label1.TabIndex = 5;
+            this.label1.Text = "Duplication Panel";
+            //
             // duplicateVictimAcrossEntriesButton
             // 
             this.duplicateVictimAcrossEntriesButton.Location = new System.Drawing.Point(13, 104);
@@ -592,31 +640,13 @@ namespace NSUNS4_Character_Manager
             this.duplicateVictimSourceIdLabel.TabIndex = 0;
             this.duplicateVictimSourceIdLabel.Text = "Source PlayerSettingParam ID:";
             // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(254)));
-            this.label1.Location = new System.Drawing.Point(111, 8);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(132, 20);
-            this.label1.TabIndex = 5;
-            this.label1.Text = "Duplication Panel";
-            // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(254)));
-            this.label2.Location = new System.Drawing.Point(115, 9);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(104, 20);
-            this.label2.TabIndex = 11;
-            this.label2.Text = "Victims Panel";
-            // 
             // Tool_FinalSpSkillCutInEditor
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(980, 571);
+            this.Controls.Add(this.pasteEntryButton);
+            this.Controls.Add(this.copyEntryButton);
             this.Controls.Add(this.duplicateVictimPanel);
             this.Controls.Add(this.victimPanel);
             this.Controls.Add(this.entryPanel);
