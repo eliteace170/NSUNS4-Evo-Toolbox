@@ -72,9 +72,7 @@ namespace NSUNS4_Character_Manager
             "SKILL_ATTRIBUTE_TYPE_WATER",
             "SKILL_ATTRIBUTE_TYPE_WIND"
         };
-        private static readonly string[] AllSuggestions = BuildAllSuggestions();
         private readonly XmlBinaryFileState fileState = new XmlBinaryFileState();
-        private readonly Timer syntaxHighlightTimer = new Timer();
         private bool loadingEditor;
         private bool editorDirty;
         private bool fileDirty;
@@ -119,10 +117,12 @@ namespace NSUNS4_Character_Manager
         public Tool_XmlBinaryEditor()
         {
             InitializeComponent();
-            syntaxHighlightTimer.Interval = 150;
-            syntaxHighlightTimer.Tick += syntaxHighlightTimer_Tick;
             chunkNameTextBox.TextChanged += editorField_TextChanged;
             chunkPathTextBox.TextChanged += editorField_TextChanged;
+            chunkNameTextBox.Enter += dismissSuggestionPopup_Event;
+            chunkPathTextBox.Enter += dismissSuggestionPopup_Event;
+            chunkListBox.MouseDown += dismissSuggestionPopup_Event;
+            xmlTextBox.MouseDown += dismissSuggestionPopup_Event;
             FormClosing += Tool_XmlBinaryEditor_FormClosing;
             suggestionListBox.Visible = false;
             suggestionListBox.BringToFront();
@@ -131,7 +131,7 @@ namespace NSUNS4_Character_Manager
 
         private void ResetUi()
         {
-            syntaxHighlightTimer.Stop();
+            HideSuggestionPopup();
             loadingEditor = true;
             try
             {
@@ -295,7 +295,7 @@ namespace NSUNS4_Character_Manager
         private void LoadSelectedEntryToEditor()
         {
             XmlBinaryChunkEntry entry = GetSelectedEntry();
-            syntaxHighlightTimer.Stop();
+            HideSuggestionPopup();
             loadingEditor = true;
             try
             {
@@ -323,7 +323,7 @@ namespace NSUNS4_Character_Manager
                 loadingEditor = false;
             }
 
-            ScheduleXmlHighlight();
+            HighlightXmlSyntax();
         }
 
         private bool ApplyEditorToSelectedEntry()
@@ -906,17 +906,6 @@ namespace NSUNS4_Character_Manager
             };
         }
 
-        private static string[] BuildAllSuggestions()
-        {
-            return CommandSuggestions
-                .Concat(TypeSuggestions)
-                .Concat(PriorityCategorySuggestions)
-                .Concat(SkillAttributeTypeSuggestions)
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
-                .ToArray();
-        }
-
         private static int ReadInt32BE(byte[] bytes, int offset)
         {
             return (bytes[offset] << 24) |
@@ -944,28 +933,15 @@ namespace NSUNS4_Character_Manager
                 editorDirty = true;
         }
 
-        private void ScheduleXmlHighlight()
+        private void dismissSuggestionPopup_Event(object sender, EventArgs e)
         {
-            syntaxHighlightTimer.Stop();
-            syntaxHighlightTimer.Start();
-        }
-
-        private void syntaxHighlightTimer_Tick(object sender, EventArgs e)
-        {
-            syntaxHighlightTimer.Stop();
-            HighlightXmlSyntax();
+            HideSuggestionPopup();
         }
 
         private void Tool_XmlBinaryEditor_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (!ConfirmSaveChanges())
                 e.Cancel = true;
-        }
-
-        protected override void OnFormClosed(FormClosedEventArgs e)
-        {
-            syntaxHighlightTimer.Dispose();
-            base.OnFormClosed(e);
         }
 
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
@@ -994,6 +970,7 @@ namespace NSUNS4_Character_Manager
             if (loadingEditor)
                 return;
 
+            HideSuggestionPopup();
             int requestedIndex = chunkListBox.SelectedIndex;
             if (requestedIndex != loadedEntryIndex && !ConfirmDiscardEditorChanges(false))
             {
@@ -1041,6 +1018,7 @@ namespace NSUNS4_Character_Manager
 
         private void saveChunkButton_Click(object sender, EventArgs e)
         {
+            HideSuggestionPopup();
             ApplyEditorToSelectedEntry();
         }
 
@@ -1052,10 +1030,7 @@ namespace NSUNS4_Character_Manager
                 return;
 
             if (!loadingEditor)
-            {
                 editorDirty = true;
-                ScheduleXmlHighlight();
-            }
 
             if (!loadingEditor && !suppressSuggestionPopup)
                 UpdateSuggestionPopup();
@@ -1092,11 +1067,13 @@ namespace NSUNS4_Character_Manager
 
         private void xmlTextBox_KeyUp(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.Down ||
-                e.KeyCode == Keys.Up ||
-                e.KeyCode == Keys.Enter ||
-                e.KeyCode == Keys.Tab ||
-                e.KeyCode == Keys.Escape)
+            bool movedCaret = e.KeyCode == Keys.Left ||
+                              e.KeyCode == Keys.Right ||
+                              e.KeyCode == Keys.Home ||
+                              e.KeyCode == Keys.End ||
+                              e.KeyCode == Keys.PageUp ||
+                              e.KeyCode == Keys.PageDown;
+            if (!movedCaret)
                 return;
 
             if (!loadingEditor && !suppressSuggestionPopup)
@@ -1213,7 +1190,7 @@ namespace NSUNS4_Character_Manager
                 return TypeSuggestions;
             }
 
-            return string.IsNullOrWhiteSpace(prefix) ? null : AllSuggestions;
+            return null;
         }
 
         private static bool IsSuggestionCharacter(char value)
@@ -1263,6 +1240,10 @@ namespace NSUNS4_Character_Manager
         private void HideSuggestionPopup()
         {
             suggestionListBox.Visible = false;
+            suggestionListBox.Items.Clear();
+            suggestionValueNeedsQuotes = false;
+            suggestionReplaceStart = 0;
+            suggestionReplaceLength = 0;
         }
 
         private void HighlightXmlSyntax()

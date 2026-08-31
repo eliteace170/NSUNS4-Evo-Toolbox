@@ -96,6 +96,8 @@ namespace NSUNS4_Character_Manager.Misc {
             this.batchImportingToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.batchImportMatchedRawToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.batchImportMatchedConvertWavToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.randomizersToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.equalizeRandomizerChancesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.infoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.supportedFormatsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.batchImportProgressBar = new System.Windows.Forms.ToolStripProgressBar();
@@ -178,6 +180,15 @@ namespace NSUNS4_Character_Manager.Misc {
             this.button5.Text = "Delete sound data from that slot";
             this.button5.UseVisualStyleBackColor = true;
             this.button5.Click += new System.EventHandler(this.button5_Click);
+            // 
+            // Mode_v
+            // 
+            this.Mode_v.AutoSize = true;
+            this.Mode_v.Location = new System.Drawing.Point(359, 6);
+            this.Mode_v.Name = "Mode_v";
+            this.Mode_v.Size = new System.Drawing.Size(98, 13);
+            this.Mode_v.TabIndex = 93;
+            this.Mode_v.Text = "Mode: NUS3BANK";
             // 
             // labelPitch
             // 
@@ -287,9 +298,9 @@ namespace NSUNS4_Character_Manager.Misc {
             this.SoundFormat_v.Size = new System.Drawing.Size(33, 13);
             this.SoundFormat_v.TabIndex = 87;
             this.SoundFormat_v.Text = "None";
-            //
+            // 
             // BnsfLoop_v
-            //
+            // 
             this.BnsfLoop_v.AutoSize = true;
             this.BnsfLoop_v.Location = new System.Drawing.Point(5, 69);
             this.BnsfLoop_v.Name = "BnsfLoop_v";
@@ -298,18 +309,18 @@ namespace NSUNS4_Character_Manager.Misc {
             this.BnsfLoop_v.Text = "Loop sound";
             this.BnsfLoop_v.UseVisualStyleBackColor = true;
             this.BnsfLoop_v.CheckedChanged += new System.EventHandler(this.BnsfLoop_v_CheckedChanged);
-            //
+            // 
             // labelBnsfLoopStart
-            //
+            // 
             this.labelBnsfLoopStart.AutoSize = true;
             this.labelBnsfLoopStart.Location = new System.Drawing.Point(5, 96);
             this.labelBnsfLoopStart.Name = "labelBnsfLoopStart";
             this.labelBnsfLoopStart.Size = new System.Drawing.Size(29, 13);
             this.labelBnsfLoopStart.TabIndex = 95;
             this.labelBnsfLoopStart.Text = "Start";
-            //
+            // 
             // BnsfLoopStart_v
-            //
+            // 
             this.BnsfLoopStart_v.Location = new System.Drawing.Point(48, 94);
             this.BnsfLoopStart_v.Maximum = new decimal(new int[] {
             2147483647,
@@ -321,18 +332,18 @@ namespace NSUNS4_Character_Manager.Misc {
             this.BnsfLoopStart_v.TabIndex = 96;
             this.BnsfLoopStart_v.ThousandsSeparator = true;
             this.BnsfLoopStart_v.ValueChanged += new System.EventHandler(this.BnsfLoopStart_v_ValueChanged);
-            //
+            // 
             // labelBnsfLoopEnd
-            //
+            // 
             this.labelBnsfLoopEnd.AutoSize = true;
             this.labelBnsfLoopEnd.Location = new System.Drawing.Point(210, 96);
             this.labelBnsfLoopEnd.Name = "labelBnsfLoopEnd";
             this.labelBnsfLoopEnd.Size = new System.Drawing.Size(26, 13);
             this.labelBnsfLoopEnd.TabIndex = 97;
             this.labelBnsfLoopEnd.Text = "End";
-            //
+            // 
             // BnsfLoopEnd_v
-            //
+            // 
             this.BnsfLoopEnd_v.Location = new System.Drawing.Point(244, 94);
             this.BnsfLoopEnd_v.Maximum = new decimal(new int[] {
             2147483647,
@@ -344,9 +355,9 @@ namespace NSUNS4_Character_Manager.Misc {
             this.BnsfLoopEnd_v.TabIndex = 98;
             this.BnsfLoopEnd_v.ThousandsSeparator = true;
             this.BnsfLoopEnd_v.ValueChanged += new System.EventHandler(this.BnsfLoopEnd_v_ValueChanged);
-            //
+            // 
             // buttonBnsfLoopFullSound
-            //
+            // 
             this.buttonBnsfLoopFullSound.Location = new System.Drawing.Point(2, 121);
             this.buttonBnsfLoopFullSound.Name = "buttonBnsfLoopFullSound";
             this.buttonBnsfLoopFullSound.Size = new System.Drawing.Size(403, 26);
@@ -478,7 +489,7 @@ namespace NSUNS4_Character_Manager.Misc {
             this.tabPage2.Location = new System.Drawing.Point(4, 22);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(406, 396);
+            this.tabPage2.Size = new System.Drawing.Size(406, 367);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Sound Randomizer";
             this.tabPage2.UseVisualStyleBackColor = true;
@@ -743,7 +754,7 @@ namespace NSUNS4_Character_Manager.Misc {
             this.tabPage3.Location = new System.Drawing.Point(4, 22);
             this.tabPage3.Name = "tabPage3";
             this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage3.Size = new System.Drawing.Size(406, 396);
+            this.tabPage3.Size = new System.Drawing.Size(406, 367);
             this.tabPage3.TabIndex = 2;
             this.tabPage3.Text = "Empty slot";
             this.tabPage3.UseVisualStyleBackColor = true;
@@ -781,22 +792,14 @@ namespace NSUNS4_Character_Manager.Misc {
             this.label2.TabIndex = 10;
             this.label2.Text = "NUS3BANK ID\r\n";
             this.label2.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
-            //
-            // Mode_v
-            //
-            this.Mode_v.AutoSize = true;
-            this.Mode_v.Location = new System.Drawing.Point(359, 6);
-            this.Mode_v.Name = "Mode_v";
-            this.Mode_v.Size = new System.Drawing.Size(94, 13);
-            this.Mode_v.TabIndex = 93;
-            this.Mode_v.Text = "Mode: NUS3BANK";
-            //
+            // 
             // menuStrip1
             // 
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fileToolStripMenuItem,
             this.exportToolStripMenuItem,
             this.importToolStripMenuItem,
+            this.randomizersToolStripMenuItem,
             this.infoToolStripMenuItem,
             this.batchImportProgressBar});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
@@ -925,6 +928,22 @@ namespace NSUNS4_Character_Manager.Misc {
             this.batchImportMatchedConvertWavToolStripMenuItem.Text = "Import matched names, convert WAV to BNSF";
             this.batchImportMatchedConvertWavToolStripMenuItem.Click += new System.EventHandler(this.batchImportMatchedConvertWavToolStripMenuItem_Click);
             // 
+            // randomizersToolStripMenuItem
+            // 
+            this.randomizersToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.equalizeRandomizerChancesToolStripMenuItem});
+            this.randomizersToolStripMenuItem.Name = "randomizersToolStripMenuItem";
+            this.randomizersToolStripMenuItem.Size = new System.Drawing.Size(87, 20);
+            this.randomizersToolStripMenuItem.Text = "Randomizers";
+            // 
+            // equalizeRandomizerChancesToolStripMenuItem
+            // 
+            this.equalizeRandomizerChancesToolStripMenuItem.Enabled = false;
+            this.equalizeRandomizerChancesToolStripMenuItem.Name = "equalizeRandomizerChancesToolStripMenuItem";
+            this.equalizeRandomizerChancesToolStripMenuItem.Size = new System.Drawing.Size(200, 22);
+            this.equalizeRandomizerChancesToolStripMenuItem.Text = "Equalize all cue chances";
+            this.equalizeRandomizerChancesToolStripMenuItem.Click += new System.EventHandler(this.equalizeRandomizerChancesToolStripMenuItem_Click);
+            // 
             // infoToolStripMenuItem
             // 
             this.infoToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -936,7 +955,7 @@ namespace NSUNS4_Character_Manager.Misc {
             // supportedFormatsToolStripMenuItem
             // 
             this.supportedFormatsToolStripMenuItem.Name = "supportedFormatsToolStripMenuItem";
-            this.supportedFormatsToolStripMenuItem.Size = new System.Drawing.Size(173, 22);
+            this.supportedFormatsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.supportedFormatsToolStripMenuItem.Text = "Supported formats";
             this.supportedFormatsToolStripMenuItem.Click += new System.EventHandler(this.supportedFormatsToolStripMenuItem_Click);
             // 
@@ -1020,9 +1039,9 @@ namespace NSUNS4_Character_Manager.Misc {
             this.VolumeLabel.Size = new System.Drawing.Size(79, 25);
             this.VolumeLabel.TabIndex = 92;
             this.VolumeLabel.Text = "Volume";
-            //
+            // 
             // toolTip1
-            //
+            // 
             this.toolTip1.ShowAlways = true;
             // 
             // Tool_nus3bankEditor_v2
@@ -1116,6 +1135,8 @@ namespace NSUNS4_Character_Manager.Misc {
         private System.Windows.Forms.ToolStripMenuItem exportToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem exportAllSoundsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem importToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem randomizersToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem equalizeRandomizerChancesToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem batchImportingToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem batchImportMatchedRawToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem batchImportMatchedConvertWavToolStripMenuItem;

@@ -99,6 +99,7 @@ namespace NSUNS4_Character_Manager
         private Button nodeDeleteEventButton;
         private Label nodeParticleIndexLabel;
         private NumericUpDown nodeParticleIndexNumericUpDown;
+        private ToolTip toolTip1;
 
         protected override void Dispose(bool disposing)
         {
@@ -109,6 +110,7 @@ namespace NSUNS4_Character_Manager
 
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -201,6 +203,7 @@ namespace NSUNS4_Character_Manager
             this.nodeEventsGrid = new System.Windows.Forms.DataGridView();
             this.nodeAddEventButton = new System.Windows.Forms.Button();
             this.nodeDeleteEventButton = new System.Windows.Forms.Button();
+            this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.menuStrip1.SuspendLayout();
             this.chunkEditorPanel.SuspendLayout();
             this.particleTabControl.SuspendLayout();
@@ -242,6 +245,7 @@ namespace NSUNS4_Character_Manager
             this.openToolStripMenuItem.Name = "openToolStripMenuItem";
             this.openToolStripMenuItem.Size = new System.Drawing.Size(124, 22);
             this.openToolStripMenuItem.Text = "Open";
+            this.openToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.O)));
             this.openToolStripMenuItem.Click += new System.EventHandler(this.openToolStripMenuItem_Click);
             // 
             // saveToolStripMenuItem
@@ -249,6 +253,7 @@ namespace NSUNS4_Character_Manager
             this.saveToolStripMenuItem.Name = "saveToolStripMenuItem";
             this.saveToolStripMenuItem.Size = new System.Drawing.Size(124, 22);
             this.saveToolStripMenuItem.Text = "Save";
+            this.saveToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
             this.saveToolStripMenuItem.Click += new System.EventHandler(this.saveToolStripMenuItem_Click);
             // 
             // saveAsToolStripMenuItem
@@ -256,6 +261,7 @@ namespace NSUNS4_Character_Manager
             this.saveAsToolStripMenuItem.Name = "saveAsToolStripMenuItem";
             this.saveAsToolStripMenuItem.Size = new System.Drawing.Size(124, 22);
             this.saveAsToolStripMenuItem.Text = "Save As...";
+            this.saveAsToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Shift) | System.Windows.Forms.Keys.S)));
             this.saveAsToolStripMenuItem.Click += new System.EventHandler(this.saveAsToolStripMenuItem_Click);
             // 
             // closeToolStripMenuItem
@@ -288,15 +294,17 @@ namespace NSUNS4_Character_Manager
             // editReferencesButton
             // 
             this.editReferencesButton.Location = new System.Drawing.Point(972, 9);
+            this.editReferencesButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.editReferencesButton.Name = "editReferencesButton";
             this.editReferencesButton.Size = new System.Drawing.Size(173, 23);
             this.editReferencesButton.TabIndex = 0;
-            this.editReferencesButton.Text = "Manage Linked Chunks";
+            this.editReferencesButton.Text = "Linked Chunks...";
             this.editReferencesButton.Click += new System.EventHandler(this.editReferencesButton_Click);
             // 
             // deleteChunkButton
             // 
             this.deleteChunkButton.Location = new System.Drawing.Point(872, 9);
+            this.deleteChunkButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.deleteChunkButton.Name = "deleteChunkButton";
             this.deleteChunkButton.Size = new System.Drawing.Size(94, 23);
             this.deleteChunkButton.TabIndex = 1;
@@ -306,6 +314,7 @@ namespace NSUNS4_Character_Manager
             // addChunkButton
             // 
             this.addChunkButton.Location = new System.Drawing.Point(776, 9);
+            this.addChunkButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.addChunkButton.Name = "addChunkButton";
             this.addChunkButton.Size = new System.Drawing.Size(90, 23);
             this.addChunkButton.TabIndex = 2;
@@ -315,17 +324,19 @@ namespace NSUNS4_Character_Manager
             // saveChunkMetaButton
             // 
             this.saveChunkMetaButton.Location = new System.Drawing.Point(666, 9);
+            this.saveChunkMetaButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.saveChunkMetaButton.Name = "saveChunkMetaButton";
             this.saveChunkMetaButton.Size = new System.Drawing.Size(104, 23);
             this.saveChunkMetaButton.TabIndex = 3;
-            this.saveChunkMetaButton.Text = "Apply Header";
+            this.saveChunkMetaButton.Text = "Apply Metadata";
             this.saveChunkMetaButton.Click += new System.EventHandler(this.saveChunkMetaButton_Click);
             // 
             // chunkPathTextBox
             // 
             this.chunkPathTextBox.Location = new System.Drawing.Point(88, 41);
+            this.chunkPathTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
             this.chunkPathTextBox.Name = "chunkPathTextBox";
-            this.chunkPathTextBox.Size = new System.Drawing.Size(562, 20);
+            this.chunkPathTextBox.Size = new System.Drawing.Size(1057, 20);
             this.chunkPathTextBox.TabIndex = 4;
             // 
             // chunkPathLabel
@@ -356,6 +367,7 @@ namespace NSUNS4_Character_Manager
             // chunkComboBox
             // 
             this.chunkComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.chunkComboBox.DropDownWidth = 900;
             this.chunkComboBox.Location = new System.Drawing.Point(88, 10);
             this.chunkComboBox.Name = "chunkComboBox";
             this.chunkComboBox.Size = new System.Drawing.Size(280, 21);
@@ -406,20 +418,24 @@ namespace NSUNS4_Character_Manager
             this.managerTabPage.Name = "managerTabPage";
             this.managerTabPage.Size = new System.Drawing.Size(1152, 584);
             this.managerTabPage.TabIndex = 0;
-            this.managerTabPage.Text = "Particle Settings";
+            this.managerTabPage.Text = "Generators";
             this.managerTabPage.UseVisualStyleBackColor = true;
             // 
             // managerListBox
             // 
-            this.managerListBox.Location = new System.Drawing.Point(6, 13);
+            this.managerListBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) | System.Windows.Forms.AnchorStyles.Left)));
+            this.managerListBox.HorizontalScrollbar = true;
+            this.managerListBox.IntegralHeight = false;
+            this.managerListBox.Location = new System.Drawing.Point(8, 8);
             this.managerListBox.Name = "managerListBox";
-            this.managerListBox.Size = new System.Drawing.Size(290, 485);
+            this.managerListBox.Size = new System.Drawing.Size(296, 488);
             this.managerListBox.TabIndex = 0;
             this.managerListBox.SelectedIndexChanged += new System.EventHandler(this.managerListBox_SelectedIndexChanged);
             // 
             // managerAddButton
             // 
-            this.managerAddButton.Location = new System.Drawing.Point(6, 513);
+            this.managerAddButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.managerAddButton.Location = new System.Drawing.Point(8, 506);
             this.managerAddButton.Name = "managerAddButton";
             this.managerAddButton.Size = new System.Drawing.Size(64, 24);
             this.managerAddButton.TabIndex = 0;
@@ -428,7 +444,8 @@ namespace NSUNS4_Character_Manager
             // 
             // managerCopyButton
             // 
-            this.managerCopyButton.Location = new System.Drawing.Point(76, 513);
+            this.managerCopyButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.managerCopyButton.Location = new System.Drawing.Point(8, 540);
             this.managerCopyButton.Name = "managerCopyButton";
             this.managerCopyButton.Size = new System.Drawing.Size(60, 24);
             this.managerCopyButton.TabIndex = 0;
@@ -437,7 +454,8 @@ namespace NSUNS4_Character_Manager
             // 
             // managerPasteButton
             // 
-            this.managerPasteButton.Location = new System.Drawing.Point(142, 513);
+            this.managerPasteButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.managerPasteButton.Location = new System.Drawing.Point(74, 540);
             this.managerPasteButton.Name = "managerPasteButton";
             this.managerPasteButton.Size = new System.Drawing.Size(60, 24);
             this.managerPasteButton.TabIndex = 0;
@@ -446,7 +464,8 @@ namespace NSUNS4_Character_Manager
             // 
             // managerDuplicateButton
             // 
-            this.managerDuplicateButton.Location = new System.Drawing.Point(208, 513);
+            this.managerDuplicateButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.managerDuplicateButton.Location = new System.Drawing.Point(78, 506);
             this.managerDuplicateButton.Name = "managerDuplicateButton";
             this.managerDuplicateButton.Size = new System.Drawing.Size(75, 24);
             this.managerDuplicateButton.TabIndex = 0;
@@ -455,7 +474,8 @@ namespace NSUNS4_Character_Manager
             // 
             // managerDeleteButton
             // 
-            this.managerDeleteButton.Location = new System.Drawing.Point(6, 543);
+            this.managerDeleteButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.managerDeleteButton.Location = new System.Drawing.Point(159, 506);
             this.managerDeleteButton.Name = "managerDeleteButton";
             this.managerDeleteButton.Size = new System.Drawing.Size(64, 24);
             this.managerDeleteButton.TabIndex = 0;
@@ -464,28 +484,29 @@ namespace NSUNS4_Character_Manager
             // 
             // managerSaveButton
             // 
-            this.managerSaveButton.Location = new System.Drawing.Point(76, 543);
+            this.managerSaveButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.managerSaveButton.Location = new System.Drawing.Point(140, 540);
             this.managerSaveButton.Name = "managerSaveButton";
-            this.managerSaveButton.Size = new System.Drawing.Size(60, 24);
+            this.managerSaveButton.Size = new System.Drawing.Size(95, 24);
             this.managerSaveButton.TabIndex = 0;
-            this.managerSaveButton.Text = "Save";
+            this.managerSaveButton.Text = "Apply Entry";
             this.managerSaveButton.Click += new System.EventHandler(this.managerSaveButton_Click);
             // 
             // managerHintLabel
             // 
             this.managerHintLabel.AutoSize = true;
-            this.managerHintLabel.Location = new System.Drawing.Point(314, 11);
+            this.managerHintLabel.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.managerHintLabel.Location = new System.Drawing.Point(320, 14);
             this.managerHintLabel.MaximumSize = new System.Drawing.Size(820, 0);
             this.managerHintLabel.Name = "managerHintLabel";
             this.managerHintLabel.Size = new System.Drawing.Size(654, 13);
             this.managerHintLabel.TabIndex = 0;
-            this.managerHintLabel.Text = "Select a particle setting on the left, use the quick link controls to adjust its " +
-    "animation and stored index, then edit the detailed values below.";
+            this.managerHintLabel.Text = "Generator parameters";
             // 
             // managerAnimationLabel
             // 
             this.managerAnimationLabel.AutoSize = true;
-            this.managerAnimationLabel.Location = new System.Drawing.Point(314, 64);
+            this.managerAnimationLabel.Location = new System.Drawing.Point(320, 51);
             this.managerAnimationLabel.Name = "managerAnimationLabel";
             this.managerAnimationLabel.Size = new System.Drawing.Size(87, 13);
             this.managerAnimationLabel.TabIndex = 0;
@@ -494,24 +515,25 @@ namespace NSUNS4_Character_Manager
             // managerAnimationComboBox
             // 
             this.managerAnimationComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.managerAnimationComboBox.Location = new System.Drawing.Point(430, 61);
+            this.managerAnimationComboBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
+            this.managerAnimationComboBox.Location = new System.Drawing.Point(438, 48);
             this.managerAnimationComboBox.Name = "managerAnimationComboBox";
-            this.managerAnimationComboBox.Size = new System.Drawing.Size(300, 21);
+            this.managerAnimationComboBox.Size = new System.Drawing.Size(704, 21);
             this.managerAnimationComboBox.TabIndex = 0;
             this.managerAnimationComboBox.SelectedIndexChanged += new System.EventHandler(this.managerAnimationComboBox_SelectedIndexChanged);
             // 
             // managerEntryIndexLabel
             // 
             this.managerEntryIndexLabel.AutoSize = true;
-            this.managerEntryIndexLabel.Location = new System.Drawing.Point(314, 92);
+            this.managerEntryIndexLabel.Location = new System.Drawing.Point(320, 81);
             this.managerEntryIndexLabel.Name = "managerEntryIndexLabel";
             this.managerEntryIndexLabel.Size = new System.Drawing.Size(94, 13);
             this.managerEntryIndexLabel.TabIndex = 0;
-            this.managerEntryIndexLabel.Text = "Stored Entry Index";
+            this.managerEntryIndexLabel.Text = "Entry ID";
             // 
             // managerEntryIndexNumericUpDown
             // 
-            this.managerEntryIndexNumericUpDown.Location = new System.Drawing.Point(430, 90);
+            this.managerEntryIndexNumericUpDown.Location = new System.Drawing.Point(438, 79);
             this.managerEntryIndexNumericUpDown.Maximum = new decimal(new int[] {
             -1,
             0,
@@ -524,10 +546,12 @@ namespace NSUNS4_Character_Manager
             // 
             // managerPropertyGrid
             // 
-            this.managerPropertyGrid.Location = new System.Drawing.Point(317, 144);
+            this.managerPropertyGrid.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
+            this.managerPropertyGrid.HelpVisible = true;
+            this.managerPropertyGrid.Location = new System.Drawing.Point(320, 116);
             this.managerPropertyGrid.Name = "managerPropertyGrid";
             this.managerPropertyGrid.PropertySort = System.Windows.Forms.PropertySort.Categorized;
-            this.managerPropertyGrid.Size = new System.Drawing.Size(825, 393);
+            this.managerPropertyGrid.Size = new System.Drawing.Size(822, 452);
             this.managerPropertyGrid.TabIndex = 0;
             this.managerPropertyGrid.ToolbarVisible = false;
             // 
@@ -555,15 +579,19 @@ namespace NSUNS4_Character_Manager
             // 
             // resourceListBox
             // 
-            this.resourceListBox.Location = new System.Drawing.Point(6, 13);
+            this.resourceListBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) | System.Windows.Forms.AnchorStyles.Left)));
+            this.resourceListBox.HorizontalScrollbar = true;
+            this.resourceListBox.IntegralHeight = false;
+            this.resourceListBox.Location = new System.Drawing.Point(8, 8);
             this.resourceListBox.Name = "resourceListBox";
-            this.resourceListBox.Size = new System.Drawing.Size(290, 485);
+            this.resourceListBox.Size = new System.Drawing.Size(296, 488);
             this.resourceListBox.TabIndex = 0;
             this.resourceListBox.SelectedIndexChanged += new System.EventHandler(this.resourceListBox_SelectedIndexChanged);
             // 
             // resourceAddButton
             // 
-            this.resourceAddButton.Location = new System.Drawing.Point(6, 513);
+            this.resourceAddButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.resourceAddButton.Location = new System.Drawing.Point(8, 506);
             this.resourceAddButton.Name = "resourceAddButton";
             this.resourceAddButton.Size = new System.Drawing.Size(64, 24);
             this.resourceAddButton.TabIndex = 0;
@@ -572,7 +600,8 @@ namespace NSUNS4_Character_Manager
             // 
             // resourceCopyButton
             // 
-            this.resourceCopyButton.Location = new System.Drawing.Point(76, 513);
+            this.resourceCopyButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.resourceCopyButton.Location = new System.Drawing.Point(8, 540);
             this.resourceCopyButton.Name = "resourceCopyButton";
             this.resourceCopyButton.Size = new System.Drawing.Size(60, 24);
             this.resourceCopyButton.TabIndex = 0;
@@ -581,7 +610,8 @@ namespace NSUNS4_Character_Manager
             // 
             // resourcePasteButton
             // 
-            this.resourcePasteButton.Location = new System.Drawing.Point(142, 513);
+            this.resourcePasteButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.resourcePasteButton.Location = new System.Drawing.Point(74, 540);
             this.resourcePasteButton.Name = "resourcePasteButton";
             this.resourcePasteButton.Size = new System.Drawing.Size(60, 24);
             this.resourcePasteButton.TabIndex = 0;
@@ -590,7 +620,8 @@ namespace NSUNS4_Character_Manager
             // 
             // resourceDuplicateButton
             // 
-            this.resourceDuplicateButton.Location = new System.Drawing.Point(208, 513);
+            this.resourceDuplicateButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.resourceDuplicateButton.Location = new System.Drawing.Point(78, 506);
             this.resourceDuplicateButton.Name = "resourceDuplicateButton";
             this.resourceDuplicateButton.Size = new System.Drawing.Size(75, 24);
             this.resourceDuplicateButton.TabIndex = 0;
@@ -599,7 +630,8 @@ namespace NSUNS4_Character_Manager
             // 
             // resourceDeleteButton
             // 
-            this.resourceDeleteButton.Location = new System.Drawing.Point(6, 543);
+            this.resourceDeleteButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.resourceDeleteButton.Location = new System.Drawing.Point(159, 506);
             this.resourceDeleteButton.Name = "resourceDeleteButton";
             this.resourceDeleteButton.Size = new System.Drawing.Size(64, 24);
             this.resourceDeleteButton.TabIndex = 0;
@@ -608,28 +640,29 @@ namespace NSUNS4_Character_Manager
             // 
             // resourceSaveButton
             // 
-            this.resourceSaveButton.Location = new System.Drawing.Point(76, 543);
+            this.resourceSaveButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.resourceSaveButton.Location = new System.Drawing.Point(140, 540);
             this.resourceSaveButton.Name = "resourceSaveButton";
-            this.resourceSaveButton.Size = new System.Drawing.Size(60, 24);
+            this.resourceSaveButton.Size = new System.Drawing.Size(95, 24);
             this.resourceSaveButton.TabIndex = 0;
-            this.resourceSaveButton.Text = "Save";
+            this.resourceSaveButton.Text = "Apply Entry";
             this.resourceSaveButton.Click += new System.EventHandler(this.resourceSaveButton_Click);
             // 
             // resourceHintLabel
             // 
             this.resourceHintLabel.AutoSize = true;
-            this.resourceHintLabel.Location = new System.Drawing.Point(314, 11);
+            this.resourceHintLabel.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.resourceHintLabel.Location = new System.Drawing.Point(320, 14);
             this.resourceHintLabel.MaximumSize = new System.Drawing.Size(820, 0);
             this.resourceHintLabel.Name = "resourceHintLabel";
             this.resourceHintLabel.Size = new System.Drawing.Size(494, 13);
             this.resourceHintLabel.TabIndex = 0;
-            this.resourceHintLabel.Text = "Select a resource entry, then use the quick link controls to point it at a partic" +
-    "le setting and effect chunk.";
+            this.resourceHintLabel.Text = "Resource parameters";
             // 
             // resourceEffectLabel
             // 
             this.resourceEffectLabel.AutoSize = true;
-            this.resourceEffectLabel.Location = new System.Drawing.Point(314, 64);
+            this.resourceEffectLabel.Location = new System.Drawing.Point(320, 51);
             this.resourceEffectLabel.Name = "resourceEffectLabel";
             this.resourceEffectLabel.Size = new System.Drawing.Size(69, 13);
             this.resourceEffectLabel.TabIndex = 0;
@@ -638,24 +671,25 @@ namespace NSUNS4_Character_Manager
             // resourceEffectComboBox
             // 
             this.resourceEffectComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.resourceEffectComboBox.Location = new System.Drawing.Point(430, 61);
+            this.resourceEffectComboBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
+            this.resourceEffectComboBox.Location = new System.Drawing.Point(438, 48);
             this.resourceEffectComboBox.Name = "resourceEffectComboBox";
-            this.resourceEffectComboBox.Size = new System.Drawing.Size(300, 21);
+            this.resourceEffectComboBox.Size = new System.Drawing.Size(704, 21);
             this.resourceEffectComboBox.TabIndex = 0;
             this.resourceEffectComboBox.SelectedIndexChanged += new System.EventHandler(this.resourceEffectComboBox_SelectedIndexChanged);
             // 
             // resourceParticleIndexLabel
             // 
             this.resourceParticleIndexLabel.AutoSize = true;
-            this.resourceParticleIndexLabel.Location = new System.Drawing.Point(314, 92);
+            this.resourceParticleIndexLabel.Location = new System.Drawing.Point(320, 81);
             this.resourceParticleIndexLabel.Name = "resourceParticleIndexLabel";
             this.resourceParticleIndexLabel.Size = new System.Drawing.Size(106, 13);
             this.resourceParticleIndexLabel.TabIndex = 0;
-            this.resourceParticleIndexLabel.Text = "Linked Particle Index";
+            this.resourceParticleIndexLabel.Text = "Generator Entry ID";
             // 
             // resourceParticleIndexNumericUpDown
             // 
-            this.resourceParticleIndexNumericUpDown.Location = new System.Drawing.Point(430, 90);
+            this.resourceParticleIndexNumericUpDown.Location = new System.Drawing.Point(438, 79);
             this.resourceParticleIndexNumericUpDown.Maximum = new decimal(new int[] {
             -1,
             0,
@@ -668,10 +702,12 @@ namespace NSUNS4_Character_Manager
             // 
             // resourcePropertyGrid
             // 
-            this.resourcePropertyGrid.Location = new System.Drawing.Point(317, 144);
+            this.resourcePropertyGrid.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
+            this.resourcePropertyGrid.HelpVisible = true;
+            this.resourcePropertyGrid.Location = new System.Drawing.Point(320, 116);
             this.resourcePropertyGrid.Name = "resourcePropertyGrid";
             this.resourcePropertyGrid.PropertySort = System.Windows.Forms.PropertySort.Categorized;
-            this.resourcePropertyGrid.Size = new System.Drawing.Size(825, 393);
+            this.resourcePropertyGrid.Size = new System.Drawing.Size(822, 452);
             this.resourcePropertyGrid.TabIndex = 0;
             this.resourcePropertyGrid.ToolbarVisible = false;
             // 
@@ -696,20 +732,24 @@ namespace NSUNS4_Character_Manager
             this.positionTabPage.Name = "positionTabPage";
             this.positionTabPage.Size = new System.Drawing.Size(1152, 584);
             this.positionTabPage.TabIndex = 2;
-            this.positionTabPage.Text = "Bone / Position";
+            this.positionTabPage.Text = "Positions";
             this.positionTabPage.UseVisualStyleBackColor = true;
             // 
             // positionListBox
             // 
-            this.positionListBox.Location = new System.Drawing.Point(6, 13);
+            this.positionListBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) | System.Windows.Forms.AnchorStyles.Left)));
+            this.positionListBox.HorizontalScrollbar = true;
+            this.positionListBox.IntegralHeight = false;
+            this.positionListBox.Location = new System.Drawing.Point(8, 8);
             this.positionListBox.Name = "positionListBox";
-            this.positionListBox.Size = new System.Drawing.Size(290, 485);
+            this.positionListBox.Size = new System.Drawing.Size(296, 488);
             this.positionListBox.TabIndex = 0;
             this.positionListBox.SelectedIndexChanged += new System.EventHandler(this.positionListBox_SelectedIndexChanged);
             // 
             // positionAddButton
             // 
-            this.positionAddButton.Location = new System.Drawing.Point(6, 513);
+            this.positionAddButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.positionAddButton.Location = new System.Drawing.Point(8, 506);
             this.positionAddButton.Name = "positionAddButton";
             this.positionAddButton.Size = new System.Drawing.Size(64, 24);
             this.positionAddButton.TabIndex = 0;
@@ -718,7 +758,8 @@ namespace NSUNS4_Character_Manager
             // 
             // positionCopyButton
             // 
-            this.positionCopyButton.Location = new System.Drawing.Point(76, 513);
+            this.positionCopyButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.positionCopyButton.Location = new System.Drawing.Point(8, 540);
             this.positionCopyButton.Name = "positionCopyButton";
             this.positionCopyButton.Size = new System.Drawing.Size(60, 24);
             this.positionCopyButton.TabIndex = 0;
@@ -727,7 +768,8 @@ namespace NSUNS4_Character_Manager
             // 
             // positionPasteButton
             // 
-            this.positionPasteButton.Location = new System.Drawing.Point(142, 513);
+            this.positionPasteButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.positionPasteButton.Location = new System.Drawing.Point(74, 540);
             this.positionPasteButton.Name = "positionPasteButton";
             this.positionPasteButton.Size = new System.Drawing.Size(60, 24);
             this.positionPasteButton.TabIndex = 0;
@@ -736,7 +778,8 @@ namespace NSUNS4_Character_Manager
             // 
             // positionDuplicateButton
             // 
-            this.positionDuplicateButton.Location = new System.Drawing.Point(208, 513);
+            this.positionDuplicateButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.positionDuplicateButton.Location = new System.Drawing.Point(78, 506);
             this.positionDuplicateButton.Name = "positionDuplicateButton";
             this.positionDuplicateButton.Size = new System.Drawing.Size(75, 24);
             this.positionDuplicateButton.TabIndex = 0;
@@ -745,7 +788,8 @@ namespace NSUNS4_Character_Manager
             // 
             // positionDeleteButton
             // 
-            this.positionDeleteButton.Location = new System.Drawing.Point(6, 543);
+            this.positionDeleteButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.positionDeleteButton.Location = new System.Drawing.Point(159, 506);
             this.positionDeleteButton.Name = "positionDeleteButton";
             this.positionDeleteButton.Size = new System.Drawing.Size(64, 24);
             this.positionDeleteButton.TabIndex = 0;
@@ -754,28 +798,29 @@ namespace NSUNS4_Character_Manager
             // 
             // positionSaveButton
             // 
-            this.positionSaveButton.Location = new System.Drawing.Point(76, 543);
+            this.positionSaveButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.positionSaveButton.Location = new System.Drawing.Point(140, 540);
             this.positionSaveButton.Name = "positionSaveButton";
-            this.positionSaveButton.Size = new System.Drawing.Size(60, 24);
+            this.positionSaveButton.Size = new System.Drawing.Size(95, 24);
             this.positionSaveButton.TabIndex = 0;
-            this.positionSaveButton.Text = "Save";
+            this.positionSaveButton.Text = "Apply Entry";
             this.positionSaveButton.Click += new System.EventHandler(this.positionSaveButton_Click);
             // 
             // positionHintLabel
             // 
             this.positionHintLabel.AutoSize = true;
-            this.positionHintLabel.Location = new System.Drawing.Point(314, 11);
+            this.positionHintLabel.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.positionHintLabel.Location = new System.Drawing.Point(320, 14);
             this.positionHintLabel.MaximumSize = new System.Drawing.Size(820, 0);
             this.positionHintLabel.Name = "positionHintLabel";
             this.positionHintLabel.Size = new System.Drawing.Size(518, 13);
             this.positionHintLabel.TabIndex = 0;
-            this.positionHintLabel.Text = "Select a position entry, choose the linked particle setting, then swap coord and " +
-    "clump references as needed.";
+            this.positionHintLabel.Text = "Position parameters";
             // 
             // positionCoordLabel
             // 
             this.positionCoordLabel.AutoSize = true;
-            this.positionCoordLabel.Location = new System.Drawing.Point(314, 64);
+            this.positionCoordLabel.Location = new System.Drawing.Point(320, 51);
             this.positionCoordLabel.Name = "positionCoordLabel";
             this.positionCoordLabel.Size = new System.Drawing.Size(69, 13);
             this.positionCoordLabel.TabIndex = 0;
@@ -784,7 +829,7 @@ namespace NSUNS4_Character_Manager
             // positionCoordComboBox
             // 
             this.positionCoordComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.positionCoordComboBox.Location = new System.Drawing.Point(430, 61);
+            this.positionCoordComboBox.Location = new System.Drawing.Point(438, 48);
             this.positionCoordComboBox.Name = "positionCoordComboBox";
             this.positionCoordComboBox.Size = new System.Drawing.Size(300, 21);
             this.positionCoordComboBox.TabIndex = 0;
@@ -793,7 +838,8 @@ namespace NSUNS4_Character_Manager
             // positionClumpLabel
             // 
             this.positionClumpLabel.AutoSize = true;
-            this.positionClumpLabel.Location = new System.Drawing.Point(750, 64);
+            this.positionClumpLabel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.positionClumpLabel.Location = new System.Drawing.Point(750, 51);
             this.positionClumpLabel.Name = "positionClumpLabel";
             this.positionClumpLabel.Size = new System.Drawing.Size(70, 13);
             this.positionClumpLabel.TabIndex = 0;
@@ -802,7 +848,8 @@ namespace NSUNS4_Character_Manager
             // positionClumpComboBox
             // 
             this.positionClumpComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.positionClumpComboBox.Location = new System.Drawing.Point(838, 61);
+            this.positionClumpComboBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.positionClumpComboBox.Location = new System.Drawing.Point(838, 48);
             this.positionClumpComboBox.Name = "positionClumpComboBox";
             this.positionClumpComboBox.Size = new System.Drawing.Size(304, 21);
             this.positionClumpComboBox.TabIndex = 0;
@@ -811,15 +858,15 @@ namespace NSUNS4_Character_Manager
             // positionParticleIndexLabel
             // 
             this.positionParticleIndexLabel.AutoSize = true;
-            this.positionParticleIndexLabel.Location = new System.Drawing.Point(314, 92);
+            this.positionParticleIndexLabel.Location = new System.Drawing.Point(320, 81);
             this.positionParticleIndexLabel.Name = "positionParticleIndexLabel";
             this.positionParticleIndexLabel.Size = new System.Drawing.Size(106, 13);
             this.positionParticleIndexLabel.TabIndex = 0;
-            this.positionParticleIndexLabel.Text = "Linked Particle Index";
+            this.positionParticleIndexLabel.Text = "Generator Entry ID";
             // 
             // positionParticleIndexNumericUpDown
             // 
-            this.positionParticleIndexNumericUpDown.Location = new System.Drawing.Point(430, 90);
+            this.positionParticleIndexNumericUpDown.Location = new System.Drawing.Point(438, 79);
             this.positionParticleIndexNumericUpDown.Maximum = new decimal(new int[] {
             -1,
             0,
@@ -832,10 +879,12 @@ namespace NSUNS4_Character_Manager
             // 
             // positionPropertyGrid
             // 
-            this.positionPropertyGrid.Location = new System.Drawing.Point(317, 144);
+            this.positionPropertyGrid.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
+            this.positionPropertyGrid.HelpVisible = true;
+            this.positionPropertyGrid.Location = new System.Drawing.Point(320, 116);
             this.positionPropertyGrid.Name = "positionPropertyGrid";
             this.positionPropertyGrid.PropertySort = System.Windows.Forms.PropertySort.Categorized;
-            this.positionPropertyGrid.Size = new System.Drawing.Size(825, 393);
+            this.positionPropertyGrid.Size = new System.Drawing.Size(822, 452);
             this.positionPropertyGrid.TabIndex = 0;
             this.positionPropertyGrid.ToolbarVisible = false;
             // 
@@ -865,15 +914,19 @@ namespace NSUNS4_Character_Manager
             // 
             // forceFieldListBox
             // 
-            this.forceFieldListBox.Location = new System.Drawing.Point(6, 13);
+            this.forceFieldListBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) | System.Windows.Forms.AnchorStyles.Left)));
+            this.forceFieldListBox.HorizontalScrollbar = true;
+            this.forceFieldListBox.IntegralHeight = false;
+            this.forceFieldListBox.Location = new System.Drawing.Point(8, 8);
             this.forceFieldListBox.Name = "forceFieldListBox";
-            this.forceFieldListBox.Size = new System.Drawing.Size(290, 485);
+            this.forceFieldListBox.Size = new System.Drawing.Size(296, 488);
             this.forceFieldListBox.TabIndex = 0;
             this.forceFieldListBox.SelectedIndexChanged += new System.EventHandler(this.forceFieldListBox_SelectedIndexChanged);
             // 
             // forceFieldAddButton
             // 
-            this.forceFieldAddButton.Location = new System.Drawing.Point(6, 513);
+            this.forceFieldAddButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.forceFieldAddButton.Location = new System.Drawing.Point(8, 506);
             this.forceFieldAddButton.Name = "forceFieldAddButton";
             this.forceFieldAddButton.Size = new System.Drawing.Size(64, 24);
             this.forceFieldAddButton.TabIndex = 0;
@@ -882,7 +935,8 @@ namespace NSUNS4_Character_Manager
             // 
             // forceFieldCopyButton
             // 
-            this.forceFieldCopyButton.Location = new System.Drawing.Point(76, 513);
+            this.forceFieldCopyButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.forceFieldCopyButton.Location = new System.Drawing.Point(8, 540);
             this.forceFieldCopyButton.Name = "forceFieldCopyButton";
             this.forceFieldCopyButton.Size = new System.Drawing.Size(60, 24);
             this.forceFieldCopyButton.TabIndex = 0;
@@ -891,7 +945,8 @@ namespace NSUNS4_Character_Manager
             // 
             // forceFieldPasteButton
             // 
-            this.forceFieldPasteButton.Location = new System.Drawing.Point(142, 513);
+            this.forceFieldPasteButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.forceFieldPasteButton.Location = new System.Drawing.Point(74, 540);
             this.forceFieldPasteButton.Name = "forceFieldPasteButton";
             this.forceFieldPasteButton.Size = new System.Drawing.Size(60, 24);
             this.forceFieldPasteButton.TabIndex = 0;
@@ -900,7 +955,8 @@ namespace NSUNS4_Character_Manager
             // 
             // forceFieldDuplicateButton
             // 
-            this.forceFieldDuplicateButton.Location = new System.Drawing.Point(208, 513);
+            this.forceFieldDuplicateButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.forceFieldDuplicateButton.Location = new System.Drawing.Point(78, 506);
             this.forceFieldDuplicateButton.Name = "forceFieldDuplicateButton";
             this.forceFieldDuplicateButton.Size = new System.Drawing.Size(75, 24);
             this.forceFieldDuplicateButton.TabIndex = 0;
@@ -909,7 +965,8 @@ namespace NSUNS4_Character_Manager
             // 
             // forceFieldDeleteButton
             // 
-            this.forceFieldDeleteButton.Location = new System.Drawing.Point(6, 543);
+            this.forceFieldDeleteButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.forceFieldDeleteButton.Location = new System.Drawing.Point(159, 506);
             this.forceFieldDeleteButton.Name = "forceFieldDeleteButton";
             this.forceFieldDeleteButton.Size = new System.Drawing.Size(64, 24);
             this.forceFieldDeleteButton.TabIndex = 0;
@@ -918,28 +975,29 @@ namespace NSUNS4_Character_Manager
             // 
             // forceFieldSaveButton
             // 
-            this.forceFieldSaveButton.Location = new System.Drawing.Point(76, 543);
+            this.forceFieldSaveButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.forceFieldSaveButton.Location = new System.Drawing.Point(140, 540);
             this.forceFieldSaveButton.Name = "forceFieldSaveButton";
-            this.forceFieldSaveButton.Size = new System.Drawing.Size(60, 24);
+            this.forceFieldSaveButton.Size = new System.Drawing.Size(95, 24);
             this.forceFieldSaveButton.TabIndex = 0;
-            this.forceFieldSaveButton.Text = "Save";
+            this.forceFieldSaveButton.Text = "Apply Entry";
             this.forceFieldSaveButton.Click += new System.EventHandler(this.forceFieldSaveButton_Click);
             // 
             // forceFieldHintLabel
             // 
             this.forceFieldHintLabel.AutoSize = true;
-            this.forceFieldHintLabel.Location = new System.Drawing.Point(314, 11);
+            this.forceFieldHintLabel.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.forceFieldHintLabel.Location = new System.Drawing.Point(320, 14);
             this.forceFieldHintLabel.MaximumSize = new System.Drawing.Size(820, 0);
             this.forceFieldHintLabel.Name = "forceFieldHintLabel";
             this.forceFieldHintLabel.Size = new System.Drawing.Size(616, 13);
             this.forceFieldHintLabel.TabIndex = 0;
-            this.forceFieldHintLabel.Text = "Select a force field entry, choose the linked particle setting, then adjust coord" +
-    " and clump links before editing the remaining values.";
+            this.forceFieldHintLabel.Text = "Force-field parameters";
             // 
             // forceFieldCoordLabel
             // 
             this.forceFieldCoordLabel.AutoSize = true;
-            this.forceFieldCoordLabel.Location = new System.Drawing.Point(314, 64);
+            this.forceFieldCoordLabel.Location = new System.Drawing.Point(320, 51);
             this.forceFieldCoordLabel.Name = "forceFieldCoordLabel";
             this.forceFieldCoordLabel.Size = new System.Drawing.Size(69, 13);
             this.forceFieldCoordLabel.TabIndex = 0;
@@ -948,7 +1006,7 @@ namespace NSUNS4_Character_Manager
             // forceFieldCoordComboBox
             // 
             this.forceFieldCoordComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.forceFieldCoordComboBox.Location = new System.Drawing.Point(430, 61);
+            this.forceFieldCoordComboBox.Location = new System.Drawing.Point(438, 48);
             this.forceFieldCoordComboBox.Name = "forceFieldCoordComboBox";
             this.forceFieldCoordComboBox.Size = new System.Drawing.Size(300, 21);
             this.forceFieldCoordComboBox.TabIndex = 0;
@@ -957,7 +1015,8 @@ namespace NSUNS4_Character_Manager
             // forceFieldClumpLabel
             // 
             this.forceFieldClumpLabel.AutoSize = true;
-            this.forceFieldClumpLabel.Location = new System.Drawing.Point(750, 64);
+            this.forceFieldClumpLabel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.forceFieldClumpLabel.Location = new System.Drawing.Point(750, 51);
             this.forceFieldClumpLabel.Name = "forceFieldClumpLabel";
             this.forceFieldClumpLabel.Size = new System.Drawing.Size(70, 13);
             this.forceFieldClumpLabel.TabIndex = 0;
@@ -966,7 +1025,8 @@ namespace NSUNS4_Character_Manager
             // forceFieldClumpComboBox
             // 
             this.forceFieldClumpComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.forceFieldClumpComboBox.Location = new System.Drawing.Point(838, 61);
+            this.forceFieldClumpComboBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.forceFieldClumpComboBox.Location = new System.Drawing.Point(838, 48);
             this.forceFieldClumpComboBox.Name = "forceFieldClumpComboBox";
             this.forceFieldClumpComboBox.Size = new System.Drawing.Size(304, 21);
             this.forceFieldClumpComboBox.TabIndex = 0;
@@ -975,15 +1035,15 @@ namespace NSUNS4_Character_Manager
             // forceFieldParticleIndexLabel
             // 
             this.forceFieldParticleIndexLabel.AutoSize = true;
-            this.forceFieldParticleIndexLabel.Location = new System.Drawing.Point(314, 92);
+            this.forceFieldParticleIndexLabel.Location = new System.Drawing.Point(320, 81);
             this.forceFieldParticleIndexLabel.Name = "forceFieldParticleIndexLabel";
             this.forceFieldParticleIndexLabel.Size = new System.Drawing.Size(106, 13);
             this.forceFieldParticleIndexLabel.TabIndex = 0;
-            this.forceFieldParticleIndexLabel.Text = "Linked Particle Index";
+            this.forceFieldParticleIndexLabel.Text = "Generator Entry ID";
             // 
             // forceFieldParticleIndexNumericUpDown
             // 
-            this.forceFieldParticleIndexNumericUpDown.Location = new System.Drawing.Point(430, 90);
+            this.forceFieldParticleIndexNumericUpDown.Location = new System.Drawing.Point(438, 79);
             this.forceFieldParticleIndexNumericUpDown.Maximum = new decimal(new int[] {
             -1,
             0,
@@ -996,10 +1056,12 @@ namespace NSUNS4_Character_Manager
             // 
             // forceFieldPropertyGrid
             // 
-            this.forceFieldPropertyGrid.Location = new System.Drawing.Point(317, 144);
+            this.forceFieldPropertyGrid.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
+            this.forceFieldPropertyGrid.HelpVisible = true;
+            this.forceFieldPropertyGrid.Location = new System.Drawing.Point(320, 116);
             this.forceFieldPropertyGrid.Name = "forceFieldPropertyGrid";
             this.forceFieldPropertyGrid.PropertySort = System.Windows.Forms.PropertySort.Categorized;
-            this.forceFieldPropertyGrid.Size = new System.Drawing.Size(825, 393);
+            this.forceFieldPropertyGrid.Size = new System.Drawing.Size(822, 452);
             this.forceFieldPropertyGrid.TabIndex = 0;
             this.forceFieldPropertyGrid.ToolbarVisible = false;
             // 
@@ -1022,20 +1084,24 @@ namespace NSUNS4_Character_Manager
             this.nodeTabPage.Name = "nodeTabPage";
             this.nodeTabPage.Size = new System.Drawing.Size(1152, 584);
             this.nodeTabPage.TabIndex = 4;
-            this.nodeTabPage.Text = "Frames / Nodes";
+            this.nodeTabPage.Text = "Timelines";
             this.nodeTabPage.UseVisualStyleBackColor = true;
             // 
             // nodeListBox
             // 
-            this.nodeListBox.Location = new System.Drawing.Point(6, 13);
+            this.nodeListBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) | System.Windows.Forms.AnchorStyles.Left)));
+            this.nodeListBox.HorizontalScrollbar = true;
+            this.nodeListBox.IntegralHeight = false;
+            this.nodeListBox.Location = new System.Drawing.Point(8, 8);
             this.nodeListBox.Name = "nodeListBox";
-            this.nodeListBox.Size = new System.Drawing.Size(290, 485);
+            this.nodeListBox.Size = new System.Drawing.Size(296, 488);
             this.nodeListBox.TabIndex = 0;
             this.nodeListBox.SelectedIndexChanged += new System.EventHandler(this.nodeListBox_SelectedIndexChanged);
             // 
             // nodeAddButton
             // 
-            this.nodeAddButton.Location = new System.Drawing.Point(6, 513);
+            this.nodeAddButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.nodeAddButton.Location = new System.Drawing.Point(8, 506);
             this.nodeAddButton.Name = "nodeAddButton";
             this.nodeAddButton.Size = new System.Drawing.Size(64, 24);
             this.nodeAddButton.TabIndex = 1;
@@ -1044,7 +1110,8 @@ namespace NSUNS4_Character_Manager
             // 
             // nodeCopyButton
             // 
-            this.nodeCopyButton.Location = new System.Drawing.Point(76, 513);
+            this.nodeCopyButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.nodeCopyButton.Location = new System.Drawing.Point(8, 540);
             this.nodeCopyButton.Name = "nodeCopyButton";
             this.nodeCopyButton.Size = new System.Drawing.Size(60, 24);
             this.nodeCopyButton.TabIndex = 2;
@@ -1053,7 +1120,8 @@ namespace NSUNS4_Character_Manager
             // 
             // nodePasteButton
             // 
-            this.nodePasteButton.Location = new System.Drawing.Point(142, 513);
+            this.nodePasteButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.nodePasteButton.Location = new System.Drawing.Point(74, 540);
             this.nodePasteButton.Name = "nodePasteButton";
             this.nodePasteButton.Size = new System.Drawing.Size(60, 24);
             this.nodePasteButton.TabIndex = 3;
@@ -1062,7 +1130,8 @@ namespace NSUNS4_Character_Manager
             // 
             // nodeDuplicateButton
             // 
-            this.nodeDuplicateButton.Location = new System.Drawing.Point(208, 513);
+            this.nodeDuplicateButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.nodeDuplicateButton.Location = new System.Drawing.Point(78, 506);
             this.nodeDuplicateButton.Name = "nodeDuplicateButton";
             this.nodeDuplicateButton.Size = new System.Drawing.Size(75, 24);
             this.nodeDuplicateButton.TabIndex = 4;
@@ -1071,7 +1140,8 @@ namespace NSUNS4_Character_Manager
             // 
             // nodeDeleteButton
             // 
-            this.nodeDeleteButton.Location = new System.Drawing.Point(6, 543);
+            this.nodeDeleteButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.nodeDeleteButton.Location = new System.Drawing.Point(159, 506);
             this.nodeDeleteButton.Name = "nodeDeleteButton";
             this.nodeDeleteButton.Size = new System.Drawing.Size(64, 24);
             this.nodeDeleteButton.TabIndex = 5;
@@ -1080,36 +1150,37 @@ namespace NSUNS4_Character_Manager
             // 
             // nodeSaveButton
             // 
-            this.nodeSaveButton.Location = new System.Drawing.Point(76, 543);
+            this.nodeSaveButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.nodeSaveButton.Location = new System.Drawing.Point(140, 540);
             this.nodeSaveButton.Name = "nodeSaveButton";
-            this.nodeSaveButton.Size = new System.Drawing.Size(60, 24);
+            this.nodeSaveButton.Size = new System.Drawing.Size(105, 24);
             this.nodeSaveButton.TabIndex = 6;
-            this.nodeSaveButton.Text = "Save";
+            this.nodeSaveButton.Text = "Apply Timeline";
             this.nodeSaveButton.Click += new System.EventHandler(this.nodeSaveButton_Click);
             // 
             // nodeHintLabel
             // 
             this.nodeHintLabel.AutoSize = true;
-            this.nodeHintLabel.Location = new System.Drawing.Point(314, 11);
+            this.nodeHintLabel.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.nodeHintLabel.Location = new System.Drawing.Point(320, 14);
             this.nodeHintLabel.MaximumSize = new System.Drawing.Size(820, 0);
             this.nodeHintLabel.Name = "nodeHintLabel";
             this.nodeHintLabel.Size = new System.Drawing.Size(571, 13);
             this.nodeHintLabel.TabIndex = 7;
-            this.nodeHintLabel.Text = "Select a frame timeline on the left, set the linked particle index, then add simp" +
-    "le Spawn and Despawn timing rows below.";
+            this.nodeHintLabel.Text = "Timeline events";
             // 
             // nodeParticleIndexLabel
             // 
             this.nodeParticleIndexLabel.AutoSize = true;
-            this.nodeParticleIndexLabel.Location = new System.Drawing.Point(314, 44);
+            this.nodeParticleIndexLabel.Location = new System.Drawing.Point(320, 51);
             this.nodeParticleIndexLabel.Name = "nodeParticleIndexLabel";
             this.nodeParticleIndexLabel.Size = new System.Drawing.Size(106, 13);
             this.nodeParticleIndexLabel.TabIndex = 8;
-            this.nodeParticleIndexLabel.Text = "Linked Particle Index";
+            this.nodeParticleIndexLabel.Text = "Generator Entry ID";
             // 
             // nodeParticleIndexNumericUpDown
             // 
-            this.nodeParticleIndexNumericUpDown.Location = new System.Drawing.Point(426, 42);
+            this.nodeParticleIndexNumericUpDown.Location = new System.Drawing.Point(438, 48);
             this.nodeParticleIndexNumericUpDown.Maximum = new decimal(new int[] {
             -1,
             0,
@@ -1124,33 +1195,60 @@ namespace NSUNS4_Character_Manager
             // 
             this.nodeEventsGrid.AllowUserToAddRows = false;
             this.nodeEventsGrid.AllowUserToDeleteRows = false;
-            this.nodeEventsGrid.Location = new System.Drawing.Point(317, 72);
+            this.nodeEventsGrid.AllowUserToResizeRows = false;
+            this.nodeEventsGrid.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
+            this.nodeEventsGrid.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+            this.nodeEventsGrid.BackgroundColor = System.Drawing.SystemColors.Window;
+            this.nodeEventsGrid.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            this.nodeEventsGrid.Location = new System.Drawing.Point(320, 82);
             this.nodeEventsGrid.Name = "nodeEventsGrid";
             this.nodeEventsGrid.RowHeadersVisible = false;
             this.nodeEventsGrid.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.nodeEventsGrid.Size = new System.Drawing.Size(825, 432);
+            this.nodeEventsGrid.Size = new System.Drawing.Size(822, 414);
             this.nodeEventsGrid.TabIndex = 10;
+            this.nodeEventsGrid.CellValidated += new System.Windows.Forms.DataGridViewCellEventHandler(this.nodeEventsGrid_CellValidated);
+            this.nodeEventsGrid.SelectionChanged += new System.EventHandler(this.nodeEventsGrid_SelectionChanged);
             // 
             // nodeAddEventButton
             // 
-            this.nodeAddEventButton.Location = new System.Drawing.Point(317, 513);
+            this.nodeAddEventButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.nodeAddEventButton.Location = new System.Drawing.Point(320, 506);
             this.nodeAddEventButton.Name = "nodeAddEventButton";
             this.nodeAddEventButton.Size = new System.Drawing.Size(92, 24);
             this.nodeAddEventButton.TabIndex = 11;
-            this.nodeAddEventButton.Text = "Add Timing Row";
+            this.nodeAddEventButton.Text = "Add Event";
             this.nodeAddEventButton.Click += new System.EventHandler(this.nodeAddEventButton_Click);
             // 
             // nodeDeleteEventButton
             // 
-            this.nodeDeleteEventButton.Location = new System.Drawing.Point(415, 513);
+            this.nodeDeleteEventButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.nodeDeleteEventButton.Location = new System.Drawing.Point(418, 506);
             this.nodeDeleteEventButton.Name = "nodeDeleteEventButton";
             this.nodeDeleteEventButton.Size = new System.Drawing.Size(95, 24);
             this.nodeDeleteEventButton.TabIndex = 12;
-            this.nodeDeleteEventButton.Text = "Remove Timing Row";
+            this.nodeDeleteEventButton.Text = "Remove Event";
             this.nodeDeleteEventButton.Click += new System.EventHandler(this.nodeDeleteEventButton_Click);
             // 
             // Tool_ParticleEditor
             // 
+            this.toolTip1.AutoPopDelay = 10000;
+            this.toolTip1.InitialDelay = 400;
+            this.toolTip1.ReshowDelay = 100;
+            this.toolTip1.ShowAlways = true;
+            this.toolTip1.SetToolTip(this.chunkComboBox, "Select the particle chunk to edit.");
+            this.toolTip1.SetToolTip(this.saveChunkMetaButton, "Apply the edited chunk name and path.");
+            this.toolTip1.SetToolTip(this.addChunkButton, "Add a new particle chunk.");
+            this.toolTip1.SetToolTip(this.deleteChunkButton, "Mark the selected particle chunk for deletion.");
+            this.toolTip1.SetToolTip(this.editReferencesButton, "Edit animation, effect, coord, and clump links used by this chunk.");
+            this.toolTip1.SetToolTip(this.managerListBox, "Particle generator entries.");
+            this.toolTip1.SetToolTip(this.resourceListBox, "Resources used by particle generators.");
+            this.toolTip1.SetToolTip(this.positionListBox, "Coordinate and clump links for particle positions.");
+            this.toolTip1.SetToolTip(this.forceFieldListBox, "Force-field entries affecting particles.");
+            this.toolTip1.SetToolTip(this.nodeListBox, "Enable and disable timelines paired with generator entries.");
+            this.toolTip1.SetToolTip(this.managerEntryIndexNumericUpDown, "Stable entry ID referenced by resources, positions, force fields, and timelines.");
+            this.toolTip1.SetToolTip(this.nodeParticleIndexNumericUpDown, "Entry ID of the generator paired with this timeline.");
+            this.toolTip1.SetToolTip(this.nodeAddEventButton, "Append a timeline state change.");
+            this.toolTip1.SetToolTip(this.nodeDeleteEventButton, "Remove the selected timeline event.");
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1184, 730);
@@ -1160,6 +1258,7 @@ namespace NSUNS4_Character_Manager
             this.MainMenuStrip = this.menuStrip1;
             this.MinimumSize = new System.Drawing.Size(1200, 769);
             this.Name = "Tool_ParticleEditor";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Particle Chunk Editor";
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
@@ -1187,98 +1286,5 @@ namespace NSUNS4_Character_Manager
 
         }
 
-        private static void BuildPropertyTab(TabPage tabPage, ListBox listBox, Label hintLabel, string hintText, Label combo1Label, string combo1Text, ComboBox combo1, Label indexLabel, string indexText, NumericUpDown indexNumericUpDown, Label combo2Label, ComboBox combo2, PropertyGrid propertyGrid, Button addButton, Button copyButton, Button pasteButton, Button duplicateButton, Button deleteButton, Button saveButton, System.EventHandler listChanged, System.EventHandler combo1Changed, System.EventHandler indexChanged, System.EventHandler combo2Changed, System.EventHandler addClick, System.EventHandler copyClick, System.EventHandler pasteClick, System.EventHandler duplicateClick, System.EventHandler deleteClick, System.EventHandler saveClick)
-        {
-            Label entriesLabel = new Label();
-            Label quickLinksLabel = new Label();
-            Label detailsLabel = new Label();
-            entriesLabel.AutoSize = true;
-            entriesLabel.Location = new Point(6, 6);
-            entriesLabel.Text = "Entries";
-            quickLinksLabel.AutoSize = true;
-            quickLinksLabel.Location = new Point(314, 44);
-            quickLinksLabel.Text = "Quick Links";
-            detailsLabel.AutoSize = true;
-            detailsLabel.Location = new Point(314, 124);
-            detailsLabel.Text = "Detailed Values";
-            listBox.Location = new Point(6, 26);
-            listBox.Size = new Size(290, 478);
-            listBox.SelectedIndexChanged += listChanged;
-            addButton.Location = new Point(6, 513);
-            addButton.Size = new Size(64, 24);
-            addButton.Text = "Add";
-            addButton.Click += addClick;
-            copyButton.Location = new Point(76, 513);
-            copyButton.Size = new Size(60, 24);
-            copyButton.Text = "Copy";
-            copyButton.Click += copyClick;
-            pasteButton.Location = new Point(142, 513);
-            pasteButton.Size = new Size(60, 24);
-            pasteButton.Text = "Paste";
-            pasteButton.Click += pasteClick;
-            duplicateButton.Location = new Point(208, 513);
-            duplicateButton.Size = new Size(75, 24);
-            duplicateButton.Text = "Duplicate";
-            duplicateButton.Click += duplicateClick;
-            deleteButton.Location = new Point(289, 513);
-            deleteButton.Size = new Size(70, 24);
-            deleteButton.Text = "Remove";
-            deleteButton.Click += deleteClick;
-            saveButton.Location = new Point(365, 513);
-            saveButton.Size = new Size(63, 24);
-            saveButton.Text = "Apply";
-            saveButton.Click += saveClick;
-            hintLabel.AutoSize = true;
-            hintLabel.Location = new Point(314, 11);
-            hintLabel.MaximumSize = new Size(820, 0);
-            hintLabel.Text = hintText;
-            combo1Label.AutoSize = true;
-            combo1Label.Location = new Point(314, 64);
-            combo1Label.Text = combo1Text;
-            combo1.DropDownStyle = ComboBoxStyle.DropDownList;
-            combo1.Location = new Point(430, 61);
-            combo1.Size = new Size(300, 21);
-            combo1.SelectedIndexChanged += combo1Changed;
-            indexLabel.AutoSize = true;
-            indexLabel.Location = new Point(314, 92);
-            indexLabel.Text = indexText;
-            indexNumericUpDown.Location = new Point(430, 90);
-            indexNumericUpDown.Maximum = new decimal(new int[] { -1, 0, 0, 0 });
-            indexNumericUpDown.Size = new Size(120, 20);
-            indexNumericUpDown.ValueChanged += indexChanged;
-            propertyGrid.Location = new Point(317, 144);
-            propertyGrid.Size = new Size(825, 393);
-            propertyGrid.HelpVisible = true;
-            propertyGrid.PropertySort = PropertySort.Categorized;
-            propertyGrid.ToolbarVisible = false;
-            tabPage.Controls.Add(entriesLabel);
-            tabPage.Controls.Add(quickLinksLabel);
-            tabPage.Controls.Add(detailsLabel);
-            tabPage.Controls.Add(listBox);
-            tabPage.Controls.Add(addButton);
-            tabPage.Controls.Add(copyButton);
-            tabPage.Controls.Add(pasteButton);
-            tabPage.Controls.Add(duplicateButton);
-            tabPage.Controls.Add(deleteButton);
-            tabPage.Controls.Add(saveButton);
-            tabPage.Controls.Add(hintLabel);
-            tabPage.Controls.Add(combo1Label);
-            tabPage.Controls.Add(combo1);
-            tabPage.Controls.Add(indexLabel);
-            tabPage.Controls.Add(indexNumericUpDown);
-            if (combo2Label != null && combo2 != null)
-            {
-                combo2Label.AutoSize = true;
-                combo2Label.Location = new Point(750, 64);
-                combo2Label.Text = "Clump Chunk";
-                combo2.DropDownStyle = ComboBoxStyle.DropDownList;
-                combo2.Location = new Point(838, 61);
-                combo2.Size = new Size(304, 21);
-                combo2.SelectedIndexChanged += combo2Changed;
-                tabPage.Controls.Add(combo2Label);
-                tabPage.Controls.Add(combo2);
-            }
-            tabPage.Controls.Add(propertyGrid);
-        }
     }
 }

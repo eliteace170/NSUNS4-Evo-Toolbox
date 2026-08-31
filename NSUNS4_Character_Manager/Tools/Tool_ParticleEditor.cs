@@ -34,6 +34,7 @@ namespace NSUNS4_Character_Manager
         private readonly List<ParticleChunkState> chunks = new List<ParticleChunkState>();
         private string filePath = "";
         private bool suppressChunkSelection;
+        private bool suppressSectionSelection;
         private bool suppressReferenceSelection;
         private bool suppressIndexSelection;
         private int lastNodeIndex = -1;
@@ -86,16 +87,25 @@ namespace NSUNS4_Character_Manager
             actionColumn.HeaderText = "State";
             actionColumn.DisplayStyle = DataGridViewComboBoxDisplayStyle.DropDownButton;
             actionColumn.ValueType = typeof(string);
-            actionColumn.DataSource = new[] { "On / Spawn", "Off / Despawn" };
+            actionColumn.DataSource = new[] { "Enabled / On", "Disabled / Off" };
             actionColumn.Width = 180;
             nodeEventsGrid.Columns.Add(actionColumn);
 
+            DataGridViewTextBoxColumn timeColumn = new DataGridViewTextBoxColumn();
+            timeColumn.Name = "timeColumn";
+            timeColumn.HeaderText = "Time (ms)";
+            timeColumn.ToolTipText = "Exact timeline time stored in the file. Valid range: 0 to 2147483647 milliseconds.";
+            timeColumn.ValueType = typeof(uint);
+            timeColumn.Width = 135;
+            nodeEventsGrid.Columns.Add(timeColumn);
+
             DataGridViewTextBoxColumn frameColumn = new DataGridViewTextBoxColumn();
             frameColumn.Name = "frameColumn";
-            frameColumn.HeaderText = "Frame";
-            frameColumn.ToolTipText = "Frame value stored in 1/33-frame units. Decimal values are supported.";
+            frameColumn.HeaderText = "Frame (30 FPS)";
+            frameColumn.ToolTipText = "Read-only frame equivalent calculated as milliseconds / 33.";
             frameColumn.ValueType = typeof(float);
             frameColumn.DefaultCellStyle.Format = "0.###";
+            frameColumn.ReadOnly = true;
             frameColumn.Width = 140;
             nodeEventsGrid.Columns.Add(frameColumn);
         }
@@ -131,6 +141,7 @@ namespace NSUNS4_Character_Manager
             chunkEditorPanel.Enabled = false;
             particleTabControl.Enabled = false;
             lastNodeIndex = -1;
+            UpdateEditorContext();
         }
 
         private void ClearReferenceCombos()
@@ -229,11 +240,20 @@ namespace NSUNS4_Character_Manager
             if (chunk == null)
                 return;
 
-            RefreshSectionList(managerListBox, chunk.Managers, x => BuildManagerLabel(chunk, x));
-            RefreshSectionList(resourceListBox, chunk.Resources, x => BuildParticleLinkLabel(chunk, x.ParticleEntryIndex) + " | " + ParticleChunkCodec.ResolveReferenceLabel(chunk, x.EffectChunkIndex));
-            RefreshSectionList(positionListBox, chunk.Positions, x => BuildParticleLinkLabel(chunk, x.ParticleEntryIndex) + " | Coord: " + ParticleChunkCodec.ResolveReferenceLabel(chunk, x.CoordChunkIndex) + " | Clump: " + ParticleChunkCodec.ResolveReferenceLabel(chunk, x.ClumpChunkIndex));
-            RefreshSectionList(forceFieldListBox, chunk.ForceFields, x => BuildParticleLinkLabel(chunk, x.ParticleEntryIndex) + " | Coord: " + ParticleChunkCodec.ResolveReferenceLabel(chunk, x.CoordChunkIndex) + " | Clump: " + ParticleChunkCodec.ResolveReferenceLabel(chunk, x.ClumpChunkIndex));
-            RefreshSectionList(nodeListBox, chunk.Nodes.Select((node, index) => new { node, index }).ToList(), x => BuildNodeLabel(chunk, x.index, x.node));
+            suppressSectionSelection = true;
+            try
+            {
+                RefreshSectionList(managerListBox, chunk.Managers, x => BuildManagerLabel(chunk, x));
+                RefreshSectionList(resourceListBox, chunk.Resources, x => BuildParticleLinkLabel(chunk, x.ParticleEntryIndex) + " | " + ParticleChunkCodec.ResolveReferenceLabel(chunk, x.EffectChunkIndex));
+                RefreshSectionList(positionListBox, chunk.Positions, x => BuildParticleLinkLabel(chunk, x.ParticleEntryIndex) + " | Coord: " + ParticleChunkCodec.ResolveReferenceLabel(chunk, x.CoordChunkIndex) + " | Clump: " + ParticleChunkCodec.ResolveReferenceLabel(chunk, x.ClumpChunkIndex));
+                RefreshSectionList(forceFieldListBox, chunk.ForceFields, x => BuildParticleLinkLabel(chunk, x.ParticleEntryIndex) + " | Coord: " + ParticleChunkCodec.ResolveReferenceLabel(chunk, x.CoordChunkIndex) + " | Clump: " + ParticleChunkCodec.ResolveReferenceLabel(chunk, x.ClumpChunkIndex));
+                RefreshSectionList(nodeListBox, chunk.Nodes.Select((node, index) => new { node, index }).ToList(), x => BuildNodeLabel(chunk, x.index, x.node));
+            }
+            finally
+            {
+                suppressSectionSelection = false;
+            }
+            UpdateEditorContext();
         }
 
         private static string BuildManagerLabel(ParticleChunkState chunk, ParticleManagerEntry entry)
@@ -273,7 +293,7 @@ namespace NSUNS4_Character_Manager
                 return linkLabel + " | No timing";
 
             return linkLabel + " | " + string.Join(", ", events.Select(x =>
-                string.Format(CultureInfo.InvariantCulture, "{0} @ {1:0.###}", x.Action == ParticleNodeAction.On ? "Spawn" : "Despawn", x.Frame)).ToArray());
+                string.Format(CultureInfo.InvariantCulture, "{0} @ {1:0.###}", x.Action == ParticleNodeAction.On ? "Enabled" : "Disabled", x.Frame)).ToArray());
         }
 
         private static void EnsureNodeLinks(ParticleChunkState chunk)
@@ -317,6 +337,7 @@ namespace NSUNS4_Character_Manager
             PopulateReferenceCombos();
             PopulateIndexControls();
             LoadSelectedNode();
+            UpdateEditorContext();
         }
 
         private void PopulateIndexControls()
@@ -368,14 +389,24 @@ namespace NSUNS4_Character_Manager
         private void PopulateReferenceCombos()
         {
             ParticleChunkState chunk = SelectedChunk;
+            ParticleManagerEntry manager = GetSelectedItem(chunk != null ? chunk.Managers : null, managerListBox);
+            ParticleResourceEntry resource = GetSelectedItem(chunk != null ? chunk.Resources : null, resourceListBox);
+            ParticlePositionEntry position = GetSelectedItem(chunk != null ? chunk.Positions : null, positionListBox);
+            ParticleForceFieldEntry forceField = GetSelectedItem(chunk != null ? chunk.ForceFields : null, forceFieldListBox);
             suppressReferenceSelection = true;
-            PopulateReferenceCombo(managerAnimationComboBox, chunk, "nuccChunkAnm", chunk.Managers.Count > 0 && managerListBox.SelectedIndex >= 0 ? (int)chunk.Managers[managerListBox.SelectedIndex].AnimationChunkIndex : 0, false);
-            PopulateReferenceCombo(resourceEffectComboBox, chunk, null, chunk.Resources.Count > 0 && resourceListBox.SelectedIndex >= 0 ? (int)chunk.Resources[resourceListBox.SelectedIndex].EffectChunkIndex : 0, false);
-            PopulateReferenceCombo(positionCoordComboBox, chunk, "nuccChunkCoord", chunk.Positions.Count > 0 && positionListBox.SelectedIndex >= 0 ? chunk.Positions[positionListBox.SelectedIndex].CoordChunkIndex : -1, true);
-            PopulateReferenceCombo(positionClumpComboBox, chunk, "nuccChunkClump", chunk.Positions.Count > 0 && positionListBox.SelectedIndex >= 0 ? chunk.Positions[positionListBox.SelectedIndex].ClumpChunkIndex : -1, true);
-            PopulateReferenceCombo(forceFieldCoordComboBox, chunk, "nuccChunkCoord", chunk.ForceFields.Count > 0 && forceFieldListBox.SelectedIndex >= 0 ? chunk.ForceFields[forceFieldListBox.SelectedIndex].CoordChunkIndex : -1, true);
-            PopulateReferenceCombo(forceFieldClumpComboBox, chunk, "nuccChunkClump", chunk.ForceFields.Count > 0 && forceFieldListBox.SelectedIndex >= 0 ? chunk.ForceFields[forceFieldListBox.SelectedIndex].ClumpChunkIndex : -1, true);
-            suppressReferenceSelection = false;
+            try
+            {
+                PopulateReferenceCombo(managerAnimationComboBox, chunk, "nuccChunkAnm", manager != null ? (int)manager.AnimationChunkIndex : 0, false);
+                PopulateReferenceCombo(resourceEffectComboBox, chunk, null, resource != null ? (int)resource.EffectChunkIndex : 0, false);
+                PopulateReferenceCombo(positionCoordComboBox, chunk, "nuccChunkCoord", position != null ? position.CoordChunkIndex : -1, true);
+                PopulateReferenceCombo(positionClumpComboBox, chunk, "nuccChunkClump", position != null ? position.ClumpChunkIndex : -1, true);
+                PopulateReferenceCombo(forceFieldCoordComboBox, chunk, "nuccChunkCoord", forceField != null ? forceField.CoordChunkIndex : -1, true);
+                PopulateReferenceCombo(forceFieldClumpComboBox, chunk, "nuccChunkClump", forceField != null ? forceField.ClumpChunkIndex : -1, true);
+            }
+            finally
+            {
+                suppressReferenceSelection = false;
+            }
         }
 
         private static void PopulateReferenceCombo(ComboBox comboBox, ParticleChunkState chunk, string chunkTypeFilter, int selectedIndex, bool allowNone)
@@ -422,10 +453,66 @@ namespace NSUNS4_Character_Manager
             if (chunk != null && nodeListBox.SelectedIndex >= 0 && nodeListBox.SelectedIndex < chunk.Nodes.Count)
             {
                 foreach (ParticleNodeEvent particleEvent in ParticleChunkCodec.DecodeNodeEvents(chunk.Nodes[nodeListBox.SelectedIndex]))
-                    nodeEventsGrid.Rows.Add(GetNodeActionLabel(particleEvent.Action), particleEvent.Frame);
+                    nodeEventsGrid.Rows.Add(GetNodeActionLabel(particleEvent.Action), particleEvent.TimeMilliseconds, particleEvent.Frame);
             }
             PopulateIndexControls();
             lastNodeIndex = nodeListBox.SelectedIndex;
+            UpdateEditorContext();
+        }
+
+        private void UpdateEditorContext()
+        {
+            ParticleChunkState chunk = SelectedChunk;
+            int managerCount = chunk != null ? chunk.Managers.Count : 0;
+            int resourceCount = chunk != null ? chunk.Resources.Count : 0;
+            int positionCount = chunk != null ? chunk.Positions.Count : 0;
+            int forceFieldCount = chunk != null ? chunk.ForceFields.Count : 0;
+            int timelineCount = chunk != null ? chunk.Nodes.Count : 0;
+
+            managerHintLabel.Text = BuildEditorHeading("Generator parameters", managerCount, managerListBox.SelectedIndex);
+            resourceHintLabel.Text = BuildEditorHeading("Resource parameters", resourceCount, resourceListBox.SelectedIndex);
+            positionHintLabel.Text = BuildEditorHeading("Position parameters", positionCount, positionListBox.SelectedIndex);
+            forceFieldHintLabel.Text = BuildEditorHeading("Force-field parameters", forceFieldCount, forceFieldListBox.SelectedIndex);
+            nodeHintLabel.Text = BuildEditorHeading("Timeline events", timelineCount, nodeListBox.SelectedIndex);
+
+            bool hasChunk = chunk != null;
+            bool hasManager = hasChunk && managerListBox.SelectedIndex >= 0 && managerListBox.SelectedIndex < managerCount;
+            bool hasResource = hasChunk && resourceListBox.SelectedIndex >= 0 && resourceListBox.SelectedIndex < resourceCount;
+            bool hasPosition = hasChunk && positionListBox.SelectedIndex >= 0 && positionListBox.SelectedIndex < positionCount;
+            bool hasForceField = hasChunk && forceFieldListBox.SelectedIndex >= 0 && forceFieldListBox.SelectedIndex < forceFieldCount;
+            bool hasTimeline = hasChunk && nodeListBox.SelectedIndex >= 0 && nodeListBox.SelectedIndex < timelineCount;
+
+            SetControlsEnabled(hasManager, managerAnimationComboBox, managerEntryIndexNumericUpDown, managerPropertyGrid, managerCopyButton, managerDuplicateButton, managerDeleteButton, managerSaveButton);
+            SetControlsEnabled(hasResource, resourceEffectComboBox, resourceParticleIndexNumericUpDown, resourcePropertyGrid, resourceCopyButton, resourceDuplicateButton, resourceDeleteButton, resourceSaveButton);
+            SetControlsEnabled(hasPosition, positionCoordComboBox, positionClumpComboBox, positionParticleIndexNumericUpDown, positionPropertyGrid, positionCopyButton, positionDuplicateButton, positionDeleteButton, positionSaveButton);
+            SetControlsEnabled(hasForceField, forceFieldCoordComboBox, forceFieldClumpComboBox, forceFieldParticleIndexNumericUpDown, forceFieldPropertyGrid, forceFieldCopyButton, forceFieldDuplicateButton, forceFieldDeleteButton, forceFieldSaveButton);
+            SetControlsEnabled(hasTimeline, nodeParticleIndexNumericUpDown, nodeEventsGrid, nodeCopyButton, nodeDuplicateButton, nodeDeleteButton, nodeSaveButton, nodeAddEventButton);
+
+            managerAddButton.Enabled = hasChunk;
+            resourceAddButton.Enabled = hasChunk;
+            positionAddButton.Enabled = hasChunk;
+            forceFieldAddButton.Enabled = hasChunk;
+            nodeAddButton.Enabled = hasChunk;
+            managerPasteButton.Enabled = hasChunk;
+            resourcePasteButton.Enabled = hasChunk;
+            positionPasteButton.Enabled = hasChunk;
+            forceFieldPasteButton.Enabled = hasChunk;
+            nodePasteButton.Enabled = hasChunk;
+            nodeDeleteEventButton.Enabled = hasTimeline && nodeEventsGrid.SelectedRows.Count > 0;
+        }
+
+        private static string BuildEditorHeading(string title, int count, int selectedIndex)
+        {
+            string selected = selectedIndex >= 0 && selectedIndex < count
+                ? "Selected " + (selectedIndex + 1).ToString(CultureInfo.InvariantCulture)
+                : "No selection";
+            return string.Format(CultureInfo.InvariantCulture, "{0}  |  {1} entries  |  {2}", title, count, selected);
+        }
+
+        private static void SetControlsEnabled(bool enabled, params Control[] controls)
+        {
+            foreach (Control control in controls)
+                control.Enabled = enabled;
         }
 
         private void ApplyNodeGrid()
@@ -456,16 +543,16 @@ namespace NSUNS4_Character_Manager
                 if (row.IsNewRow)
                     continue;
                 object actionValue = row.Cells[0].Value;
-                object frameValue = row.Cells[1].Value;
-                if (actionValue == null || frameValue == null)
+                object timeValue = row.Cells[1].Value;
+                if (actionValue == null || timeValue == null)
                     continue;
 
-                float frame;
-                if (!float.TryParse(frameValue.ToString(), NumberStyles.Float, CultureInfo.CurrentCulture, out frame) &&
-                    !float.TryParse(frameValue.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out frame))
-                    throw new InvalidOperationException("Node frame values must be numeric.");
-                if (float.IsNaN(frame) || float.IsInfinity(frame) || frame < 0f || frame > ushort.MaxValue / 33f)
-                    throw new InvalidOperationException("Node frame values must be between 0 and 1985.909.");
+                uint timeMilliseconds;
+                if (!uint.TryParse(timeValue.ToString(), NumberStyles.Integer, CultureInfo.CurrentCulture, out timeMilliseconds) &&
+                    !uint.TryParse(timeValue.ToString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out timeMilliseconds))
+                    throw new InvalidOperationException("Timeline time values must be whole milliseconds.");
+                if (timeMilliseconds > 0x7FFFFFFFu)
+                    throw new InvalidOperationException("Timeline time values must be between 0 and 2147483647 milliseconds.");
 
                 ParticleNodeAction action;
                 if (actionValue is ParticleNodeAction)
@@ -473,10 +560,13 @@ namespace NSUNS4_Character_Manager
                 else
                     action = ParseNodeActionLabel(actionValue.ToString());
 
-                events.Add(new ParticleNodeEvent { Action = action, Frame = frame });
+                events.Add(new ParticleNodeEvent { Action = action, TimeMilliseconds = timeMilliseconds });
             }
 
-            chunk.Nodes[targetIndex] = ParticleChunkCodec.EncodeNodeEvents(events);
+            ParticleNodeEntry updatedTimeline = ParticleChunkCodec.EncodeNodeEvents(events);
+            byte[] existingPadding = chunk.Nodes[targetIndex].Padding;
+            updatedTimeline.Padding = existingPadding != null ? (byte[])existingPadding.Clone() : new byte[0];
+            chunk.Nodes[targetIndex] = updatedTimeline;
         }
 
         private void ApplyChunkMetadata()
@@ -845,12 +935,12 @@ namespace NSUNS4_Character_Manager
 
         private static string GetNodeActionLabel(ParticleNodeAction action)
         {
-            return action == ParticleNodeAction.On ? "On / Spawn" : "Off / Despawn";
+            return action == ParticleNodeAction.On ? "Enabled / On" : "Disabled / Off";
         }
 
         private static ParticleNodeAction ParseNodeActionLabel(string value)
         {
-            return string.Equals(value, "Off / Despawn", StringComparison.OrdinalIgnoreCase)
+            return string.Equals(value, "Disabled / Off", StringComparison.OrdinalIgnoreCase)
                 ? ParticleNodeAction.Off
                 : ParticleNodeAction.On;
         }
@@ -874,11 +964,27 @@ namespace NSUNS4_Character_Manager
         private void addChunkButton_Click(object sender, EventArgs e) { AddChunk(); }
         private void deleteChunkButton_Click(object sender, EventArgs e) { DeleteChunk(); }
         private void editReferencesButton_Click(object sender, EventArgs e) { EditReferences(); }
-        private void managerListBox_SelectedIndexChanged(object sender, EventArgs e) { LoadSelectedObjects(); }
-        private void resourceListBox_SelectedIndexChanged(object sender, EventArgs e) { LoadSelectedObjects(); }
-        private void positionListBox_SelectedIndexChanged(object sender, EventArgs e) { LoadSelectedObjects(); }
-        private void forceFieldListBox_SelectedIndexChanged(object sender, EventArgs e) { LoadSelectedObjects(); }
-        private void nodeListBox_SelectedIndexChanged(object sender, EventArgs e) { if (lastNodeIndex >= 0 && lastNodeIndex != nodeListBox.SelectedIndex) ApplyNodeGrid(lastNodeIndex); LoadSelectedNode(); }
+        private void managerListBox_SelectedIndexChanged(object sender, EventArgs e) { if (!suppressSectionSelection) LoadSelectedObjects(); }
+        private void resourceListBox_SelectedIndexChanged(object sender, EventArgs e) { if (!suppressSectionSelection) LoadSelectedObjects(); }
+        private void positionListBox_SelectedIndexChanged(object sender, EventArgs e) { if (!suppressSectionSelection) LoadSelectedObjects(); }
+        private void forceFieldListBox_SelectedIndexChanged(object sender, EventArgs e) { if (!suppressSectionSelection) LoadSelectedObjects(); }
+        private void nodeListBox_SelectedIndexChanged(object sender, EventArgs e) { if (suppressSectionSelection) return; if (lastNodeIndex >= 0 && lastNodeIndex != nodeListBox.SelectedIndex) ApplyNodeGrid(lastNodeIndex); LoadSelectedNode(); }
+
+        private void nodeEventsGrid_SelectionChanged(object sender, EventArgs e)
+        {
+            nodeDeleteEventButton.Enabled = nodeEventsGrid.Enabled && nodeEventsGrid.SelectedRows.Count > 0;
+        }
+
+        private void nodeEventsGrid_CellValidated(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0 || e.ColumnIndex != 1 || e.RowIndex >= nodeEventsGrid.Rows.Count)
+                return;
+
+            DataGridViewRow row = nodeEventsGrid.Rows[e.RowIndex];
+            uint timeMilliseconds;
+            if (row.Cells[1].Value != null && uint.TryParse(row.Cells[1].Value.ToString(), NumberStyles.Integer, CultureInfo.CurrentCulture, out timeMilliseconds) && timeMilliseconds <= 0x7FFFFFFFu)
+                row.Cells[2].Value = timeMilliseconds / 33f;
+        }
 
         private void managerAnimationComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -998,7 +1104,7 @@ namespace NSUNS4_Character_Manager
         private void nodeDuplicateButton_Click(object sender, EventArgs e) { AddNodeEntry(true); }
         private void nodeDeleteButton_Click(object sender, EventArgs e) { DeleteNodeEntry(); }
         private void nodeSaveButton_Click(object sender, EventArgs e) { ApplyNodeGrid(); RefreshSelectedSection(false); }
-        private void nodeAddEventButton_Click(object sender, EventArgs e) { nodeEventsGrid.Rows.Add(GetNodeActionLabel(ParticleNodeAction.On), 0); }
+        private void nodeAddEventButton_Click(object sender, EventArgs e) { nodeEventsGrid.Rows.Add(GetNodeActionLabel(ParticleNodeAction.On), 0u, 0f); }
         private void nodeDeleteEventButton_Click(object sender, EventArgs e) { foreach (DataGridViewRow row in nodeEventsGrid.SelectedRows) if (!row.IsNewRow) nodeEventsGrid.Rows.Remove(row); }
     }
 }

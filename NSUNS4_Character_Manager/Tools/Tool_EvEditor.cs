@@ -104,6 +104,7 @@ namespace NSUNS4_Character_Manager
         private sealed class UltimateChunk
         {
             public string Name = "";
+            public string ChunkPath = "";
             public string NameSuffix = "";
             public int OriginalEntryCount = -1;
             public bool IsNew;
@@ -362,7 +363,7 @@ namespace NSUNS4_Character_Manager
         private void LoadUltimateFile(string filePath, bool allowTabSwitch)
         {
             byte[] bytes = File.ReadAllBytes(filePath);
-            List<XfbinBinaryChunkPage> ultimatePages = GetUltimateBinaryChunkPages(filePath);
+            List<XfbinBinaryChunkItem> ultimatePages = GetUltimateBinaryChunks(filePath);
             if (ultimatePages.Count == 0)
             {
                 if (allowTabSwitch)
@@ -381,9 +382,14 @@ namespace NSUNS4_Character_Manager
             ultimateState.FilePath = filePath;
             ultimateState.FileBytes = bytes;
             ultimateState.OriginalPrefix = GetUltimateCharacterCodeFromPath(filePath);
+            // Variant filenames need not match the prefix used by their sound chunks.
+            string firstChunkName = ultimatePages[0].ChunkName ?? "";
+            int splIndex = firstChunkName.IndexOf("spl", StringComparison.OrdinalIgnoreCase);
+            if (splIndex > 0 && !firstChunkName.StartsWith(ultimateState.OriginalPrefix, StringComparison.OrdinalIgnoreCase))
+                ultimateState.OriginalPrefix = firstChunkName.Substring(0, splIndex).TrimEnd('_');
             ultimateState.CurrentPrefix = ultimateState.OriginalPrefix;
             ultimatePrefixText.Text = ultimateState.CurrentPrefix;
-            OpenUltimateChunksFromPages(ultimatePages, ultimateState.Chunks);
+            OpenUltimateChunks(ultimatePages, ultimateState.Chunks);
             InitializeUltimateChunkSuffixes();
             RefreshUltimateChunkList();
         }
@@ -492,12 +498,12 @@ namespace NSUNS4_Character_Manager
             return false;
         }
 
-        private static List<XfbinBinaryChunkPage> GetUltimateBinaryChunkPages(string filePath)
+        private static List<XfbinBinaryChunkItem> GetUltimateBinaryChunks(string filePath)
         {
-            List<XfbinBinaryChunkPage> result = new List<XfbinBinaryChunkPage>();
+            List<XfbinBinaryChunkItem> result = new List<XfbinBinaryChunkItem>();
             using (XfbinParserBackend backend = new XfbinParserBackend(filePath))
             {
-                foreach (XfbinBinaryChunkPage page in backend.GetBinaryChunkPages())
+                foreach (XfbinBinaryChunkItem page in backend.GetBinaryChunks())
                 {
                     byte[] bytes = page.BinaryData ?? new byte[0];
                     if (LooksLikeUltimateChunk(page.ChunkType, page.ChunkPath, page.ChunkName, bytes))
@@ -508,15 +514,16 @@ namespace NSUNS4_Character_Manager
             return result;
         }
 
-        private static void OpenUltimateChunksFromPages(List<XfbinBinaryChunkPage> pages, List<UltimateChunk> target)
+        private static void OpenUltimateChunks(List<XfbinBinaryChunkItem> pages, List<UltimateChunk> target)
         {
-            foreach (XfbinBinaryChunkPage page in pages)
+            foreach (XfbinBinaryChunkItem page in pages)
             {
                 byte[] chunkBytes = page.BinaryData ?? new byte[0];
                 short count = BitConverter.ToInt16(chunkBytes, BattleChunkCountOffset);
                 UltimateChunk stateChunk = new UltimateChunk
                 {
                     Name = string.IsNullOrWhiteSpace(page.ChunkName) ? Path.GetFileNameWithoutExtension(page.ChunkPath ?? "") : page.ChunkName,
+                    ChunkPath = page.ChunkPath ?? "",
                     NameSuffix = string.IsNullOrWhiteSpace(page.ChunkName) ? Path.GetFileNameWithoutExtension(page.ChunkPath ?? "") : page.ChunkName,
                     OriginalEntryCount = count
                 };
@@ -1330,15 +1337,17 @@ namespace NSUNS4_Character_Manager
 
                 foreach (UltimateChunk stateChunk in ultimateState.Chunks)
                 {
-                    string newChunkName = currentPrefix + (stateChunk.NameSuffix ?? "");
-                    string newChunkPath = BuildUltimateChunkPath(currentPrefix, stateChunk.NameSuffix);
+                    bool preserveIdentity = !stateChunk.IsNew && currentPrefix == ultimateState.OriginalPrefix;
+                    string newChunkName = preserveIdentity ? stateChunk.Name : currentPrefix + (stateChunk.NameSuffix ?? "");
+                    string newChunkPath = preserveIdentity && !string.IsNullOrEmpty(stateChunk.ChunkPath)
+                        ? stateChunk.ChunkPath : BuildUltimateChunkPath(currentPrefix, stateChunk.NameSuffix);
                     backend.UpsertBinaryChunk(stateChunk.Name, newChunkName, newChunkPath, BuildUltimateChunkData(stateChunk));
                     targetNames.Add(newChunkName);
                 }
 
-                foreach (XfbinBinaryChunkPage page in backend.GetBinaryChunkPages())
+                foreach (XfbinBinaryChunkItem page in backend.GetBinaryChunks())
                 {
-                    if (!LooksLikeUltimateChunk(page.ChunkType, page.ChunkPath, page.ChunkName, null))
+                    if (!LooksLikeUltimateChunk(page.ChunkType, page.ChunkPath, page.ChunkName, page.BinaryData))
                         continue;
                     if (!targetNames.Contains(page.ChunkName))
                         backend.DeleteBinaryChunk(page.ChunkName);
@@ -1350,23 +1359,28 @@ namespace NSUNS4_Character_Manager
             if (!File.Exists(outputPath)) { MessageBox.Show("XFBIN write failed."); return; }
             ultimateState.FilePath = outputPath;
             ultimateState.FileBytes = File.ReadAllBytes(outputPath);
-            ultimateState.OriginalPrefix = currentPrefix;
             ultimateState.CurrentPrefix = currentPrefix;
             ultimatePrefixText.Text = currentPrefix;
             foreach (UltimateChunk stateChunk in ultimateState.Chunks)
             {
-                stateChunk.Name = currentPrefix + (stateChunk.NameSuffix ?? "");
+                if (stateChunk.IsNew || currentPrefix != ultimateState.OriginalPrefix)
+                {
+                    stateChunk.Name = currentPrefix + (stateChunk.NameSuffix ?? "");
+                    stateChunk.ChunkPath = BuildUltimateChunkPath(currentPrefix, stateChunk.NameSuffix);
+                }
                 stateChunk.OriginalEntryCount = stateChunk.Entries.Count;
                 stateChunk.IsNew = false;
             }
+            ultimateState.OriginalPrefix = currentPrefix;
         }
 
         private byte[] BuildUltimateChunkData(UltimateChunk chunk)
         {
-            List<UltimateEntry> entries = new List<UltimateEntry>(chunk.Entries);
-            entries.Sort((left, right) => left.SoundDelay.CompareTo(right.SoundDelay));
-            for (short i = 0; i < entries.Count; i++)
-                entries[i].Index = i;
+            // Saving must not reorder entries or change their indices behind the UI.
+            // Sorting and reindexing are explicit editor operations.
+            List<UltimateEntry> entries = chunk.Entries;
+            if (entries.Count > short.MaxValue)
+                throw new InvalidOperationException("An Ultimate chunk cannot contain more than 32767 entries.");
 
             int entryBytesLength = entries.Count * EvSplEntrySize;
             byte[] output = new byte[BattleChunkHeaderSize + entryBytesLength];
@@ -1377,8 +1391,6 @@ namespace NSUNS4_Character_Manager
                 int ptr = BattleChunkHeaderSize + (i * EvSplEntrySize);
                 WriteUltimateEntry(output, ptr, entries[i]);
             }
-            chunk.Entries.Clear();
-            chunk.Entries.AddRange(entries);
             return output;
         }
 

@@ -8,51 +8,36 @@ namespace NSUNS4_Character_Manager
 {
     internal enum ParticleSpawnType
     {
-        SpawnAtBone = 0,
-        RandomSpawnXZ = 1,
-        RandomSpawnXYZ = 2
+        SpawnPoint = 0,
+        SpawnPlanarCircle = 1,
+        SpawnSphere = 2,
+        SpawnTubeRandomEnd = 3,
+        SpawnTubeForward = 4,
+        SpawnTubeReverse = 5
     }
 
-    internal enum ParticleRandomRollType
+    internal enum ParticleDirectionType : byte
     {
-        DisabledRandomRotation = 0,
-        RandomTrackballRotation = 1,
-        Unknown2 = 2,
-        RandomRotation = 3
+        DirectionOutward = 0,
+        DirectionInward = 1,
+        DirectionRandomXYZ = 2,
+        DirectionLocalCone = 3
     }
 
-    internal enum ParticleType : byte
+    internal enum ParticleRotationType : byte
     {
-        Default = 0,
-        InvertAndAddRandomScale = 1,
-        Unknown2 = 2,
-        Unknown3 = 3,
-        KillAtEnd = 4,
-        Unknown5 = 5,
-        Unknown6 = 6,
-        Unknown7 = 7,
-        Unknown8 = 8,
-        Unknown9 = 9,
-        Unknown10 = 10,
-        Unknown11 = 11,
-        Unknown12 = 12,
-        Unknown13 = 13,
-        Unknown14 = 14,
-        Unknown15 = 15,
-        Unknown16 = 16,
-        Unknown17 = 17,
-        Unknown18 = 18,
-        Unknown19 = 19,
-        Unknown20 = 20,
-        Unknown21 = 21,
-        Unknown22 = 22,
-        Unknown23 = 23
+        RotationZero = 0,
+        RotationRandomXYZ = 1,
+        RotationAxisAligned = 2,
+        RotationAxisRandomY = 3
     }
 
     internal enum ParticleEffectChunkType : uint
     {
         nuccChunkClump = 1,
         nuccChunkAnm = 2,
+        nuccChunkSprite = 3,
+        nuccChunkSprite2 = 4,
         nuccChunkBillboard = 5
     }
 
@@ -64,7 +49,9 @@ namespace NSUNS4_Character_Manager
         public const int HeaderTableSize = 0x28;
         public const int ParticleManagerSize = 0xD0;
         public const int ParticleResourceSize = 0x20;
+        public const int ParticlePositionLegacySize = 0x30;
         public const int ParticlePositionSize = 0x38;
+        public const int ParticleForceFieldLegacySize = 0x60;
         public const int ParticleForceFieldSize = 0x70;
         public static readonly uint[] DefaultHeaderValues = { 0x28u, 0x0D28u, 0x1768u, 0x21F8u, 0x21F8u };
 
@@ -93,6 +80,7 @@ namespace NSUNS4_Character_Manager
                 ChunkPath = source.ChunkPath,
                 Version = source.Version,
                 VersionAttribute = source.VersionAttribute,
+                UsesVersion78Layout = source.UsesVersion78Layout,
                 DeletePending = source.DeletePending
             };
 
@@ -109,6 +97,7 @@ namespace NSUNS4_Character_Manager
             clone.ForceFields.AddRange(source.ForceFields.Select(CloneForceField));
             clone.Nodes.AddRange(source.Nodes.Select(CloneNode));
             clone.References.AddRange(CloneReferences(source.References));
+            clone.ExtendedData = source.ExtendedData != null ? (byte[])source.ExtendedData.Clone() : new byte[0];
             return clone;
         }
 
@@ -120,36 +109,36 @@ namespace NSUNS4_Character_Manager
                 EntryIndex = entry.EntryIndex,
                 Field08 = entry.Field08,
                 Field0C = entry.Field0C,
-                StretchParticles = entry.StretchParticles,
-                AttachmentType = entry.AttachmentType,
-                VelocityType = entry.VelocityType,
-                AttachToBone = entry.AttachToBone,
-                RandomRollType = entry.RandomRollType,
-                FrameRate = entry.FrameRate,
-                Field16 = entry.Field16,
-                ParticleType = entry.ParticleType,
-                Field18 = entry.Field18,
-                Field19 = entry.Field19,
-                Field1A = entry.Field1A,
-                Gravity = entry.Gravity,
-                FrameEnd = entry.FrameEnd,
-                Field1E = entry.Field1E,
-                ParticleCount = entry.ParticleCount,
-                SpawnRadiusStart = entry.SpawnRadiusStart,
-                SpawnRadiusEnd = entry.SpawnRadiusEnd,
+                AllocationMode = entry.AllocationMode,
+                SpawnType = entry.SpawnType,
+                DirectionType = entry.DirectionType,
+                ParticleInstanceMode = entry.ParticleInstanceMode,
+                RotationType = entry.RotationType,
+                ControlRate = entry.ControlRate,
+                GeneratorFlags = entry.GeneratorFlags,
+                ParticleBehaviorType = entry.ParticleBehaviorType,
+                ParticleInstanceFlag0 = entry.ParticleInstanceFlag0,
+                ParticleInstanceFlag1 = entry.ParticleInstanceFlag1,
+                ParticleInstanceFlag2 = entry.ParticleInstanceFlag2,
+                ParticleInstanceFlag3 = entry.ParticleInstanceFlag3,
+                GeneratorEndTime = entry.GeneratorEndTime,
+                ExtendedDataFlags = entry.ExtendedDataFlags,
+                ParticleCountOrRate = entry.ParticleCountOrRate,
+                SpawnRadius = entry.SpawnRadius,
+                SpawnRadiusRandomness = entry.SpawnRadiusRandomness,
                 Lifetime = entry.Lifetime,
-                Field2E = entry.Field2E,
+                Reserved2E = entry.Reserved2E,
                 LifetimeRandomness = entry.LifetimeRandomness,
-                Velocity = entry.Velocity,
-                ObjectAlignedVelocity = entry.ObjectAlignedVelocity,
-                RandomRotationStart = entry.RandomRotationStart,
-                RandomRotationMiddle = entry.RandomRotationMiddle,
-                RandomRotationEnd = entry.RandomRotationEnd,
-                RandomRotationFactor = entry.RandomRotationFactor,
-                AlphaStart = entry.AlphaStart,
-                AlphaMiddle = entry.AlphaMiddle,
-                AlphaEnd = entry.AlphaEnd,
-                AlphaFactor = entry.AlphaFactor,
+                InitialSpeed = entry.InitialSpeed,
+                InitialSpeedRandomness = entry.InitialSpeedRandomness,
+                EmissionAngle1 = entry.EmissionAngle1,
+                EmissionAngle2 = entry.EmissionAngle2,
+                EmissionAngle1Randomness = entry.EmissionAngle1Randomness,
+                EmissionAngle2Randomness = entry.EmissionAngle2Randomness,
+                FadeParameter1 = entry.FadeParameter1,
+                FadeParameter2 = entry.FadeParameter2,
+                InitialRotation = entry.InitialRotation,
+                InitialRotationRandomness = entry.InitialRotationRandomness,
                 ScaleStartX = entry.ScaleStartX,
                 ScaleStartY = entry.ScaleStartY,
                 ScaleStartZ = entry.ScaleStartZ,
@@ -162,7 +151,7 @@ namespace NSUNS4_Character_Manager
                 ScaleEndX = entry.ScaleEndX,
                 ScaleEndY = entry.ScaleEndY,
                 ScaleEndZ = entry.ScaleEndZ,
-                ScaleFactor = entry.ScaleFactor,
+                ScaleInterpolationPoint = entry.ScaleInterpolationPoint,
                 ColorStartR = entry.ColorStartR,
                 ColorStartG = entry.ColorStartG,
                 ColorStartB = entry.ColorStartB,
@@ -175,10 +164,10 @@ namespace NSUNS4_Character_Manager
                 ColorEndG = entry.ColorEndG,
                 ColorEndB = entry.ColorEndB,
                 ColorEndA = entry.ColorEndA,
-                ColorFactor = entry.ColorFactor,
-                FieldC4 = entry.FieldC4,
-                FieldC8 = entry.FieldC8,
-                FieldCC = entry.FieldCC
+                ColorInterpolationPoint = entry.ColorInterpolationPoint,
+                UnknownC4 = entry.UnknownC4,
+                UnknownC8 = entry.UnknownC8,
+                UnknownCC = entry.UnknownCC
             };
         }
 
@@ -217,7 +206,8 @@ namespace NSUNS4_Character_Manager
                 Field28 = entry.Field28,
                 Field2C = entry.Field2C,
                 ClumpChunkIndex = entry.ClumpChunkIndex,
-                Field34 = entry.Field34
+                Field34 = entry.Field34,
+                HasVersion78Fields = entry.HasVersion78Fields
             };
         }
 
@@ -255,14 +245,15 @@ namespace NSUNS4_Character_Manager
                 ClumpChunkIndex = entry.ClumpChunkIndex,
                 Field64 = entry.Field64,
                 Field68 = entry.Field68,
-                Field6C = entry.Field6C
+                Field6C = entry.Field6C,
+                HasVersion78Fields = entry.HasVersion78Fields
             };
         }
 
         public static ParticleNodeEntry CloneNode(ParticleNodeEntry entry)
         {
             ParticleNodeEntry clone = new ParticleNodeEntry();
-            clone.Frames.AddRange(entry.Frames.Select(x => new ParticleFrameEntry { Flag = x.Flag, FrameRaw = x.FrameRaw }));
+            clone.Frames.AddRange(entry.Frames.Select(x => new ParticleFrameEntry { RawValue = x.RawValue }));
             clone.Padding = entry.Padding != null ? (byte[])entry.Padding.Clone() : new byte[0];
             return clone;
         }
@@ -282,16 +273,18 @@ namespace NSUNS4_Character_Manager
             string path = string.IsNullOrWhiteSpace(chunk.ChunkPath) ? "(no path)" : chunk.ChunkPath;
             return string.Format(
                 CultureInfo.InvariantCulture,
-                "{0} | v0x{1:X2} | {2} | Links:{3} M:{4} R:{5} P:{6} F:{7} N:{8}",
+                "{0} | {1} | {2} | {3} | Links:{4} M:{5} R:{6} P:{7} F:{8} T:{9} Ext:{10}B",
                 string.IsNullOrWhiteSpace(chunk.ChunkName) ? "(unnamed chunk)" : chunk.ChunkName,
-                chunk.Version,
+                chunk.Version == 0 ? "version not supplied" : "v0x" + chunk.Version.ToString("X2", CultureInfo.InvariantCulture),
+                chunk.UsesVersion78Layout ? "v0x78+ entry layout" : "legacy entry layout",
                 path,
                 chunk.References.Count,
                 chunk.Managers.Count,
                 chunk.Resources.Count,
                 chunk.Positions.Count,
                 chunk.ForceFields.Count,
-                chunk.Nodes.Count);
+                chunk.Nodes.Count,
+                chunk.ExtendedData != null ? chunk.ExtendedData.Length : 0);
         }
 
         public static List<ParticleChunkReferenceEntry> ExtractReferenceEntries(XfbinParserPageDefinition definition, string chunkName, string chunkType)
@@ -362,8 +355,8 @@ namespace NSUNS4_Character_Manager
             {
                 events.Add(new ParticleNodeEvent
                 {
-                    Action = frame.Flag == 0 ? ParticleNodeAction.Off : ParticleNodeAction.On,
-                    Frame = frame.FrameRaw / 33f
+                    Action = (frame.RawValue & 0x80000000u) == 0 ? ParticleNodeAction.Off : ParticleNodeAction.On,
+                    TimeMilliseconds = frame.RawValue & 0x7FFFFFFFu
                 });
             }
 
@@ -375,11 +368,9 @@ namespace NSUNS4_Character_Manager
             ParticleNodeEntry node = new ParticleNodeEntry();
             foreach (ParticleNodeEvent particleEvent in events)
             {
-                int frameRaw = (int)Math.Round(Math.Max(0f, particleEvent.Frame) * 33f, MidpointRounding.AwayFromZero);
                 node.Frames.Add(new ParticleFrameEntry
                 {
-                    Flag = particleEvent.Action == ParticleNodeAction.On ? (ushort)1 : (ushort)0,
-                    FrameRaw = checked((ushort)Math.Min(frameRaw, ushort.MaxValue))
+                    RawValue = particleEvent.TimeMilliseconds | (particleEvent.Action == ParticleNodeAction.On ? 0x80000000u : 0u)
                 });
             }
 
@@ -410,6 +401,8 @@ namespace NSUNS4_Character_Manager
                 state.Headers[i].Size = ReadUInt16BE(bytes, headerOffset + 6);
             }
 
+            state.UsesVersion78Layout = DetectVersion78Layout(state);
+
             int managerOffset = HeaderTableSize;
             int resourceOffset = managerOffset + state.Headers[0].Size;
             int positionOffset = resourceOffset + state.Headers[1].Size;
@@ -430,6 +423,13 @@ namespace NSUNS4_Character_Manager
             if (!TryParseNodes(bytes, nodeOffset, state.Headers[4], state.Nodes))
                 return false;
 
+            int extendedDataOffset = nodeOffset + state.Headers[4].Size;
+            if (extendedDataOffset < bytes.Length)
+            {
+                state.ExtendedData = new byte[bytes.Length - extendedDataOffset];
+                Buffer.BlockCopy(bytes, extendedDataOffset, state.ExtendedData, 0, state.ExtendedData.Length);
+            }
+
             chunk = state;
             return true;
         }
@@ -438,16 +438,18 @@ namespace NSUNS4_Character_Manager
         {
             byte[] managerBytes = BuildManagers(chunk.Managers);
             byte[] resourceBytes = BuildResources(chunk.Resources);
-            byte[] positionBytes = BuildPositions(chunk.Positions);
-            byte[] forceFieldBytes = BuildForceFields(chunk.ForceFields);
+            byte[] positionBytes = BuildPositions(chunk.Positions, chunk.UsesVersion78Layout);
+            byte[] forceFieldBytes = BuildForceFields(chunk.ForceFields, chunk.UsesVersion78Layout);
             byte[] nodeBytes = BuildNodes(chunk.Nodes);
+            byte[] extendedData = chunk.ExtendedData ?? new byte[0];
 
-            byte[] output = new byte[HeaderTableSize + managerBytes.Length + resourceBytes.Length + positionBytes.Length + forceFieldBytes.Length + nodeBytes.Length];
+            byte[] output = new byte[HeaderTableSize + managerBytes.Length + resourceBytes.Length + positionBytes.Length + forceFieldBytes.Length + nodeBytes.Length + extendedData.Length];
             Buffer.BlockCopy(managerBytes, 0, output, HeaderTableSize, managerBytes.Length);
             Buffer.BlockCopy(resourceBytes, 0, output, HeaderTableSize + managerBytes.Length, resourceBytes.Length);
             Buffer.BlockCopy(positionBytes, 0, output, HeaderTableSize + managerBytes.Length + resourceBytes.Length, positionBytes.Length);
             Buffer.BlockCopy(forceFieldBytes, 0, output, HeaderTableSize + managerBytes.Length + resourceBytes.Length + positionBytes.Length, forceFieldBytes.Length);
             Buffer.BlockCopy(nodeBytes, 0, output, HeaderTableSize + managerBytes.Length + resourceBytes.Length + positionBytes.Length + forceFieldBytes.Length, nodeBytes.Length);
+            Buffer.BlockCopy(extendedData, 0, output, HeaderTableSize + managerBytes.Length + resourceBytes.Length + positionBytes.Length + forceFieldBytes.Length + nodeBytes.Length, extendedData.Length);
 
             WriteSectionHeader(output, 0x00, chunk.Headers[0].Value == 0 ? DefaultHeaderValues[0] : chunk.Headers[0].Value, chunk.Managers.Count, managerBytes.Length);
             WriteSectionHeader(output, 0x08, chunk.Headers[1].Value == 0 ? DefaultHeaderValues[1] : chunk.Headers[1].Value, chunk.Resources.Count, resourceBytes.Length);
@@ -462,6 +464,15 @@ namespace NSUNS4_Character_Manager
             WriteUInt32BE(output, offset, value);
             WriteUInt16BE(output, offset + 4, checked((ushort)count));
             WriteUInt16BE(output, offset + 6, checked((ushort)size));
+        }
+
+        private static bool DetectVersion78Layout(ParticleChunkState chunk)
+        {
+            if (chunk.Headers[2].Count > 0)
+                return chunk.Headers[2].Size == chunk.Headers[2].Count * ParticlePositionSize;
+            if (chunk.Headers[3].Count > 0)
+                return chunk.Headers[3].Size == chunk.Headers[3].Count * ParticleForceFieldSize;
+            return chunk.Version == 0 || chunk.Version > 0x77;
         }
 
         private static bool TryParseManagers(byte[] bytes, int offset, ParticleSectionHeaderState header, List<ParticleManagerEntry> output)
@@ -481,36 +492,36 @@ namespace NSUNS4_Character_Manager
                     EntryIndex = ReadUInt32BE(bytes, e + 0x04),
                     Field08 = ReadUInt32BE(bytes, e + 0x08),
                     Field0C = ReadUInt32BE(bytes, e + 0x0C),
-                    StretchParticles = bytes[e + 0x10] != 0,
-                    AttachmentType = (ParticleSpawnType)bytes[e + 0x11],
-                    VelocityType = bytes[e + 0x12],
-                    AttachToBone = bytes[e + 0x13] != 0,
-                    RandomRollType = (ParticleRandomRollType)bytes[e + 0x14],
-                    FrameRate = bytes[e + 0x15],
-                    Field16 = bytes[e + 0x16],
-                    ParticleType = (ParticleType)bytes[e + 0x17],
-                    Field18 = bytes[e + 0x18],
-                    Field19 = bytes[e + 0x19],
-                    Field1A = bytes[e + 0x1A],
-                    Gravity = bytes[e + 0x1B],
-                    FrameEnd = ReadInt16BE(bytes, e + 0x1C),
-                    Field1E = ReadUInt16BE(bytes, e + 0x1E),
-                    ParticleCount = ReadSingleBE(bytes, e + 0x20),
-                    SpawnRadiusStart = ReadSingleBE(bytes, e + 0x24),
-                    SpawnRadiusEnd = ReadSingleBE(bytes, e + 0x28),
+                    AllocationMode = bytes[e + 0x10],
+                    SpawnType = (ParticleSpawnType)bytes[e + 0x11],
+                    DirectionType = (ParticleDirectionType)bytes[e + 0x12],
+                    ParticleInstanceMode = bytes[e + 0x13],
+                    RotationType = (ParticleRotationType)bytes[e + 0x14],
+                    ControlRate = bytes[e + 0x15],
+                    GeneratorFlags = bytes[e + 0x16],
+                    ParticleBehaviorType = bytes[e + 0x17],
+                    ParticleInstanceFlag0 = bytes[e + 0x18],
+                    ParticleInstanceFlag1 = bytes[e + 0x19],
+                    ParticleInstanceFlag2 = bytes[e + 0x1A],
+                    ParticleInstanceFlag3 = bytes[e + 0x1B],
+                    GeneratorEndTime = ReadInt16BE(bytes, e + 0x1C),
+                    ExtendedDataFlags = ReadUInt16BE(bytes, e + 0x1E),
+                    ParticleCountOrRate = ReadSingleBE(bytes, e + 0x20),
+                    SpawnRadius = ReadSingleBE(bytes, e + 0x24),
+                    SpawnRadiusRandomness = ReadSingleBE(bytes, e + 0x28),
                     Lifetime = ReadUInt16BE(bytes, e + 0x2C),
-                    Field2E = ReadUInt16BE(bytes, e + 0x2E),
+                    Reserved2E = ReadUInt16BE(bytes, e + 0x2E),
                     LifetimeRandomness = ReadSingleBE(bytes, e + 0x30),
-                    Velocity = ReadSingleBE(bytes, e + 0x34),
-                    ObjectAlignedVelocity = ReadSingleBE(bytes, e + 0x38),
-                    RandomRotationStart = ReadSingleBE(bytes, e + 0x3C),
-                    RandomRotationMiddle = ReadSingleBE(bytes, e + 0x40),
-                    RandomRotationEnd = ReadSingleBE(bytes, e + 0x44),
-                    RandomRotationFactor = ReadSingleBE(bytes, e + 0x48),
-                    AlphaStart = ReadSingleBE(bytes, e + 0x4C),
-                    AlphaMiddle = ReadSingleBE(bytes, e + 0x50),
-                    AlphaEnd = ReadSingleBE(bytes, e + 0x54),
-                    AlphaFactor = ReadSingleBE(bytes, e + 0x58),
+                    InitialSpeed = ReadSingleBE(bytes, e + 0x34),
+                    InitialSpeedRandomness = ReadSingleBE(bytes, e + 0x38),
+                    EmissionAngle1 = ReadSingleBE(bytes, e + 0x3C),
+                    EmissionAngle2 = ReadSingleBE(bytes, e + 0x40),
+                    EmissionAngle1Randomness = ReadSingleBE(bytes, e + 0x44),
+                    EmissionAngle2Randomness = ReadSingleBE(bytes, e + 0x48),
+                    FadeParameter1 = ReadSingleBE(bytes, e + 0x4C),
+                    FadeParameter2 = ReadSingleBE(bytes, e + 0x50),
+                    InitialRotation = ReadSingleBE(bytes, e + 0x54),
+                    InitialRotationRandomness = ReadSingleBE(bytes, e + 0x58),
                     ScaleStartX = ReadSingleBE(bytes, e + 0x5C),
                     ScaleStartY = ReadSingleBE(bytes, e + 0x60),
                     ScaleStartZ = ReadSingleBE(bytes, e + 0x64),
@@ -523,7 +534,7 @@ namespace NSUNS4_Character_Manager
                     ScaleEndX = ReadSingleBE(bytes, e + 0x80),
                     ScaleEndY = ReadSingleBE(bytes, e + 0x84),
                     ScaleEndZ = ReadSingleBE(bytes, e + 0x88),
-                    ScaleFactor = ReadSingleBE(bytes, e + 0x8C),
+                    ScaleInterpolationPoint = ReadSingleBE(bytes, e + 0x8C),
                     ColorStartR = ReadSingleBE(bytes, e + 0x90),
                     ColorStartG = ReadSingleBE(bytes, e + 0x94),
                     ColorStartB = ReadSingleBE(bytes, e + 0x98),
@@ -536,10 +547,10 @@ namespace NSUNS4_Character_Manager
                     ColorEndG = ReadSingleBE(bytes, e + 0xB4),
                     ColorEndB = ReadSingleBE(bytes, e + 0xB8),
                     ColorEndA = ReadSingleBE(bytes, e + 0xBC),
-                    ColorFactor = ReadSingleBE(bytes, e + 0xC0),
-                    FieldC4 = ReadSingleBE(bytes, e + 0xC4),
-                    FieldC8 = ReadSingleBE(bytes, e + 0xC8),
-                    FieldCC = ReadSingleBE(bytes, e + 0xCC)
+                    ColorInterpolationPoint = ReadSingleBE(bytes, e + 0xC0),
+                    UnknownC4 = ReadUInt32BE(bytes, e + 0xC4),
+                    UnknownC8 = ReadUInt32BE(bytes, e + 0xC8),
+                    UnknownCC = ReadUInt32BE(bytes, e + 0xCC)
                 });
             }
 
@@ -581,13 +592,15 @@ namespace NSUNS4_Character_Manager
             output.Clear();
             if (header.Count == 0)
                 return header.Size == 0;
-            if (header.Size != header.Count * ParticlePositionSize)
+            bool hasVersion78Fields = header.Size == header.Count * ParticlePositionSize;
+            int entrySize = hasVersion78Fields ? ParticlePositionSize : ParticlePositionLegacySize;
+            if (header.Size != header.Count * entrySize)
                 return false;
 
             for (int i = 0; i < header.Count; i++)
             {
-                int e = offset + (i * ParticlePositionSize);
-                output.Add(new ParticlePositionEntry
+                int e = offset + (i * entrySize);
+                ParticlePositionEntry entry = new ParticlePositionEntry
                 {
                     CoordChunkIndex = ReadInt32BE(bytes, e + 0x00),
                     ParticleEntryIndex = ReadUInt32BE(bytes, e + 0x04),
@@ -600,10 +613,15 @@ namespace NSUNS4_Character_Manager
                     Field20 = ReadInt32BE(bytes, e + 0x20),
                     Field24 = ReadInt32BE(bytes, e + 0x24),
                     Field28 = ReadInt32BE(bytes, e + 0x28),
-                    Field2C = ReadInt32BE(bytes, e + 0x2C),
-                    ClumpChunkIndex = ReadInt32BE(bytes, e + 0x30),
-                    Field34 = ReadUInt32BE(bytes, e + 0x34)
-                });
+                    Field2C = ReadInt32BE(bytes, e + 0x2C)
+                };
+                entry.HasVersion78Fields = hasVersion78Fields;
+                if (hasVersion78Fields)
+                {
+                    entry.ClumpChunkIndex = ReadInt32BE(bytes, e + 0x30);
+                    entry.Field34 = ReadUInt32BE(bytes, e + 0x34);
+                }
+                output.Add(entry);
             }
 
             return true;
@@ -614,13 +632,15 @@ namespace NSUNS4_Character_Manager
             output.Clear();
             if (header.Count == 0)
                 return header.Size == 0;
-            if (header.Size != header.Count * ParticleForceFieldSize)
+            bool hasVersion78Fields = header.Size == header.Count * ParticleForceFieldSize;
+            int entrySize = hasVersion78Fields ? ParticleForceFieldSize : ParticleForceFieldLegacySize;
+            if (header.Size != header.Count * entrySize)
                 return false;
 
             for (int i = 0; i < header.Count; i++)
             {
-                int e = offset + (i * ParticleForceFieldSize);
-                output.Add(new ParticleForceFieldEntry
+                int e = offset + (i * entrySize);
+                ParticleForceFieldEntry entry = new ParticleForceFieldEntry
                 {
                     CoordChunkIndex = ReadInt32BE(bytes, e + 0x00),
                     ParticleEntryIndex = ReadUInt32BE(bytes, e + 0x04),
@@ -648,12 +668,17 @@ namespace NSUNS4_Character_Manager
                     Field50 = ReadSingleBE(bytes, e + 0x50),
                     ParticleSpeed = ReadSingleBE(bytes, e + 0x54),
                     Field58 = ReadSingleBE(bytes, e + 0x58),
-                    Field5C = ReadSingleBE(bytes, e + 0x5C),
-                    ClumpChunkIndex = ReadInt32BE(bytes, e + 0x60),
-                    Field64 = ReadInt32BE(bytes, e + 0x64),
-                    Field68 = ReadInt32BE(bytes, e + 0x68),
-                    Field6C = ReadInt32BE(bytes, e + 0x6C)
-                });
+                    Field5C = ReadSingleBE(bytes, e + 0x5C)
+                };
+                entry.HasVersion78Fields = hasVersion78Fields;
+                if (hasVersion78Fields)
+                {
+                    entry.ClumpChunkIndex = ReadInt32BE(bytes, e + 0x60);
+                    entry.Field64 = ReadInt32BE(bytes, e + 0x64);
+                    entry.Field68 = ReadInt32BE(bytes, e + 0x68);
+                    entry.Field6C = ReadInt32BE(bytes, e + 0x6C);
+                }
+                output.Add(entry);
             }
 
             return true;
@@ -682,8 +707,7 @@ namespace NSUNS4_Character_Manager
                 {
                     entry.Frames.Add(new ParticleFrameEntry
                     {
-                        Flag = ReadUInt16BE(bytes, current),
-                        FrameRaw = ReadUInt16BE(bytes, current + 2)
+                        RawValue = ReadUInt32BE(bytes, current)
                     });
                     current += 4;
                 }
@@ -714,36 +738,36 @@ namespace NSUNS4_Character_Manager
                 WriteUInt32BE(output, e + 0x04, entry.EntryIndex);
                 WriteUInt32BE(output, e + 0x08, entry.Field08);
                 WriteUInt32BE(output, e + 0x0C, entry.Field0C);
-                output[e + 0x10] = entry.StretchParticles ? (byte)1 : (byte)0;
-                output[e + 0x11] = (byte)entry.AttachmentType;
-                output[e + 0x12] = entry.VelocityType;
-                output[e + 0x13] = entry.AttachToBone ? (byte)1 : (byte)0;
-                output[e + 0x14] = (byte)entry.RandomRollType;
-                output[e + 0x15] = entry.FrameRate;
-                output[e + 0x16] = entry.Field16;
-                output[e + 0x17] = (byte)entry.ParticleType;
-                output[e + 0x18] = entry.Field18;
-                output[e + 0x19] = entry.Field19;
-                output[e + 0x1A] = entry.Field1A;
-                output[e + 0x1B] = entry.Gravity;
-                WriteInt16BE(output, e + 0x1C, entry.FrameEnd);
-                WriteUInt16BE(output, e + 0x1E, entry.Field1E);
-                WriteSingleBE(output, e + 0x20, entry.ParticleCount);
-                WriteSingleBE(output, e + 0x24, entry.SpawnRadiusStart);
-                WriteSingleBE(output, e + 0x28, entry.SpawnRadiusEnd);
+                output[e + 0x10] = entry.AllocationMode;
+                output[e + 0x11] = (byte)entry.SpawnType;
+                output[e + 0x12] = (byte)entry.DirectionType;
+                output[e + 0x13] = entry.ParticleInstanceMode;
+                output[e + 0x14] = (byte)entry.RotationType;
+                output[e + 0x15] = entry.ControlRate;
+                output[e + 0x16] = entry.GeneratorFlags;
+                output[e + 0x17] = entry.ParticleBehaviorType;
+                output[e + 0x18] = entry.ParticleInstanceFlag0;
+                output[e + 0x19] = entry.ParticleInstanceFlag1;
+                output[e + 0x1A] = entry.ParticleInstanceFlag2;
+                output[e + 0x1B] = entry.ParticleInstanceFlag3;
+                WriteInt16BE(output, e + 0x1C, entry.GeneratorEndTime);
+                WriteUInt16BE(output, e + 0x1E, entry.ExtendedDataFlags);
+                WriteSingleBE(output, e + 0x20, entry.ParticleCountOrRate);
+                WriteSingleBE(output, e + 0x24, entry.SpawnRadius);
+                WriteSingleBE(output, e + 0x28, entry.SpawnRadiusRandomness);
                 WriteUInt16BE(output, e + 0x2C, entry.Lifetime);
-                WriteUInt16BE(output, e + 0x2E, entry.Field2E);
+                WriteUInt16BE(output, e + 0x2E, entry.Reserved2E);
                 WriteSingleBE(output, e + 0x30, entry.LifetimeRandomness);
-                WriteSingleBE(output, e + 0x34, entry.Velocity);
-                WriteSingleBE(output, e + 0x38, entry.ObjectAlignedVelocity);
-                WriteSingleBE(output, e + 0x3C, entry.RandomRotationStart);
-                WriteSingleBE(output, e + 0x40, entry.RandomRotationMiddle);
-                WriteSingleBE(output, e + 0x44, entry.RandomRotationEnd);
-                WriteSingleBE(output, e + 0x48, entry.RandomRotationFactor);
-                WriteSingleBE(output, e + 0x4C, entry.AlphaStart);
-                WriteSingleBE(output, e + 0x50, entry.AlphaMiddle);
-                WriteSingleBE(output, e + 0x54, entry.AlphaEnd);
-                WriteSingleBE(output, e + 0x58, entry.AlphaFactor);
+                WriteSingleBE(output, e + 0x34, entry.InitialSpeed);
+                WriteSingleBE(output, e + 0x38, entry.InitialSpeedRandomness);
+                WriteSingleBE(output, e + 0x3C, entry.EmissionAngle1);
+                WriteSingleBE(output, e + 0x40, entry.EmissionAngle2);
+                WriteSingleBE(output, e + 0x44, entry.EmissionAngle1Randomness);
+                WriteSingleBE(output, e + 0x48, entry.EmissionAngle2Randomness);
+                WriteSingleBE(output, e + 0x4C, entry.FadeParameter1);
+                WriteSingleBE(output, e + 0x50, entry.FadeParameter2);
+                WriteSingleBE(output, e + 0x54, entry.InitialRotation);
+                WriteSingleBE(output, e + 0x58, entry.InitialRotationRandomness);
                 WriteSingleBE(output, e + 0x5C, entry.ScaleStartX);
                 WriteSingleBE(output, e + 0x60, entry.ScaleStartY);
                 WriteSingleBE(output, e + 0x64, entry.ScaleStartZ);
@@ -756,7 +780,7 @@ namespace NSUNS4_Character_Manager
                 WriteSingleBE(output, e + 0x80, entry.ScaleEndX);
                 WriteSingleBE(output, e + 0x84, entry.ScaleEndY);
                 WriteSingleBE(output, e + 0x88, entry.ScaleEndZ);
-                WriteSingleBE(output, e + 0x8C, entry.ScaleFactor);
+                WriteSingleBE(output, e + 0x8C, entry.ScaleInterpolationPoint);
                 WriteSingleBE(output, e + 0x90, entry.ColorStartR);
                 WriteSingleBE(output, e + 0x94, entry.ColorStartG);
                 WriteSingleBE(output, e + 0x98, entry.ColorStartB);
@@ -769,10 +793,10 @@ namespace NSUNS4_Character_Manager
                 WriteSingleBE(output, e + 0xB4, entry.ColorEndG);
                 WriteSingleBE(output, e + 0xB8, entry.ColorEndB);
                 WriteSingleBE(output, e + 0xBC, entry.ColorEndA);
-                WriteSingleBE(output, e + 0xC0, entry.ColorFactor);
-                WriteSingleBE(output, e + 0xC4, entry.FieldC4);
-                WriteSingleBE(output, e + 0xC8, entry.FieldC8);
-                WriteSingleBE(output, e + 0xCC, entry.FieldCC);
+                WriteSingleBE(output, e + 0xC0, entry.ColorInterpolationPoint);
+                WriteUInt32BE(output, e + 0xC4, entry.UnknownC4);
+                WriteUInt32BE(output, e + 0xC8, entry.UnknownC8);
+                WriteUInt32BE(output, e + 0xCC, entry.UnknownCC);
             }
 
             return output;
@@ -801,13 +825,15 @@ namespace NSUNS4_Character_Manager
             return output;
         }
 
-        private static byte[] BuildPositions(List<ParticlePositionEntry> entries)
+        private static byte[] BuildPositions(List<ParticlePositionEntry> entries, bool usesVersion78Layout)
         {
-            byte[] output = new byte[entries.Count * ParticlePositionSize];
+            bool hasVersion78Fields = usesVersion78Layout || entries.Any(x => x.HasVersion78Fields);
+            int entrySize = hasVersion78Fields ? ParticlePositionSize : ParticlePositionLegacySize;
+            byte[] output = new byte[entries.Count * entrySize];
             for (int i = 0; i < entries.Count; i++)
             {
                 ParticlePositionEntry entry = entries[i];
-                int e = i * ParticlePositionSize;
+                int e = i * entrySize;
                 WriteInt32BE(output, e + 0x00, entry.CoordChunkIndex);
                 WriteUInt32BE(output, e + 0x04, entry.ParticleEntryIndex);
                 WriteInt32BE(output, e + 0x08, entry.Field08);
@@ -820,20 +846,25 @@ namespace NSUNS4_Character_Manager
                 WriteInt32BE(output, e + 0x24, entry.Field24);
                 WriteInt32BE(output, e + 0x28, entry.Field28);
                 WriteInt32BE(output, e + 0x2C, entry.Field2C);
-                WriteInt32BE(output, e + 0x30, entry.ClumpChunkIndex);
-                WriteUInt32BE(output, e + 0x34, entry.Field34);
+                if (hasVersion78Fields)
+                {
+                    WriteInt32BE(output, e + 0x30, entry.ClumpChunkIndex);
+                    WriteUInt32BE(output, e + 0x34, entry.Field34);
+                }
             }
 
             return output;
         }
 
-        private static byte[] BuildForceFields(List<ParticleForceFieldEntry> entries)
+        private static byte[] BuildForceFields(List<ParticleForceFieldEntry> entries, bool usesVersion78Layout)
         {
-            byte[] output = new byte[entries.Count * ParticleForceFieldSize];
+            bool hasVersion78Fields = usesVersion78Layout || entries.Any(x => x.HasVersion78Fields);
+            int entrySize = hasVersion78Fields ? ParticleForceFieldSize : ParticleForceFieldLegacySize;
+            byte[] output = new byte[entries.Count * entrySize];
             for (int i = 0; i < entries.Count; i++)
             {
                 ParticleForceFieldEntry entry = entries[i];
-                int e = i * ParticleForceFieldSize;
+                int e = i * entrySize;
                 WriteInt32BE(output, e + 0x00, entry.CoordChunkIndex);
                 WriteUInt32BE(output, e + 0x04, entry.ParticleEntryIndex);
                 WriteInt32BE(output, e + 0x08, entry.Field08);
@@ -861,10 +892,13 @@ namespace NSUNS4_Character_Manager
                 WriteSingleBE(output, e + 0x54, entry.ParticleSpeed);
                 WriteSingleBE(output, e + 0x58, entry.Field58);
                 WriteSingleBE(output, e + 0x5C, entry.Field5C);
-                WriteInt32BE(output, e + 0x60, entry.ClumpChunkIndex);
-                WriteInt32BE(output, e + 0x64, entry.Field64);
-                WriteInt32BE(output, e + 0x68, entry.Field68);
-                WriteInt32BE(output, e + 0x6C, entry.Field6C);
+                if (hasVersion78Fields)
+                {
+                    WriteInt32BE(output, e + 0x60, entry.ClumpChunkIndex);
+                    WriteInt32BE(output, e + 0x64, entry.Field64);
+                    WriteInt32BE(output, e + 0x68, entry.Field68);
+                    WriteInt32BE(output, e + 0x6C, entry.Field6C);
+                }
             }
 
             return output;
@@ -882,8 +916,7 @@ namespace NSUNS4_Character_Manager
                 foreach (ParticleFrameEntry frame in entry.Frames)
                 {
                     byte[] frameBytes = new byte[4];
-                    WriteUInt16BE(frameBytes, 0, frame.Flag);
-                    WriteUInt16BE(frameBytes, 2, frame.FrameRaw);
+                    WriteUInt32BE(frameBytes, 0, frame.RawValue);
                     output.AddRange(frameBytes);
                 }
 
@@ -998,6 +1031,7 @@ namespace NSUNS4_Character_Manager
         public string ChunkPath { get; set; } = "";
         public int Version { get; set; } = 121;
         public int VersionAttribute { get; set; } = 2024;
+        public bool UsesVersion78Layout { get; set; } = true;
         public bool DeletePending { get; set; }
         public readonly ParticleSectionHeaderState[] Headers =
         {
@@ -1013,6 +1047,7 @@ namespace NSUNS4_Character_Manager
         public readonly List<ParticleForceFieldEntry> ForceFields = new List<ParticleForceFieldEntry>();
         public readonly List<ParticleNodeEntry> Nodes = new List<ParticleNodeEntry>();
         public readonly List<ParticleChunkReferenceEntry> References = new List<ParticleChunkReferenceEntry>();
+        public byte[] ExtendedData { get; set; } = new byte[0];
     }
 
     internal sealed class ParticleChunkReferenceEntry
@@ -1037,122 +1072,123 @@ namespace NSUNS4_Character_Manager
     internal sealed class ParticleNodeEvent
     {
         public ParticleNodeAction Action { get; set; }
-        public float Frame { get; set; }
+        public uint TimeMilliseconds { get; set; }
+        public float Frame => TimeMilliseconds / 33f;
     }
 
     internal sealed class ParticleManagerEntry
     {
         [Category("Links")]
-        [Description("Offset 0x00. Index into this particle page's linked chunk map; normally a nuccChunkAnm.")]
+        [DisplayName("Animation Chunk Map")]
+        [Description("Offset 0x00 (u32). Index into this particle page's linked chunk map; normally a nuccChunkAnm.")]
         public uint AnimationChunkIndex { get; set; }
         [Category("Links")]
-        [Description("Offset 0x04. Stable particle-setting identifier used by resource, position, force-field, and node entries.")]
+        [DisplayName("Entry ID")]
+        [Description("Offset 0x04 (u32). Stable particle-setting identifier used by resource, position, force-field, and timeline entries.")]
         public uint EntryIndex { get; set; }
-        [Category("Unknown")]
-        [DisplayName("Field 0x08")]
-        [Description("Unknown unsigned 32-bit value at offset 0x08.")]
+        [Category("Reserved")]
+        [DisplayName("Reserved 0x08-0x0B")]
+        [Description("Offsets 0x08-0x0B. Four reserved bytes preserved as a raw u32 value.")]
         public uint Field08 { get; set; }
-        [Category("Unknown")]
-        [DisplayName("Field 0x0C")]
-        [Description("Unknown unsigned 32-bit value at offset 0x0C.")]
+        [Category("Reserved")]
+        [DisplayName("Reserved 0x0C-0x0F")]
+        [Description("Offsets 0x0C-0x0F. Four reserved bytes preserved as a raw u32 value.")]
         public uint Field0C { get; set; }
-        [Category("Spawn")]
-        [Description("Offset 0x10. Enables particle stretching behavior.")]
-        public bool StretchParticles { get; set; }
-        [Category("Spawn")]
-        [Description("Offset 0x11. Selects bone, random XZ, or random XYZ attachment/spawn behavior.")]
-        public ParticleSpawnType AttachmentType { get; set; }
-        [Category("Spawn")]
-        [Description("Offset 0x12. Velocity behavior selector; values are not fully documented.")]
-        public byte VelocityType { get; set; }
-        [Category("Spawn")]
-        [Description("Offset 0x13. Keeps the particle attached to its source bone.")]
-        public bool AttachToBone { get; set; }
-        [Category("Rotation")]
-        [Description("Offset 0x14. Selects disabled, trackball, unknown type 2, or random roll behavior.")]
-        public ParticleRandomRollType RandomRollType { get; set; }
+        [Category("Generator Modes")]
+        [Description("Offset 0x10 (u8). Particle allocation mode recovered from nuccParticleGenParam.")]
+        public byte AllocationMode { get; set; }
+        [Category("Generator Modes")]
+        [Description("Offset 0x11 (u8). Generator shape: point, planar circle, sphere, or one of three tube modes.")]
+        public ParticleSpawnType SpawnType { get; set; }
+        [Category("Generator Modes")]
+        [Description("Offset 0x12 (u8). Initial direction: outward, inward, random XYZ, or local cone.")]
+        public ParticleDirectionType DirectionType { get; set; }
+        [Category("Generator Modes")]
+        [Description("Offset 0x13 (u8). Particle instance mode; values are not yet named by the executable analysis.")]
+        public byte ParticleInstanceMode { get; set; }
+        [Category("Generator Modes")]
+        [Description("Offset 0x14 (u8). Initial rotation mode.")]
+        public ParticleRotationType RotationType { get; set; }
+        [Category("Generator Modes")]
+        [Description("Offset 0x15 (u8). Generator control/update rate.")]
+        public byte ControlRate { get; set; }
+        [Category("Flags")]
+        [Description("Offset 0x16 (u8). Generator flags. Bit 0 enables independent random XYZ scale; bit 4 enables position-node path adjustment.")]
+        public byte GeneratorFlags { get; set; }
+        [Category("Generator Modes")]
+        [Description("Offset 0x17 (u8). Particle behavior type. The recovered template leaves its numeric values unnamed.")]
+        public byte ParticleBehaviorType { get; set; }
+        [Category("Flags")]
+        [DisplayName("Instance Flag 0 (0x18)")]
+        [Description("Offset 0x18 (u8). First particle-instance flag byte.")]
+        public byte ParticleInstanceFlag0 { get; set; }
+        [Category("Flags")]
+        [DisplayName("Instance Flag 1 (0x19)")]
+        [Description("Offset 0x19 (u8). Second particle-instance flag byte.")]
+        public byte ParticleInstanceFlag1 { get; set; }
+        [Category("Flags")]
+        [DisplayName("Instance Flag 2 (0x1A)")]
+        [Description("Offset 0x1A (u8). Third particle-instance flag byte.")]
+        public byte ParticleInstanceFlag2 { get; set; }
+        [Category("Flags")]
+        [DisplayName("Instance Flag 3 (0x1B)")]
+        [Description("Offset 0x1B (u8). Fourth particle-instance flag byte.")]
+        public byte ParticleInstanceFlag3 { get; set; }
         [Category("Timing")]
-        [Description("Offset 0x15. Particle playback frame rate.")]
-        public byte FrameRate { get; set; }
-        [Category("Unknown")]
-        [DisplayName("Field 0x16")]
-        [Description("Unknown byte at offset 0x16.")]
-        public byte Field16 { get; set; }
+        [Description("Offset 0x1C (s16). Generator end time; -1 means endless.")]
+        public short GeneratorEndTime { get; set; }
+        [Category("Flags")]
+        [Description("Offset 0x1E (u16). The low byte enables the v0x7B extended particle-data block.")]
+        public ushort ExtendedDataFlags { get; set; }
         [Category("Spawn")]
-        [Description("Offset 0x17. Particle behavior type; the template currently names values 0 through 23.")]
-        public ParticleType ParticleType { get; set; }
-        [Category("Unknown")]
-        [DisplayName("Field 0x18")]
-        [Description("Unknown byte at offset 0x18.")]
-        public byte Field18 { get; set; }
-        [Category("Unknown")]
-        [DisplayName("Field 0x19")]
-        [Description("Unknown byte at offset 0x19.")]
-        public byte Field19 { get; set; }
-        [Category("Unknown")]
-        [DisplayName("Field 0x1A")]
-        [Description("Unknown byte at offset 0x1A.")]
-        public byte Field1A { get; set; }
-        [Category("Gravity")]
-        [Description("Offset 0x1B. Gravity control value.")]
-        public byte Gravity { get; set; }
+        [Description("Offset 0x20 (f32). Particle count or emission rate, depending on allocation mode.")]
+        public float ParticleCountOrRate { get; set; }
+        [Category("Spawn")]
+        [Description("Offset 0x24 (f32). Base spawn radius.")]
+        public float SpawnRadius { get; set; }
+        [Category("Spawn")]
+        [Description("Offset 0x28 (f32). Random variation applied to spawn radius.")]
+        public float SpawnRadiusRandomness { get; set; }
         [Category("Timing")]
-        [Description("Offset 0x1C. End frame; -1 (0xFFFF) is commonly used for no fixed end.")]
-        public short FrameEnd { get; set; }
-        [Category("Unknown")]
-        [DisplayName("Field 0x1E")]
-        [Description("Unknown unsigned 16-bit value at offset 0x1E.")]
-        public ushort Field1E { get; set; }
-        [Category("Spawn")]
-        [Description("Offset 0x20. Number or density of emitted particles.")]
-        public float ParticleCount { get; set; }
-        [Category("Spawn")]
-        [Description("Offset 0x24. Initial spawn radius.")]
-        public float SpawnRadiusStart { get; set; }
-        [Category("Spawn")]
-        [Description("Offset 0x28. Final spawn radius.")]
-        public float SpawnRadiusEnd { get; set; }
-        [Category("Timing")]
-        [Description("Offset 0x2C. Base particle lifetime.")]
+        [Description("Offset 0x2C (u16). Base particle lifetime.")]
         public ushort Lifetime { get; set; }
-        [Category("Unknown")]
-        [DisplayName("Field 0x2E")]
-        [Description("Unknown unsigned 16-bit value at offset 0x2E.")]
-        public ushort Field2E { get; set; }
+        [Category("Reserved")]
+        [DisplayName("Reserved 0x2E")]
+        [Description("Offset 0x2E (u16). Reserved value preserved when saving.")]
+        public ushort Reserved2E { get; set; }
         [Category("Timing")]
-        [Description("Offset 0x30. Random variation applied to lifetime.")]
+        [Description("Offset 0x30 (f32). Random variation applied to lifetime.")]
         public float LifetimeRandomness { get; set; }
         [Category("Movement")]
-        [Description("Offset 0x34. Primary particle velocity.")]
-        public float Velocity { get; set; }
+        [Description("Offset 0x34 (f32). Initial particle speed.")]
+        public float InitialSpeed { get; set; }
         [Category("Movement")]
-        [DisplayName("Object-Aligned Velocity")]
-        [Description("Offset 0x38. Velocity component aligned to the source object.")]
-        public float ObjectAlignedVelocity { get; set; }
+        [Description("Offset 0x38 (f32). Random variation applied to initial speed.")]
+        public float InitialSpeedRandomness { get; set; }
+        [Category("Emission")]
+        [Description("Offset 0x3C (f32). First emission-angle parameter.")]
+        public float EmissionAngle1 { get; set; }
+        [Category("Emission")]
+        [Description("Offset 0x40 (f32). Second emission-angle parameter.")]
+        public float EmissionAngle2 { get; set; }
+        [Category("Emission")]
+        [Description("Offset 0x44 (f32). Random variation applied to emission angle 1.")]
+        public float EmissionAngle1Randomness { get; set; }
+        [Category("Emission")]
+        [Description("Offset 0x48 (f32). Random variation applied to emission angle 2.")]
+        public float EmissionAngle2Randomness { get; set; }
+        [Category("Fade")]
+        [Description("Offset 0x4C (f32). First fade parameter recovered from the generator block.")]
+        public float FadeParameter1 { get; set; }
+        [Category("Fade")]
+        [Description("Offset 0x50 (f32). Second fade parameter recovered from the generator block.")]
+        public float FadeParameter2 { get; set; }
         [Category("Rotation")]
-        [Description("Offset 0x3C. Random rotation at the start phase.")]
-        public float RandomRotationStart { get; set; }
+        [Description("Offset 0x54 (f32). Initial particle rotation.")]
+        public float InitialRotation { get; set; }
         [Category("Rotation")]
-        [Description("Offset 0x40. Random rotation at the middle phase.")]
-        public float RandomRotationMiddle { get; set; }
-        [Category("Rotation")]
-        [Description("Offset 0x44. Random rotation at the end phase.")]
-        public float RandomRotationEnd { get; set; }
-        [Category("Rotation")]
-        [Description("Offset 0x48. Interpolation factor for random rotation phases.")]
-        public float RandomRotationFactor { get; set; }
-        [Category("Alpha")]
-        [Description("Offset 0x4C. Alpha at the start phase.")]
-        public float AlphaStart { get; set; }
-        [Category("Alpha")]
-        [Description("Offset 0x50. Alpha at the middle phase.")]
-        public float AlphaMiddle { get; set; }
-        [Category("Alpha")]
-        [Description("Offset 0x54. Alpha at the end phase.")]
-        public float AlphaEnd { get; set; }
-        [Category("Alpha")]
-        [Description("Offset 0x58. Interpolation factor for alpha phases.")]
-        public float AlphaFactor { get; set; }
+        [Description("Offset 0x58 (f32). Random variation applied to initial rotation.")]
+        public float InitialRotationRandomness { get; set; }
         [Category("Scale")]
         [Description("Offset 0x5C. Start scale on X.")]
         public float ScaleStartX { get; set; }
@@ -1190,8 +1226,8 @@ namespace NSUNS4_Character_Manager
         [Description("Offset 0x88. End scale on Z.")]
         public float ScaleEndZ { get; set; }
         [Category("Scale")]
-        [Description("Offset 0x8C. Interpolation factor for scale phases.")]
-        public float ScaleFactor { get; set; }
+        [Description("Offset 0x8C (f32). Point used to interpolate the start, middle, and end scales.")]
+        public float ScaleInterpolationPoint { get; set; }
         [Category("Color")]
         [Description("Offset 0x90. Start color red channel.")]
         public float ColorStartR { get; set; }
@@ -1229,20 +1265,20 @@ namespace NSUNS4_Character_Manager
         [Description("Offset 0xBC. End color alpha channel.")]
         public float ColorEndA { get; set; }
         [Category("Color")]
-        [Description("Offset 0xC0. Interpolation factor for color phases.")]
-        public float ColorFactor { get; set; }
+        [Description("Offset 0xC0 (f32). Point used to interpolate the start, middle, and end colors.")]
+        public float ColorInterpolationPoint { get; set; }
         [Category("Unknown")]
-        [DisplayName("Field 0xC4")]
-        [Description("Unknown 32-bit floating-point value at offset 0xC4 (unk9 in br_particle.py).")]
-        public float FieldC4 { get; set; }
+        [DisplayName("Unknown 0xC4")]
+        [Description("Offset 0xC4 (u32). Unknown raw value. It is intentionally not interpreted as a float.")]
+        public uint UnknownC4 { get; set; }
         [Category("Unknown")]
-        [DisplayName("Field 0xC8")]
-        [Description("Unknown 32-bit floating-point value at offset 0xC8 (unk10 in br_particle.py).")]
-        public float FieldC8 { get; set; }
+        [DisplayName("Unknown 0xC8")]
+        [Description("Offset 0xC8 (u32). Unknown raw value. It is intentionally not interpreted as a float.")]
+        public uint UnknownC8 { get; set; }
         [Category("Unknown")]
-        [DisplayName("Field 0xCC")]
-        [Description("Unknown 32-bit floating-point value at offset 0xCC (unk11 in br_particle.py).")]
-        public float FieldCC { get; set; }
+        [DisplayName("Unknown 0xCC")]
+        [Description("Offset 0xCC (u32). Unknown raw value. It is intentionally not interpreted as a float.")]
+        public uint UnknownCC { get; set; }
     }
 
     internal sealed class ParticleResourceEntry
@@ -1286,12 +1322,15 @@ namespace NSUNS4_Character_Manager
         [Description("Unsigned 16-bit normalized value at offset 0x1A. Edit as a value from 0.0 to 1.0.")]
         public float Parameter1A { get; set; }
         [Category("Resource")]
-        [Description("Offset 0x1C. Expected values: clump=1, animation=2, billboard=5.")]
+        [Description("Offset 0x1C (u32). Resource type: clump=1, animation=2, sprite=3, sprite2=4, billboard=5.")]
         public ParticleEffectChunkType EffectChunkType { get; set; }
     }
 
     internal sealed class ParticlePositionEntry
     {
+        [Browsable(false)]
+        public bool HasVersion78Fields { get; set; }
+
         [Category("Links")]
         [Description("Offset 0x00. Signed coord chunk index; negative values represent no link.")]
         public int CoordChunkIndex { get; set; }
@@ -1339,16 +1378,19 @@ namespace NSUNS4_Character_Manager
         [Description("Unknown signed 32-bit value at offset 0x2C.")]
         public int Field2C { get; set; }
         [Category("Links")]
-        [Description("Offset 0x30. Signed clump chunk index; negative values represent no link.")]
+        [Description("Offset 0x30 (v0x78+ only). Clump chunk-map index. Negative values are shown as no link for compatibility with observed files.")]
         public int ClumpChunkIndex { get; set; }
         [Category("Unknown")]
         [DisplayName("Field 0x34")]
-        [Description("Unknown unsigned 32-bit value at offset 0x34.")]
+        [Description("Offset 0x34 (u32, v0x78+ only). Unknown value.")]
         public uint Field34 { get; set; }
     }
 
     internal sealed class ParticleForceFieldEntry
     {
+        [Browsable(false)]
+        public bool HasVersion78Fields { get; set; }
+
         [Category("Links")]
         [Description("Offset 0x00. Signed coord chunk index; negative values represent no link.")]
         public int CoordChunkIndex { get; set; }
@@ -1455,26 +1497,25 @@ namespace NSUNS4_Character_Manager
         [Description("Unknown 32-bit float at offset 0x5C.")]
         public float Field5C { get; set; }
         [Category("Links")]
-        [Description("Offset 0x60. Signed clump chunk index; negative values represent no link.")]
+        [Description("Offset 0x60 (v0x78+ only). Clump chunk-map index. Negative values are shown as no link for compatibility with observed files.")]
         public int ClumpChunkIndex { get; set; }
         [Category("Unknown")]
         [DisplayName("Field 0x64")]
-        [Description("Unknown signed 32-bit value at offset 0x64.")]
+        [Description("Offset 0x64 (v0x78+ only). First unknown 32-bit value in the 12-byte extension.")]
         public int Field64 { get; set; }
         [Category("Unknown")]
         [DisplayName("Field 0x68")]
-        [Description("Unknown signed 32-bit value at offset 0x68.")]
+        [Description("Offset 0x68 (v0x78+ only). Second unknown 32-bit value in the 12-byte extension.")]
         public int Field68 { get; set; }
         [Category("Unknown")]
         [DisplayName("Field 0x6C")]
-        [Description("Unknown signed 32-bit value at offset 0x6C.")]
+        [Description("Offset 0x6C (v0x78+ only). Third unknown 32-bit value in the 12-byte extension.")]
         public int Field6C { get; set; }
     }
 
     internal sealed class ParticleFrameEntry
     {
-        public ushort Flag { get; set; }
-        public ushort FrameRaw { get; set; }
+        public uint RawValue { get; set; }
     }
 
     internal sealed class ParticleNodeEntry

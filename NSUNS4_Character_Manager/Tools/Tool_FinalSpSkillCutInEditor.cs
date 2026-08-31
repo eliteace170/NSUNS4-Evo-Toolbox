@@ -13,7 +13,8 @@ namespace NSUNS4_Character_Manager
         private const int VictimSize = 0x18;
         private const int EntrySize = 0x4D8;
         private const string ClipboardPrefix = "NSUNS4_FINAL_SP_SKILL_CUT_IN_ENTRY:";
-        private const int ClipboardVersion = 2;
+        private const int ClipboardVersion = 3;
+        private const int LegacyClipboardVersion = 2;
         private readonly FinalSpSkillCutInFileState fileState = new FinalSpSkillCutInFileState();
         private bool displayHex;
 
@@ -642,6 +643,15 @@ namespace NSUNS4_Character_Manager
                 writer.Write(entry.OugiName2 ?? "");
                 writer.Write(entry.Padding1);
                 writer.Write(entry.Padding2);
+                writer.Write(entry.Victims.Count);
+
+                foreach (FinalSpSkillCutInVictim victim in entry.Victims)
+                {
+                    writer.Write(victim.PlayerSettingIdVictim);
+                    writer.Write(victim.VictimFileName ?? "");
+                    writer.Write(victim.VictimTextureName ?? "");
+                    writer.Write(victim.Padding);
+                }
 
                 writer.Flush();
                 Clipboard.SetText(ClipboardPrefix + Convert.ToBase64String(stream.ToArray()));
@@ -678,7 +688,8 @@ namespace NSUNS4_Character_Manager
                 using (MemoryStream stream = new MemoryStream(payload))
                 using (BinaryReader reader = new BinaryReader(stream, Encoding.UTF8))
                 {
-                    if (reader.ReadInt32() != ClipboardVersion)
+                    int clipboardVersion = reader.ReadInt32();
+                    if (clipboardVersion != ClipboardVersion && clipboardVersion != LegacyClipboardVersion)
                         throw new InvalidDataException("Unsupported clipboard version.");
 
                     entry = new FinalSpSkillCutInEntry
@@ -692,6 +703,24 @@ namespace NSUNS4_Character_Manager
                         Padding1 = reader.ReadInt32(),
                         Padding2 = reader.ReadInt32()
                     };
+
+                    if (clipboardVersion >= 3)
+                    {
+                        int victimCount = reader.ReadInt32();
+                        if (victimCount < 0 || victimCount > VictimCount)
+                            throw new InvalidDataException("Invalid victim count.");
+
+                        for (int i = 0; i < victimCount; i++)
+                        {
+                            entry.Victims.Add(new FinalSpSkillCutInVictim
+                            {
+                                PlayerSettingIdVictim = reader.ReadInt32(),
+                                VictimFileName = reader.ReadString(),
+                                VictimTextureName = reader.ReadString(),
+                                Padding = reader.ReadInt32()
+                            });
+                        }
+                    }
 
                     if (stream.Position != stream.Length)
                         throw new InvalidDataException("Unexpected clipboard data.");

@@ -61,6 +61,8 @@ namespace NSUNS4_Character_Manager
         public static string costumeBreakParamPath = "[null]";
         public static string commandListParamPath = "[null]";
         public static string cpuParamPath = "[null]";
+        public static string evoCustomParamPath = "[null]";
+        public static string privateCameraPath = "[null]";
         private Button button9;
         private Button button10;
         private Button button11;
@@ -79,8 +81,8 @@ namespace NSUNS4_Character_Manager
         private TabPage tabPage2;
         private TabControl tabControl2;
         private TabPage tabPage3;
+        private TabPage evoSpecificParamsTabPage;
         private TabPage tabPage4;
-        private TabPage tabPage5;
         private TabPage tabPage6;
         private Button button24;
         private Button button23;
@@ -106,6 +108,8 @@ namespace NSUNS4_Character_Manager
         private LinkLabel linkLabel12;
         private Button button30;
         private Button button31;
+        private Button evoCustomParamButton;
+        private Button privateCameraButton;
         private Button button32;
         private Button button33;
         private Button button34;
@@ -179,6 +183,8 @@ namespace NSUNS4_Character_Manager
             cfg.Add("[null]");
             cfg.Add("[null]");
             cfg.Add("[null]");
+            cfg.Add("[null]"); // EvoCustomParam (index 30).
+            cfg.Add("[null]"); // privateCamera (index 31).
             File.WriteAllLines(ConfigPath, cfg.ToArray());
             MessageBox.Show("Config file created.");
         }
@@ -216,6 +222,8 @@ namespace NSUNS4_Character_Manager
             cfg.Add(costumeBreakParamPath);
             cfg.Add(commandListParamPath);
             cfg.Add(cpuParamPath);
+            cfg.Add(evoCustomParamPath);
+            cfg.Add(privateCameraPath);
             File.WriteAllLines(ConfigPath, cfg.ToArray());
             MessageBox.Show("Config file saved.");
         }
@@ -253,6 +261,8 @@ namespace NSUNS4_Character_Manager
             if (cfg.Length > 27) costumeBreakParamPath = cfg[27];
             if (cfg.Length > 28) commandListParamPath = cfg[28];
             if (cfg.Length > 29) cpuParamPath = cfg[29];
+            evoCustomParamPath = cfg.Length > 30 ? cfg[30] : "[null]";
+            privateCameraPath = cfg.Length > 31 ? cfg[31] : "[null]";
             BackfillDefaultPaths();
             //MessageBox.Show("Loaded paths.");
         }
@@ -284,6 +294,10 @@ namespace NSUNS4_Character_Manager
             if (!File.Exists(cpuParamPath))
                 cpuParamPath = ResolveDataWin32File("cpuparam.xfbin",
                     "duel\\WIN64\\cpuparam.xfbin");
+            if (!File.Exists(evoCustomParamPath))
+                evoCustomParamPath = Path.Combine(datawin32Path, "spc", "WIN64", "EvoCustomParam.xfbin");
+            if (!File.Exists(privateCameraPath))
+                privateCameraPath = Path.Combine(datawin32Path, "spc", "privateCamera.bin.xfbin");
         }
 
         private static string ResolveDataWin32File(string fileName, params string[] relativeCandidates)
@@ -1157,7 +1171,6 @@ namespace NSUNS4_Character_Manager
             this.tabControl2 = new System.Windows.Forms.TabControl();
             this.tabPage3 = new System.Windows.Forms.TabPage();
             this.button30 = new System.Windows.Forms.Button();
-            this.button31 = new System.Windows.Forms.Button();
             this.button32 = new System.Windows.Forms.Button();
             this.button34 = new System.Windows.Forms.Button();
             this.button38 = new System.Windows.Forms.Button();
@@ -1168,10 +1181,13 @@ namespace NSUNS4_Character_Manager
             this.button26 = new System.Windows.Forms.Button();
             this.button40 = new System.Windows.Forms.Button();
             this.button41 = new System.Windows.Forms.Button();
+            this.privateCameraButton = new System.Windows.Forms.Button();
+            this.evoSpecificParamsTabPage = new System.Windows.Forms.TabPage();
+            this.button31 = new System.Windows.Forms.Button();
+            this.evoCustomParamButton = new System.Windows.Forms.Button();
             this.tabPage4 = new System.Windows.Forms.TabPage();
-            this.tabPage5 = new System.Windows.Forms.TabPage();
-            this.button24 = new System.Windows.Forms.Button();
             this.button23 = new System.Windows.Forms.Button();
+            this.button24 = new System.Windows.Forms.Button();
             this.tabPage6 = new System.Windows.Forms.TabPage();
             this.linkLabel12 = new System.Windows.Forms.LinkLabel();
             this.linkLabel10 = new System.Windows.Forms.LinkLabel();
@@ -1199,8 +1215,8 @@ namespace NSUNS4_Character_Manager
             this.tabPage1.SuspendLayout();
             this.tabControl2.SuspendLayout();
             this.tabPage3.SuspendLayout();
+            this.evoSpecificParamsTabPage.SuspendLayout();
             this.tabPage4.SuspendLayout();
-            this.tabPage5.SuspendLayout();
             this.tabPage6.SuspendLayout();
             this.tabPage7.SuspendLayout();
             this.extraToolsPanel.SuspendLayout();
@@ -1502,7 +1518,7 @@ namespace NSUNS4_Character_Manager
             // 
             // button22
             // 
-            this.button22.Location = new System.Drawing.Point(3, 3);
+            this.button22.Location = new System.Drawing.Point(3, 41);
             this.button22.Name = "button22";
             this.button22.Size = new System.Drawing.Size(598, 38);
             this.button22.TabIndex = 30;
@@ -1530,7 +1546,7 @@ namespace NSUNS4_Character_Manager
             this.tabControl1.Location = new System.Drawing.Point(0, 24);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(624, 544);
+            this.tabControl1.Size = new System.Drawing.Size(624, 546);
             this.tabControl1.TabIndex = 31;
             // 
             // tabPage1
@@ -1540,15 +1556,15 @@ namespace NSUNS4_Character_Manager
             this.tabPage1.Location = new System.Drawing.Point(4, 22);
             this.tabPage1.Name = "tabPage1";
             this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(616, 518);
+            this.tabPage1.Size = new System.Drawing.Size(616, 520);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "For modders";
             // 
             // tabControl2
             // 
             this.tabControl2.Controls.Add(this.tabPage3);
+            this.tabControl2.Controls.Add(this.evoSpecificParamsTabPage);
             this.tabControl2.Controls.Add(this.tabPage4);
-            this.tabControl2.Controls.Add(this.tabPage5);
             this.tabControl2.Controls.Add(this.tabPage6);
             this.tabControl2.Controls.Add(this.tabPage7);
             this.tabControl2.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -1558,13 +1574,12 @@ namespace NSUNS4_Character_Manager
             this.tabControl2.Name = "tabControl2";
             this.tabControl2.RightToLeft = System.Windows.Forms.RightToLeft.No;
             this.tabControl2.SelectedIndex = 0;
-            this.tabControl2.Size = new System.Drawing.Size(610, 512);
+            this.tabControl2.Size = new System.Drawing.Size(610, 514);
             this.tabControl2.TabIndex = 31;
             // 
             // tabPage3
             // 
             this.tabPage3.Controls.Add(this.button30);
-            this.tabPage3.Controls.Add(this.button31);
             this.tabPage3.Controls.Add(this.button32);
             this.tabPage3.Controls.Add(this.button34);
             this.tabPage3.Controls.Add(this.button38);
@@ -1589,10 +1604,11 @@ namespace NSUNS4_Character_Manager
             this.tabPage3.Controls.Add(this.button21);
             this.tabPage3.Controls.Add(this.button40);
             this.tabPage3.Controls.Add(this.button41);
+            this.tabPage3.Controls.Add(this.privateCameraButton);
             this.tabPage3.Location = new System.Drawing.Point(4, 22);
             this.tabPage3.Name = "tabPage3";
             this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage3.Size = new System.Drawing.Size(602, 486);
+            this.tabPage3.Size = new System.Drawing.Size(602, 488);
             this.tabPage3.TabIndex = 0;
             this.tabPage3.Text = "Character Management";
             this.tabPage3.UseVisualStyleBackColor = true;
@@ -1609,17 +1625,6 @@ namespace NSUNS4_Character_Manager
             this.button30.UseVisualStyleBackColor = true;
             this.button30.Click += new System.EventHandler(this.button30_Click);
             // 
-            // button31
-            // 
-            this.button31.Font = new System.Drawing.Font("Segoe UI", 8.5F);
-            this.button31.Location = new System.Drawing.Point(301, 337);
-            this.button31.Name = "button31";
-            this.button31.Size = new System.Drawing.Size(299, 38);
-            this.button31.TabIndex = 35;
-            this.button31.Text = "EvoUnlockItemParam Editor";
-            this.button31.UseVisualStyleBackColor = true;
-            this.button31.Click += new System.EventHandler(this.button31_Click);
-            // 
             // button32
             // 
             this.button32.Font = new System.Drawing.Font("Segoe UI", 8.5F);
@@ -1634,7 +1639,7 @@ namespace NSUNS4_Character_Manager
             // button34
             // 
             this.button34.Font = new System.Drawing.Font("Segoe UI", 8.5F);
-            this.button34.Location = new System.Drawing.Point(301, 411);
+            this.button34.Location = new System.Drawing.Point(301, 374);
             this.button34.Name = "button34";
             this.button34.Size = new System.Drawing.Size(299, 38);
             this.button34.TabIndex = 38;
@@ -1645,7 +1650,7 @@ namespace NSUNS4_Character_Manager
             // button38
             // 
             this.button38.Font = new System.Drawing.Font("Segoe UI", 8.5F);
-            this.button38.Location = new System.Drawing.Point(301, 374);
+            this.button38.Location = new System.Drawing.Point(301, 337);
             this.button38.Name = "button38";
             this.button38.Size = new System.Drawing.Size(299, 38);
             this.button38.TabIndex = 46;
@@ -1722,56 +1727,92 @@ namespace NSUNS4_Character_Manager
             // button41
             // 
             this.button41.Font = new System.Drawing.Font("Segoe UI", 8.5F);
-            this.button41.Location = new System.Drawing.Point(301, 448);
+            this.button41.Location = new System.Drawing.Point(301, 411);
             this.button41.Name = "button41";
             this.button41.Size = new System.Drawing.Size(299, 38);
             this.button41.TabIndex = 49;
-            this.button41.Text = "CPU Param Editor\r\n(cpuparam.xfbin)";
+            this.button41.Text = "CPU Param Editor \r\n(cpuparam.xfbin)";
             this.button41.UseVisualStyleBackColor = true;
             this.button41.Click += new System.EventHandler(this.button41_Click);
+            // 
+            // privateCameraButton
+            // 
+            this.privateCameraButton.Font = new System.Drawing.Font("Segoe UI", 8.5F);
+            this.privateCameraButton.Location = new System.Drawing.Point(301, 448);
+            this.privateCameraButton.Name = "privateCameraButton";
+            this.privateCameraButton.Size = new System.Drawing.Size(299, 38);
+            this.privateCameraButton.TabIndex = 50;
+            this.privateCameraButton.Text = "Character Camera Position \r\n(privateCamera.bin.xfbin)";
+            this.privateCameraButton.UseVisualStyleBackColor = true;
+            this.privateCameraButton.Click += new System.EventHandler(this.privateCameraButton_Click);
+            // 
+            // evoSpecificParamsTabPage
+            // 
+            this.evoSpecificParamsTabPage.Controls.Add(this.button31);
+            this.evoSpecificParamsTabPage.Controls.Add(this.evoCustomParamButton);
+            this.evoSpecificParamsTabPage.Location = new System.Drawing.Point(4, 22);
+            this.evoSpecificParamsTabPage.Name = "evoSpecificParamsTabPage";
+            this.evoSpecificParamsTabPage.Padding = new System.Windows.Forms.Padding(3);
+            this.evoSpecificParamsTabPage.Size = new System.Drawing.Size(602, 488);
+            this.evoSpecificParamsTabPage.TabIndex = 5;
+            this.evoSpecificParamsTabPage.Text = "Evo Specific Params";
+            this.evoSpecificParamsTabPage.UseVisualStyleBackColor = true;
+            // 
+            // button31
+            // 
+            this.button31.Font = new System.Drawing.Font("Segoe UI", 8.5F);
+            this.button31.Location = new System.Drawing.Point(3, 3);
+            this.button31.Name = "button31";
+            this.button31.Size = new System.Drawing.Size(299, 38);
+            this.button31.TabIndex = 0;
+            this.button31.Text = "EvoUnlockItemParam Editor";
+            this.button31.UseVisualStyleBackColor = true;
+            this.button31.Click += new System.EventHandler(this.button31_Click);
+            // 
+            // evoCustomParamButton
+            // 
+            this.evoCustomParamButton.Font = new System.Drawing.Font("Segoe UI", 8.5F);
+            this.evoCustomParamButton.Location = new System.Drawing.Point(301, 3);
+            this.evoCustomParamButton.Name = "evoCustomParamButton";
+            this.evoCustomParamButton.Size = new System.Drawing.Size(299, 38);
+            this.evoCustomParamButton.TabIndex = 1;
+            this.evoCustomParamButton.Text = "Evo Custom Param";
+            this.evoCustomParamButton.UseVisualStyleBackColor = true;
+            this.evoCustomParamButton.Click += new System.EventHandler(this.evoCustomParamButton_Click);
             // 
             // tabPage4
             // 
             this.tabPage4.Controls.Add(this.button20);
+            this.tabPage4.Controls.Add(this.button22);
+            this.tabPage4.Controls.Add(this.button23);
+            this.tabPage4.Controls.Add(this.button24);
             this.tabPage4.Location = new System.Drawing.Point(4, 22);
             this.tabPage4.Name = "tabPage4";
             this.tabPage4.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage4.Size = new System.Drawing.Size(602, 507);
+            this.tabPage4.Size = new System.Drawing.Size(602, 488);
             this.tabPage4.TabIndex = 1;
-            this.tabPage4.Text = "Stage Management";
+            this.tabPage4.Text = "Stage / Story Mode";
             this.tabPage4.UseVisualStyleBackColor = true;
-            // 
-            // tabPage5
-            // 
-            this.tabPage5.Controls.Add(this.button24);
-            this.tabPage5.Controls.Add(this.button23);
-            this.tabPage5.Controls.Add(this.button22);
-            this.tabPage5.Location = new System.Drawing.Point(4, 22);
-            this.tabPage5.Name = "tabPage5";
-            this.tabPage5.Size = new System.Drawing.Size(602, 507);
-            this.tabPage5.TabIndex = 2;
-            this.tabPage5.Text = "Story Mode Management";
-            this.tabPage5.UseVisualStyleBackColor = true;
-            // 
-            // button24
-            // 
-            this.button24.Location = new System.Drawing.Point(3, 76);
-            this.button24.Name = "button24";
-            this.button24.Size = new System.Drawing.Size(598, 38);
-            this.button24.TabIndex = 32;
-            this.button24.Text = "Episode Movie Editor\r\n(episodeMovieParam.bin.xfbin)";
-            this.button24.UseVisualStyleBackColor = true;
-            this.button24.Visible = false;
             // 
             // button23
             // 
-            this.button23.Location = new System.Drawing.Point(3, 39);
+            this.button23.Location = new System.Drawing.Point(3, 79);
             this.button23.Name = "button23";
             this.button23.Size = new System.Drawing.Size(598, 38);
             this.button23.TabIndex = 31;
             this.button23.Text = "Episode Editor\r\n(episodeParam.bin.xfbin)";
             this.button23.UseVisualStyleBackColor = true;
             this.button23.Visible = false;
+            // 
+            // button24
+            // 
+            this.button24.Location = new System.Drawing.Point(3, 117);
+            this.button24.Name = "button24";
+            this.button24.Size = new System.Drawing.Size(598, 38);
+            this.button24.TabIndex = 32;
+            this.button24.Text = "Episode Movie Editor\r\n(episodeMovieParam.bin.xfbin)";
+            this.button24.UseVisualStyleBackColor = true;
+            this.button24.Visible = false;
             // 
             // tabPage6
             // 
@@ -1792,7 +1833,7 @@ namespace NSUNS4_Character_Manager
             this.tabPage6.Controls.Add(this.button37);
             this.tabPage6.Location = new System.Drawing.Point(4, 22);
             this.tabPage6.Name = "tabPage6";
-            this.tabPage6.Size = new System.Drawing.Size(602, 507);
+            this.tabPage6.Size = new System.Drawing.Size(602, 488);
             this.tabPage6.TabIndex = 3;
             this.tabPage6.Text = "Other tools";
             this.tabPage6.UseVisualStyleBackColor = true;
@@ -1960,7 +2001,7 @@ namespace NSUNS4_Character_Manager
             this.tabPage7.Controls.Add(this.extraToolsPanel);
             this.tabPage7.Location = new System.Drawing.Point(4, 22);
             this.tabPage7.Name = "tabPage7";
-            this.tabPage7.Size = new System.Drawing.Size(602, 507);
+            this.tabPage7.Size = new System.Drawing.Size(602, 488);
             this.tabPage7.TabIndex = 4;
             this.tabPage7.Text = "Extra Tools";
             this.tabPage7.UseVisualStyleBackColor = true;
@@ -1976,7 +2017,7 @@ namespace NSUNS4_Character_Manager
             this.extraToolsPanel.Margin = new System.Windows.Forms.Padding(0);
             this.extraToolsPanel.Name = "extraToolsPanel";
             this.extraToolsPanel.Padding = new System.Windows.Forms.Padding(6);
-            this.extraToolsPanel.Size = new System.Drawing.Size(602, 507);
+            this.extraToolsPanel.Size = new System.Drawing.Size(602, 488);
             this.extraToolsPanel.TabIndex = 0;
             this.extraToolsPanel.WrapContents = false;
             // 
@@ -1990,7 +2031,7 @@ namespace NSUNS4_Character_Manager
             this.tabPage2.Location = new System.Drawing.Point(4, 22);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(616, 539);
+            this.tabPage2.Size = new System.Drawing.Size(616, 520);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "For players";
             this.tabPage2.UseVisualStyleBackColor = true;
@@ -2058,7 +2099,7 @@ namespace NSUNS4_Character_Manager
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(624, 568);
+            this.ClientSize = new System.Drawing.Size(624, 570);
             this.Controls.Add(this.linkLabel9);
             this.Controls.Add(this.linkLabel2);
             this.Controls.Add(this.linkLabel1);
@@ -2080,8 +2121,8 @@ namespace NSUNS4_Character_Manager
             this.tabPage1.ResumeLayout(false);
             this.tabControl2.ResumeLayout(false);
             this.tabPage3.ResumeLayout(false);
+            this.evoSpecificParamsTabPage.ResumeLayout(false);
             this.tabPage4.ResumeLayout(false);
-            this.tabPage5.ResumeLayout(false);
             this.tabPage6.ResumeLayout(false);
             this.tabPage6.PerformLayout();
             this.tabPage7.ResumeLayout(false);
@@ -2381,6 +2422,8 @@ namespace NSUNS4_Character_Manager
             damageprmPath = datawin32Path + "\\spc\\damageprm.bin.xfbin";
             spTypeSupportParamPath = datawin32Path + "\\spc\\WIN64\\spTypeSupportParam.xfbin";
             unlockEvoItemParamPath = datawin32Path + "\\spc\\WIN64\\EvoUnlockItemParam.xfbin";
+            evoCustomParamPath = Path.Combine(datawin32Path, "spc", "WIN64", "EvoCustomParam.xfbin");
+            privateCameraPath = Path.Combine(datawin32Path, "spc", "privateCamera.bin.xfbin");
             itemInfoPath = ResolveDataWin32File("ItemInfo.bin.xfbin",
                 "duel\\WIN64\\ItemInfo.bin.xfbin",
                 "spc\\WIN64\\ItemInfo.bin.xfbin");
@@ -2421,6 +2464,8 @@ namespace NSUNS4_Character_Manager
                 messageInfoPath = datawin32Path + "\\message";
                 spTypeSupportParamPath = datawin32Path + "\\spc\\WIN64\\spTypeSupportParam.xfbin";
                 unlockEvoItemParamPath = datawin32Path + "\\spc\\WIN64\\EvoUnlockItemParam.xfbin";
+                evoCustomParamPath = Path.Combine(datawin32Path, "spc", "WIN64", "EvoCustomParam.xfbin");
+                privateCameraPath = Path.Combine(datawin32Path, "spc", "privateCamera.bin.xfbin");
                 itemInfoPath = ResolveDataWin32File("ItemInfo.bin.xfbin",
                     "duel\\WIN64\\ItemInfo.bin.xfbin",
                     "spc\\WIN64\\ItemInfo.bin.xfbin");
@@ -2578,6 +2623,16 @@ namespace NSUNS4_Character_Manager
         {
             Tool_XmlBinaryEditor t = new Tool_XmlBinaryEditor();
             t.Show();
+        }
+
+        private void evoCustomParamButton_Click(object sender, EventArgs e)
+        {
+            new Tool_EvoCustomParamEditor().Show();
+        }
+
+        private void privateCameraButton_Click(object sender, EventArgs e)
+        {
+            new Tool_PrivateCameraEditor().Show();
         }
 
         private void button38_Click(object sender, EventArgs e)

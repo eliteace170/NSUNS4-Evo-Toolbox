@@ -1154,6 +1154,8 @@ namespace NSUNS4_Character_Manager.Misc {
             SetNubModeButtonState(button9, NubImportSoundTooltip);
             SetNubModeButtonState(button10, NubImportSoundTooltip);
 
+            equalizeRandomizerChancesToolStripMenuItem.Enabled = FileOpen && !NubMode;
+
             if (!NubMode)
                 HideNubDeleteSlotTooltip();
         }
@@ -2203,6 +2205,51 @@ namespace NSUNS4_Character_Manager.Misc {
             else {
                 MessageBox.Show("Select sound section");
             }
+        }
+
+        private int EqualizeAllRandomizerChances(out int skippedCount) {
+            skippedCount = 0;
+            if (!FileOpen || NubMode)
+                return 0;
+
+            int updatedCount = 0;
+            for (int row = 0; row < TONE_SectionType_List.Count; row++) {
+                if (TONE_SectionType_List[row] != 1)
+                    continue;
+
+                int cueCount = TONE_RandomizerSectionCount_List[row];
+                if (cueCount <= 0 || TONE_RandomizerOneSection_PlayChance_List[row].Count != cueCount ||
+                    TONE_RandomizerOneSection_SoundID_List[row].Count != cueCount) {
+                    skippedCount++;
+                    continue;
+                }
+
+                // Keep full float precision and detach lists shared by copied entries.
+                TONE_RandomizerOneSection_PlayChance_List[row] = Enumerable.Repeat(1.0f / cueCount, cueCount).ToList();
+                updatedCount++;
+            }
+            return updatedCount;
+        }
+
+        private void equalizeRandomizerChancesToolStripMenuItem_Click(object sender, EventArgs e) {
+            if (!FileOpen || NubMode)
+                return;
+
+            int skippedCount;
+            int updatedCount = EqualizeAllRandomizerChances(out skippedCount);
+            int row = GetCurrentRowIndex();
+            int cue = listBox2.SelectedIndex;
+            if (row >= 0 && TONE_SectionType_List[row] == 1 && cue >= 0 &&
+                cue < TONE_RandomizerOneSection_PlayChance_List[row].Count) {
+                float chance = TONE_RandomizerOneSection_PlayChance_List[row][cue];
+                if (chance >= 0 && chance <= 1)
+                    PlayChance_v.Value = (decimal)chance;
+            }
+
+            string message = "Equalized cue chances in " + updatedCount + " randomizer entries.";
+            if (skippedCount > 0)
+                message += "\nSkipped " + skippedCount + " empty or incomplete randomizer entries.";
+            MessageBox.Show(this, message, "Randomizers", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void button6_Click(object sender, EventArgs e) {
