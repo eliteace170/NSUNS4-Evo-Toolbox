@@ -23,11 +23,9 @@ namespace NSUNS4_Character_Manager.Tools
 
             // COND
             for(int x = 0; x < Program.COND.Length; x++) t_condition.Items.Add(Program.COND[x]);
-            for(int x = Program.COND.Length; x < 256; x++) t_condition.Items.Add("0x" + t_condition.Items.Count.ToString("X2").PadLeft(2, '0') + " = ???");
 
             // LINK_COND
             for (int x = 0; x < Program.LINK_COND.Length; x++) t_linkCondition.Items.Add(Program.LINK_COND[x]);
-            for (int x = Program.LINK_COND.Length; x < 256; x++) t_linkCondition.Items.Add("0x" + (t_linkCondition.Items.Count-1).ToString("X2").PadLeft(2, '0') + " = ???");
 
             // DMG COND
             for (int x = 0; x < Program.DMGCOND.Length; x++) t_dmgcond.Items.Add(Program.DMGCOND[x]);
@@ -836,14 +834,13 @@ namespace NSUNS4_Character_Manager.Tools
             t_prevanm1.Text = "";
             t_prevanm2.Text = "";
             t_prevanm3.Text = "";
-            t_distance.Text = "";
-            t_direction.Value = 0;
+            t_direction.SelectedIndex = 0;
             t_condition.SelectedIndex = -1;
             t_linkCondition.SelectedIndex = -1;
             t_length.Value = 0;
             t_btnpress.Value = 0;
             numericUpDown1.Value = 0;
-            numericUpDown2.Value = 0;
+            comboBoxCondition2.SelectedIndex = -1;
             t_hitboxid.Text = "";
             t_dmgid.Text = "";
             t_hiteffect.SelectedIndex = -1;
@@ -922,7 +919,7 @@ namespace NSUNS4_Character_Manager.Tools
 
             index = start + 0x68;
             byte direction = actualSection[index];
-            t_direction.Value = direction;
+            t_direction.SelectedIndex = direction <= 4 ? direction : -1;
 
             index = start + 0x6A;
             int linkCondition1 = actualSection[index];
@@ -930,12 +927,14 @@ namespace NSUNS4_Character_Manager.Tools
             if (linkCondition1 == 0xFF && linkCondition2 == 0xFF)
                 t_linkCondition.SelectedIndex = 0;
             else
-                t_linkCondition.SelectedIndex = linkCondition1 + 1;
+                t_linkCondition.SelectedIndex = linkCondition1 + 1 < t_linkCondition.Items.Count
+                    ? linkCondition1 + 1
+                    : -1;
             //MessageBox.Show(index.ToString("X2"));
 
             index = start + 0x6C;
             byte condition = actualSection[index];
-            t_condition.SelectedIndex = condition;
+            t_condition.SelectedIndex = condition < t_condition.Items.Count ? condition : -1;
             //MessageBox.Show(index.ToString("X2"));
 
             
@@ -950,7 +949,9 @@ namespace NSUNS4_Character_Manager.Tools
 
             index = start + 0x72;
             int cond2 = actualSection[index] * 0x1 + actualSection[index + 0x1] * 0x100;
-            numericUpDown2.Value = cond2;
+            comboBoxCondition2.SelectedIndex = cond2 >= 1 && cond2 <= comboBoxCondition2.Items.Count
+                ? cond2 - 1
+                : -1;
 
             index = start + 0x74;
             string planm1 = Main.b_ReadString(actualSection, index);
@@ -1225,7 +1226,7 @@ namespace NSUNS4_Character_Manager.Tools
                 // code here
 
                 // Replace direction
-                plAnmList[ver][anm][0x68] = (byte)t_direction.Value;
+                plAnmList[ver][anm][0x68] = (byte)Math.Max(t_direction.SelectedIndex, 0);
                 if (t_linkCondition.SelectedIndex - 1 != -1)
                 {
                     plAnmList[ver][anm][0x6A] = Convert.ToByte(t_linkCondition.SelectedIndex - 1);
@@ -1247,7 +1248,8 @@ namespace NSUNS4_Character_Manager.Tools
                 plAnmList[ver][anm][0x70] = btnbytes[0];
                 plAnmList[ver][anm][0x71] = btnbytes[1];
 
-                byte[] cond2Bytes = BitConverter.GetBytes((int)numericUpDown2.Value);
+                int cond2 = comboBoxCondition2.SelectedIndex + 1;
+                byte[] cond2Bytes = BitConverter.GetBytes(cond2);
                 plAnmList[ver][anm][0x72] = cond2Bytes[0];
                 plAnmList[ver][anm][0x73] = cond2Bytes[1];
 
@@ -2297,14 +2299,13 @@ namespace NSUNS4_Character_Manager.Tools
             t_prevanm1.Text = "";
             t_prevanm2.Text = "";
             t_prevanm3.Text = "";
-            t_distance.Text = "";
-            t_direction.Value = 0;
+            t_direction.SelectedIndex = 0;
             t_condition.SelectedIndex = -1;
             t_linkCondition.SelectedIndex = -1;
             t_length.Value = 0;
             t_btnpress.Value = 0;
             numericUpDown1.Value = 0;
-            numericUpDown2.Value = 0;
+            comboBoxCondition2.SelectedIndex = -1;
             t_hitboxid.Text = "";
             t_dmgid.Text = "";
             t_hiteffect.SelectedIndex = -1;
@@ -2787,7 +2788,6 @@ namespace NSUNS4_Character_Manager.Tools
                 t_length.Hexadecimal = true;
                 t_btnpress.Hexadecimal = true;
                 numericUpDown1.Hexadecimal = true;
-                numericUpDown2.Hexadecimal = true;
             }
             else
             {
@@ -2802,7 +2802,6 @@ namespace NSUNS4_Character_Manager.Tools
                 t_length.Hexadecimal = false;
                 t_btnpress.Hexadecimal = false;
                 numericUpDown1.Hexadecimal = false;
-                numericUpDown2.Hexadecimal = false;
             }
         }
 
@@ -3255,6 +3254,11 @@ namespace NSUNS4_Character_Manager.Tools
             {
                 MessageBox.Show("Select Ver section before pasting code!");
             }
+        }
+
+        private void label21_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }
