@@ -61,7 +61,7 @@ namespace NSUNS4_Character_Manager
         private System.Windows.Forms.Label commandType5Label;
         private System.Windows.Forms.ComboBox commandType5ComboBox;
         private System.Windows.Forms.Label commandType6Label;
-        private System.Windows.Forms.NumericUpDown commandType6NumericUpDown;
+        private System.Windows.Forms.ComboBox sceneGroupComboBox;
         private System.Windows.Forms.Label hashHelpLabel;
         private System.Windows.Forms.Button saveEntryButton;
         private System.Windows.Forms.StatusStrip statusStrip1;
@@ -135,7 +135,7 @@ namespace NSUNS4_Character_Manager
             this.commandType5Label = new System.Windows.Forms.Label();
             this.commandType5ComboBox = new System.Windows.Forms.ComboBox();
             this.commandType6Label = new System.Windows.Forms.Label();
-            this.commandType6NumericUpDown = new System.Windows.Forms.NumericUpDown();
+            this.sceneGroupComboBox = new System.Windows.Forms.ComboBox();
             this.hashHelpLabel = new System.Windows.Forms.Label();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.statusLabel = new System.Windows.Forms.ToolStripStatusLabel();
@@ -148,7 +148,6 @@ namespace NSUNS4_Character_Manager
             this.entryEditorPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.commandListIndexNumericUpDown)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.costumeIndexNumericUpDown)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.commandType6NumericUpDown)).BeginInit();
             this.statusStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -416,7 +415,7 @@ namespace NSUNS4_Character_Manager
             this.entryEditorPanel.Controls.Add(this.commandType5Label);
             this.entryEditorPanel.Controls.Add(this.commandType5ComboBox);
             this.entryEditorPanel.Controls.Add(this.commandType6Label);
-            this.entryEditorPanel.Controls.Add(this.commandType6NumericUpDown);
+            this.entryEditorPanel.Controls.Add(this.sceneGroupComboBox);
             this.entryEditorPanel.Controls.Add(this.hashHelpLabel);
             this.entryEditorPanel.Location = new System.Drawing.Point(3, 3);
             this.entryEditorPanel.Name = "entryEditorPanel";
@@ -448,7 +447,7 @@ namespace NSUNS4_Character_Manager
             this.commandListIndexLabel.Name = "commandListIndexLabel";
             this.commandListIndexLabel.Size = new System.Drawing.Size(117, 15);
             this.commandListIndexLabel.TabIndex = 1;
-            this.commandListIndexLabel.Text = "Command List Index";
+            this.commandListIndexLabel.Text = "Display Order";
             // 
             // commandListIndexNumericUpDown
             // 
@@ -512,7 +511,7 @@ namespace NSUNS4_Character_Manager
             this.attackNameLabel.Name = "attackNameLabel";
             this.attackNameLabel.Size = new System.Drawing.Size(102, 15);
             this.attackNameLabel.TabIndex = 5;
-            this.attackNameLabel.Text = "Attack Hash Bytes";
+            this.attackNameLabel.Text = "Title Hash Bytes";
             // 
             // attackNameHashTextBox
             // 
@@ -538,7 +537,7 @@ namespace NSUNS4_Character_Manager
             this.buttonPressLabel.Name = "buttonPressLabel";
             this.buttonPressLabel.Size = new System.Drawing.Size(104, 15);
             this.buttonPressLabel.TabIndex = 7;
-            this.buttonPressLabel.Text = "Button Press Bytes";
+            this.buttonPressLabel.Text = "Input Hash Bytes";
             // 
             // buttonPressHashTextBox
             // 
@@ -657,7 +656,7 @@ namespace NSUNS4_Character_Manager
             this.commandType1Label.Name = "commandType1Label";
             this.commandType1Label.Size = new System.Drawing.Size(100, 15);
             this.commandType1Label.TabIndex = 7;
-            this.commandType1Label.Text = "Command Type 1";
+            this.commandType1Label.Text = "Menu Type";
             // 
             // commandType1ComboBox
             // 
@@ -674,7 +673,7 @@ namespace NSUNS4_Character_Manager
             this.commandTypeSkillLabel.Name = "commandTypeSkillLabel";
             this.commandTypeSkillLabel.Size = new System.Drawing.Size(115, 15);
             this.commandTypeSkillLabel.TabIndex = 8;
-            this.commandTypeSkillLabel.Text = "Command Type Skill";
+            this.commandTypeSkillLabel.Text = "Skill Type";
             // 
             // commandTypeSkillComboBox
             // 
@@ -691,7 +690,7 @@ namespace NSUNS4_Character_Manager
             this.commandTypeAwakeLabel.Name = "commandTypeAwakeLabel";
             this.commandTypeAwakeLabel.Size = new System.Drawing.Size(129, 15);
             this.commandTypeAwakeLabel.TabIndex = 9;
-            this.commandTypeAwakeLabel.Text = "Command Type Awake";
+            this.commandTypeAwakeLabel.Text = "Awake Type";
             // 
             // commandTypeAwakeComboBox
             // 
@@ -708,7 +707,7 @@ namespace NSUNS4_Character_Manager
             this.commandTypeTeamLabel.Name = "commandTypeTeamLabel";
             this.commandTypeTeamLabel.Size = new System.Drawing.Size(122, 15);
             this.commandTypeTeamLabel.TabIndex = 10;
-            this.commandTypeTeamLabel.Text = "Command Type Team";
+            this.commandTypeTeamLabel.Text = "Team Type";
             // 
             // commandTypeTeamComboBox
             // 
@@ -725,7 +724,7 @@ namespace NSUNS4_Character_Manager
             this.commandType5Label.Name = "commandType5Label";
             this.commandType5Label.Size = new System.Drawing.Size(100, 15);
             this.commandType5Label.TabIndex = 11;
-            this.commandType5Label.Text = "Command Type 5";
+            this.commandType5Label.Text = "Extra Type";
             // 
             // commandType5ComboBox
             // 
@@ -742,14 +741,14 @@ namespace NSUNS4_Character_Manager
             this.commandType6Label.Name = "commandType6Label";
             this.commandType6Label.Size = new System.Drawing.Size(100, 15);
             this.commandType6Label.TabIndex = 12;
-            this.commandType6Label.Text = "Command Type 6";
+            this.commandType6Label.Text = "Scene Group";
             // 
-            // commandType6NumericUpDown
+            // sceneGroupComboBox
             // 
-            this.commandType6NumericUpDown.Location = new System.Drawing.Point(488, 171);
-            this.commandType6NumericUpDown.Name = "commandType6NumericUpDown";
-            this.commandType6NumericUpDown.Size = new System.Drawing.Size(188, 23);
-            this.commandType6NumericUpDown.TabIndex = 12;
+            this.sceneGroupComboBox.Location = new System.Drawing.Point(488, 171);
+            this.sceneGroupComboBox.Name = "sceneGroupComboBox";
+            this.sceneGroupComboBox.Size = new System.Drawing.Size(188, 23);
+            this.sceneGroupComboBox.TabIndex = 12;
             // 
             // hashHelpLabel
             // 
@@ -806,7 +805,6 @@ namespace NSUNS4_Character_Manager
             this.entryEditorPanel.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.commandListIndexNumericUpDown)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.costumeIndexNumericUpDown)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.commandType6NumericUpDown)).EndInit();
             this.statusStrip1.ResumeLayout(false);
             this.statusStrip1.PerformLayout();
             this.ResumeLayout(false);

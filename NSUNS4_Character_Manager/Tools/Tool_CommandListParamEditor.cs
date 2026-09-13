@@ -1,4 +1,3 @@
-using NAudio.Midi;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -24,7 +23,10 @@ namespace NSUNS4_Character_Manager
         private sealed class CommandListParamDocument
         {
             public uint Version;
-            public long Padding;
+            // Self-relative pointer at +0x0C, normally 8 (S4 loader 14072585C).
+            public long EntriesOffset = 8;
+            public byte[] ArrayPrefix = new byte[0];
+            public byte[] TrailingData = new byte[0];
             public readonly List<CommandListParamEntry> Entries = new List<CommandListParamEntry>();
         }
 
@@ -185,6 +187,7 @@ namespace NSUNS4_Character_Manager
             PopulateButtonFormulaOptions();
             ConfigureNumericControls();
             PopulateCommandTypeChoices();
+            ConfigureS4Context();
             ResetEditor();
             if (File.Exists(Main.chaPath))
                 LoadCharacodeReferences(Main.chaPath, false);
@@ -218,7 +221,6 @@ namespace NSUNS4_Character_Manager
         {
             SetSignedRange(commandListIndexNumericUpDown);
             SetSignedRange(costumeIndexNumericUpDown);
-            SetSignedRange(commandType6NumericUpDown);
         }
 
         private static void SetSignedRange(NumericUpDown control)
@@ -231,27 +233,175 @@ namespace NSUNS4_Character_Manager
         {
             commandType1ComboBox.Items.AddRange(new object[]
             {
-                "0 - Default", "1", "2", "3", "100", "200", "300", "1000"
+                "0 - Normal", "1 - Command only", "2 - Scene command", "3 - Filtered",
+                "100 - Filtered", "200 - Filtered", "300 - Filtered", "1000 - Both menus"
             });
             commandTypeSkillComboBox.Items.AddRange(new object[]
             {
-                "0 - Always enabled", "1 - Skill", "2 - Secret technique", "3 - Reinforced skill",
-                "4 - Team skill", "5 - Non-single team", "6 - Single team", "7 - Other/always enabled", "10"
+                "0 - No skill restriction", "1 - Skill", "2 - Secret technique", "3 - Reinforced skill",
+                "4 - Team skill", "5 - Team required", "6 - Team required", "7 - Passes skill filter", "10 - Passes skill filter"
             });
             commandTypeAwakeComboBox.Items.AddRange(new object[]
             {
-                "0 - Normal/instant awakening", "1 - True awakening", "2 - Always enabled",
-                "3 - Disabled", "4 - Other/always enabled"
+                "0 - Base state", "1 - True awakening", "2 - Either state", "3 - Hidden", "4 - Passes awake filter"
             });
             commandTypeTeamComboBox.Items.AddRange(new object[]
             {
-                "0 - Always enabled", "1 - Single team", "2 - Non-single team", "3 - Other/always enabled"
+                "0 - Any team", "1 - Single", "2 - Team", "3 - Passes team filter"
             });
-            commandType5ComboBox.Items.Add("-1 - Always enabled");
+            commandType5ComboBox.Items.Add("-1 - Default / passes");
             for (int value = 0; value <= 20; value++)
-                commandType5ComboBox.Items.Add(value.ToString());
-            commandType5ComboBox.Items.Add("2000 - Always enabled");
+                commandType5ComboBox.Items.Add(value.ToString(CultureInfo.InvariantCulture) + " - Filtered / unresolved");
+            commandType5ComboBox.Items.Add("2000 - Special / passes");
+            sceneGroupComboBox.Items.AddRange(new object[]
+            {
+                "-1 - Normal context",
+                "0 - Boss01 phase 1",
+                "1 - Boss01 phase 4",
+                "2 - Boss02.1 phase 01",
+                "3 - Boss02.2 phase 03",
+                "4 - Boss02.3 phase 01",
+                "5 - Boss02.3 phase 02",
+                "6 - Boss03 phase 01",
+                "7 - Boss04 phase 1",
+                "8 - Boss05 phase 1",
+                "9 - Boss05 phase 2",
+                "10 - Boss05 phase 3",
+                "11 - Boss10 phase 01",
+                "12 - Boss11 phase 02",
+                "13 - Boss06 phase 01",
+                "14 - Boss06 phase 02",
+                "15 - Boss06 phase 03",
+                "17 - Boss07.1 phase 01",
+                "18 - Boss07.1 phase 02",
+                "20 - Boss07.2 phase 01",
+                "21 - Boss07.2 phase 02",
+                "22 - Boss08 phase 01",
+                "24 - Boss08 phase 03.2",
+                "25 - Boss02.2 phase 01",
+                "26 - Boss02.2 phase 02",
+                "27 - Boss09 phase 01",
+                "28 - Boss03 phase 02",
+                "29 - Boss04 phase 2",
+                "30 - Boss05 phase 4",
+                "31 - Boss11 phase 01",
+                "32 - Boss08 default",
+                "33 - Boss08 state 1",
+                "34 - Boss08 state 3",
+                "35 - Boss08 state 5",
+                "36 - Boss08 state 6",
+                "37 - Unresolved group",
+                "43 - Boss12 phase 01",
+                "45 - Relive episode 12",
+                "46 - Relive episode 04",
+                "47 - Unresolved group",
+                "76 - Unresolved group",
+                "77 - Unresolved group",
+                "106 - Unresolved group",
+            });
+            foreach (ComboBox combo in new[] { commandType1ComboBox, commandTypeSkillComboBox,
+                commandTypeAwakeComboBox, commandTypeTeamComboBox, commandType5ComboBox, sceneGroupComboBox })
+            {
+                combo.DropDownStyle = ComboBoxStyle.DropDown;
+                combo.DropDownWidth = 360; // Keep arbitrary signed values editable.
+            }
         }
+
+        private ToolTip fieldHelp;
+
+        private void ConfigureS4Context()
+        {
+            if (components == null) components = new System.ComponentModel.Container();
+            fieldHelp = new ToolTip(components) { AutoPopDelay = 30000, InitialDelay = 350, ReshowDelay = 100 };
+            fieldHelp.SetToolTip(commandLinkTextBox, "Command identifier, used as the map key and by hardcoded exclusions. CRC-32/BZIP2. Link suffix and display order are independent. Recovered names are CRC-matching candidates; a hash alone cannot prove the original spelling.");
+            fieldHelp.SetToolTip(commandListIndexNumericUpDown, "Ascending display order within the selected list. This is not necessarily the number in the command link.");
+            fieldHelp.SetToolTip(costumeIndexNumericUpDown, "Exact player costume slot for character combo entries. Generic command-list entries ignore this field; no wildcard is confirmed.");
+            fieldHelp.SetToolTip(attackNameHashTextBox, "Four stored bytes (8 hex digits) of the title message hash. Some combo titles have hardcoded replacements.");
+            fieldHelp.SetToolTip(buttonPressHashTextBox, "Input-instruction message hash, not executable controls. Also selects built-in notes and some hardcoded exclusions.");
+            fieldHelp.SetToolTip(buttonFormulaInputComboBox, "Searches existing message text for icons. This changes the displayed instructions, not the character's actual moves.");
+            fieldHelp.SetToolTip(commandType1ComboBox, "Command menu accepts 0, 1, 2, 1000. Combo menu accepts 0, 1000. Values 3/100/200/300 fail both traced menus; their original meanings are unresolved.");
+            fieldHelp.SetToolTip(commandTypeSkillComboBox, "1: skill; 2: secret technique; 3: reinforced skill must be available. 4: team plus team skill. BOTH 5 and 6 require a team in S4. Other values pass this filter only.");
+            fieldHelp.SetToolTip(commandTypeAwakeComboBox, "0: not awakened; combo mode also permits instant awakening. 1: awakened with player AwakeType 0. 2 and 4 pass; 3 fails. The original distinction between 2 and 4 is unresolved.");
+            fieldHelp.SetToolTip(commandTypeTeamComboBox, "0: unrestricted. 1: single. 2: team. Other values pass this filter. Exact cases, not flags.");
+            fieldHelp.SetToolTip(commandType5ComboBox, "Only -1 and 2000 pass the traced S4 menus. Other values fail. Their original authoring meaning is unresolved.");
+            fieldHelp.SetToolTip(sceneGroupComboBox, "Command-set group, not scene ID. Generic menu needs -1 in normal context. Combo menu treats -1 as unrestricted. Boss03 phase 2 uses group 28 in commands but 6 in combos. See S4 field guide for overrides.");
+            sortToolStripButton.ToolTipText = "File order controls zero-hash inheritance. Display Order controls menu sorting independently.";
+            var help = new ToolStripMenuItem("S4 field guide");
+            help.Click += delegate { ShowS4FieldGuide(); };
+            menuStrip1.Items.Add(help);
+        }
+
+        // Read effective hashes without expanding or changing stored zero values.
+        private CommandListParamEntry CloneWithContext(CommandListParamEntry entry)
+        {
+            CommandListParamEntry clone = entry.Clone();
+            uint character = 0, code = 0;
+            foreach (CommandListParamEntry preceding in fileState.Document.Entries)
+            {
+                if (preceding.CharacterName != 0) character = preceding.CharacterName;
+                if (preceding.Characode != 0) code = preceding.Characode;
+                if (ReferenceEquals(preceding, entry)) break;
+            }
+            clone.CharacterName = character;
+            clone.Characode = code;
+            return clone;
+        }
+
+        private void ShowInheritedContext(int index)
+        {
+            CommandListParamEntry raw = fileState.Document.Entries[index];
+            CommandListParamEntry effective = CloneWithContext(raw);
+            string name, code;
+            if (!messageTextByHash.TryGetValue(effective.CharacterName, out name)) name = FormatHashBytes(effective.CharacterName);
+            if (!characodeNamesByHash.TryGetValue(effective.Characode, out code)) code = FormatHashBytes(effective.Characode);
+            fieldHelp.SetToolTip(characterNameTextBox, "Heading message hash. Zero inherits the preceding nonzero value. Effective heading: " + name);
+            fieldHelp.SetToolTip(characodeTextBox, "Character hash. Zero inherits independently of the heading. Effective character: " + code);
+            characodeLabel.Text = raw.Characode == 0 ? "Characode (inherited)" : "Characode";
+            characterNameLabel.Text = raw.CharacterName == 0 ? "Heading (inherited)" : "Character Heading";
+        }
+
+        private void ShowS4FieldGuide()
+        {
+            using (var guide = new Form { Text = "Storm 4 command-list field guide", StartPosition = FormStartPosition.CenterParent,
+                Size = new System.Drawing.Size(820, 650), MinimizeBox = false, MaximizeBox = true })
+            using (var text = new TextBox { Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Vertical,
+                Dock = DockStyle.Fill, Font = new System.Drawing.Font("Segoe UI", 10), Text = S4FieldGuide.Replace("\n", Environment.NewLine) })
+            {
+                guide.Controls.Add(text);
+                guide.ShowDialog(this);
+            }
+        }
+
+        private const string S4FieldGuide = @"STORM 4 ONLY — version 1001, 52-byte records
+
+NAME RECOVERY
+Names are candidates verified against the stored CRC, not unique reversals of a hash. The fallback searches independently of display order, using the effective character, costume and observed S4 patterns. Ambiguous fallback matches remain raw hashes. Message reference files provide displayed text; they do not always contain the original message key string.
+
+EDITING AND HASHES
+Command Link identifies a record. Display Order sorts selected rows; it does not have to match the link's number. Hash bytes are little-endian CRC-32/BZIP2: 3irk_command_009 is 71039A21 in the byte field, while its display order in the researched file is 8.
+Character Heading and Characode inherit their preceding nonzero values independently when stored as zero. Hover over either field to see the effective value. Editing a nonzero value also affects following zero rows until the next explicit value. File order therefore matters. Duplicates and clones copy effective hashes to avoid inheriting unrelated rows at their new position.
+Costume Index is an exact combo-list slot match. Generic command entries ignore it. The generic command menu matches characode 'commandList'; the combo menu matches the player character and costume.
+Title and Input hashes reference messages. The input builder searches message icons, not gameplay actions. Notes and some titles come from built-in tables or overrides, not separate S4 record fields.
+
+FILTERS
+Filters are combined; passing one does not guarantee display. Unknown integers are preserved and editable.
+Menu: commands accept 0/1/2/1000; combos accept 0/1000. Value 2 enters the generic scene-command path. Values 3/100/200/300 fail both menus; original meanings unresolved.
+Skill: 0 passes; 1 requires skill; 2 secret technique; 3 reinforced skill; 4 team plus team skill. Both 5 and 6 require a team in S4. Other values, including 10, pass this helper only.
+Awake: 0 requires not awakened, except combo mode also allows instant awakening. 1 requires true awakening (player AwakeType 0). 2 passes; 3 fails; 4 and other values pass. The distinction between 2 and 4 is unresolved.
+Team: 0 passes, 1 single, 2 team. Other values pass.
+Extra: only -1 and 2000 pass. Values 0..20 exist in the file but fail the traced menus; their authoring meanings are unresolved.
+
+SCENE GROUPS
+These are command-set IDs, not scene IDs. Choices name the command-menu mapping. Generic menus require -1 in normal context; it is not a universal wildcard. Combo menus accept -1 without a scene restriction.
+Boss03 phase 2 uses group 28 for commands, but group 6 for combos. Combo mappings are Boss03 phases 1/2 -> 6 and Boss05 phase 2 -> 9.
+Boss08 phase03_2 maps initially to 24; manager state overrides it to 32 by default, or 33/34/35/36 for state 1/3/5/6. Relive story episodes 12 and 04 select groups 45 and 46.
+Groups without a confirmed selection source keep neutral labels. Do not assume every group present in a modded asset is selected by the original game.
+
+LIMITS OF THESE FIELDS
+All 13 fields have runtime uses, but some are ignored by a specific menu. Hardcoded character/job, awakening, scene and story exclusions can still hide a row. Some fallback combo lists live in code. Editing this file changes menu data; it does not grant moves.
+
+EVIDENCE
+NSUNS4_107.i64: loader 14072585C; command consumer 140652C2C; combo consumer 1406503D0; filters 140653B70..140653D28; sort 140650954. The supplied evo asset has 8,123 records. Connections has a different record layout and is not supported here.";
 
         private void ResetEditor()
         {
@@ -274,7 +424,7 @@ namespace NSUNS4_Character_Manager
 
             SetLoadedState(false);
             statusLabel.Text = "Open commandListParam.bin.xfbin to begin.";
-            Text = "Command List Param Editor";
+            Text = "Storm 4 Command List Editor";
         }
 
         private void SetLoadedState(bool loaded)
@@ -306,7 +456,7 @@ namespace NSUNS4_Character_Manager
             SetComboValue(commandTypeAwakeComboBox, 0);
             SetComboValue(commandTypeTeamComboBox, 0);
             SetComboValue(commandType5ComboBox, -1);
-            commandType6NumericUpDown.Value = -1;
+            SetComboValue(sceneGroupComboBox, -1);
             entryEditorPanel.Enabled = false;
         }
 
@@ -364,7 +514,7 @@ namespace NSUNS4_Character_Manager
                 {
                     string detail = string.IsNullOrWhiteSpace(parseError) ? string.Empty : Environment.NewLine + Environment.NewLine + parseError;
                     MessageBox.Show(this, "No valid commandListParam binary chunk was found." + detail,
-                        "Command List Param Editor", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        "Storm 4 Command List Editor", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
@@ -378,15 +528,17 @@ namespace NSUNS4_Character_Manager
                     fileState.Document.Entries.Count,
                     Path.GetFileName(filePath),
                     characodeNamesByHash.Count > 0 || messageTextByHash.Count > 0
-                        ? string.Format("{0} characode hashes and {1} message hashes loaded; internal command patterns active.",
+                        ? string.Format("{0} characode hashes and {1} message hashes loaded; command-name patterns active.",
                             characodeNamesByHash.Count, messageTextByHash.Count)
                         : "Load reference files from the References menu.");
-                Text = "Command List Param Editor - " + Path.GetFileName(filePath);
+                statusLabel.Text += string.Format(" Command names: {0}/{1} resolved.",
+                    fileState.Document.Entries.Count(x => !string.IsNullOrEmpty(x.CommandLinkName)), fileState.Document.Entries.Count);
+                Text = "Storm 4 Command List Editor - " + Path.GetFileName(filePath);
             }
             catch (Exception ex)
             {
                 MessageBox.Show(this, "Could not open the XFBIN." + Environment.NewLine + Environment.NewLine + ex.Message,
-                    "Command List Param Editor", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    "Storm 4 Command List Editor", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -408,9 +560,16 @@ namespace NSUNS4_Character_Manager
                 return false;
             }
 
+            if (ReadUInt32LE(bytes, 4) != 1001)
+            {
+                error = "This editor supports Storm 4 version 1001 only (52-byte records).";
+                return false;
+            }
+            long entriesOffset = ReadInt64LE(bytes, 12);
             uint count = ReadUInt32LE(bytes, 8);
             if (ReadUInt32BE(bytes, 0) != bytes.Length - 4 ||
-                CommandHeaderSize + ((long)count * CommandEntrySize) != bytes.Length)
+                entriesOffset < 8 || entriesOffset > bytes.Length - 12L ||
+                (long)count * CommandEntrySize > bytes.Length - 12L - entriesOffset)
             {
                 error = "The size or 0x34-byte entry table is invalid.";
                 return false;
@@ -419,11 +578,13 @@ namespace NSUNS4_Character_Manager
             document = new CommandListParamDocument
             {
                 Version = ReadUInt32LE(bytes, 4),
-                Padding = ReadInt64LE(bytes, 12)
+                EntriesOffset = entriesOffset,
+                ArrayPrefix = bytes.Skip(CommandHeaderSize).Take((int)entriesOffset - 8).ToArray(),
+                TrailingData = bytes.Skip(checked((int)(12 + entriesOffset + (long)count * CommandEntrySize))).ToArray()
             };
             for (int i = 0; i < count; i++)
             {
-                int offset = CommandHeaderSize + (i * CommandEntrySize);
+                int offset = checked((int)(12 + document.EntriesOffset) + (i * CommandEntrySize));
                 document.Entries.Add(new CommandListParamEntry
                 {
                     CommandLink = ReadUInt32LE(bytes, offset),
@@ -446,16 +607,22 @@ namespace NSUNS4_Character_Manager
 
         private static byte[] BuildCommandListChunk(CommandListParamDocument document)
         {
-            int length = checked(CommandHeaderSize + (document.Entries.Count * CommandEntrySize));
+            if (document.Version != 1001 || document.EntriesOffset != 8L + document.ArrayPrefix.Length)
+                throw new InvalidDataException("Invalid Storm 4 command-list header.");
+            int arrayStart = checked((int)(12 + document.EntriesOffset));
+            int tableEnd = checked(arrayStart + (document.Entries.Count * CommandEntrySize));
+            int length = checked(tableEnd + document.TrailingData.Length);
             byte[] bytes = new byte[length];
             WriteUInt32BE(bytes, 0, checked((uint)(length - 4)));
             WriteUInt32LE(bytes, 4, document.Version);
             WriteUInt32LE(bytes, 8, checked((uint)document.Entries.Count));
-            WriteInt64LE(bytes, 12, document.Padding);
+            WriteInt64LE(bytes, 12, document.EntriesOffset);
+            Buffer.BlockCopy(document.ArrayPrefix, 0, bytes, CommandHeaderSize, document.ArrayPrefix.Length);
+            Buffer.BlockCopy(document.TrailingData, 0, bytes, tableEnd, document.TrailingData.Length);
 
             for (int i = 0; i < document.Entries.Count; i++)
             {
-                int offset = CommandHeaderSize + (i * CommandEntrySize);
+                int offset = checked((int)(12 + document.EntriesOffset) + (i * CommandEntrySize));
                 CommandListParamEntry entry = document.Entries[i];
                 WriteUInt32LE(bytes, offset, entry.CommandLink);
                 WriteInt32LE(bytes, offset + 0x04, entry.CommandListIndex);
@@ -550,7 +717,7 @@ namespace NSUNS4_Character_Manager
                 if (showError)
                 {
                     MessageBox.Show(this, "Could not load characode references." + Environment.NewLine + Environment.NewLine + ex.Message,
-                        "Command List Param Editor", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        "Storm 4 Command List Editor", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
                 return false;
             }
@@ -665,7 +832,7 @@ namespace NSUNS4_Character_Manager
                 {
                     MessageBox.Show(this,
                         "Select the English messageInfo file from the WIN64\\eng folder.",
-                        "Command List Param Editor", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        "Storm 4 Command List Editor", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
@@ -786,7 +953,7 @@ namespace NSUNS4_Character_Manager
                 if (showError)
                 {
                     MessageBox.Show(this, "Could not load messageInfo references." + Environment.NewLine + Environment.NewLine + ex.Message,
-                        "Command List Param Editor", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        "Storm 4 Command List Editor", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
                 return false;
             }
@@ -928,12 +1095,92 @@ namespace NSUNS4_Character_Manager
                 }
             }
 
+            RecoverAdditionalCommandNames(entries, matchedNames);
+
             foreach (CommandListParamEntry entry in entries)
             {
                 string commandName;
                 if (matchedNames.TryGetValue(entry.CommandLink, out commandName))
                     entry.CommandLinkName = commandName;
             }
+        }
+
+        // S4 asset research: display order and numeric suffix are independent.
+        // These are CRC-verified naming candidates, not a reversible decoding of CRC.
+        // Scope candidates to the effective character/costume; retain raw hashes on ambiguity.
+        private void RecoverAdditionalCommandNames(List<CommandListParamEntry> entries,
+            Dictionary<uint, string> matchedNames)
+        {
+            var codes = new Dictionary<uint, string>(characodeNamesByHash);
+            foreach (string code in new[] { "commandList", "3kkd", "bbrb", "bnry", "b3nx", "b8it" })
+                codes[ComputeGameCrc32(code)] = code;
+            var groups = new Dictionary<string, HashSet<uint>>(StringComparer.Ordinal);
+            uint inheritedCode = 0;
+            foreach (CommandListParamEntry entry in entries)
+            {
+                if (entry.Characode != 0) inheritedCode = entry.Characode;
+                string code;
+                if (matchedNames.ContainsKey(entry.CommandLink) || !codes.TryGetValue(inheritedCode, out code)) continue;
+                string group = code + "|" + entry.CostumeIndex.ToString(CultureInfo.InvariantCulture);
+                HashSet<uint> targets;
+                if (!groups.TryGetValue(group, out targets)) groups[group] = targets = new HashSet<uint>();
+                targets.Add(entry.CommandLink);
+            }
+            var candidates = new Dictionary<uint, HashSet<string>>();
+            foreach (var group in groups)
+            {
+                string[] parts = group.Key.Split('|');
+                string code = parts[0];
+                int costume = int.Parse(parts[1], CultureInfo.InvariantCulture);
+                var stems = new HashSet<string>(StringComparer.Ordinal);
+                if (code == "commandList")
+                {
+                    foreach (string stem in KnownCommandStems) stems.Add(stem);
+                    // Recovered in contiguous scene command groups, including suffixes
+                    // that have no relationship to the display order.
+                    foreach (string stem in new[] {
+                        "Boss03_phase01_command_", "Boss04_phase01_command_", "Boss04_phase02_command_",
+                        "Boss05_phase01_command_", "Boss05_phase02_command_", "Boss07_phase01_command_",
+                        "Boss08_phase01_command_", "Boss08_phase02_command_", "Boss09_phase01_command_",
+                        "Boss09_phase02_command_", "Boss09_phase03_command_", "Boss12_phase01_command_" }) stems.Add(stem);
+                }
+                else
+                {
+                    foreach (string format in CharacodeCommandStemFormats)
+                        stems.Add(string.Format(CultureInfo.InvariantCulture, format, code));
+                    stems.Add(code + "_command_01_");
+                    // These researched legacy x-variant stems differ from the row's
+                    // costume slot; require the matching character and an exact CRC.
+                    foreach (string legacy in new[] { "3mfn_x_01_command_", "2ymt_x_01_command_",
+                        "2tkg_x_01_command_", "2orc_x_02_command_", "2jug_x_01_command_", "3klb_x_01_command_" })
+                        if (legacy.StartsWith(code + "_", StringComparison.Ordinal)) stems.Add(legacy);
+                    if (costume >= 0 && costume <= MaximumCostumeNumber)
+                    {
+                        string slot = costume.ToString("D2", CultureInfo.InvariantCulture);
+                        stems.Add(code + "_" + slot + "_command_");
+                        stems.Add(code + "_x_" + slot + "_command_");
+                        stems.Add(code + "_" + slot + "_x_command_");
+                        stems.Add(code + "_" + slot + "_command_01_");
+                        stems.Add(code + "_" + slot + "command_");
+                    }
+                }
+                // Bounded fallback covers researched S4 groups without searching
+                // arbitrary text or unrelated characters (which creates CRC collisions).
+                foreach (string stem in stems)
+                {
+                    for (int number = 0; number < 150; number++)
+                    {
+                        string name = stem + number.ToString("D3", CultureInfo.InvariantCulture);
+                        uint hash = ComputeGameCrc32(name);
+                        if (!group.Value.Contains(hash)) continue;
+                        HashSet<string> names;
+                        if (!candidates.TryGetValue(hash, out names)) candidates[hash] = names = new HashSet<string>(StringComparer.Ordinal);
+                        names.Add(name);
+                    }
+                }
+            }
+            foreach (var candidate in candidates)
+                if (candidate.Value.Count == 1) matchedNames[candidate.Key] = candidate.Value.Single();
         }
 
         private static void TryMatchGeneratedCommand(string commandName, HashSet<uint> targetHashes,
@@ -1101,7 +1348,8 @@ namespace NSUNS4_Character_Manager
             SetComboValue(commandTypeAwakeComboBox, entry.CommandTypeAwake);
             SetComboValue(commandTypeTeamComboBox, entry.CommandTypeTeam);
             SetComboValue(commandType5ComboBox, entry.CommandType5);
-            commandType6NumericUpDown.Value = entry.CommandType6;
+            SetComboValue(sceneGroupComboBox, entry.CommandType6);
+            ShowInheritedContext(index);
             entryEditorPanel.Enabled = true;
         }
 
@@ -1112,6 +1360,7 @@ namespace NSUNS4_Character_Manager
             int typeAwake;
             int typeTeam;
             int type5;
+            int sceneGroup;
             CommandListParamEntry currentEntry = fileState.Document.Entries[loadedEntryIndex];
             uint commandLinkHash;
             string commandLinkName;
@@ -1136,6 +1385,7 @@ namespace NSUNS4_Character_Manager
                 !TryReadComboValue(commandTypeAwakeComboBox, out typeAwake) ||
                 !TryReadComboValue(commandTypeTeamComboBox, out typeTeam) ||
                 !TryReadComboValue(commandType5ComboBox, out type5) ||
+                !TryReadComboValue(sceneGroupComboBox, out sceneGroup) ||
                 !TryReadRawHashBytes(attackNameHashTextBox.Text, out attackNameHash) ||
                 !TryReadRawHashBytes(buttonPressHashTextBox.Text, out buttonPressHash))
             {
@@ -1166,7 +1416,7 @@ namespace NSUNS4_Character_Manager
                 CommandTypeAwake = typeAwake,
                 CommandTypeTeam = typeTeam,
                 CommandType5 = type5,
-                CommandType6 = (int)commandType6NumericUpDown.Value
+                CommandType6 = sceneGroup
             };
 
             RefreshEntryList(loadedEntryIndex);
@@ -1473,7 +1723,7 @@ namespace NSUNS4_Character_Manager
             if (loadedEntryIndex < 0)
                 return;
 
-            fileState.Document.Entries.Add(fileState.Document.Entries[loadedEntryIndex].Clone());
+            fileState.Document.Entries.Add(CloneWithContext(fileState.Document.Entries[loadedEntryIndex]));
             RefreshEntryList(fileState.Document.Entries.Count - 1);
             statusLabel.Text = "Entry duplicated. Save the XFBIN to persist the change.";
         }
@@ -1484,6 +1734,13 @@ namespace NSUNS4_Character_Manager
                 return;
 
             int index = loadedEntryIndex;
+            if (index + 1 < fileState.Document.Entries.Count)
+            {
+                CommandListParamEntry next = fileState.Document.Entries[index + 1];
+                CommandListParamEntry effective = CloneWithContext(next);
+                if (next.CharacterName == 0) next.CharacterName = effective.CharacterName;
+                if (next.Characode == 0) next.Characode = effective.Characode;
+            }
             fileState.Document.Entries.RemoveAt(index);
             RefreshEntryList(Math.Min(index, fileState.Document.Entries.Count - 1));
             statusLabel.Text = "Entry deleted. Save the XFBIN to persist the change.";
@@ -1562,7 +1819,7 @@ namespace NSUNS4_Character_Manager
                     continue;
                 }
 
-                CommandListParamEntry clone = sourceEntry.Clone();
+                CommandListParamEntry clone = CloneWithContext(sourceEntry);
                 clone.CommandLink = targetCommandHash;
                 clone.CommandLinkName = targetCommandName;
                 if (clone.Characode == sourceCharacodeHash)
@@ -1678,7 +1935,7 @@ namespace NSUNS4_Character_Manager
                         continue;
                     }
 
-                    CommandListParamEntry costumeEntry = baseEntry.Clone();
+                    CommandListParamEntry costumeEntry = CloneWithContext(baseEntry);
                     costumeEntry.CommandLink = costumeCommandHash;
                     costumeEntry.CommandLinkName = costumeCommandName;
                     costumeEntry.CostumeIndex = costumeIndex;
@@ -1740,15 +1997,15 @@ namespace NSUNS4_Character_Manager
 
                 sourceFilePath = outputPath;
                 statusLabel.Text = "Saved " + Path.GetFileName(outputPath) + ".";
-                Text = "Command List Param Editor - " + Path.GetFileName(outputPath);
+                Text = "Storm 4 Command List Editor - " + Path.GetFileName(outputPath);
                 MessageBox.Show(this,
                     "File saved successfully." + Environment.NewLine + Environment.NewLine + Path.GetFullPath(outputPath),
-                    "Command List Param Editor", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    "Storm 4 Command List Editor", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
                 MessageBox.Show(this, "Could not save the XFBIN." + Environment.NewLine + Environment.NewLine + ex.Message,
-                    "Command List Param Editor", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    "Storm 4 Command List Editor", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.IO;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
@@ -34,7 +35,7 @@ namespace NSUNS4_Character_Manager
 			public string DefaultAssist2 = "";
 			public string AwakeAction = "";
 			public string[] Items = new string[4];
-			public byte[] ItemCounts = new byte[4];
+			public short[] ItemCounts = new short[4];
 			public string Partner = "";
 			public byte[] SettingList = new byte[36];
 			public byte[] AwaSettingList = new byte[84];
@@ -66,7 +67,7 @@ namespace NSUNS4_Character_Manager
 					DefaultAssist2 = DefaultAssist2,
 					AwakeAction = AwakeAction,
 					Items = (string[])Items.Clone(),
-					ItemCounts = (byte[])ItemCounts.Clone(),
+					ItemCounts = (short[])ItemCounts.Clone(),
 					Partner = Partner,
 					SettingList = (byte[])SettingList.Clone(),
 					AwaSettingList = (byte[])AwaSettingList.Clone(),
@@ -100,7 +101,7 @@ namespace NSUNS4_Character_Manager
 		public List<string> DefaultAssist2 = new List<string>();
 		public List<string> AwkAction = new List<string>();
 		public List<string[]> ItemList = new List<string[]>();
-		public List<byte[]> ItemCount = new List<byte[]>();
+		public List<short[]> ItemCount = new List<short[]>();
         public List<string> Partner = new List<string>();
 		public List<byte[]> SettingList = new List<byte[]>();
 		public List<byte[]> AwaSettingList = new List<byte[]>();
@@ -120,17 +121,18 @@ namespace NSUNS4_Character_Manager
 		public List<int> VictoryUnknownList => CameraDistanceList;
 		private bool syncingConditionControls = false;
 
-
 		public Tool_DuelPlayerParamEditor()
 		{
 			InitializeComponent();
+            if (LicenseManager.UsageMode == LicenseUsageMode.Designtime) return;
 			InitializeConditionFlagList();
+            InitializeFieldContext();
 			ResetInlineSettings();
 		}
 
 		private static int ReadUInt16(byte[] data, int offset)
 		{
-			return BitConverter.ToUInt16(data, offset);
+			return BitConverter.ToInt16(data, offset); // S4 reads these values with MOVSX.
 		}
 
 		private static int SwapInt32Endian(int value)
@@ -273,7 +275,7 @@ namespace NSUNS4_Character_Manager
 					DefaultAssist2 = DefaultAssist2[i],
 					AwakeAction = AwkAction[i],
 					Items = (string[])ItemList[i].Clone(),
-					ItemCounts = (byte[])ItemCount[i].Clone(),
+					ItemCounts = (short[])ItemCount[i].Clone(),
 					Partner = Partner[i],
 					SettingList = (byte[])SettingList[i].Clone(),
 					AwaSettingList = (byte[])AwaSettingList[i].Clone(),
@@ -306,7 +308,7 @@ namespace NSUNS4_Character_Manager
 			DefaultAssist2 = Entries.Select(e => e.DefaultAssist2).ToList();
 			AwkAction = Entries.Select(e => e.AwakeAction).ToList();
 			ItemList = Entries.Select(e => (string[])e.Items.Clone()).ToList();
-			ItemCount = Entries.Select(e => (byte[])e.ItemCounts.Clone()).ToList();
+			ItemCount = Entries.Select(e => (short[])e.ItemCounts.Clone()).ToList();
 			Partner = Entries.Select(e => e.Partner).ToList();
 			SettingList = Entries.Select(e => (byte[])e.SettingList.Clone()).ToList();
 			AwaSettingList = Entries.Select(e => (byte[])e.AwaSettingList.Clone()).ToList();
@@ -356,7 +358,7 @@ namespace NSUNS4_Character_Manager
 				DefaultAssist2 = "",
 				AwakeAction = "",
 				Items = new string[4],
-				ItemCounts = new byte[4],
+				ItemCounts = new short[4],
 				SettingList = new byte[36],
 				Setting2List = new byte[16],
 				AwaSettingList = new byte[84],
@@ -383,17 +385,25 @@ namespace NSUNS4_Character_Manager
 			entry.BinName = w_charaprmbas.Text + "prm_bas";
 			entry.CharacterId = w_charaprmbas.Text;
 			entry.MotionCode = w_characodeid.Text;
+            costumeGrid.EndEdit();
+            for (int slot = 0; slot < 20; slot++)
+            {
+                entry.BaseCostumes[slot] = Convert.ToString(costumeGrid.Rows[slot].Cells[1].Value);
+                entry.AwakeCostumes[slot] = Convert.ToString(costumeGrid.Rows[slot].Cells[2].Value);
+            }
 			entry.DefaultAssist1 = w_defaultassist1.Text;
 			entry.DefaultAssist2 = w_defaultassist2.Text;
 			entry.AwakeAction = w_awkaction.Text;
 			entry.Items = new string[4] { w_item1.Text, w_item2.Text, w_item3.Text, w_item4.Text };
-			entry.ItemCounts = new byte[4] { (byte)w_itemc1.Value, (byte)w_itemc2.Value, (byte)w_itemc3.Value, (byte)w_itemc4.Value };
+			entry.ItemCounts = new short[4] { (short)w_itemc1.Value, (short)w_itemc2.Value, (short)w_itemc3.Value, (short)w_itemc4.Value };
 			entry.Partner = w_partner.Text;
 			int displayedConditionFlag = unchecked((int)decimal.ToUInt32(v_enableAwaSkill.Value));
 			int storedConditionFlag = GetStoredConditionValue(displayedConditionFlag);
 			entry.ConditionFlag = storedConditionFlag;
 			entry.EnableAwaSkill = storedConditionFlag & 0xFF;
 			ApplyInlineSettingsToEntry(entry);
+            if (loadedExtraSettings != null) DecodeExtraSettings(entry, loadedExtraSettings);
+            ApplyAdditionalFields(entry);
 			return entry;
 		}
 
@@ -401,6 +411,7 @@ namespace NSUNS4_Character_Manager
 		{
 			w_charaprmbas.Text = !string.IsNullOrWhiteSpace(entry.CharacterId) ? entry.CharacterId : GetEntryPrefixFromBinName(entry.BinName);
 			w_characodeid.Text = entry.MotionCode;
+            LoadCostumes(entry);
 			w_defaultassist1.Text = entry.DefaultAssist1;
 			w_defaultassist2.Text = entry.DefaultAssist2;
 			w_awkaction.Text = entry.AwakeAction;
@@ -419,66 +430,495 @@ namespace NSUNS4_Character_Manager
 			LoadInlineSettingsFromEntry(entry);
 		}
 
-		private string[] GetConditionFlagNames()
-		{
-			string[] storedBitOrderNames = new string[]
-			{
-                "ENABLE AWAKENING JUTSU",
-				"",
-				"",
-				"",
-				"",
-				"",
-				"",
-				"",
-				"ENABLE GIANT AWAKENING COND",
-				"ENABLE PRIVATE CAMERA",
-				"ENABLE GIANT AWAKENING LAND SOUND",
-				"ENABLE AWAKENING HITMARK",
-                "",
-				"",
-				"",
-				"",
-				"",
-				"",
-				"ENABLE BASE GLOW",
-				"ENABLE AWAKE GLOW",
-				"ENABLE TELEPORT DASH",
-				"",
-				"",
-				"ENABLE AWAKENING MOVESET",
-				"",
-				"",
-				"",
-				"ENABLE PUPPET COND",
-				"ENABLE PUPPET USER COND",
-				"",
-				"",
-				""
+        private static string ReadCostumeCode(byte[] data, int offset)
+        {
+            // A full eight-byte code has no terminator; never read into the next slot.
+            int length = 0;
+            while (length < 8 && data[offset + length] != 0) length++;
+            return Encoding.ASCII.GetString(data, offset, length);
+        }
+
+        private void LoadCostumes(DuelPlayerParamEntry entry)
+        {
+            // Rows are record data; the grid and all columns are defined in Designer.cs.
+            costumeGrid.Rows.Clear();
+            for (int slot = 0; slot < 20; slot++)
+                costumeGrid.Rows.Add(slot, entry.BaseCostumes[slot] ?? "", entry.AwakeCostumes[slot] ?? "");
+        }
+
+        // S4 record context. Keep legacy member names for clipboard/caller compatibility.
+        private int hoveredConditionFlag = -1;
+        private string loadedExtraSettings;
+        private readonly Dictionary<NumericUpDown, decimal> loadedFloatValues = new Dictionary<NumericUpDown, decimal>();
+
+        // Numeric values are file values; names describe verified branches, not original source enums.
+        private enum AwakeRiskMode { Mode0 = 0, Reaction = 1, ReactionSkills = 2, Life = 3, LifeSkills = 4, Skills = 5 }
+        private enum DefaultSupportClass { Unspecified = -1, Attack = 0, Defense = 1, Balance = 2 }
+        private enum AwakeningPriority { Default = -1, Priority301 = 301, Priority390 = 390 }
+        private enum AwakeningSkill { Default = -1, Slot0 = 0, Slot1 = 1, Slot2 = 2, Slot3 = 3, Slot4 = 4, Slot5 = 5 }
+        private enum DashPriorityMode { Disabled = 0, Enabled = 1 }
+        private enum JobType { Default = -1, Type0 = 0, Type1 = 1 }
+        private enum AnimationStyle { Default = -1, Normal = 0, Female = 1 }
+        private sealed class RiskChoice
+        {
+            public int Value;
+            public string Label;
+            public override string ToString() { return Value + " - " + Label; }
+        }
+
+        private static string EnumChoiceLabel(Type type, object choice)
+        {
+            int value = Convert.ToInt32(choice);
+            if (type == typeof(DefaultSupportClass))
+                return value == -1 ? "Unspecified" : value == 0 ? "Attack" : value == 1 ? "Defense (legacy)" : "Balance (legacy)";
+            if (type == typeof(JobType))
+                return value == -1 ? "Default (uses type 0)" : value == 0 ? "Type 0 (excludes command 039)" : "Type 1 (excludes command 018)";
+            if (type == typeof(AnimationStyle))
+                return value == -1 ? "Default (unchanged)" : value == 0 ? "Normal (unchanged)" : "Female animation conversion";
+            if (type == typeof(AwakeningPriority))
+                return value == -1 ? "Default (no override)" : "Priority " + value;
+            if (type == typeof(AwakeningSkill))
+                return value == -1 ? "Default" : "Skill slot " + value;
+            if (type == typeof(DashPriorityMode))
+                return value == 0 ? "Disabled (350)" : "Enabled (390)";
+            if (type == typeof(AwakeRiskMode))
+                return new[] { "Chakra recovery after awakening", "Exit reaction", "Exit reaction + action gauges", "Life recovery", "Life recovery + action gauges", "Action gauges" }[value];
+            return choice.ToString();
+        }
+
+        private static void SelectEnumValue(ComboBox combo, Type type, int value)
+        {
+            combo.Items.Clear();
+            combo.Tag = type;
+            foreach (object choice in Enum.GetValues(type).Cast<object>().OrderBy(c => Convert.ToInt32(c)))
+                combo.Items.Add(new RiskChoice { Value = Convert.ToInt32(choice), Label = EnumChoiceLabel(type, choice) });
+            if (!combo.Items.Cast<RiskChoice>().Any(c => c.Value == value))
+                combo.Items.Add(new RiskChoice { Value = value, Label = type == typeof(DashPriorityMode) && value != 0 ? "Enabled (nonzero; preserved)" : "Unlisted value (preserved)" });
+            combo.SelectedItem = combo.Items.Cast<RiskChoice>().First(c => c.Value == value);
+        }
+
+        private static int ReadEnumValue(ComboBox combo)
+        {
+            return ((RiskChoice)combo.SelectedItem).Value;
+        }
+
+        private void SelectAwakeRisk(int value)
+        {
+            SelectEnumValue(awakeRisk, typeof(AwakeRiskMode), value);
+        }
+
+        private void InitializeFieldContext()
+        {
+            checkedListConditionFlags.MouseMove += (s, e) =>
+            {
+                int index = checkedListConditionFlags.IndexFromPoint(e.Location);
+                if (index == hoveredConditionFlag) return;
+                hoveredConditionFlag = index;
+                fieldTips.Hide(checkedListConditionFlags);
+                if (index >= 0 && index < ConditionFlagDetails.Length)
+                    fieldTips.Show(WrapFieldHelp(ConditionFlagDetails[index]),
+                        checkedListConditionFlags, e.X + 18, e.Y + 20, 30000);
             };
+            checkedListConditionFlags.MouseLeave += (s, e) =>
+            {
+                hoveredConditionFlag = -1;
+                fieldTips.Hide(checkedListConditionFlags);
+            };
+            checkedListConditionFlags.SelectedIndexChanged += (s, e) =>
+            {
+                // Keyboard users receive the same per-row context. Mouse hover does not toggle bits.
+                int index = checkedListConditionFlags.SelectedIndex;
+                if (index >= 0 && index < ConditionFlagDetails.Length)
+                    checkedListConditionFlags.AccessibleDescription = ConditionFlagDetails[index];
+            };
+            SelectAwakeRisk(1);
+            InitializeAdditionalFields();
+            LoadCostumes(CreateDefaultEntry("1new"));
+            w_item1.MaxLength = 29;
+            w_item2.MaxLength = 29;
+            w_item3.MaxLength = 29;
+            w_item4.MaxLength = 29;
+        }
 
-			List<string> displayOrderNames = new List<string>(storedBitOrderNames.Length);
-			for (int byteIndex = 3; byteIndex >= 0; byteIndex--)
-			{
-				for (int bitInByte = 0; bitInByte < 8; bitInByte++)
-				{
-					displayOrderNames.Add(storedBitOrderNames[byteIndex * 8 + bitInByte]);
-				}
-			}
+        // Bind the Designer-owned tab controls to record fields.
+        // All scalar fields are Designer-owned controls, displayed in file order.
+        private readonly Dictionary<int, Control> additionalFields = new Dictionary<int, Control>();
 
-			for (int i = 0; i < displayOrderNames.Count; i++)
-			{
-				if (string.IsNullOrWhiteSpace(displayOrderNames[i]))
-				{
-					displayOrderNames[i] = "unknow " + (i + 1).ToString();
-				}
-			}
+        // Bind Designer-owned controls to file fields; layout belongs in Designer.cs.
+        private void InitializeAdditionalFields()
+        {
+            additionalFields.Add(0x15C, extraUnknown15C);
+            additionalFields.Add(0x168, extraJobType);
+            additionalFields.Add(0x16C, extraUnknown16C);
+            additionalFields.Add(0x170, extraUnknown170);
+            additionalFields.Add(0x174, extraUnknown174);
+            additionalFields.Add(0x178, extraUnknown178);
+            additionalFields.Add(0x17C, extraFemaleAnims);
+            additionalFields.Add(0x180, extraUnknown180);
+            additionalFields.Add(0x184, extraUnknown184);
+            additionalFields.Add(0x188, extraUnknown188);
+            additionalFields.Add(0x18C, extraUnknown18C);
+            additionalFields.Add(0x190, extraUnknown190);
+            additionalFields.Add(0x194, extraUnknown194);
+            additionalFields.Add(0x198, extraUnknown198);
+            additionalFields.Add(0x19C, extraUnknown19C);
+            additionalFields.Add(0x1A0, extraAdventureSupport);
+            additionalFields.Add(0x1CC, extraUnknown1CC);
+            additionalFields.Add(0x1FE, extraDashTrackTime);
+            additionalFields.Add(0x200, extraDashTurnRate);
+            additionalFields.Add(0x292, extraAwakeDashTrackTime);
+            additionalFields.Add(0x294, extraAwakeDashTurnRate);
+            additionalFields.Add(0x298, extraUnknown298);
+            additionalFields.Add(0x29C, extraUnknown29C);
+            additionalFields.Add(0x2A0, extraUnknown2A0);
+            additionalFields.Add(0x2A4, extraUnknown2A4);
+            additionalFields.Add(0x2A8, extraUnknown2A8);
+            additionalFields.Add(0x2AC, extraUnknown2AC);
+            additionalFields.Add(0x2B0, extraUnknown2B0);
+            additionalFields.Add(0x2B4, extraUnknown2B4);
+            additionalFields.Add(0x2B8, extraUnknown2B8);
+            additionalFields.Add(0x2BC, extraUnknown2BC);
+            additionalFields.Add(0x2CC, extraUnknown2CC);
+            extraJobType.Tag = typeof(JobType);
+            extraFemaleAnims.Tag = typeof(AnimationStyle);
+            extraAdventureSupport.Tag = typeof(DefaultSupportClass);
+        }
 
-			return displayOrderNames.ToArray();
-		}
+        private void LoadAdditionalFields(DuelPlayerParamEntry entry)
+        {
+            foreach (var item in additionalFields)
+            {
+                ExtraField field = ExtraFields.First(f => f.Offset == item.Key);
+                string raw = ReadExtraField(entry, field);
+                var combo = item.Value as ComboBox;
+                if (combo != null)
+                {
+                    SelectEnumValue(combo, (Type)combo.Tag, int.Parse(raw, CultureInfo.InvariantCulture));
+                }
+                else
+                {
+                    var number = (NumericUpDown)item.Value;
+                    decimal value;
+                    if (!decimal.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out value)) value = 0;
+                    SetNumericValue(number, value);
+                    // Preserve the original float bits, including values outside decimal range.
+                    number.Tag = number.Value;
+                }
+            }
+        }
+
+        private void ApplyAdditionalFields(DuelPlayerParamEntry entry)
+        {
+            foreach (var item in additionalFields)
+            {
+                ExtraField field = ExtraFields.First(f => f.Offset == item.Key);
+                var combo = item.Value as ComboBox;
+                if (combo != null)
+                {
+                    var choice = combo.SelectedItem as RiskChoice;
+                    if (choice != null) WriteExtraField(entry, field, choice.Value.ToString(CultureInfo.InvariantCulture));
+                }
+                else
+                {
+                    var number = (NumericUpDown)item.Value;
+                    if (!(number.Tag is decimal) || number.Value != (decimal)number.Tag)
+                        WriteExtraField(entry, field, number.Value.ToString(CultureInfo.InvariantCulture));
+                }
+            }
+        }
+
+        private static string WrapFieldHelp(string value)
+        {
+            var output = new StringBuilder();
+            foreach (string line in value.Replace("\r", "").Split('\n'))
+            {
+                int width = 0;
+                foreach (string word in line.Split(' '))
+                {
+                    if (width != 0 && width + word.Length + 1 > 88) { output.AppendLine(); width = 0; }
+                    if (width != 0) { output.Append(' '); width++; }
+                    output.Append(word); width += word.Length;
+                }
+                output.AppendLine();
+            }
+            return output.ToString().TrimEnd();
+        }
+
+        private void LoadFloatSetting(NumericUpDown control, byte[] data, int offset)
+        {
+            float value = BitConverter.ToSingle(data, offset);
+            decimal display = 0;
+            if (!float.IsNaN(value) && !float.IsInfinity(value))
+            {
+                try { display = (decimal)value; }
+                catch (OverflowException) { display = value < 0 ? control.Minimum : control.Maximum; }
+            }
+            SetNumericValue(control, display);
+            loadedFloatValues[control] = control.Value;
+        }
+
+        private void SaveFloatSetting(NumericUpDown control, byte[] data, int offset)
+        {
+            decimal loaded;
+            if (!loadedFloatValues.TryGetValue(control, out loaded) || control.Value != loaded)
+                Buffer.BlockCopy(BitConverter.GetBytes((float)control.Value), 0, data, offset, 4);
+        }
+
+        private static string EncodeItemCounts(short[] counts)
+        {
+            var bytes = new byte[8];
+            for (int i = 0; i < 4; i++) Buffer.BlockCopy(BitConverter.GetBytes(counts[i]), 0, bytes, i * 2, 2);
+            return EncodeBytes(bytes);
+        }
+
+        private static short[] DecodeItemCounts(string text)
+        {
+            byte[] bytes = DecodeBytes(text);
+            if (bytes.Length != 4 && bytes.Length != 8) throw new FormatException("Invalid item-count clipboard data.");
+            var counts = new short[4];
+            for (int i = 0; i < 4; i++) counts[i] = bytes.Length == 4 ? (short)bytes[i] : BitConverter.ToInt16(bytes, i * 2);
+            return counts;
+        }
+
+        private enum FieldKind { Short, Int, Float }
+        private sealed class ExtraField
+        {
+            public readonly int Offset;
+            public readonly FieldKind Kind;
+            public readonly string Name, Description;
+            public ExtraField(int offset, FieldKind kind, string name, string description)
+            { Offset = offset; Kind = kind; Name = name; Description = description; }
+        }
+
+        private static readonly ExtraField[] ExtraFields = new ExtraField[]
+        {
+            new ExtraField(0x15C, FieldKind.Int, "Unknown15C", "All supplied records contain zero. No confirmed stock-game consumer; preserve these four bytes. It is addressable arithmetically as flag word 3 for indexes 96..127, but no such caller was recovered. Direct +0x15C hits in player movement refer to player-object state, not automatically to the parameter record."),
+            new ExtraField(0x168, FieldKind.Int, "JobType", "Indexed parameter 2. Negative values normalize to 0. Pause-menu filtering: type 0 excludes sys_free_command_039; type 1 excludes sys_free_command_018. Broader meaning of the category is unresolved. Fresh direct/wrapper audits still find a command-list role rather than a combat-state switch. Only 3mfn has value 1 in the supplied asset. This correlation alone does not prove a general Samurai class or enable samurai abilities."),
+            new ExtraField(0x16C, FieldKind.Int, "Unknown16C", "Indexed integer slot 3. All supplied records contain -1. A fresh audit of both the global accessor and the player/pair-awakening wrapper finds constant consumers only for indexes 0, 1, 2 and 7; no semantic reader for this slot was established. Preserve the slot; lack of a traced consumer is not proof of unused storage."),
+            new ExtraField(0x170, FieldKind.Int, "Unknown170", "Indexed integer slot 4. All supplied records contain -1. A fresh audit of both the global accessor and the player/pair-awakening wrapper finds constant consumers only for indexes 0, 1, 2 and 7; no semantic reader for this slot was established. Preserve the slot; lack of a traced consumer is not proof of unused storage."),
+            new ExtraField(0x174, FieldKind.Int, "Unknown174", "Indexed integer slot 5. All supplied records contain -1. A fresh audit of both the global accessor and the player/pair-awakening wrapper finds constant consumers only for indexes 0, 1, 2 and 7; no semantic reader for this slot was established. Preserve the slot; lack of a traced consumer is not proof of unused storage."),
+            new ExtraField(0x178, FieldKind.Int, "Unknown178", "Indexed integer slot 6. All supplied records contain -1. A fresh audit of both the global accessor and the player/pair-awakening wrapper finds constant consumers only for indexes 0, 1, 2 and 7; no semantic reader for this slot was established. Preserve the slot; lack of a traced consumer is not proof of unused storage."),
+            new ExtraField(0x17C, FieldKind.Int, "FemaleAnims", "Exactly 1 invokes ConvertWomanAnm for selected damage and support-rescue animation IDs; other values leave those IDs unchanged."),
+            new ExtraField(0x180, FieldKind.Int, "Unknown180", "Indexed integer slot 8. All supplied records contain -1. A fresh audit of both the global accessor and the player/pair-awakening wrapper finds constant consumers only for indexes 0, 1, 2 and 7; no semantic reader for this slot was established. Preserve the slot; lack of a traced consumer is not proof of unused storage."),
+            new ExtraField(0x184, FieldKind.Int, "Unknown184", "Indexed integer slot 9. All supplied records contain -1. A fresh audit of both the global accessor and the player/pair-awakening wrapper finds constant consumers only for indexes 0, 1, 2 and 7; no semantic reader for this slot was established. Preserve the slot; lack of a traced consumer is not proof of unused storage."),
+            new ExtraField(0x188, FieldKind.Int, "Unknown188", "Indexed integer slot 10. All supplied records contain -1. A fresh audit of both the global accessor and the player/pair-awakening wrapper finds constant consumers only for indexes 0, 1, 2 and 7; no semantic reader for this slot was established. Preserve the slot; lack of a traced consumer is not proof of unused storage."),
+            new ExtraField(0x18C, FieldKind.Int, "Unknown18C", "Indexed integer slot 11. All supplied records contain -1. A fresh audit of both the global accessor and the player/pair-awakening wrapper finds constant consumers only for indexes 0, 1, 2 and 7; no semantic reader for this slot was established. Preserve the slot; lack of a traced consumer is not proof of unused storage."),
+            new ExtraField(0x190, FieldKind.Int, "Unknown190", "Indexed integer slot 12. All supplied records contain -1. A fresh audit of both the global accessor and the player/pair-awakening wrapper finds constant consumers only for indexes 0, 1, 2 and 7; no semantic reader for this slot was established. Preserve the slot; lack of a traced consumer is not proof of unused storage."),
+            new ExtraField(0x194, FieldKind.Int, "Unknown194", "Indexed integer slot 13. All supplied records contain -1. A fresh audit of both the global accessor and the player/pair-awakening wrapper finds constant consumers only for indexes 0, 1, 2 and 7; no semantic reader for this slot was established. Preserve the slot; lack of a traced consumer is not proof of unused storage."),
+            new ExtraField(0x198, FieldKind.Int, "Unknown198", "Indexed integer slot 14. All supplied records contain -1. A fresh audit of both the global accessor and the player/pair-awakening wrapper finds constant consumers only for indexes 0, 1, 2 and 7; no semantic reader for this slot was established. Preserve the slot; lack of a traced consumer is not proof of unused storage."),
+            new ExtraField(0x19C, FieldKind.Int, "Unknown19C", "Indexed integer slot 15. All supplied records contain -1. A fresh audit of both the global accessor and the player/pair-awakening wrapper finds constant consumers only for indexes 0, 1, 2 and 7; no semantic reader for this slot was established. Preserve the slot; lack of a traced consumer is not proof of unused storage."),
+            new ExtraField(0x1A0, FieldKind.Int, "AdventureSupport", "Default support class copied during adventure battle setup into +0x0C of a 0x3C-byte team-member record. S4 IsAttackTypeSupport tests that member class for 0. S3 establishes the legacy class names: 0 Attack, 1 Defense, 2 Balance. S4 effects for classes 1/2 are not established by this trace; this field does not select its separate Strike Back/Dash Cut/etc. support actions."),
+            new ExtraField(0x1CC, FieldKind.Float, "LegacyGuardRate", "Legacy guard-rate slot: S3 GetGrdPer reads its corresponding +0x12C float, and Connections has a +0x1CC float getter. Neither getter has a recovered code caller in these databases; no S4 semantic reader was found. Final guard behavior is unverified. The former AirDashSpeed name is unsupported. A fresh pointer-reference check also recovered no hidden absolute function pointer to either legacy getter; this does not rule out indirect/generated access."),
+            new ExtraField(0x1FE, FieldKind.Short, "DashTrackTime", "Chakra-dash target-tracking duration, move parameter 4. During continued dash motion, the game rotates toward the target only while ActCnt / (nuccAnmTimePerSec / FPS) is less than this value. This limits homing, not total dash duration (move parameter 3). The loader converts file frames by currentFPS/30. Once the action counter is nonnegative, zero or negative values skip that steering window."),
+            new ExtraField(0x200, FieldKind.Float, "DashTurnRate", "Chakra-dash turn-strength coefficient, move parameter 5. The dash passes field * 72 degrees to CalcDircInterp; team-secret-technique preparation passes field * 90 degrees. The helper multiplies by actor GetSpeedRate, applies 1/4, 1/3 or 1/2 damping near the target, quantizes to 1/65536 of a turn, then converts to radians. Nearly aligned directions snap to the target. This is not a literal degrees-per-second field."),
+            new ExtraField(0x292, FieldKind.Short, "AwakeDashTrackTime", "True-awakening counterpart: selected when awakening is active and AwakeType != 1. Chakra-dash target-tracking duration, move parameter 4. During continued dash motion, the game rotates toward the target only while ActCnt / (nuccAnmTimePerSec / FPS) is less than this value. This limits homing, not total dash duration (move parameter 3). The loader converts file frames by currentFPS/30. Once the action counter is nonnegative, zero or negative values skip that steering window."),
+            new ExtraField(0x294, FieldKind.Float, "AwakeDashTurnRate", "True-awakening counterpart: selected when awakening is active and AwakeType != 1. Chakra-dash turn-strength coefficient, move parameter 5. The dash passes field * 72 degrees to CalcDircInterp; team-secret-technique preparation passes field * 90 degrees. The helper multiplies by actor GetSpeedRate, applies 1/4, 1/3 or 1/2 damping near the target, quantizes to 1/65536 of a turn, then converts to radians. Nearly aligned directions snap to the target. This is not a literal degrees-per-second field."),
+            new ExtraField(0x298, FieldKind.Float, "Unknown298", "Float interpretation retained from existing type annotation and plausible data. All records share the reported value. No verified gameplay consumer; do not infer a meaning from the value alone. The similarly positioned S3 region is an array of signed skill-priority shorts (+0x370 onward), not matching floats. S4 obtains those priorities from skillCustomizeParam/spSkillCustomizeParam, so the S3 names cannot be transferred to this slot."),
+            new ExtraField(0x29C, FieldKind.Float, "Unknown29C", "Float interpretation retained from existing type annotation and plausible data. All records share the reported value. No verified gameplay consumer; do not infer a meaning from the value alone. The similarly positioned S3 region is an array of signed skill-priority shorts (+0x370 onward), not matching floats. S4 obtains those priorities from skillCustomizeParam/spSkillCustomizeParam, so the S3 names cannot be transferred to this slot."),
+            new ExtraField(0x2A0, FieldKind.Float, "Unknown2A0", "Float interpretation retained from existing type annotation and plausible data. All records share the reported value. No verified gameplay consumer; do not infer a meaning from the value alone. The similarly positioned S3 region is an array of signed skill-priority shorts (+0x370 onward), not matching floats. S4 obtains those priorities from skillCustomizeParam/spSkillCustomizeParam, so the S3 names cannot be transferred to this slot."),
+            new ExtraField(0x2A4, FieldKind.Float, "Unknown2A4", "Float interpretation retained from existing type annotation and plausible data. All records share the reported value. No verified gameplay consumer; do not infer a meaning from the value alone. The similarly positioned S3 region is an array of signed skill-priority shorts (+0x370 onward), not matching floats. S4 obtains those priorities from skillCustomizeParam/spSkillCustomizeParam, so the S3 names cannot be transferred to this slot."),
+            new ExtraField(0x2A8, FieldKind.Float, "Unknown2A8", "Float interpretation retained from existing type annotation and plausible data. All records share the reported value. No verified gameplay consumer; do not infer a meaning from the value alone. The similarly positioned S3 region is an array of signed skill-priority shorts (+0x370 onward), not matching floats. S4 obtains those priorities from skillCustomizeParam/spSkillCustomizeParam, so the S3 names cannot be transferred to this slot."),
+            new ExtraField(0x2AC, FieldKind.Float, "Unknown2AC", "Float interpretation retained from existing type annotation and plausible data. All records share the reported value. No verified gameplay consumer; do not infer a meaning from the value alone. The similarly positioned S3 region is an array of signed skill-priority shorts (+0x370 onward), not matching floats. S4 obtains those priorities from skillCustomizeParam/spSkillCustomizeParam, so the S3 names cannot be transferred to this slot."),
+            new ExtraField(0x2B0, FieldKind.Float, "Unknown2B0", "Float interpretation retained from existing type annotation and plausible data. All records share the reported value. No verified gameplay consumer; do not infer a meaning from the value alone. The similarly positioned S3 region is an array of signed skill-priority shorts (+0x370 onward), not matching floats. S4 obtains those priorities from skillCustomizeParam/spSkillCustomizeParam, so the S3 names cannot be transferred to this slot."),
+            new ExtraField(0x2B4, FieldKind.Float, "Unknown2B4", "Float interpretation retained from existing type annotation and plausible data. All records share the reported value. No verified gameplay consumer; do not infer a meaning from the value alone. The similarly positioned S3 region is an array of signed skill-priority shorts (+0x370 onward), not matching floats. S4 obtains those priorities from skillCustomizeParam/spSkillCustomizeParam, so the S3 names cannot be transferred to this slot."),
+            new ExtraField(0x2B8, FieldKind.Float, "Unknown2B8", "Float interpretation retained from existing type annotation and plausible data. All records share the reported value. No verified gameplay consumer; do not infer a meaning from the value alone. The similarly positioned S3 region is an array of signed skill-priority shorts (+0x370 onward), not matching floats. S4 obtains those priorities from skillCustomizeParam/spSkillCustomizeParam, so the S3 names cannot be transferred to this slot."),
+            new ExtraField(0x2BC, FieldKind.Float, "Unknown2BC", "Unresolved four-byte slot. Existing S4 float interpretation is provisional. Connections has an uncalled integer getter at this offset; zero data cannot settle its type. Preserve raw bits; the template also exposes an integer/hex view. S3 has two distinct integer awakening-start fields (+0x39C flag and +0x3A0 action). Neighboring placement alone cannot establish which, if either, corresponds to S4 +0x2BC."),
+            new ExtraField(0x2CC, FieldKind.Float, "Unknown2CC", "Float values approximately 0.1 (263 records) or 0.03 (6 records). No verified consumer; not the confirmed maximum-chakra recovery field, which is +0x2D0. A fresh Connections offset scan likewise did not establish a parameter-record reader. Do not alias it to maximum-chakra recovery or special-support gauge recovery merely because their values are similar."),
+        };
+
+        private static byte[] FieldBuffer(DuelPlayerParamEntry entry, int offset, out int index)
+        {
+            index = offset;
+            if (offset >= 0x284 && offset < 0x2D8) { index -= 0x284; return entry.AwaSettingList; }
+            if (offset >= 0x1F4 && offset < 0x204) { index -= 0x1F4; return entry.Setting2List; }
+            if (offset >= 0x1C0 && offset < 0x1E4) { index -= 0x1C0; return entry.SettingList; }
+            return entry.Data;
+        }
+
+        private static string EncodeExtraSettings(DuelPlayerParamEntry entry)
+        {
+            var bytes = new byte[ExtraFields.Length * 8];
+            for (int i = 0; i < ExtraFields.Length; i++)
+            {
+                ExtraField field = ExtraFields[i];
+                ushort size = (ushort)(field.Kind == FieldKind.Short ? 2 : 4);
+                Buffer.BlockCopy(BitConverter.GetBytes((ushort)field.Offset), 0, bytes, i * 8, 2);
+                Buffer.BlockCopy(BitConverter.GetBytes(size), 0, bytes, i * 8 + 2, 2);
+                int index;
+                byte[] source = FieldBuffer(entry, field.Offset, out index);
+                Buffer.BlockCopy(source, index, bytes, i * 8 + 4, size);
+            }
+            return EncodeBytes(bytes);
+        }
+
+        private static void DecodeExtraSettings(DuelPlayerParamEntry entry, string text)
+        {
+            byte[] bytes = DecodeBytes(text);
+            if (bytes.Length % 8 != 0) throw new FormatException("Invalid extra-field clipboard data.");
+            for (int i = 0; i < bytes.Length; i += 8)
+            {
+                int offset = BitConverter.ToUInt16(bytes, i);
+                int size = BitConverter.ToUInt16(bytes, i + 2);
+                ExtraField field = ExtraFields.FirstOrDefault(f => f.Offset == offset);
+                if (field == null || size != (field.Kind == FieldKind.Short ? 2 : 4))
+                    throw new FormatException("Unknown extra field in clipboard data.");
+                int index;
+                byte[] target = FieldBuffer(entry, offset, out index);
+                Buffer.BlockCopy(bytes, i + 4, target, index, size);
+            }
+        }
+
+        private static string ReadExtraField(DuelPlayerParamEntry entry, ExtraField field)
+        {
+            int index;
+            byte[] bytes = FieldBuffer(entry, field.Offset, out index);
+            if (field.Kind == FieldKind.Float) return BitConverter.ToSingle(bytes, index).ToString("R", CultureInfo.InvariantCulture);
+            if (field.Kind == FieldKind.Short) return BitConverter.ToInt16(bytes, index).ToString(CultureInfo.InvariantCulture);
+            return BitConverter.ToInt32(bytes, index).ToString(CultureInfo.InvariantCulture);
+        }
+
+        private static void WriteExtraField(DuelPlayerParamEntry entry, ExtraField field, string value)
+        {
+            byte[] replacement;
+            if (field.Kind == FieldKind.Float)
+            {
+                float number = float.Parse(value, NumberStyles.Float, CultureInfo.InvariantCulture);
+                if (float.IsNaN(number) || float.IsInfinity(number)) throw new FormatException("Enter a finite float.");
+                replacement = BitConverter.GetBytes(number);
+            }
+            else if (field.Kind == FieldKind.Short) replacement = BitConverter.GetBytes(short.Parse(value, CultureInfo.InvariantCulture));
+            else replacement = BitConverter.GetBytes(int.Parse(value, CultureInfo.InvariantCulture));
+            int index;
+            byte[] bytes = FieldBuffer(entry, field.Offset, out index);
+            Buffer.BlockCopy(replacement, 0, bytes, index, replacement.Length);
+        }
+
+        // Verified against NSUNS4_107, NSUNS3HD_NX (ns3), and NSUNSC.exe.
+        // Offsets are relative to MotionCode; add four for the binary size word.
+        // A counterpart documents another build, never an automatic S4 semantic claim.
+        // Runtime flags are LE at +0x150 from MotionCode. Checkbox index == game bit.
+        // ConditionFlag retains its legacy swapped storage; do not remove the endian
+        // conversions or change EnableAwaSkill/EvoDup serialization when editing labels.
+        [Flags]
+        private enum PlayerFlags : uint
+        {
+            None = 0,
+            ThrowFall = 0x00000001u,
+            KeepDouble = 0x00000002u,
+            RenderToggle = 0x00000004u,
+            Puppet = 0x00000008u,
+            PuppetOwner = 0x00000010u,
+            AnimAttachment = 0x00000020u,
+            FinishRunStop = 0x00000040u,
+            FinishAwakeRunStop = 0x00000080u,
+            DefaultSubstitution = 0x00000100u,
+            Unknown09 = 0x00000200u,
+            BaseGlare = 0x00000400u,
+            AwakeGlare = 0x00000800u,
+            WarpDash = 0x00001000u,
+            DodgeDraw = 0x00002000u,
+            Unknown14 = 0x00004000u,
+            AwakeEvents = 0x00008000u,
+            HugeAwake = 0x00010000u,
+            HugeCamera = 0x00020000u,
+            HugeFootSound = 0x00040000u,
+            AwakeHitmark = 0x00080000u,
+            NoDamageTurn = 0x00100000u,
+            DirectionDamage = 0x00200000u,
+            Unknown22 = 0x00400000u,
+            EndAwakeOnDefeat = 0x00800000u,
+            AwakeSkill = 0x01000000u,
+            Unknown25 = 0x02000000u,
+            Unknown26 = 0x04000000u,
+            Unknown27 = 0x08000000u,
+            Unknown28 = 0x10000000u,
+            Unknown29 = 0x20000000u,
+            Unknown30 = 0x40000000u,
+            Unknown31 = 0x80000000u,
+        }
+
+        private string[] GetConditionFlagNames()
+        {
+            return new string[]
+            {
+                "Force Air State For Throw Success",
+                "Keep double state after throw",
+                "Render toggle (partial)",
+                "Puppet",
+                "Puppet controller",
+                "Attachment by animation source",
+                "Finish run-stop animation",
+                "Finish awakened run-stop",
+                "Default substitution selection",
+                "Deprecated",
+                "Keep base glare",
+                "Keep awakened glare",
+                "Awakened warp dash",
+                "Keep dodge drawing (predicate)",
+                "Deprecated",
+                "Separate awakening events",
+                "Awakening super armor / huge classification",
+                "Huge awakening camera",
+                "Huge awakening foot sound",
+                "Awakened hitmark decoration",
+                "No awakened damage turn",
+                "Awakened directional-damage exception",
+                "Deprecated",
+                "End awakening on defeat",
+                "Awakening skill",
+                "Unused 25",
+                "Unused 26",
+                "Unused 27",
+                "Unused 28",
+                "Unused 29",
+                "Unused 30",
+                "Unused 31",
+            };
+        }
+
+        // Behavior traced from S4 callers; partial/unresolved meanings are explicit.
+        private static readonly string[] ConditionFlagDetails = new string[]
+        {
+            "For THROW_SUCCESS_ATTACKER, resets velocity/gravity and movement state during cleanup; on animation end sets zero gravity and requests FALL rather than NUT. Seen in 2nrt/2nrv. Specific throw handling, not a general air-throw enable.",
+            "Skips ResetDoubleState when ending the direction-attack/throw action. Seen in 2ten/8ten. Exact visual role of double state requires further tracing.",
+            "Clears a subdraw/clump byte during creation, costume break, awakening model changes and several character-specific paths. The cleared field is not named in this database; do not label it as a specific visual feature yet.",
+            "Returned by IsPuppetCharacter.",
+            "IsPuppetController requires this flag and not currently awakened. IsPuppetOwner checks the flag without that awakening restriction.",
+            "During animation changes, tests whether the animation chunk name contains the motion characode. Disables attachment slot 1 if it does, enables slot 1 otherwise.",
+            "Suppresses the early transition to neutral when forward speed falls below 1; run-stop still exits on animation end. This bit applies in normal and awakened states.",
+            "Same suppression as bit 6, but only while awakened. Animation end still permits the neutral transition.",
+            "Forces a selected dodge/substitution value to 0 during player creation and dodge-skill selection checks. Observed on Rock Lee/Mifune-related motion codes. This does not disable substitution itself.",
+            "Effect is not yet known.",
+            "Prevents this helper from forcing the model glare coefficient to zero while not awakened or while using instant awakening. It preserves glare; it does not set a glow intensity.",
+            "Prevents the same zeroing while truly awakened. Player state UNKNOWN_17A8 == 2 bypasses the helper independently.",
+            "IsEnableChakraDashWarp requires both awakening and this bit. Also affects post-dodge positioning while in the warp chakra-dash action.",
+            "IsDisableDrawAtDodge returns false only when awakened AND this bit is set; otherwise true. The enum name suggests the opposite polarity, so preserve this exact predicate. Likely prevents the usual dodge hide while awakened; final rendering should be tested in-game.",
+            "Effect is not yet known.",
+            "For motion modes 1 or 9, skips normal prm_mot/prm_skl/prm_spl event setup. The prm_awa setup is separately executed for those modes. This is more precise than ENABLE AWAKENING MOVESET; it does not independently create a moveset.",
+            "Used by IsAwakeWithSuperArmorCharacter and IsHugeAwakeCharacter when player AwakeType is not 1. IsHugeAwakeNow additionally requires the awakening condition group. It is a classification flag, not a model-size setting.",
+            "IsHugeAwakeNowForCamera requires this bit, an active awakening condition group and AwakeType != 1. This is not a generic enable-private-camera switch.",
+            "When awakened and queried for sound type 6, selects column 7 of the surface sound table instead of column 2. It changes a particular foot/landing sound lookup, not every movement sound.",
+            "Attacker must be awakened; the flag gates the skill-slot hitmark/damage-decoration path. It does not enable every hit effect universally.",
+            "While awakened, blocks the normal damage-facing turn even if IsEnableTurnDamageNormal permits it. Applies within additional damage-attribute checks.",
+            "IsAwakeChangeNotDirectionDamage returns this bit while truly awakened. Wall-battle states independently force that predicate true; instant awakening returns false. Also used in character-specific damage action selection.",
+            "Effect is not yet known.",
+            "On defeat, clears awakening conditions, ends awakening and its gauge, and triggers transition effects. DMG_HELL_ACTION is excluded. Battle-end code also uses it for a color-conversion effect.",
+            "IsPlayerFlagParamAwakeSkill uses this bit; Orochimaru (2orc) with current skill number 1 is an explicit exception. Also used in current-skill attack-priority selection. The awakening skill number comes from a separate parameter at +0x164.",
+            "Effect is not yet known.",
+            "Effect is not yet known.",
+            "Effect is not yet known.",
+            "Effect is not yet known.",
+            "Effect is not yet known.",
+            "Effect is not yet known.",
+            "Effect is not yet known.",
+        };
+
+
+
 
 		private void InitializeConditionFlagList()
 		{
+            // Keep the existing checkbox order, raw-value conversion and custom setEvo1 field.
 			checkedListConditionFlags.Items.Clear();
 			foreach (string flagName in GetConditionFlagNames())
 			{
@@ -491,35 +931,37 @@ namespace NSUNS4_Character_Manager
 			byte[] setting1 = entry.SettingList ?? new byte[36];
 			byte[] setting2 = entry.Setting2List ?? new byte[16];
 			byte[] awake = entry.AwaSettingList ?? new byte[84];
+            loadedExtraSettings = EncodeExtraSettings(entry);
+            LoadAdditionalFields(entry);
 
-			SetNumericValue(setBaseMovement, (decimal)BitConverter.ToSingle(setting1, 0));
-			SetNumericValue(setBaseChakraDash, (decimal)BitConverter.ToSingle(setting1, 4));
-			SetNumericValue(setGuardPressure, (decimal)BitConverter.ToSingle(setting1, 8));
-			SetNumericValue(setAttack, (decimal)BitConverter.ToSingle(setting1, 16));
-			SetNumericValue(setDefense, (decimal)BitConverter.ToSingle(setting1, 20));
-			SetNumericValue(setAssistDamage, (decimal)BitConverter.ToSingle(setting1, 24));
-			SetNumericValue(setItemBuffDuration, (decimal)BitConverter.ToSingle(setting1, 28));
-			SetNumericValue(setChakraCharge, (decimal)BitConverter.ToSingle(setting1, 32));
+			LoadFloatSetting(setBaseMovement, setting1, 0);
+			LoadFloatSetting(setBaseChakraDash, setting1, 4);
+			LoadFloatSetting(setGuardPressure, setting1, 8);
+			LoadFloatSetting(setAttack, setting1, 16);
+			LoadFloatSetting(setDefense, setting1, 20);
+			LoadFloatSetting(setAssistDamage, setting1, 24);
+			LoadFloatSetting(setItemBuffDuration, setting1, 28);
+			LoadFloatSetting(setChakraCharge, setting1, 32);
 
-			SetNumericValue(setAwakeHpRequirement, (decimal)BitConverter.ToSingle(setting2, 0));
-			SetNumericValue(setBaseNinjaDash, setting2[4]);
-			SetNumericValue(setBaseAirDashDuration, setting2[6]);
-			SetNumericValue(setBaseGroundedChakraDashDuration, setting2[8]);
+			LoadFloatSetting(setAwakeHpRequirement, setting2, 0);
+			SetNumericValue(setBaseNinjaDash, BitConverter.ToInt16(setting2, 4));
+			SetNumericValue(setBaseAirDashDuration, BitConverter.ToInt16(setting2, 6));
+			SetNumericValue(setBaseGroundedChakraDashDuration, BitConverter.ToInt16(setting2, 8));
 
-			SetNumericValue(setAwakeMovement, (decimal)BitConverter.ToSingle(awake, 0));
-			SetNumericValue(setAwakeChakraDash, (decimal)BitConverter.ToSingle(awake, 4));
-			SetNumericValue(setAwakeNinjaDash, awake[8]);
-			SetNumericValue(setAwakeAirDashDuration, awake[10]);
-			SetNumericValue(setAwakeGroundedChakraDashDuration, awake[12]);
-			setEnableDashPriority.Checked = awake[60] != 0;
-			setAwakeningDebuff.Checked = awake[64] != 0;
-			SetNumericValue(setChakraCostAwakening, (decimal)BitConverter.ToSingle(awake, 68));
-			SetNumericValue(setChakraBlockRecovery, (decimal)BitConverter.ToSingle(awake, 76));
-			SetNumericValue(setAwakeningActionCharge, (decimal)BitConverter.ToSingle(awake, 80));
+			LoadFloatSetting(setAwakeMovement, awake, 0);
+			LoadFloatSetting(setAwakeChakraDash, awake, 4);
+			SetNumericValue(setAwakeNinjaDash, BitConverter.ToInt16(awake, 8));
+			SetNumericValue(setAwakeAirDashDuration, BitConverter.ToInt16(awake, 10));
+			SetNumericValue(setAwakeGroundedChakraDashDuration, BitConverter.ToInt16(awake, 12));
+			SelectEnumValue(setEnableDashPriority, typeof(DashPriorityMode), BitConverter.ToInt32(awake, 60));
+			SelectAwakeRisk(BitConverter.ToInt32(awake, 64));
+			LoadFloatSetting(setChakraCostAwakening, awake, 68);
+			LoadFloatSetting(setChakraBlockRecovery, awake, 76);
+			LoadFloatSetting(setAwakeningActionCharge, awake, 80);
 
 			SetNumericValue(setEvo1, entry.EvoDup);
-			SetNumericValue(setAwaBodyPriority, entry.AwaBodyPriority);
-			SetNumericValue(setDefaultAwaSkillIndex, entry.DefaultAwaSkillIndex);
+			SelectEnumValue(setAwaBodyPriority, typeof(AwakeningPriority), entry.AwaBodyPriority);
+			SelectEnumValue(setDefaultAwaSkillIndex, typeof(AwakeningSkill), entry.DefaultAwaSkillIndex);
 			SetNumericValue(setCameraDistance, entry.CameraDistance);
 			SetNumericValue(setCameraUnknown1, entry.CameraUnknown1);
 			SetNumericValue(setVictoryCameraAngle, entry.VictoryAngle);
@@ -534,37 +976,38 @@ namespace NSUNS4_Character_Manager
 			byte[] setting2 = entry.Setting2List != null && entry.Setting2List.Length == 16 ? (byte[])entry.Setting2List.Clone() : new byte[16];
 			byte[] awake = entry.AwaSettingList != null && entry.AwaSettingList.Length == 84 ? (byte[])entry.AwaSettingList.Clone() : new byte[84];
 
-			Buffer.BlockCopy(BitConverter.GetBytes((float)setBaseMovement.Value), 0, setting1, 0, 4);
-			Buffer.BlockCopy(BitConverter.GetBytes((float)setBaseChakraDash.Value), 0, setting1, 4, 4);
-			Buffer.BlockCopy(BitConverter.GetBytes((float)setGuardPressure.Value), 0, setting1, 8, 4);
-			Buffer.BlockCopy(BitConverter.GetBytes((float)setAttack.Value), 0, setting1, 16, 4);
-			Buffer.BlockCopy(BitConverter.GetBytes((float)setDefense.Value), 0, setting1, 20, 4);
-			Buffer.BlockCopy(BitConverter.GetBytes((float)setAssistDamage.Value), 0, setting1, 24, 4);
-			Buffer.BlockCopy(BitConverter.GetBytes((float)setItemBuffDuration.Value), 0, setting1, 28, 4);
-			Buffer.BlockCopy(BitConverter.GetBytes((float)setChakraCharge.Value), 0, setting1, 32, 4);
+			SaveFloatSetting(setBaseMovement, setting1, 0);
+			SaveFloatSetting(setBaseChakraDash, setting1, 4);
+			SaveFloatSetting(setGuardPressure, setting1, 8);
+			SaveFloatSetting(setAttack, setting1, 16);
+			SaveFloatSetting(setDefense, setting1, 20);
+			SaveFloatSetting(setAssistDamage, setting1, 24);
+			SaveFloatSetting(setItemBuffDuration, setting1, 28);
+			SaveFloatSetting(setChakraCharge, setting1, 32);
 
-			Buffer.BlockCopy(BitConverter.GetBytes((float)setAwakeHpRequirement.Value), 0, setting2, 0, 4);
-			setting2[4] = (byte)setBaseNinjaDash.Value;
-			setting2[6] = (byte)setBaseAirDashDuration.Value;
-			setting2[8] = (byte)setBaseGroundedChakraDashDuration.Value;
+			SaveFloatSetting(setAwakeHpRequirement, setting2, 0);
+			Buffer.BlockCopy(BitConverter.GetBytes((short)setBaseNinjaDash.Value), 0, setting2, 4, 2);
+			Buffer.BlockCopy(BitConverter.GetBytes((short)setBaseAirDashDuration.Value), 0, setting2, 6, 2);
+			Buffer.BlockCopy(BitConverter.GetBytes((short)setBaseGroundedChakraDashDuration.Value), 0, setting2, 8, 2);
 
-			Buffer.BlockCopy(BitConverter.GetBytes((float)setAwakeMovement.Value), 0, awake, 0, 4);
-			Buffer.BlockCopy(BitConverter.GetBytes((float)setAwakeChakraDash.Value), 0, awake, 4, 4);
-			awake[8] = (byte)setAwakeNinjaDash.Value;
-			awake[10] = (byte)setAwakeAirDashDuration.Value;
-			awake[12] = (byte)setAwakeGroundedChakraDashDuration.Value;
-			awake[60] = (byte)(setEnableDashPriority.Checked ? 1 : 0);
-			awake[64] = (byte)(setAwakeningDebuff.Checked ? 1 : 0);
-			Buffer.BlockCopy(BitConverter.GetBytes((float)setChakraCostAwakening.Value), 0, awake, 68, 4);
-			Buffer.BlockCopy(BitConverter.GetBytes((float)setChakraBlockRecovery.Value), 0, awake, 76, 4);
-			Buffer.BlockCopy(BitConverter.GetBytes((float)setAwakeningActionCharge.Value), 0, awake, 80, 4);
+			SaveFloatSetting(setAwakeMovement, awake, 0);
+			SaveFloatSetting(setAwakeChakraDash, awake, 4);
+			Buffer.BlockCopy(BitConverter.GetBytes((short)setAwakeNinjaDash.Value), 0, awake, 8, 2);
+			Buffer.BlockCopy(BitConverter.GetBytes((short)setAwakeAirDashDuration.Value), 0, awake, 10, 2);
+			Buffer.BlockCopy(BitConverter.GetBytes((short)setAwakeGroundedChakraDashDuration.Value), 0, awake, 12, 2);
+			// Write the selected raw enum value, preserving noncanonical nonzero values.
+            Buffer.BlockCopy(BitConverter.GetBytes(ReadEnumValue(setEnableDashPriority)), 0, awake, 60, 4);
+			Buffer.BlockCopy(BitConverter.GetBytes(((RiskChoice)awakeRisk.SelectedItem).Value), 0, awake, 64, 4);
+			SaveFloatSetting(setChakraCostAwakening, awake, 68);
+			SaveFloatSetting(setChakraBlockRecovery, awake, 76);
+			SaveFloatSetting(setAwakeningActionCharge, awake, 80);
 
 			entry.SettingList = setting1;
 			entry.Setting2List = setting2;
 			entry.AwaSettingList = awake;
 			entry.EvoDup = (long)setEvo1.Value;
-			entry.AwaBodyPriority = (int)setAwaBodyPriority.Value;
-			entry.DefaultAwaSkillIndex = (int)setDefaultAwaSkillIndex.Value;
+			entry.AwaBodyPriority = ReadEnumValue(setAwaBodyPriority);
+			entry.DefaultAwaSkillIndex = ReadEnumValue(setDefaultAwaSkillIndex);
 			entry.CameraDistance = (int)setCameraDistance.Value;
 			entry.CameraUnknown1 = (int)setCameraUnknown1.Value;
 			entry.VictoryAngle = (int)setVictoryCameraAngle.Value;
@@ -576,6 +1019,7 @@ namespace NSUNS4_Character_Manager
 		private void ResetInlineSettings()
 		{
 			LoadInlineSettingsFromEntry(CreateDefaultEntry("1new"));
+            LoadCostumes(CreateDefaultEntry("1new"));
 		}
 
 		private void SortEntries()
@@ -607,64 +1051,16 @@ namespace NSUNS4_Character_Manager
 			}
 		}
 
-		private DuelCopySettingsMode? ShowCopySettingsDialog()
-		{
-			using (Form dialog = new Form())
-			using (Label promptLabel = new Label())
-			using (ListBox optionsList = new ListBox())
-			using (Button okButton = new Button())
-			using (Button cancelButton = new Button())
-			{
-				dialog.Text = "Copy settings";
-				dialog.FormBorderStyle = FormBorderStyle.FixedDialog;
-				dialog.StartPosition = FormStartPosition.CenterParent;
-				dialog.ClientSize = new Size(320, 245);
-				dialog.MaximizeBox = false;
-				dialog.MinimizeBox = false;
-				dialog.ShowInTaskbar = false;
+        private DuelCopySettingsMode? ShowCopySettingsDialog()
+        {
+            using (var dialog = new Tool_DuelPlayerParamEditor_CopySettings())
+            {
+                if (dialog.ShowDialog(this) != DialogResult.OK || dialog.SelectedModeIndex < 0)
+                    return null;
+                return (DuelCopySettingsMode)dialog.SelectedModeIndex;
+            }
+        }
 
-				promptLabel.AutoSize = false;
-				promptLabel.Location = new Point(12, 12);
-				promptLabel.Size = new Size(296, 36);
-				promptLabel.Text = "Choose which settings to copy to the clipboard.";
-
-				optionsList.Location = new Point(12, 52);
-				optionsList.Size = new Size(296, 123);
-				optionsList.Items.AddRange(new object[]
-				{
-					"1. Items only",
-					"2. Conditions list",
-					"3. Battle settings",
-                    "4. Conditions + Battle settings",
-					"5. Everything"
-				});
-				optionsList.SelectedIndex = 0;
-
-				okButton.Text = "Copy";
-				okButton.Location = new Point(152, 190);
-				okButton.Size = new Size(75, 25);
-				okButton.DialogResult = DialogResult.OK;
-
-				cancelButton.Text = "Cancel";
-				cancelButton.Location = new Point(233, 190);
-				cancelButton.Size = new Size(75, 25);
-				cancelButton.DialogResult = DialogResult.Cancel;
-
-				dialog.AcceptButton = okButton;
-				dialog.CancelButton = cancelButton;
-				dialog.Controls.Add(promptLabel);
-				dialog.Controls.Add(optionsList);
-				dialog.Controls.Add(okButton);
-				dialog.Controls.Add(cancelButton);
-
-				if (dialog.ShowDialog(this) != DialogResult.OK || optionsList.SelectedIndex < 0)
-				{
-					return null;
-				}
-
-				return (DuelCopySettingsMode)optionsList.SelectedIndex;
-			}
-		}
 
 		private string BuildCopySettingsPayload(DuelPlayerParamEntry entry, DuelCopySettingsMode mode)
 		{
@@ -680,7 +1076,7 @@ namespace NSUNS4_Character_Manager
 				lines.Add("item1=" + EncodeText(entry.Items[1]));
 				lines.Add("item2=" + EncodeText(entry.Items[2]));
 				lines.Add("item3=" + EncodeText(entry.Items[3]));
-				lines.Add("itemCounts=" + EncodeBytes(entry.ItemCounts));
+				lines.Add("itemCounts=" + EncodeItemCounts(entry.ItemCounts));
 			}
 
 			if (mode == DuelCopySettingsMode.ConditionsOnly ||
@@ -698,6 +1094,7 @@ namespace NSUNS4_Character_Manager
 				lines.Add("settingList=" + EncodeBytes(entry.SettingList));
 				lines.Add("setting2List=" + EncodeBytes(entry.Setting2List));
 				lines.Add("awaSettingList=" + EncodeBytes(entry.AwaSettingList));
+                lines.Add("extraSettings=" + EncodeExtraSettings(entry));
 				lines.Add("evoDup=" + entry.EvoDup.ToString());
 				lines.Add("awaBodyPriority=" + entry.AwaBodyPriority.ToString());
 				lines.Add("defaultAwaSkillIndex=" + entry.DefaultAwaSkillIndex.ToString());
@@ -797,7 +1194,7 @@ namespace NSUNS4_Character_Manager
 			if (payload.ContainsKey("item1")) entry.Items[1] = DecodeText(payload["item1"]);
 			if (payload.ContainsKey("item2")) entry.Items[2] = DecodeText(payload["item2"]);
 			if (payload.ContainsKey("item3")) entry.Items[3] = DecodeText(payload["item3"]);
-			if (payload.ContainsKey("itemCounts")) entry.ItemCounts = DecodeBytes(payload["itemCounts"]);
+			if (payload.ContainsKey("itemCounts")) entry.ItemCounts = DecodeItemCounts(payload["itemCounts"]);
 
 			if (payload.ContainsKey("conditionFlag")) entry.ConditionFlag = unchecked((int)uint.Parse(payload["conditionFlag"]));
 			if (payload.ContainsKey("enableAwaSkill")) entry.EnableAwaSkill = int.Parse(payload["enableAwaSkill"]);
@@ -805,6 +1202,7 @@ namespace NSUNS4_Character_Manager
 			if (payload.ContainsKey("settingList")) entry.SettingList = DecodeBytes(payload["settingList"]);
 			if (payload.ContainsKey("setting2List")) entry.Setting2List = DecodeBytes(payload["setting2List"]);
 			if (payload.ContainsKey("awaSettingList")) entry.AwaSettingList = DecodeBytes(payload["awaSettingList"]);
+            if (payload.ContainsKey("extraSettings")) DecodeExtraSettings(entry, payload["extraSettings"]);
 			if (payload.ContainsKey("evoDup")) entry.EvoDup = long.Parse(payload["evoDup"]);
 			if (payload.ContainsKey("awaBodyPriority")) entry.AwaBodyPriority = int.Parse(payload["awaBodyPriority"]);
 			if (payload.ContainsKey("defaultAwaSkillIndex")) entry.DefaultAwaSkillIndex = int.Parse(payload["defaultAwaSkillIndex"]);
@@ -1681,7 +2079,7 @@ namespace NSUNS4_Character_Manager
 				items[x2] = "";
 			}
 			ItemList.Add(items);
-			byte[] itemc = new byte[4];
+			short[] itemc = new short[4];
 			for (int x = 0; x < 4; x++)
 			{
 				itemc[x] = 0;
@@ -1771,7 +2169,7 @@ namespace NSUNS4_Character_Manager
 				for (int c2 = 0; c2 < 20; c2++)
 				{
 					costumeid[c2] = "";
-					string cid = Main.b_ReadString(FileBytes, _ptr + 8 + 8 * c2);
+					string cid = ReadCostumeCode(FileBytes, _ptr + 8 + 8 * c2);
 					if (cid != "")
 					{
 						costumeid[c2] = cid;
@@ -1781,7 +2179,7 @@ namespace NSUNS4_Character_Manager
 				for (int c = 0; c < 20; c++)
 				{
 					awkcostumeid[c] = "";
-					string awkcid = Main.b_ReadString(FileBytes, _ptr + 168 + 8 * c);
+					string awkcid = ReadCostumeCode(FileBytes, _ptr + 168 + 8 * c);
 					if (awkcid != "")
 					{
 						awkcostumeid[c] = awkcid;
@@ -1791,13 +2189,13 @@ namespace NSUNS4_Character_Manager
 				string defAssist2 = Main.b_ReadString(FileBytes, _ptr + 428);
 				string awkaction = Main.b_ReadString(FileBytes, _ptr + 484);
 				string[] itemlist = new string[4];
-				byte[] itemcount = new byte[4];
+				short[] itemcount = new short[4];
 				for (int i = 0; i < 4; i++)
 				{
 					itemlist[i] = "";
 					itemcount[i] = 0;
 					string item = Main.b_ReadString(FileBytes, _ptr + 516 + 32 * i);
-					byte count = FileBytes[_ptr + 546 + 32 * i];
+					short count = BitConverter.ToInt16(FileBytes, _ptr + 546 + 32 * i); itemcount[i] = count;
 					if (item != "")
 					{
 						itemlist[i] = item;
@@ -2381,14 +2779,14 @@ namespace NSUNS4_Character_Manager
 				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, SettingList[x], _ptr + 448);
 				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, Setting2List[x], _ptr + 500);
 				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, AwaSettingList[x], _ptr + 644);
-				fileBytes36 = Main.b_ReplaceString(fileBytes36, ItemList[x][0], _ptr + 516, 16);
-				fileBytes36[_ptr + 546] = ItemCount[x][0];
-				fileBytes36 = Main.b_ReplaceString(fileBytes36, ItemList[x][1], _ptr + 548, 16);
-				fileBytes36[_ptr + 578] = ItemCount[x][1];
-				fileBytes36 = Main.b_ReplaceString(fileBytes36, ItemList[x][2], _ptr + 580, 16);
-				fileBytes36[_ptr + 610] = ItemCount[x][2];
-				fileBytes36 = Main.b_ReplaceString(fileBytes36, ItemList[x][3], _ptr + 612, 16);
-				fileBytes36[_ptr + 642] = ItemCount[x][3];
+				fileBytes36 = Main.b_ReplaceString(fileBytes36, ItemList[x][0], _ptr + 516, 30);
+				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(ItemCount[x][0]), _ptr + 546);
+				fileBytes36 = Main.b_ReplaceString(fileBytes36, ItemList[x][1], _ptr + 548, 30);
+				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(ItemCount[x][1]), _ptr + 578);
+				fileBytes36 = Main.b_ReplaceString(fileBytes36, ItemList[x][2], _ptr + 580, 30);
+				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(ItemCount[x][2]), _ptr + 610);
+				fileBytes36 = Main.b_ReplaceString(fileBytes36, ItemList[x][3], _ptr + 612, 30);
+				fileBytes36 = Main.b_ReplaceBytes(fileBytes36, BitConverter.GetBytes(ItemCount[x][3]), _ptr + 642);
 				fileBytes36 = Main.b_ReplaceString(fileBytes36, Partner[x], _ptr + 328, 8);
             }
 			return Main.b_AddBytes(fileBytes36, new byte[20]
@@ -2524,24 +2922,8 @@ namespace NSUNS4_Character_Manager
 			}
 		}
 
-		private void b_costumeids_Click(object sender, EventArgs e)
-		{
-			int x = listBox1.SelectedIndex;
-			if (x != -1)
-			{
-				Tool_DuelPlayerParamEditor_Costumes t = new Tool_DuelPlayerParamEditor_Costumes(CostumeList[x].ToArray(), AwkCostumeList[x].ToArray(), this, x);
-				t.ShowDialog();
-			}
-			else
-			{
-				MessageBox.Show("No entry selected...");
-			}
-		}
 
-		private void b_awkcostumeids_Click(object sender, EventArgs e)
-		{
-			b_costumeids_Click(sender, e);
-		}
+
 
 		private void sortToolStripMenuItem_Click(object sender, EventArgs e)
 		{
@@ -2626,7 +3008,6 @@ namespace NSUNS4_Character_Manager
 			base.Dispose(disposing);
 		}
 
-
         private void Tool_DuelPlayerParamEditor_Load(object sender, EventArgs e)
         {
 			if (File.Exists(Main.dppPath)) {
@@ -2696,20 +3077,18 @@ namespace NSUNS4_Character_Manager
 			}
         }
 
-        private void settingsTitleLabel_Click(object sender, EventArgs e)
-        {
 
-        }
+
 
         private void w_itemc3_ValueChanged(object sender, EventArgs e)
         {
 
         }
+
+        private void identityTab_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }
-
-
-
-
-
 

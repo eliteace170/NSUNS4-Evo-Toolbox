@@ -117,8 +117,232 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <metadata name="menuStrip1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+  <metadata name="fieldTips.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>17, 17</value>
+  </metadata>
+  <metadata name="fieldTips.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>17, 17</value>
+  </metadata>
+  <metadata name="fieldTips.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>17, 17</value>
+  </metadata>
+  <data name="extraUnknown15CLabel.ToolTip" xml:space="preserve">
+    <value>All supplied records contain zero. No confirmed stock-game consumer; preserve these four bytes. It is addressable arithmetically as flag word 3 for indexes 96..127, but no such caller was recovered. Direct +0x15C hits in player movement refer to player-object state, not automatically to the parameter record.</value>
+  </data>
+  <data name="extraUnknown15C.ToolTip" xml:space="preserve">
+    <value>All supplied records contain zero. No confirmed stock-game consumer; preserve these four bytes. It is addressable arithmetically as flag word 3 for indexes 96..127, but no such caller was recovered. Direct +0x15C hits in player movement refer to player-object state, not automatically to the parameter record.</value>
+  </data>
+  <data name="extraJobTypeLabel.ToolTip" xml:space="preserve">
+    <value>Indexed parameter 2. Negative values normalize to 0. Pause-menu filtering: type 0 excludes sys_free_command_039; type 1 excludes sys_free_command_018. Broader meaning of the category is unresolved. Fresh direct/wrapper audits still find a command-list role rather than a combat-state switch. Only 3mfn has value 1 in the supplied asset. This correlation alone does not prove a general Samurai class or enable samurai abilities.</value>
+  </data>
+  <data name="extraJobType.ToolTip" xml:space="preserve">
+    <value>Indexed parameter 2. Negative values normalize to 0. Pause-menu filtering: type 0 excludes sys_free_command_039; type 1 excludes sys_free_command_018. Broader meaning of the category is unresolved. Fresh direct/wrapper audits still find a command-list role rather than a combat-state switch. Only 3mfn has value 1 in the supplied asset. This correlation alone does not prove a general Samurai class or enable samurai abilities.</value>
+  </data>
+  <data name="extraUnknown16CLabel.ToolTip" xml:space="preserve">
+    <value>Indexed integer slot 3. All supplied records contain -1. A fresh audit of both the global accessor and the player/pair-awakening wrapper finds constant consumers only for indexes 0, 1, 2 and 7; no semantic reader for this slot was established. Preserve the slot; lack of a traced consumer is not proof of unused storage.</value>
+  </data>
+  <data name="extraUnknown16C.ToolTip" xml:space="preserve">
+    <value>Indexed integer slot 3. All supplied records contain -1. A fresh audit of both the global accessor and the player/pair-awakening wrapper finds constant consumers only for indexes 0, 1, 2 and 7; no semantic reader for this slot was established. Preserve the slot; lack of a traced consumer is not proof of unused storage.</value>
+  </data>
+  <data name="extraUnknown170Label.ToolTip" xml:space="preserve">
+    <value>Indexed integer slot 4. All supplied records contain -1. A fresh audit of both the global accessor and the player/pair-awakening wrapper finds constant consumers only for indexes 0, 1, 2 and 7; no semantic reader for this slot was established. Preserve the slot; lack of a traced consumer is not proof of unused storage.</value>
+  </data>
+  <data name="extraUnknown170.ToolTip" xml:space="preserve">
+    <value>Indexed integer slot 4. All supplied records contain -1. A fresh audit of both the global accessor and the player/pair-awakening wrapper finds constant consumers only for indexes 0, 1, 2 and 7; no semantic reader for this slot was established. Preserve the slot; lack of a traced consumer is not proof of unused storage.</value>
+  </data>
+  <data name="extraUnknown174Label.ToolTip" xml:space="preserve">
+    <value>Indexed integer slot 5. All supplied records contain -1. A fresh audit of both the global accessor and the player/pair-awakening wrapper finds constant consumers only for indexes 0, 1, 2 and 7; no semantic reader for this slot was established. Preserve the slot; lack of a traced consumer is not proof of unused storage.</value>
+  </data>
+  <data name="extraUnknown174.ToolTip" xml:space="preserve">
+    <value>Indexed integer slot 5. All supplied records contain -1. A fresh audit of both the global accessor and the player/pair-awakening wrapper finds constant consumers only for indexes 0, 1, 2 and 7; no semantic reader for this slot was established. Preserve the slot; lack of a traced consumer is not proof of unused storage.</value>
+  </data>
+  <data name="extraUnknown178Label.ToolTip" xml:space="preserve">
+    <value>Indexed integer slot 6. All supplied records contain -1. A fresh audit of both the global accessor and the player/pair-awakening wrapper finds constant consumers only for indexes 0, 1, 2 and 7; no semantic reader for this slot was established. Preserve the slot; lack of a traced consumer is not proof of unused storage.</value>
+  </data>
+  <data name="extraUnknown178.ToolTip" xml:space="preserve">
+    <value>Indexed integer slot 6. All supplied records contain -1. A fresh audit of both the global accessor and the player/pair-awakening wrapper finds constant consumers only for indexes 0, 1, 2 and 7; no semantic reader for this slot was established. Preserve the slot; lack of a traced consumer is not proof of unused storage.</value>
+  </data>
+  <data name="extraUnknown180Label.ToolTip" xml:space="preserve">
+    <value>Indexed integer slot 8. All supplied records contain -1. A fresh audit of both the global accessor and the player/pair-awakening wrapper finds constant consumers only for indexes 0, 1, 2 and 7; no semantic reader for this slot was established. Preserve the slot; lack of a traced consumer is not proof of unused storage.</value>
+  </data>
+  <data name="extraUnknown180.ToolTip" xml:space="preserve">
+    <value>Indexed integer slot 8. All supplied records contain -1. A fresh audit of both the global accessor and the player/pair-awakening wrapper finds constant consumers only for indexes 0, 1, 2 and 7; no semantic reader for this slot was established. Preserve the slot; lack of a traced consumer is not proof of unused storage.</value>
+  </data>
+  <data name="extraUnknown184Label.ToolTip" xml:space="preserve">
+    <value>Indexed integer slot 9. All supplied records contain -1. A fresh audit of both the global accessor and the player/pair-awakening wrapper finds constant consumers only for indexes 0, 1, 2 and 7; no semantic reader for this slot was established. Preserve the slot; lack of a traced consumer is not proof of unused storage.</value>
+  </data>
+  <data name="extraUnknown184.ToolTip" xml:space="preserve">
+    <value>Indexed integer slot 9. All supplied records contain -1. A fresh audit of both the global accessor and the player/pair-awakening wrapper finds constant consumers only for indexes 0, 1, 2 and 7; no semantic reader for this slot was established. Preserve the slot; lack of a traced consumer is not proof of unused storage.</value>
+  </data>
+  <data name="extraUnknown188Label.ToolTip" xml:space="preserve">
+    <value>Indexed integer slot 10. All supplied records contain -1. A fresh audit of both the global accessor and the player/pair-awakening wrapper finds constant consumers only for indexes 0, 1, 2 and 7; no semantic reader for this slot was established. Preserve the slot; lack of a traced consumer is not proof of unused storage.</value>
+  </data>
+  <data name="extraUnknown188.ToolTip" xml:space="preserve">
+    <value>Indexed integer slot 10. All supplied records contain -1. A fresh audit of both the global accessor and the player/pair-awakening wrapper finds constant consumers only for indexes 0, 1, 2 and 7; no semantic reader for this slot was established. Preserve the slot; lack of a traced consumer is not proof of unused storage.</value>
+  </data>
+  <data name="extraUnknown18CLabel.ToolTip" xml:space="preserve">
+    <value>Indexed integer slot 11. All supplied records contain -1. A fresh audit of both the global accessor and the player/pair-awakening wrapper finds constant consumers only for indexes 0, 1, 2 and 7; no semantic reader for this slot was established. Preserve the slot; lack of a traced consumer is not proof of unused storage.</value>
+  </data>
+  <data name="extraUnknown18C.ToolTip" xml:space="preserve">
+    <value>Indexed integer slot 11. All supplied records contain -1. A fresh audit of both the global accessor and the player/pair-awakening wrapper finds constant consumers only for indexes 0, 1, 2 and 7; no semantic reader for this slot was established. Preserve the slot; lack of a traced consumer is not proof of unused storage.</value>
+  </data>
+  <data name="extraUnknown190Label.ToolTip" xml:space="preserve">
+    <value>Indexed integer slot 12. All supplied records contain -1. A fresh audit of both the global accessor and the player/pair-awakening wrapper finds constant consumers only for indexes 0, 1, 2 and 7; no semantic reader for this slot was established. Preserve the slot; lack of a traced consumer is not proof of unused storage.</value>
+  </data>
+  <data name="extraUnknown190.ToolTip" xml:space="preserve">
+    <value>Indexed integer slot 12. All supplied records contain -1. A fresh audit of both the global accessor and the player/pair-awakening wrapper finds constant consumers only for indexes 0, 1, 2 and 7; no semantic reader for this slot was established. Preserve the slot; lack of a traced consumer is not proof of unused storage.</value>
+  </data>
+  <data name="extraUnknown194Label.ToolTip" xml:space="preserve">
+    <value>Indexed integer slot 13. All supplied records contain -1. A fresh audit of both the global accessor and the player/pair-awakening wrapper finds constant consumers only for indexes 0, 1, 2 and 7; no semantic reader for this slot was established. Preserve the slot; lack of a traced consumer is not proof of unused storage.</value>
+  </data>
+  <data name="extraUnknown194.ToolTip" xml:space="preserve">
+    <value>Indexed integer slot 13. All supplied records contain -1. A fresh audit of both the global accessor and the player/pair-awakening wrapper finds constant consumers only for indexes 0, 1, 2 and 7; no semantic reader for this slot was established. Preserve the slot; lack of a traced consumer is not proof of unused storage.</value>
+  </data>
+  <data name="extraUnknown198Label.ToolTip" xml:space="preserve">
+    <value>Indexed integer slot 14. All supplied records contain -1. A fresh audit of both the global accessor and the player/pair-awakening wrapper finds constant consumers only for indexes 0, 1, 2 and 7; no semantic reader for this slot was established. Preserve the slot; lack of a traced consumer is not proof of unused storage.</value>
+  </data>
+  <data name="extraUnknown198.ToolTip" xml:space="preserve">
+    <value>Indexed integer slot 14. All supplied records contain -1. A fresh audit of both the global accessor and the player/pair-awakening wrapper finds constant consumers only for indexes 0, 1, 2 and 7; no semantic reader for this slot was established. Preserve the slot; lack of a traced consumer is not proof of unused storage.</value>
+  </data>
+  <data name="extraUnknown19CLabel.ToolTip" xml:space="preserve">
+    <value>Indexed integer slot 15. All supplied records contain -1. A fresh audit of both the global accessor and the player/pair-awakening wrapper finds constant consumers only for indexes 0, 1, 2 and 7; no semantic reader for this slot was established. Preserve the slot; lack of a traced consumer is not proof of unused storage.</value>
+  </data>
+  <data name="extraUnknown19C.ToolTip" xml:space="preserve">
+    <value>Indexed integer slot 15. All supplied records contain -1. A fresh audit of both the global accessor and the player/pair-awakening wrapper finds constant consumers only for indexes 0, 1, 2 and 7; no semantic reader for this slot was established. Preserve the slot; lack of a traced consumer is not proof of unused storage.</value>
+  </data>
+  <data name="extraAdventureSupportLabel.ToolTip" xml:space="preserve">
+    <value>Default support class copied during adventure battle setup into +0x0C of a 0x3C-byte team-member record. S4 IsAttackTypeSupport tests that member class for 0. S3 establishes the legacy class names: 0 Attack, 1 Defense, 2 Balance. S4 effects for classes 1/2 are not established by this trace; this field does not select its separate Strike Back/Dash Cut/etc. support actions.</value>
+  </data>
+  <data name="extraAdventureSupport.ToolTip" xml:space="preserve">
+    <value>Default support class copied during adventure battle setup into +0x0C of a 0x3C-byte team-member record. S4 IsAttackTypeSupport tests that member class for 0. S3 establishes the legacy class names: 0 Attack, 1 Defense, 2 Balance. S4 effects for classes 1/2 are not established by this trace; this field does not select its separate Strike Back/Dash Cut/etc. support actions.</value>
+  </data>
+  <data name="setCameraUnknown1.ToolTip" xml:space="preserve">
+    <value>Signed 16-bit-looking populated field adjacent to Height and VictoryHeight; no confirmed consumer. Do not call it a camera Y coordinate or declare it unused. The deeper cross-game scan establishes no semantic getter. S3 places end-demo height directly after height, so it supplies no matching intervening short.</value>
+  </data>
+  <data name="setCameraUnknown4.ToolTip" xml:space="preserve">
+    <value>Signed 16-bit parameter format version, not a collision or camera setting. Connections checks this same offset against 110; S3 checks +0x11C against 103. S4_107 copies the field but has no corresponding diagnostic check.</value>
+  </data>
+  <data name="extraUnknown1CCLabel.ToolTip" xml:space="preserve">
+    <value>Legacy guard-rate slot: S3 GetGrdPer reads its corresponding +0x12C float, and Connections has a +0x1CC float getter. Neither getter has a recovered code caller in these databases; no S4 semantic reader was found. Final guard behavior is unverified. The former AirDashSpeed name is unsupported. A fresh pointer-reference check also recovered no hidden absolute function pointer to either legacy getter; this does not rule out indirect/generated access.</value>
+  </data>
+  <data name="extraUnknown1CC.ToolTip" xml:space="preserve">
+    <value>Legacy guard-rate slot: S3 GetGrdPer reads its corresponding +0x12C float, and Connections has a +0x1CC float getter. Neither getter has a recovered code caller in these databases; no S4 semantic reader was found. Final guard behavior is unverified. The former AirDashSpeed name is unsupported. A fresh pointer-reference check also recovered no hidden absolute function pointer to either legacy getter; this does not rule out indirect/generated access.</value>
+  </data>
+  <data name="setItemBuffDuration.ToolTip" xml:space="preserve">
+    <value>Eligible positive-condition duration is multiplied by this value; eligible negative duration is divided by it. Permanent duration -1 is exempt; a separate condition-group predicate controls eligibility. Not restricted to item buffs.</value>
+  </data>
+  <data name="extraDashTrackTimeLabel.ToolTip" xml:space="preserve">
+    <value>Chakra-dash target-tracking duration, move parameter 4. During continued dash motion, the game rotates toward the target only while ActCnt / (nuccAnmTimePerSec / FPS) is less than this value. This limits homing, not total dash duration (move parameter 3). The loader converts file frames by currentFPS/30. Once the action counter is nonnegative, zero or negative values skip that steering window.</value>
+  </data>
+  <data name="extraDashTrackTime.ToolTip" xml:space="preserve">
+    <value>Chakra-dash target-tracking duration, move parameter 4. During continued dash motion, the game rotates toward the target only while ActCnt / (nuccAnmTimePerSec / FPS) is less than this value. This limits homing, not total dash duration (move parameter 3). The loader converts file frames by currentFPS/30. Once the action counter is nonnegative, zero or negative values skip that steering window.</value>
+  </data>
+  <data name="extraDashTurnRateLabel.ToolTip" xml:space="preserve">
+    <value>Chakra-dash turn-strength coefficient, move parameter 5. The dash passes field * 72 degrees to CalcDircInterp; team-secret-technique preparation passes field * 90 degrees. The helper multiplies by actor GetSpeedRate, applies 1/4, 1/3 or 1/2 damping near the target, quantizes to 1/65536 of a turn, then converts to radians. Nearly aligned directions snap to the target. This is not a literal degrees-per-second field.</value>
+  </data>
+  <data name="extraDashTurnRate.ToolTip" xml:space="preserve">
+    <value>Chakra-dash turn-strength coefficient, move parameter 5. The dash passes field * 72 degrees to CalcDircInterp; team-secret-technique preparation passes field * 90 degrees. The helper multiplies by actor GetSpeedRate, applies 1/4, 1/3 or 1/2 damping near the target, quantizes to 1/65536 of a turn, then converts to radians. Nearly aligned directions snap to the target. This is not a literal degrees-per-second field.</value>
+  </data>
+  <data name="extraAwakeDashTrackTimeLabel.ToolTip" xml:space="preserve">
+    <value>True-awakening counterpart: selected when awakening is active and AwakeType != 1. Chakra-dash target-tracking duration, move parameter 4. During continued dash motion, the game rotates toward the target only while ActCnt / (nuccAnmTimePerSec / FPS) is less than this value. This limits homing, not total dash duration (move parameter 3). The loader converts file frames by currentFPS/30. Once the action counter is nonnegative, zero or negative values skip that steering window.</value>
+  </data>
+  <data name="extraAwakeDashTrackTime.ToolTip" xml:space="preserve">
+    <value>True-awakening counterpart: selected when awakening is active and AwakeType != 1. Chakra-dash target-tracking duration, move parameter 4. During continued dash motion, the game rotates toward the target only while ActCnt / (nuccAnmTimePerSec / FPS) is less than this value. This limits homing, not total dash duration (move parameter 3). The loader converts file frames by currentFPS/30. Once the action counter is nonnegative, zero or negative values skip that steering window.</value>
+  </data>
+  <data name="extraAwakeDashTurnRateLabel.ToolTip" xml:space="preserve">
+    <value>True-awakening counterpart: selected when awakening is active and AwakeType != 1. Chakra-dash turn-strength coefficient, move parameter 5. The dash passes field * 72 degrees to CalcDircInterp; team-secret-technique preparation passes field * 90 degrees. The helper multiplies by actor GetSpeedRate, applies 1/4, 1/3 or 1/2 damping near the target, quantizes to 1/65536 of a turn, then converts to radians. Nearly aligned directions snap to the target. This is not a literal degrees-per-second field.</value>
+  </data>
+  <data name="extraAwakeDashTurnRate.ToolTip" xml:space="preserve">
+    <value>True-awakening counterpart: selected when awakening is active and AwakeType != 1. Chakra-dash turn-strength coefficient, move parameter 5. The dash passes field * 72 degrees to CalcDircInterp; team-secret-technique preparation passes field * 90 degrees. The helper multiplies by actor GetSpeedRate, applies 1/4, 1/3 or 1/2 damping near the target, quantizes to 1/65536 of a turn, then converts to radians. Nearly aligned directions snap to the target. This is not a literal degrees-per-second field.</value>
+  </data>
+  <data name="extraUnknown298Label.ToolTip" xml:space="preserve">
+    <value>Float interpretation retained from existing type annotation and plausible data. All records share the reported value. No verified gameplay consumer; do not infer a meaning from the value alone. The similarly positioned S3 region is an array of signed skill-priority shorts (+0x370 onward), not matching floats. S4 obtains those priorities from skillCustomizeParam/spSkillCustomizeParam, so the S3 names cannot be transferred to this slot.</value>
+  </data>
+  <data name="extraUnknown298.ToolTip" xml:space="preserve">
+    <value>Float interpretation retained from existing type annotation and plausible data. All records share the reported value. No verified gameplay consumer; do not infer a meaning from the value alone. The similarly positioned S3 region is an array of signed skill-priority shorts (+0x370 onward), not matching floats. S4 obtains those priorities from skillCustomizeParam/spSkillCustomizeParam, so the S3 names cannot be transferred to this slot.</value>
+  </data>
+  <data name="extraUnknown29CLabel.ToolTip" xml:space="preserve">
+    <value>Float interpretation retained from existing type annotation and plausible data. All records share the reported value. No verified gameplay consumer; do not infer a meaning from the value alone. The similarly positioned S3 region is an array of signed skill-priority shorts (+0x370 onward), not matching floats. S4 obtains those priorities from skillCustomizeParam/spSkillCustomizeParam, so the S3 names cannot be transferred to this slot.</value>
+  </data>
+  <data name="extraUnknown29C.ToolTip" xml:space="preserve">
+    <value>Float interpretation retained from existing type annotation and plausible data. All records share the reported value. No verified gameplay consumer; do not infer a meaning from the value alone. The similarly positioned S3 region is an array of signed skill-priority shorts (+0x370 onward), not matching floats. S4 obtains those priorities from skillCustomizeParam/spSkillCustomizeParam, so the S3 names cannot be transferred to this slot.</value>
+  </data>
+  <data name="extraUnknown2A0Label.ToolTip" xml:space="preserve">
+    <value>Float interpretation retained from existing type annotation and plausible data. All records share the reported value. No verified gameplay consumer; do not infer a meaning from the value alone. The similarly positioned S3 region is an array of signed skill-priority shorts (+0x370 onward), not matching floats. S4 obtains those priorities from skillCustomizeParam/spSkillCustomizeParam, so the S3 names cannot be transferred to this slot.</value>
+  </data>
+  <data name="extraUnknown2A0.ToolTip" xml:space="preserve">
+    <value>Float interpretation retained from existing type annotation and plausible data. All records share the reported value. No verified gameplay consumer; do not infer a meaning from the value alone. The similarly positioned S3 region is an array of signed skill-priority shorts (+0x370 onward), not matching floats. S4 obtains those priorities from skillCustomizeParam/spSkillCustomizeParam, so the S3 names cannot be transferred to this slot.</value>
+  </data>
+  <data name="extraUnknown2A4Label.ToolTip" xml:space="preserve">
+    <value>Float interpretation retained from existing type annotation and plausible data. All records share the reported value. No verified gameplay consumer; do not infer a meaning from the value alone. The similarly positioned S3 region is an array of signed skill-priority shorts (+0x370 onward), not matching floats. S4 obtains those priorities from skillCustomizeParam/spSkillCustomizeParam, so the S3 names cannot be transferred to this slot.</value>
+  </data>
+  <data name="extraUnknown2A4.ToolTip" xml:space="preserve">
+    <value>Float interpretation retained from existing type annotation and plausible data. All records share the reported value. No verified gameplay consumer; do not infer a meaning from the value alone. The similarly positioned S3 region is an array of signed skill-priority shorts (+0x370 onward), not matching floats. S4 obtains those priorities from skillCustomizeParam/spSkillCustomizeParam, so the S3 names cannot be transferred to this slot.</value>
+  </data>
+  <data name="extraUnknown2A8Label.ToolTip" xml:space="preserve">
+    <value>Float interpretation retained from existing type annotation and plausible data. All records share the reported value. No verified gameplay consumer; do not infer a meaning from the value alone. The similarly positioned S3 region is an array of signed skill-priority shorts (+0x370 onward), not matching floats. S4 obtains those priorities from skillCustomizeParam/spSkillCustomizeParam, so the S3 names cannot be transferred to this slot.</value>
+  </data>
+  <data name="extraUnknown2A8.ToolTip" xml:space="preserve">
+    <value>Float interpretation retained from existing type annotation and plausible data. All records share the reported value. No verified gameplay consumer; do not infer a meaning from the value alone. The similarly positioned S3 region is an array of signed skill-priority shorts (+0x370 onward), not matching floats. S4 obtains those priorities from skillCustomizeParam/spSkillCustomizeParam, so the S3 names cannot be transferred to this slot.</value>
+  </data>
+  <data name="extraUnknown2ACLabel.ToolTip" xml:space="preserve">
+    <value>Float interpretation retained from existing type annotation and plausible data. All records share the reported value. No verified gameplay consumer; do not infer a meaning from the value alone. The similarly positioned S3 region is an array of signed skill-priority shorts (+0x370 onward), not matching floats. S4 obtains those priorities from skillCustomizeParam/spSkillCustomizeParam, so the S3 names cannot be transferred to this slot.</value>
+  </data>
+  <data name="extraUnknown2AC.ToolTip" xml:space="preserve">
+    <value>Float interpretation retained from existing type annotation and plausible data. All records share the reported value. No verified gameplay consumer; do not infer a meaning from the value alone. The similarly positioned S3 region is an array of signed skill-priority shorts (+0x370 onward), not matching floats. S4 obtains those priorities from skillCustomizeParam/spSkillCustomizeParam, so the S3 names cannot be transferred to this slot.</value>
+  </data>
+  <data name="extraUnknown2B0Label.ToolTip" xml:space="preserve">
+    <value>Float interpretation retained from existing type annotation and plausible data. All records share the reported value. No verified gameplay consumer; do not infer a meaning from the value alone. The similarly positioned S3 region is an array of signed skill-priority shorts (+0x370 onward), not matching floats. S4 obtains those priorities from skillCustomizeParam/spSkillCustomizeParam, so the S3 names cannot be transferred to this slot.</value>
+  </data>
+  <data name="extraUnknown2B0.ToolTip" xml:space="preserve">
+    <value>Float interpretation retained from existing type annotation and plausible data. All records share the reported value. No verified gameplay consumer; do not infer a meaning from the value alone. The similarly positioned S3 region is an array of signed skill-priority shorts (+0x370 onward), not matching floats. S4 obtains those priorities from skillCustomizeParam/spSkillCustomizeParam, so the S3 names cannot be transferred to this slot.</value>
+  </data>
+  <data name="extraUnknown2B4Label.ToolTip" xml:space="preserve">
+    <value>Float interpretation retained from existing type annotation and plausible data. All records share the reported value. No verified gameplay consumer; do not infer a meaning from the value alone. The similarly positioned S3 region is an array of signed skill-priority shorts (+0x370 onward), not matching floats. S4 obtains those priorities from skillCustomizeParam/spSkillCustomizeParam, so the S3 names cannot be transferred to this slot.</value>
+  </data>
+  <data name="extraUnknown2B4.ToolTip" xml:space="preserve">
+    <value>Float interpretation retained from existing type annotation and plausible data. All records share the reported value. No verified gameplay consumer; do not infer a meaning from the value alone. The similarly positioned S3 region is an array of signed skill-priority shorts (+0x370 onward), not matching floats. S4 obtains those priorities from skillCustomizeParam/spSkillCustomizeParam, so the S3 names cannot be transferred to this slot.</value>
+  </data>
+  <data name="extraUnknown2B8Label.ToolTip" xml:space="preserve">
+    <value>Float interpretation retained from existing type annotation and plausible data. All records share the reported value. No verified gameplay consumer; do not infer a meaning from the value alone. The similarly positioned S3 region is an array of signed skill-priority shorts (+0x370 onward), not matching floats. S4 obtains those priorities from skillCustomizeParam/spSkillCustomizeParam, so the S3 names cannot be transferred to this slot.</value>
+  </data>
+  <data name="extraUnknown2B8.ToolTip" xml:space="preserve">
+    <value>Float interpretation retained from existing type annotation and plausible data. All records share the reported value. No verified gameplay consumer; do not infer a meaning from the value alone. The similarly positioned S3 region is an array of signed skill-priority shorts (+0x370 onward), not matching floats. S4 obtains those priorities from skillCustomizeParam/spSkillCustomizeParam, so the S3 names cannot be transferred to this slot.</value>
+  </data>
+  <data name="extraUnknown2BCLabel.ToolTip" xml:space="preserve">
+    <value>Unresolved four-byte slot. Existing S4 float interpretation is provisional. Connections has an uncalled integer getter at this offset; zero data cannot settle its type. Preserve raw bits; the template also exposes an integer/hex view. S3 has two distinct integer awakening-start fields (+0x39C flag and +0x3A0 action). Neighboring placement alone cannot establish which, if either, corresponds to S4 +0x2BC.</value>
+  </data>
+  <data name="extraUnknown2BC.ToolTip" xml:space="preserve">
+    <value>Unresolved four-byte slot. Existing S4 float interpretation is provisional. Connections has an uncalled integer getter at this offset; zero data cannot settle its type. Preserve raw bits; the template also exposes an integer/hex view. S3 has two distinct integer awakening-start fields (+0x39C flag and +0x3A0 action). Neighboring placement alone cannot establish which, if either, corresponds to S4 +0x2BC.</value>
+  </data>
+  <data name="awakeRiskLabel.ToolTip" xml:space="preserve">
+    <value>Controls awakening recovery and exit effects. Character-specific overrides can apply.
+0 - Mode0: maximum chakra recovers after awakening ends.
+1 - Reaction: applies an exit reaction condition; maximum chakra can recover during awakening.
+2 - ReactionSkills: same as Reaction, and fills action gauges 2 and 3 on awakening start.
+3 - Life: tracks and replenishes life after awakening; maximum chakra recovery waits.
+4 - LifeSkills: same life-recovery behavior, and fills action gauges 2 and 3.
+5 - Skills: fills action gauges 2 and 3; maximum chakra recovery waits.
+Other values have unresolved effects and are preserved.</value>
+  </data>
+  <data name="awakeRisk.ToolTip" xml:space="preserve">
+    <value>Controls awakening recovery and exit effects. Character-specific overrides can apply.
+0 - Mode0: maximum chakra recovers after awakening ends.
+1 - Reaction: applies an exit reaction condition; maximum chakra can recover during awakening.
+2 - ReactionSkills: same as Reaction, and fills action gauges 2 and 3 on awakening start.
+3 - Life: tracks and replenishes life after awakening; maximum chakra recovery waits.
+4 - LifeSkills: same life-recovery behavior, and fills action gauges 2 and 3.
+5 - Skills: fills action gauges 2 and 3; maximum chakra recovery waits.
+Other values have unresolved effects and are preserved.</value>
+  </data>
+  <data name="extraUnknown2CCLabel.ToolTip" xml:space="preserve">
+    <value>Float values approximately 0.1 (263 records) or 0.03 (6 records). No verified consumer; not the confirmed maximum-chakra recovery field, which is +0x2D0. A fresh Connections offset scan likewise did not establish a parameter-record reader. Do not alias it to maximum-chakra recovery or special-support gauge recovery merely because their values are similar.</value>
+  </data>
+  <data name="extraUnknown2CC.ToolTip" xml:space="preserve">
+    <value>Float values approximately 0.1 (263 records) or 0.03 (6 records). No verified consumer; not the confirmed maximum-chakra recovery field, which is +0x2D0. A fresh Connections offset scan likewise did not establish a parameter-record reader. Do not alias it to maximum-chakra recovery or special-support gauge recovery merely because their values are similar.</value>
+  </data>
+  <metadata name="menuStrip1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>115, 17</value>
   </metadata>
   <metadata name="$this.TrayHeight" type="System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>25</value>

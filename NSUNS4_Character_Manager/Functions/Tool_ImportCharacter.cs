@@ -950,7 +950,10 @@ namespace NSUNS4_Character_Manager.Functions {
                                         spSkillCustomizeOriginalFile.spl2_PriorList[c] = spSkillCustomizeModFile.spl2_PriorList[0];
                                         spSkillCustomizeOriginalFile.spl3_PriorList[c] = spSkillCustomizeModFile.spl3_PriorList[0];
                                         spSkillCustomizeOriginalFile.spl4_PriorList[c] = spSkillCustomizeModFile.spl4_PriorList[0];
-                                        spSkillCustomizeOriginalFile.WeirdValuesList[c] = spSkillCustomizeModFile.WeirdValuesList[0];
+                                        spSkillCustomizeOriginalFile.UnusedByteList[c] = (byte[])spSkillCustomizeModFile.UnusedByteList[0].Clone();
+                                        spSkillCustomizeOriginalFile.DamageMultiplierList[c] = (float[])spSkillCustomizeModFile.DamageMultiplierList[0].Clone();
+                                        spSkillCustomizeOriginalFile.TeamUltimateDamageList[c] = spSkillCustomizeModFile.TeamUltimateDamageList[0];
+                                        spSkillCustomizeOriginalFile.UnknownFieldsList[c] = (byte[])spSkillCustomizeModFile.UnknownFieldsList[0].Clone();
                                     }
                                 }
                             } else {
@@ -971,7 +974,10 @@ namespace NSUNS4_Character_Manager.Functions {
                                 spSkillCustomizeOriginalFile.spl2_NameList.Add(spSkillCustomizeModFile.spl2_NameList[0]);
                                 spSkillCustomizeOriginalFile.spl3_NameList.Add(spSkillCustomizeModFile.spl3_NameList[0]);
                                 spSkillCustomizeOriginalFile.spl4_NameList.Add(spSkillCustomizeModFile.spl4_NameList[0]);
-                                spSkillCustomizeOriginalFile.WeirdValuesList.Add(spSkillCustomizeModFile.WeirdValuesList[0]);
+                                spSkillCustomizeOriginalFile.UnusedByteList.Add((byte[])spSkillCustomizeModFile.UnusedByteList[0].Clone());
+                                spSkillCustomizeOriginalFile.DamageMultiplierList.Add((float[])spSkillCustomizeModFile.DamageMultiplierList[0].Clone());
+                                spSkillCustomizeOriginalFile.TeamUltimateDamageList.Add(spSkillCustomizeModFile.TeamUltimateDamageList[0]);
+                                spSkillCustomizeOriginalFile.UnknownFieldsList.Add((byte[])spSkillCustomizeModFile.UnknownFieldsList[0].Clone());
                                 spSkillCustomizeOriginalFile.EntryCount++;
                             }
                             if (!Directory.Exists(Main.datawin32Path + "\\spc\\WIN64")) {

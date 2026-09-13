@@ -281,6 +281,12 @@
     <Compile Include="NSUNS4_Character_Manager\Tools\Tool_DuelPlayerParamEditor.Designer.cs">
       <DependentUpon>Tool_DuelPlayerParamEditor.cs</DependentUpon>
     </Compile>
+    <Compile Include="NSUNS4_Character_Manager\Tools\Tool_DuelPlayerParamEditor_CopySettings.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="NSUNS4_Character_Manager\Tools\Tool_DuelPlayerParamEditor_CopySettings.Designer.cs">
+      <DependentUpon>Tool_DuelPlayerParamEditor_CopySettings.cs</DependentUpon>
+    </Compile>
     <Compile Include="NSUNS4_Character_Manager\Tools\Tool_DuelPlayerParamEditor_Costumes.cs">
       <SubType>Form</SubType>
     </Compile>

@@ -940,17 +940,17 @@ namespace NSUNS4_Character_Manager.Tools
             
 
             index = start + 0x6E;
-            int atttime = actualSection[index] * 0x1 + actualSection[index + 0x1] * 0x100;
+            short atttime = BitConverter.ToInt16(actualSection, index);
             t_length.Value = atttime;
 
             index = start + 0x70;
-            int btnpress = actualSection[index] * 0x1 + actualSection[index + 0x1] * 0x100;
+            short btnpress = BitConverter.ToInt16(actualSection, index);
             t_btnpress.Value = btnpress;
 
             index = start + 0x72;
             int cond2 = actualSection[index] * 0x1 + actualSection[index + 0x1] * 0x100;
-            comboBoxCondition2.SelectedIndex = cond2 >= 1 && cond2 <= comboBoxCondition2.Items.Count
-                ? cond2 - 1
+            comboBoxCondition2.SelectedIndex = cond2 < comboBoxCondition2.Items.Count
+                ? cond2
                 : -1;
 
             index = start + 0x74;
@@ -1240,15 +1240,17 @@ namespace NSUNS4_Character_Manager.Tools
                 // Replace conditions and timing
                 plAnmList[ver][anm][0x6C] = (byte)t_condition.SelectedIndex;
 
-                byte[] lengthbytes = BitConverter.GetBytes((int)t_length.Value);
+                byte[] lengthbytes = BitConverter.GetBytes((short)t_length.Value);
                 plAnmList[ver][anm][0x6E] = lengthbytes[0];
                 plAnmList[ver][anm][0x6F] = lengthbytes[1];
 
-                byte[] btnbytes = BitConverter.GetBytes((int)t_btnpress.Value);
+                byte[] btnbytes = BitConverter.GetBytes((short)t_btnpress.Value);
                 plAnmList[ver][anm][0x70] = btnbytes[0];
                 plAnmList[ver][anm][0x71] = btnbytes[1];
 
-                int cond2 = comboBoxCondition2.SelectedIndex + 1;
+                int cond2 = comboBoxCondition2.SelectedIndex >= 0
+                    ? comboBoxCondition2.SelectedIndex
+                    : BitConverter.ToUInt16(plAnmList[ver][anm], 0x72);
                 byte[] cond2Bytes = BitConverter.GetBytes(cond2);
                 plAnmList[ver][anm][0x72] = cond2Bytes[0];
                 plAnmList[ver][anm][0x73] = cond2Bytes[1];

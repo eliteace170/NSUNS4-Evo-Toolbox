@@ -518,7 +518,7 @@
             "Side"});
             this.t_direction.Location = new System.Drawing.Point(686, 113);
             this.t_direction.Name = "t_direction";
-            this.t_direction.Size = new System.Drawing.Size(125, 21);
+            this.t_direction.Size = new System.Drawing.Size(97, 21);
             this.t_direction.TabIndex = 28;
             // 
             // label10
@@ -623,10 +623,15 @@
             this.t_length.Hexadecimal = true;
             this.t_length.Location = new System.Drawing.Point(627, 288);
             this.t_length.Maximum = new decimal(new int[] {
-            65535,
+            32767,
             0,
             0,
             0});
+            this.t_length.Minimum = new decimal(new int[] {
+            32768,
+            0,
+            0,
+            -2147483648});
             this.t_length.Name = "t_length";
             this.t_length.Size = new System.Drawing.Size(190, 23);
             this.t_length.TabIndex = 38;
@@ -645,10 +650,15 @@
             this.t_btnpress.Hexadecimal = true;
             this.t_btnpress.Location = new System.Drawing.Point(826, 288);
             this.t_btnpress.Maximum = new decimal(new int[] {
-            65535,
+            32767,
             0,
             0,
             0});
+            this.t_btnpress.Minimum = new decimal(new int[] {
+            32768,
+            0,
+            0,
+            -2147483648});
             this.t_btnpress.Name = "t_btnpress";
             this.t_btnpress.Size = new System.Drawing.Size(177, 23);
             this.t_btnpress.TabIndex = 40;
@@ -813,6 +823,11 @@
             this.t_dmgamount.BackColor = System.Drawing.Color.PapayaWhip;
             this.t_dmgamount.DecimalPlaces = 3;
             this.t_dmgamount.Location = new System.Drawing.Point(535, 621);
+            this.t_dmgamount.Maximum = new decimal(new int[] {
+            200,
+            0,
+            0,
+            0});
             this.t_dmgamount.Minimum = new decimal(new int[] {
             100,
             0,
@@ -1266,16 +1281,16 @@
             // label37
             // 
             this.label37.AutoSize = true;
-            this.label37.Location = new System.Drawing.Point(827, 115);
+            this.label37.Location = new System.Drawing.Point(783, 117);
             this.label37.Name = "label37";
-            this.label37.Size = new System.Drawing.Size(67, 15);
+            this.label37.Size = new System.Drawing.Size(114, 15);
             this.label37.TabIndex = 104;
-            this.label37.Text = "Frame skip:";
+            this.label37.Text = "Frame interpolation:";
             // 
             // numericUpDown1
             // 
             this.numericUpDown1.Hexadecimal = true;
-            this.numericUpDown1.Location = new System.Drawing.Point(900, 113);
+            this.numericUpDown1.Location = new System.Drawing.Point(903, 115);
             this.numericUpDown1.Maximum = new decimal(new int[] {
             65535,
             0,
@@ -1298,11 +1313,19 @@
             // 
             this.comboBoxCondition2.FormattingEnabled = true;
             this.comboBoxCondition2.Items.AddRange(new object[] {
+            "0 = None",
             "1 = ConnectOnLanding",
             "2 = ConnectOnAnmEnd",
             "3 = ConnectOnNearEnemy (distance below 200; special cases use 500)",
             "4 = ConnectOnComboThrow (hit-confirm exception)",
-            "5 = Deprecated / unhandled"});
+            "5 = Deprecated / unhandled",
+            "6 = Deprecated / unhandled",
+            "7 = Deprecated / unhandled",
+            "8 = Deprecated / unhandled",
+            "9 = Deprecated / unhandled",
+            "10 = unhandled",
+            "11 = unhandled",
+            "12 = unhandled"});
             this.comboBoxCondition2.Location = new System.Drawing.Point(628, 241);
             this.comboBoxCondition2.Name = "comboBoxCondition2";
             this.comboBoxCondition2.Size = new System.Drawing.Size(375, 21);

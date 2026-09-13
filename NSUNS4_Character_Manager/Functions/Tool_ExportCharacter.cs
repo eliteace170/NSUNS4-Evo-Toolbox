@@ -930,7 +930,10 @@ namespace NSUNS4_Character_Manager.Functions {
                         spSkillCustomizeFile.spl2_NameList.RemoveAt(x);
                         spSkillCustomizeFile.spl3_NameList.RemoveAt(x);
                         spSkillCustomizeFile.spl4_NameList.RemoveAt(x);
-                        spSkillCustomizeFile.WeirdValuesList.RemoveAt(x);
+                        spSkillCustomizeFile.UnusedByteList.RemoveAt(x);
+                        spSkillCustomizeFile.DamageMultiplierList.RemoveAt(x);
+                        spSkillCustomizeFile.TeamUltimateDamageList.RemoveAt(x);
+                        spSkillCustomizeFile.UnknownFieldsList.RemoveAt(x);
                         spSkillCustomizeFile.EntryCount--;
                         x--;
                     }

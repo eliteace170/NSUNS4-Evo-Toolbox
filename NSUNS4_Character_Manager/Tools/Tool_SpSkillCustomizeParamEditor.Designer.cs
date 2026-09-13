@@ -66,15 +66,21 @@ namespace NSUNS4_Character_Manager.Tools
             this.label12 = new System.Windows.Forms.Label();
             this.v_ult4_prior = new System.Windows.Forms.NumericUpDown();
             this.label13 = new System.Windows.Forms.Label();
-            this.label18 = new System.Windows.Forms.Label();
             this.dmgMult1 = new System.Windows.Forms.NumericUpDown();
             this.dmgMult2 = new System.Windows.Forms.NumericUpDown();
             this.dmgMult3 = new System.Windows.Forms.NumericUpDown();
             this.dmgMult4 = new System.Windows.Forms.NumericUpDown();
-            this.unusedByte1 = new System.Windows.Forms.NumericUpDown();
-            this.unusedByte2 = new System.Windows.Forms.NumericUpDown();
-            this.unusedByte3 = new System.Windows.Forms.NumericUpDown();
-            this.unusedByte4 = new System.Windows.Forms.NumericUpDown();
+            this.fifthChakraCost = new System.Windows.Forms.NumericUpDown();
+            this.fifthChakraCostLabel = new System.Windows.Forms.Label();
+            this.teamUltimateDamage = new System.Windows.Forms.NumericUpDown();
+            this.teamUltimateDamageLabel = new System.Windows.Forms.Label();
+            this.unknownValue = new System.Windows.Forms.NumericUpDown();
+            this.ult1Unknown = new System.Windows.Forms.NumericUpDown();
+            this.ult2Unknown = new System.Windows.Forms.NumericUpDown();
+            this.ult3Unknown = new System.Windows.Forms.NumericUpDown();
+            this.ult4Unknown = new System.Windows.Forms.NumericUpDown();
+            this.unknownValueLabel = new System.Windows.Forms.Label();
+            this.ultUnknownLabel = new System.Windows.Forms.Label();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.char01)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ULT1_CUC_v)).BeginInit();
@@ -90,10 +96,13 @@ namespace NSUNS4_Character_Manager.Tools
             ((System.ComponentModel.ISupportInitialize)(this.dmgMult2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dmgMult3)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dmgMult4)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.unusedByte1)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.unusedByte2)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.unusedByte3)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.unusedByte4)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.fifthChakraCost)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.teamUltimateDamage)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.unknownValue)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.ult1Unknown)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.ult2Unknown)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.ult3Unknown)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.ult4Unknown)).BeginInit();
             this.SuspendLayout();
             // 
             // listBox1
@@ -109,7 +118,7 @@ namespace NSUNS4_Character_Manager.Tools
             // 
             // menuStrip1
             // 
-            this.menuStrip1.Font = new System.Drawing.Font("CC2 RocknRoll Latin DB", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.menuStrip1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fileToolStripMenuItem,
             this.globalSettingsToolStripMenuItem});
@@ -131,16 +140,6 @@ namespace NSUNS4_Character_Manager.Tools
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
             this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
             this.fileToolStripMenuItem.Text = "File";
-            // 
-            // globalSettingsToolStripMenuItem
-            // 
-            this.globalSettingsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.globalDamageMultiplierButton,
-            this.globalChakraUsageButton});
-            this.globalSettingsToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.globalSettingsToolStripMenuItem.Name = "globalSettingsToolStripMenuItem";
-            this.globalSettingsToolStripMenuItem.Size = new System.Drawing.Size(98, 20);
-            this.globalSettingsToolStripMenuItem.Text = "Global Settings";
             // 
             // openToolStripMenuItem
             // 
@@ -170,21 +169,32 @@ namespace NSUNS4_Character_Manager.Tools
             this.closeFileToolStripMenuItem.Text = "Close file";
             this.closeFileToolStripMenuItem.Click += new System.EventHandler(this.closeFileToolStripMenuItem_Click);
             // 
+            // globalSettingsToolStripMenuItem
+            // 
+            this.globalSettingsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.globalDamageMultiplierButton,
+            this.globalChakraUsageButton});
+            this.globalSettingsToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.globalSettingsToolStripMenuItem.Name = "globalSettingsToolStripMenuItem";
+            this.globalSettingsToolStripMenuItem.Size = new System.Drawing.Size(98, 20);
+            this.globalSettingsToolStripMenuItem.Text = "Global Settings";
+            // 
             // globalDamageMultiplierButton
             // 
             this.globalDamageMultiplierButton.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.globalDamageMultiplierButton.Name = "globalDamageMultiplierButton";
-            this.globalDamageMultiplierButton.Size = new System.Drawing.Size(145, 20);
-            this.globalDamageMultiplierButton.Text = "Global Damage Multiplier";
+            this.globalDamageMultiplierButton.Size = new System.Drawing.Size(273, 22);
+            this.globalDamageMultiplierButton.Text = "Global Damage Multiplier (incl. Team)";
             this.globalDamageMultiplierButton.Click += new System.EventHandler(this.globalDamageMultiplierButton_Click);
             // 
             // globalChakraUsageButton
             // 
             this.globalChakraUsageButton.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.globalChakraUsageButton.Name = "globalChakraUsageButton";
-            this.globalChakraUsageButton.Size = new System.Drawing.Size(124, 20);
+            this.globalChakraUsageButton.Size = new System.Drawing.Size(273, 22);
             this.globalChakraUsageButton.Text = "Global Chakra Usage";
             this.globalChakraUsageButton.Click += new System.EventHandler(this.globalChakraUsageButton_Click);
+            // 
             // label1
             // 
             this.label1.AutoSize = true;
@@ -199,7 +209,7 @@ namespace NSUNS4_Character_Manager.Tools
             // 
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Segoe UI", 8.5F);
-            this.label2.Location = new System.Drawing.Point(221, 90);
+            this.label2.Location = new System.Drawing.Point(221, 93);
             this.label2.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(31, 15);
@@ -210,7 +220,7 @@ namespace NSUNS4_Character_Manager.Tools
             // 
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Segoe UI", 8.5F);
-            this.label3.Location = new System.Drawing.Point(221, 112);
+            this.label3.Location = new System.Drawing.Point(221, 117);
             this.label3.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(31, 15);
@@ -221,7 +231,7 @@ namespace NSUNS4_Character_Manager.Tools
             // 
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Segoe UI", 8.5F);
-            this.label4.Location = new System.Drawing.Point(221, 134);
+            this.label4.Location = new System.Drawing.Point(221, 141);
             this.label4.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(31, 15);
@@ -298,7 +308,7 @@ namespace NSUNS4_Character_Manager.Tools
             // 
             // Spl3_Name
             // 
-            this.Spl3_Name.Location = new System.Drawing.Point(256, 136);
+            this.Spl3_Name.Location = new System.Drawing.Point(256, 138);
             this.Spl3_Name.Margin = new System.Windows.Forms.Padding(2, 3, 2, 3);
             this.Spl3_Name.MaxLength = 15;
             this.Spl3_Name.Name = "Spl3_Name";
@@ -471,7 +481,7 @@ namespace NSUNS4_Character_Manager.Tools
             // 
             this.label12.AutoSize = true;
             this.label12.Font = new System.Drawing.Font("Segoe UI", 8.5F);
-            this.label12.Location = new System.Drawing.Point(221, 157);
+            this.label12.Location = new System.Drawing.Point(221, 167);
             this.label12.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label12.Name = "label12";
             this.label12.Size = new System.Drawing.Size(31, 15);
@@ -503,24 +513,11 @@ namespace NSUNS4_Character_Manager.Tools
             this.label13.TabIndex = 179;
             this.label13.Text = "Damage multiplier";
             // 
-            // label18
-            // 
-            this.label18.AutoSize = true;
-            this.label18.Font = new System.Drawing.Font("Segoe UI", 8.5F);
-            this.label18.Location = new System.Drawing.Point(776, 69);
-            this.label18.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
-            this.label18.Name = "label18";
-            this.label18.Size = new System.Drawing.Size(58, 15);
-            this.label18.TabIndex = 184;
-            this.label18.Text = "Unknown";
-            this.label18.TextAlign = System.Drawing.ContentAlignment.TopCenter;
-            this.label18.Click += new System.EventHandler(this.label18_Click);
-            // 
             // dmgMult1
             // 
             this.dmgMult1.DecimalPlaces = 3;
             this.dmgMult1.Font = new System.Drawing.Font("Segoe UI", 9.5F);
-            this.dmgMult1.Location = new System.Drawing.Point(779, 90);
+            this.dmgMult1.Location = new System.Drawing.Point(649, 90);
             this.dmgMult1.Margin = new System.Windows.Forms.Padding(2, 3, 2, 3);
             this.dmgMult1.Maximum = new decimal(new int[] {
             1000,
@@ -540,7 +537,7 @@ namespace NSUNS4_Character_Manager.Tools
             // 
             this.dmgMult2.DecimalPlaces = 3;
             this.dmgMult2.Font = new System.Drawing.Font("Segoe UI", 9.5F);
-            this.dmgMult2.Location = new System.Drawing.Point(779, 114);
+            this.dmgMult2.Location = new System.Drawing.Point(649, 114);
             this.dmgMult2.Margin = new System.Windows.Forms.Padding(2, 3, 2, 3);
             this.dmgMult2.Maximum = new decimal(new int[] {
             1000,
@@ -560,7 +557,7 @@ namespace NSUNS4_Character_Manager.Tools
             // 
             this.dmgMult3.DecimalPlaces = 3;
             this.dmgMult3.Font = new System.Drawing.Font("Segoe UI", 9.5F);
-            this.dmgMult3.Location = new System.Drawing.Point(779, 138);
+            this.dmgMult3.Location = new System.Drawing.Point(649, 138);
             this.dmgMult3.Margin = new System.Windows.Forms.Padding(2, 3, 2, 3);
             this.dmgMult3.Maximum = new decimal(new int[] {
             1000,
@@ -580,7 +577,7 @@ namespace NSUNS4_Character_Manager.Tools
             // 
             this.dmgMult4.DecimalPlaces = 3;
             this.dmgMult4.Font = new System.Drawing.Font("Segoe UI", 9.5F);
-            this.dmgMult4.Location = new System.Drawing.Point(779, 162);
+            this.dmgMult4.Location = new System.Drawing.Point(649, 162);
             this.dmgMult4.Margin = new System.Windows.Forms.Padding(2, 3, 2, 3);
             this.dmgMult4.Maximum = new decimal(new int[] {
             1000,
@@ -596,76 +593,149 @@ namespace NSUNS4_Character_Manager.Tools
             0,
             0});
             // 
-            // unusedByte1
+            // fifthChakraCost
             // 
-            this.unusedByte1.Font = new System.Drawing.Font("Segoe UI", 9.5F);
-            this.unusedByte1.Hexadecimal = true;
-            this.unusedByte1.Location = new System.Drawing.Point(649, 90);
-            this.unusedByte1.Margin = new System.Windows.Forms.Padding(2, 3, 2, 3);
-            this.unusedByte1.Maximum = new decimal(new int[] {
-            255,
+            this.fifthChakraCost.DecimalPlaces = 3;
+            this.fifthChakraCost.Location = new System.Drawing.Point(386, 208);
+            this.fifthChakraCost.Maximum = new decimal(new int[] {
+            1000,
             0,
             0,
             0});
-            this.unusedByte1.Name = "unusedByte1";
-            this.unusedByte1.Size = new System.Drawing.Size(126, 24);
-            this.unusedByte1.TabIndex = 191;
+            this.fifthChakraCost.Name = "fifthChakraCost";
+            this.fifthChakraCost.Size = new System.Drawing.Size(125, 23);
+            this.fifthChakraCost.TabIndex = 191;
             // 
-            // unusedByte2
+            // fifthChakraCostLabel
             // 
-            this.unusedByte2.Font = new System.Drawing.Font("Segoe UI", 9.5F);
-            this.unusedByte2.Hexadecimal = true;
-            this.unusedByte2.Location = new System.Drawing.Point(649, 114);
-            this.unusedByte2.Margin = new System.Windows.Forms.Padding(2, 3, 2, 3);
-            this.unusedByte2.Maximum = new decimal(new int[] {
-            255,
+            this.fifthChakraCostLabel.AutoSize = true;
+            this.fifthChakraCostLabel.Location = new System.Drawing.Point(253, 210);
+            this.fifthChakraCostLabel.Name = "fifthChakraCostLabel";
+            this.fifthChakraCostLabel.Size = new System.Drawing.Size(122, 15);
+            this.fifthChakraCostLabel.TabIndex = 0;
+            this.fifthChakraCostLabel.Text = "Team ultimate Chakra";
+            // 
+            // teamUltimateDamage
+            // 
+            this.teamUltimateDamage.DecimalPlaces = 3;
+            this.teamUltimateDamage.Location = new System.Drawing.Point(386, 237);
+            this.teamUltimateDamage.Maximum = new decimal(new int[] {
+            1000,
             0,
             0,
             0});
-            this.unusedByte2.Name = "unusedByte2";
-            this.unusedByte2.Size = new System.Drawing.Size(126, 24);
-            this.unusedByte2.TabIndex = 192;
+            this.teamUltimateDamage.Name = "teamUltimateDamage";
+            this.teamUltimateDamage.Size = new System.Drawing.Size(125, 23);
+            this.teamUltimateDamage.TabIndex = 192;
             // 
-            // unusedByte3
+            // teamUltimateDamageLabel
             // 
-            this.unusedByte3.Font = new System.Drawing.Font("Segoe UI", 9.5F);
-            this.unusedByte3.Hexadecimal = true;
-            this.unusedByte3.Location = new System.Drawing.Point(649, 138);
-            this.unusedByte3.Margin = new System.Windows.Forms.Padding(2, 3, 2, 3);
-            this.unusedByte3.Maximum = new decimal(new int[] {
-            255,
+            this.teamUltimateDamageLabel.AutoSize = true;
+            this.teamUltimateDamageLabel.Location = new System.Drawing.Point(253, 239);
+            this.teamUltimateDamageLabel.Name = "teamUltimateDamageLabel";
+            this.teamUltimateDamageLabel.Size = new System.Drawing.Size(128, 15);
+            this.teamUltimateDamageLabel.TabIndex = 192;
+            this.teamUltimateDamageLabel.Text = "Team ultimate damage";
+            // 
+            // unknownValue
+            // 
+            this.unknownValue.Font = new System.Drawing.Font("Segoe UI", 9.5F);
+            this.unknownValue.Location = new System.Drawing.Point(386, 266);
+            this.unknownValue.Maximum = new decimal(new int[] {
+            -1,
             0,
             0,
             0});
-            this.unusedByte3.Name = "unusedByte3";
-            this.unusedByte3.Size = new System.Drawing.Size(126, 24);
-            this.unusedByte3.TabIndex = 193;
+            this.unknownValue.Name = "unknownValue";
+            this.unknownValue.Size = new System.Drawing.Size(126, 24);
+            this.unknownValue.TabIndex = 193;
             // 
-            // unusedByte4
+            // ult1Unknown
             // 
-            this.unusedByte4.Font = new System.Drawing.Font("Segoe UI", 9.5F);
-            this.unusedByte4.Hexadecimal = true;
-            this.unusedByte4.Location = new System.Drawing.Point(649, 162);
-            this.unusedByte4.Margin = new System.Windows.Forms.Padding(2, 3, 2, 3);
-            this.unusedByte4.Maximum = new decimal(new int[] {
-            255,
+            this.ult1Unknown.Font = new System.Drawing.Font("Segoe UI", 9.5F);
+            this.ult1Unknown.Location = new System.Drawing.Point(779, 90);
+            this.ult1Unknown.Maximum = new decimal(new int[] {
+            -1,
             0,
             0,
             0});
-            this.unusedByte4.Name = "unusedByte4";
-            this.unusedByte4.Size = new System.Drawing.Size(126, 24);
-            this.unusedByte4.TabIndex = 194;
+            this.ult1Unknown.Name = "ult1Unknown";
+            this.ult1Unknown.Size = new System.Drawing.Size(126, 24);
+            this.ult1Unknown.TabIndex = 194;
+            // 
+            // ult2Unknown
+            // 
+            this.ult2Unknown.Font = new System.Drawing.Font("Segoe UI", 9.5F);
+            this.ult2Unknown.Location = new System.Drawing.Point(779, 114);
+            this.ult2Unknown.Maximum = new decimal(new int[] {
+            -1,
+            0,
+            0,
+            0});
+            this.ult2Unknown.Name = "ult2Unknown";
+            this.ult2Unknown.Size = new System.Drawing.Size(126, 24);
+            this.ult2Unknown.TabIndex = 195;
+            // 
+            // ult3Unknown
+            // 
+            this.ult3Unknown.Font = new System.Drawing.Font("Segoe UI", 9.5F);
+            this.ult3Unknown.Location = new System.Drawing.Point(779, 138);
+            this.ult3Unknown.Maximum = new decimal(new int[] {
+            -1,
+            0,
+            0,
+            0});
+            this.ult3Unknown.Name = "ult3Unknown";
+            this.ult3Unknown.Size = new System.Drawing.Size(126, 24);
+            this.ult3Unknown.TabIndex = 196;
+            // 
+            // ult4Unknown
+            // 
+            this.ult4Unknown.Font = new System.Drawing.Font("Segoe UI", 9.5F);
+            this.ult4Unknown.Location = new System.Drawing.Point(779, 162);
+            this.ult4Unknown.Maximum = new decimal(new int[] {
+            -1,
+            0,
+            0,
+            0});
+            this.ult4Unknown.Name = "ult4Unknown";
+            this.ult4Unknown.Size = new System.Drawing.Size(126, 24);
+            this.ult4Unknown.TabIndex = 197;
+            // 
+            // unknownValueLabel
+            // 
+            this.unknownValueLabel.AutoSize = true;
+            this.unknownValueLabel.Location = new System.Drawing.Point(253, 271);
+            this.unknownValueLabel.Name = "unknownValueLabel";
+            this.unknownValueLabel.Size = new System.Drawing.Size(89, 15);
+            this.unknownValueLabel.TabIndex = 198;
+            this.unknownValueLabel.Text = "Unknown value";
+            // 
+            // ultUnknownLabel
+            // 
+            this.ultUnknownLabel.AutoSize = true;
+            this.ultUnknownLabel.Location = new System.Drawing.Point(779, 69);
+            this.ultUnknownLabel.Name = "ultUnknownLabel";
+            this.ultUnknownLabel.Size = new System.Drawing.Size(58, 15);
+            this.ultUnknownLabel.TabIndex = 199;
+            this.ultUnknownLabel.Text = "Unknown";
             // 
             // Tool_SpSkillCustomizeParamEditor
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(915, 338);
-            this.Controls.Add(this.unusedByte4);
-            this.Controls.Add(this.unusedByte3);
-            this.Controls.Add(this.unusedByte2);
-            this.Controls.Add(this.unusedByte1);
-            this.Controls.Add(this.label18);
+            this.Controls.Add(this.fifthChakraCostLabel);
+            this.Controls.Add(this.fifthChakraCost);
+            this.Controls.Add(this.teamUltimateDamageLabel);
+            this.Controls.Add(this.teamUltimateDamage);
+            this.Controls.Add(this.unknownValue);
+            this.Controls.Add(this.ult1Unknown);
+            this.Controls.Add(this.ult2Unknown);
+            this.Controls.Add(this.ult3Unknown);
+            this.Controls.Add(this.ult4Unknown);
+            this.Controls.Add(this.unknownValueLabel);
+            this.Controls.Add(this.ultUnknownLabel);
             this.Controls.Add(this.dmgMult4);
             this.Controls.Add(this.dmgMult3);
             this.Controls.Add(this.dmgMult2);
@@ -724,10 +794,13 @@ namespace NSUNS4_Character_Manager.Tools
             ((System.ComponentModel.ISupportInitialize)(this.dmgMult2)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.dmgMult3)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.dmgMult4)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.unusedByte1)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.unusedByte2)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.unusedByte3)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.unusedByte4)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.fifthChakraCost)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.teamUltimateDamage)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.unknownValue)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.ult1Unknown)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.ult2Unknown)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.ult3Unknown)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.ult4Unknown)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -772,16 +845,22 @@ namespace NSUNS4_Character_Manager.Tools
         private System.Windows.Forms.TextBox Spl4_Name;
         private System.Windows.Forms.Label label12;
         private System.Windows.Forms.NumericUpDown v_ult4_prior;
+        private System.Windows.Forms.NumericUpDown fifthChakraCost;
+        private System.Windows.Forms.Label fifthChakraCostLabel;
+        private System.Windows.Forms.NumericUpDown teamUltimateDamage;
+        private System.Windows.Forms.Label teamUltimateDamageLabel;
+        private System.Windows.Forms.NumericUpDown unknownValue;
+        private System.Windows.Forms.NumericUpDown ult1Unknown;
+        private System.Windows.Forms.NumericUpDown ult2Unknown;
+        private System.Windows.Forms.NumericUpDown ult3Unknown;
+        private System.Windows.Forms.NumericUpDown ult4Unknown;
+        private System.Windows.Forms.Label unknownValueLabel;
+        private System.Windows.Forms.Label ultUnknownLabel;
         private System.Windows.Forms.Label label13;
-        private System.Windows.Forms.Label label18;
         private System.Windows.Forms.NumericUpDown dmgMult1;
         private System.Windows.Forms.NumericUpDown dmgMult2;
         private System.Windows.Forms.NumericUpDown dmgMult3;
         private System.Windows.Forms.NumericUpDown dmgMult4;
-        private System.Windows.Forms.NumericUpDown unusedByte1;
-        private System.Windows.Forms.NumericUpDown unusedByte2;
-        private System.Windows.Forms.NumericUpDown unusedByte3;
-        private System.Windows.Forms.NumericUpDown unusedByte4;
     }
 }
 
