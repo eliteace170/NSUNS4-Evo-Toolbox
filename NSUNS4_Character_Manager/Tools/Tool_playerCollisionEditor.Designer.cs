@@ -48,6 +48,7 @@
             this.button3 = new System.Windows.Forms.Button();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.saveAndCloseToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.numberFormatToolStripButton = new System.Windows.Forms.ToolStripButton();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown3)).BeginInit();
@@ -260,7 +261,8 @@
             // menuStrip1
             // 
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.saveAndCloseToolStripMenuItem});
+            this.saveAndCloseToolStripMenuItem,
+            this.numberFormatToolStripButton});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
             this.menuStrip1.Size = new System.Drawing.Size(689, 24);
@@ -273,6 +275,18 @@
             this.saveAndCloseToolStripMenuItem.Size = new System.Drawing.Size(96, 20);
             this.saveAndCloseToolStripMenuItem.Text = "Save and close";
             this.saveAndCloseToolStripMenuItem.Click += new System.EventHandler(this.saveAndCloseToolStripMenuItem_Click);
+            // 
+            // numberFormatToolStripButton
+            // 
+            this.numberFormatToolStripButton.Checked = true;
+            this.numberFormatToolStripButton.CheckOnClick = true;
+            this.numberFormatToolStripButton.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.numberFormatToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.numberFormatToolStripButton.Name = "numberFormatToolStripButton";
+            this.numberFormatToolStripButton.Size = new System.Drawing.Size(31, 20);
+            this.numberFormatToolStripButton.Text = "Hex";
+            this.numberFormatToolStripButton.ToolTipText = "Toggle hexadecimal or decimal display";
+            this.numberFormatToolStripButton.Click += new System.EventHandler(this.numberFormatToolStripButton_Click);
             // 
             // Tool_playerCollisionEditor
             // 
@@ -337,5 +351,6 @@
         private System.Windows.Forms.Button button3;
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem saveAndCloseToolStripMenuItem;
+        private System.Windows.Forms.ToolStripButton numberFormatToolStripButton;
     }
 }

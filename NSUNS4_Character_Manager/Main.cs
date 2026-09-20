@@ -1361,6 +1361,7 @@ namespace NSUNS4_Character_Manager
             this.infoToolStripMenuItem.Name = "infoToolStripMenuItem";
             this.infoToolStripMenuItem.Size = new System.Drawing.Size(40, 20);
             this.infoToolStripMenuItem.Text = "Info";
+            this.infoToolStripMenuItem.Click += new System.EventHandler(this.infoToolStripMenuItem_Click);
             // 
             // addingCharacterWoReplacingToolStripMenuItem
             // 
@@ -2112,7 +2113,7 @@ namespace NSUNS4_Character_Manager
             this.MaximizeBox = false;
             this.Name = "Main";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Naruto: Storm 4 Evo Toolbox v6.9 (Ace\'s build)";
+            this.Text = "Naruto: Storm 4 Evo Toolbox v7.0 (Ace\'s build)";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.Main_FormClosed);
             this.Load += new System.EventHandler(this.Main_Load);
             this.menuStrip1.ResumeLayout(false);
@@ -2657,6 +2658,11 @@ namespace NSUNS4_Character_Manager
         {
             Tool_CpuParamEditor t = new Tool_CpuParamEditor();
             t.Show();
+        }
+
+        private void infoToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }

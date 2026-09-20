@@ -16,35 +16,44 @@ namespace NSUNS4_Character_Manager.Tools
         private void InitializeComponent()
         {
             this.listBox1 = new System.Windows.Forms.ListBox();
-            this.label1 = new System.Windows.Forms.Label();
-            this.nFrameActionUnlock = new System.Windows.Forms.NumericUpDown();
-            this.label2 = new System.Windows.Forms.Label();
-            this.nActionLength = new System.Windows.Forms.NumericUpDown();
-            this.label3 = new System.Windows.Forms.Label();
-            this.nUnk1 = new System.Windows.Forms.NumericUpDown();
-            this.label4 = new System.Windows.Forms.Label();
-            this.nCircleVelocity = new System.Windows.Forms.NumericUpDown();
-            this.label5 = new System.Windows.Forms.Label();
-            this.nUnk2 = new System.Windows.Forms.NumericUpDown();
-            this.label6 = new System.Windows.Forms.Label();
-            this.nCircleVelocityStrength = new System.Windows.Forms.NumericUpDown();
-            this.label7 = new System.Windows.Forms.Label();
-            this.nMovementFrequency = new System.Windows.Forms.NumericUpDown();
-            this.label8 = new System.Windows.Forms.Label();
-            this.nForwardVelocity = new System.Windows.Forms.NumericUpDown();
+            this.labelCancelFrame = new System.Windows.Forms.Label();
+            this.nCancelFrame = new System.Windows.Forms.NumericUpDown();
+            this.labelAirLength = new System.Windows.Forms.Label();
+            this.nAirLength = new System.Windows.Forms.NumericUpDown();
+            this.labelCircularAccelerationStartFrame = new System.Windows.Forms.Label();
+            this.nCircularAccelerationStartFrame = new System.Windows.Forms.NumericUpDown();
+            this.labelCircularAccelerationEndFrame = new System.Windows.Forms.Label();
+            this.nCircularAccelerationEndFrame = new System.Windows.Forms.NumericUpDown();
+            this.labelCircularAccelerationSpeed = new System.Windows.Forms.Label();
+            this.nCircularAccelerationSpeed = new System.Windows.Forms.NumericUpDown();
+            this.labelCircularAccelerationSpeedDropoff = new System.Windows.Forms.Label();
+            this.nCircularAccelerationSpeedDropoff = new System.Windows.Forms.NumericUpDown();
+            this.labelCircularAccelerationSpeedMax = new System.Windows.Forms.Label();
+            this.nCircularAccelerationSpeedMax = new System.Windows.Forms.NumericUpDown();
+            this.labelForwardAccelerationStartFrame = new System.Windows.Forms.Label();
+            this.nForwardAccelerationStartFrame = new System.Windows.Forms.NumericUpDown();
+            this.labelForwardAccelerationEndFrame = new System.Windows.Forms.Label();
+            this.nForwardAccelerationEndFrame = new System.Windows.Forms.NumericUpDown();
+            this.labelForwardAccelerationSpeed = new System.Windows.Forms.Label();
+            this.nForwardAccelerationSpeed = new System.Windows.Forms.NumericUpDown();
+            this.labelPadding = new System.Windows.Forms.Label();
+            this.nPadding = new System.Windows.Forms.NumericUpDown();
             this.buttonAdd = new System.Windows.Forms.Button();
             this.buttonDelete = new System.Windows.Forms.Button();
             this.buttonSave = new System.Windows.Forms.Button();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.saveAndCloseToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            ((System.ComponentModel.ISupportInitialize)(this.nFrameActionUnlock)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.nActionLength)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.nUnk1)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.nCircleVelocity)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.nUnk2)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.nCircleVelocityStrength)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.nMovementFrequency)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.nForwardVelocity)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nCancelFrame)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nAirLength)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nCircularAccelerationStartFrame)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nCircularAccelerationEndFrame)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nCircularAccelerationSpeed)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nCircularAccelerationSpeedDropoff)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nCircularAccelerationSpeedMax)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nForwardAccelerationStartFrame)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nForwardAccelerationEndFrame)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nForwardAccelerationSpeed)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nPadding)).BeginInit();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -54,232 +63,346 @@ namespace NSUNS4_Character_Manager.Tools
             this.listBox1.HorizontalScrollbar = true;
             this.listBox1.Location = new System.Drawing.Point(12, 27);
             this.listBox1.Name = "listBox1";
-            this.listBox1.Size = new System.Drawing.Size(527, 355);
+            this.listBox1.Size = new System.Drawing.Size(500, 498);
             this.listBox1.TabIndex = 0;
             this.listBox1.SelectedIndexChanged += new System.EventHandler(this.listBox1_SelectedIndexChanged);
             // 
-            // label1
+            // labelCancelFrame
             // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(542, 27);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(106, 13);
-            this.label1.TabIndex = 1;
-            this.label1.Text = "Frame Action Unlock";
+            this.labelCancelFrame.AutoSize = true;
+            this.labelCancelFrame.Location = new System.Drawing.Point(527, 27);
+            this.labelCancelFrame.Name = "labelCancelFrame";
+            this.labelCancelFrame.Size = new System.Drawing.Size(72, 13);
+            this.labelCancelFrame.TabIndex = 1;
+            this.labelCancelFrame.Text = "Cancel Frame";
             // 
-            // nFrameActionUnlock
+            // nCancelFrame
             // 
-            this.nFrameActionUnlock.Hexadecimal = true;
-            this.nFrameActionUnlock.Location = new System.Drawing.Point(545, 43);
-            this.nFrameActionUnlock.Maximum = new decimal(new int[] {
-            65535,
+            this.nCancelFrame.Location = new System.Drawing.Point(530, 43);
+            this.nCancelFrame.Maximum = new decimal(new int[] {
+            32767,
             0,
             0,
             0});
-            this.nFrameActionUnlock.Name = "nFrameActionUnlock";
-            this.nFrameActionUnlock.Size = new System.Drawing.Size(250, 20);
-            this.nFrameActionUnlock.TabIndex = 2;
+            this.nCancelFrame.Minimum = new decimal(new int[] {
+            32768,
+            0,
+            0,
+            -2147483648});
+            this.nCancelFrame.Name = "nCancelFrame";
+            this.nCancelFrame.Size = new System.Drawing.Size(340, 20);
+            this.nCancelFrame.TabIndex = 2;
             // 
-            // label2
+            // labelAirLength
             // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(542, 72);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(73, 13);
-            this.label2.TabIndex = 3;
-            this.label2.Text = "Action Length";
+            this.labelAirLength.AutoSize = true;
+            this.labelAirLength.Location = new System.Drawing.Point(527, 69);
+            this.labelAirLength.Name = "labelAirLength";
+            this.labelAirLength.Size = new System.Drawing.Size(55, 13);
+            this.labelAirLength.TabIndex = 3;
+            this.labelAirLength.Text = "Air Length";
             // 
-            // nActionLength
+            // nAirLength
             // 
-            this.nActionLength.Hexadecimal = true;
-            this.nActionLength.Location = new System.Drawing.Point(545, 88);
-            this.nActionLength.Maximum = new decimal(new int[] {
-            65535,
+            this.nAirLength.Location = new System.Drawing.Point(530, 85);
+            this.nAirLength.Maximum = new decimal(new int[] {
+            32767,
             0,
             0,
             0});
-            this.nActionLength.Name = "nActionLength";
-            this.nActionLength.Size = new System.Drawing.Size(250, 20);
-            this.nActionLength.TabIndex = 4;
+            this.nAirLength.Minimum = new decimal(new int[] {
+            32768,
+            0,
+            0,
+            -2147483648});
+            this.nAirLength.Name = "nAirLength";
+            this.nAirLength.Size = new System.Drawing.Size(340, 20);
+            this.nAirLength.TabIndex = 4;
             // 
-            // label3
+            // labelCircularAccelerationStartFrame
             // 
-            this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(542, 117);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(36, 13);
-            this.label3.TabIndex = 5;
-            this.label3.Text = "Unk 1";
+            this.labelCircularAccelerationStartFrame.AutoSize = true;
+            this.labelCircularAccelerationStartFrame.Location = new System.Drawing.Point(527, 111);
+            this.labelCircularAccelerationStartFrame.Name = "labelCircularAccelerationStartFrame";
+            this.labelCircularAccelerationStartFrame.Size = new System.Drawing.Size(161, 13);
+            this.labelCircularAccelerationStartFrame.TabIndex = 5;
+            this.labelCircularAccelerationStartFrame.Text = "Circular Acceleration Start Frame";
             // 
-            // nUnk1
+            // nCircularAccelerationStartFrame
             // 
-            this.nUnk1.Hexadecimal = true;
-            this.nUnk1.Location = new System.Drawing.Point(545, 133);
-            this.nUnk1.Maximum = new decimal(new int[] {
-            65535,
+            this.nCircularAccelerationStartFrame.Location = new System.Drawing.Point(530, 127);
+            this.nCircularAccelerationStartFrame.Maximum = new decimal(new int[] {
+            32767,
             0,
             0,
             0});
-            this.nUnk1.Name = "nUnk1";
-            this.nUnk1.Size = new System.Drawing.Size(250, 20);
-            this.nUnk1.TabIndex = 6;
+            this.nCircularAccelerationStartFrame.Minimum = new decimal(new int[] {
+            32768,
+            0,
+            0,
+            -2147483648});
+            this.nCircularAccelerationStartFrame.Name = "nCircularAccelerationStartFrame";
+            this.nCircularAccelerationStartFrame.Size = new System.Drawing.Size(340, 20);
+            this.nCircularAccelerationStartFrame.TabIndex = 6;
             // 
-            // label4
+            // labelCircularAccelerationEndFrame
             // 
-            this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(542, 162);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(73, 13);
-            this.label4.TabIndex = 7;
-            this.label4.Text = "Circle Velocity";
+            this.labelCircularAccelerationEndFrame.AutoSize = true;
+            this.labelCircularAccelerationEndFrame.Location = new System.Drawing.Point(527, 153);
+            this.labelCircularAccelerationEndFrame.Name = "labelCircularAccelerationEndFrame";
+            this.labelCircularAccelerationEndFrame.Size = new System.Drawing.Size(158, 13);
+            this.labelCircularAccelerationEndFrame.TabIndex = 7;
+            this.labelCircularAccelerationEndFrame.Text = "Circular Acceleration End Frame";
             // 
-            // nCircleVelocity
+            // nCircularAccelerationEndFrame
             // 
-            this.nCircleVelocity.DecimalPlaces = 4;
-            this.nCircleVelocity.Location = new System.Drawing.Point(545, 178);
-            this.nCircleVelocity.Maximum = new decimal(new int[] {
+            this.nCircularAccelerationEndFrame.Location = new System.Drawing.Point(530, 169);
+            this.nCircularAccelerationEndFrame.Maximum = new decimal(new int[] {
+            32767,
+            0,
+            0,
+            0});
+            this.nCircularAccelerationEndFrame.Minimum = new decimal(new int[] {
+            32768,
+            0,
+            0,
+            -2147483648});
+            this.nCircularAccelerationEndFrame.Name = "nCircularAccelerationEndFrame";
+            this.nCircularAccelerationEndFrame.Size = new System.Drawing.Size(340, 20);
+            this.nCircularAccelerationEndFrame.TabIndex = 8;
+            // 
+            // labelCircularAccelerationSpeed
+            // 
+            this.labelCircularAccelerationSpeed.AutoSize = true;
+            this.labelCircularAccelerationSpeed.Location = new System.Drawing.Point(527, 195);
+            this.labelCircularAccelerationSpeed.Name = "labelCircularAccelerationSpeed";
+            this.labelCircularAccelerationSpeed.Size = new System.Drawing.Size(138, 13);
+            this.labelCircularAccelerationSpeed.TabIndex = 9;
+            this.labelCircularAccelerationSpeed.Text = "Circular Acceleration Speed";
+            // 
+            // nCircularAccelerationSpeed
+            // 
+            this.nCircularAccelerationSpeed.DecimalPlaces = 4;
+            this.nCircularAccelerationSpeed.Increment = new decimal(new int[] {
+            1,
+            0,
+            0,
+            262144});
+            this.nCircularAccelerationSpeed.Location = new System.Drawing.Point(530, 211);
+            this.nCircularAccelerationSpeed.Maximum = new decimal(new int[] {
             1000000,
             0,
             0,
             0});
-            this.nCircleVelocity.Minimum = new decimal(new int[] {
+            this.nCircularAccelerationSpeed.Minimum = new decimal(new int[] {
             1000000,
             0,
             0,
             -2147483648});
-            this.nCircleVelocity.Name = "nCircleVelocity";
-            this.nCircleVelocity.Size = new System.Drawing.Size(250, 20);
-            this.nCircleVelocity.TabIndex = 8;
+            this.nCircularAccelerationSpeed.Name = "nCircularAccelerationSpeed";
+            this.nCircularAccelerationSpeed.Size = new System.Drawing.Size(340, 20);
+            this.nCircularAccelerationSpeed.TabIndex = 10;
             // 
-            // label5
+            // labelCircularAccelerationSpeedDropoff
             // 
-            this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(542, 207);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(36, 13);
-            this.label5.TabIndex = 9;
-            this.label5.Text = "Unk 2";
+            this.labelCircularAccelerationSpeedDropoff.AutoSize = true;
+            this.labelCircularAccelerationSpeedDropoff.Location = new System.Drawing.Point(527, 237);
+            this.labelCircularAccelerationSpeedDropoff.Name = "labelCircularAccelerationSpeedDropoff";
+            this.labelCircularAccelerationSpeedDropoff.Size = new System.Drawing.Size(176, 13);
+            this.labelCircularAccelerationSpeedDropoff.TabIndex = 11;
+            this.labelCircularAccelerationSpeedDropoff.Text = "Circular Acceleration Speed Dropoff";
             // 
-            // nUnk2
+            // nCircularAccelerationSpeedDropoff
             // 
-            this.nUnk2.DecimalPlaces = 4;
-            this.nUnk2.Location = new System.Drawing.Point(545, 223);
-            this.nUnk2.Maximum = new decimal(new int[] {
+            this.nCircularAccelerationSpeedDropoff.DecimalPlaces = 4;
+            this.nCircularAccelerationSpeedDropoff.Increment = new decimal(new int[] {
+            1,
+            0,
+            0,
+            262144});
+            this.nCircularAccelerationSpeedDropoff.Location = new System.Drawing.Point(530, 253);
+            this.nCircularAccelerationSpeedDropoff.Maximum = new decimal(new int[] {
             1000000,
             0,
             0,
             0});
-            this.nUnk2.Minimum = new decimal(new int[] {
+            this.nCircularAccelerationSpeedDropoff.Minimum = new decimal(new int[] {
             1000000,
             0,
             0,
             -2147483648});
-            this.nUnk2.Name = "nUnk2";
-            this.nUnk2.Size = new System.Drawing.Size(250, 20);
-            this.nUnk2.TabIndex = 10;
+            this.nCircularAccelerationSpeedDropoff.Name = "nCircularAccelerationSpeedDropoff";
+            this.nCircularAccelerationSpeedDropoff.Size = new System.Drawing.Size(340, 20);
+            this.nCircularAccelerationSpeedDropoff.TabIndex = 12;
             // 
-            // label6
+            // labelCircularAccelerationSpeedMax
             // 
-            this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(542, 252);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(116, 13);
-            this.label6.TabIndex = 11;
-            this.label6.Text = "Circle Velocity Strength";
+            this.labelCircularAccelerationSpeedMax.AutoSize = true;
+            this.labelCircularAccelerationSpeedMax.Location = new System.Drawing.Point(527, 279);
+            this.labelCircularAccelerationSpeedMax.Name = "labelCircularAccelerationSpeedMax";
+            this.labelCircularAccelerationSpeedMax.Size = new System.Drawing.Size(161, 13);
+            this.labelCircularAccelerationSpeedMax.TabIndex = 13;
+            this.labelCircularAccelerationSpeedMax.Text = "Circular Acceleration Speed Max";
             // 
-            // nCircleVelocityStrength
+            // nCircularAccelerationSpeedMax
             // 
-            this.nCircleVelocityStrength.DecimalPlaces = 4;
-            this.nCircleVelocityStrength.Location = new System.Drawing.Point(545, 268);
-            this.nCircleVelocityStrength.Maximum = new decimal(new int[] {
+            this.nCircularAccelerationSpeedMax.DecimalPlaces = 4;
+            this.nCircularAccelerationSpeedMax.Increment = new decimal(new int[] {
+            1,
+            0,
+            0,
+            262144});
+            this.nCircularAccelerationSpeedMax.Location = new System.Drawing.Point(530, 295);
+            this.nCircularAccelerationSpeedMax.Maximum = new decimal(new int[] {
             1000000,
             0,
             0,
             0});
-            this.nCircleVelocityStrength.Minimum = new decimal(new int[] {
+            this.nCircularAccelerationSpeedMax.Minimum = new decimal(new int[] {
             1000000,
             0,
             0,
             -2147483648});
-            this.nCircleVelocityStrength.Name = "nCircleVelocityStrength";
-            this.nCircleVelocityStrength.Size = new System.Drawing.Size(250, 20);
-            this.nCircleVelocityStrength.TabIndex = 12;
+            this.nCircularAccelerationSpeedMax.Name = "nCircularAccelerationSpeedMax";
+            this.nCircularAccelerationSpeedMax.Size = new System.Drawing.Size(340, 20);
+            this.nCircularAccelerationSpeedMax.TabIndex = 14;
             // 
-            // label7
+            // labelForwardAccelerationStartFrame
             // 
-            this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(542, 297);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(110, 13);
-            this.label7.TabIndex = 13;
-            this.label7.Text = "Movement Frequency";
+            this.labelForwardAccelerationStartFrame.AutoSize = true;
+            this.labelForwardAccelerationStartFrame.Location = new System.Drawing.Point(527, 321);
+            this.labelForwardAccelerationStartFrame.Name = "labelForwardAccelerationStartFrame";
+            this.labelForwardAccelerationStartFrame.Size = new System.Drawing.Size(164, 13);
+            this.labelForwardAccelerationStartFrame.TabIndex = 15;
+            this.labelForwardAccelerationStartFrame.Text = "Forward Acceleration Start Frame";
             // 
-            // nMovementFrequency
+            // nForwardAccelerationStartFrame
             // 
-            this.nMovementFrequency.Hexadecimal = true;
-            this.nMovementFrequency.Location = new System.Drawing.Point(545, 313);
-            this.nMovementFrequency.Maximum = new decimal(new int[] {
-            65535,
+            this.nForwardAccelerationStartFrame.Location = new System.Drawing.Point(530, 337);
+            this.nForwardAccelerationStartFrame.Maximum = new decimal(new int[] {
+            32767,
             0,
             0,
             0});
-            this.nMovementFrequency.Name = "nMovementFrequency";
-            this.nMovementFrequency.Size = new System.Drawing.Size(250, 20);
-            this.nMovementFrequency.TabIndex = 14;
+            this.nForwardAccelerationStartFrame.Minimum = new decimal(new int[] {
+            32768,
+            0,
+            0,
+            -2147483648});
+            this.nForwardAccelerationStartFrame.Name = "nForwardAccelerationStartFrame";
+            this.nForwardAccelerationStartFrame.Size = new System.Drawing.Size(340, 20);
+            this.nForwardAccelerationStartFrame.TabIndex = 16;
             // 
-            // label8
+            // labelForwardAccelerationEndFrame
             // 
-            this.label8.AutoSize = true;
-            this.label8.Location = new System.Drawing.Point(542, 342);
-            this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(85, 13);
-            this.label8.TabIndex = 15;
-            this.label8.Text = "Forward Velocity";
+            this.labelForwardAccelerationEndFrame.AutoSize = true;
+            this.labelForwardAccelerationEndFrame.Location = new System.Drawing.Point(527, 363);
+            this.labelForwardAccelerationEndFrame.Name = "labelForwardAccelerationEndFrame";
+            this.labelForwardAccelerationEndFrame.Size = new System.Drawing.Size(161, 13);
+            this.labelForwardAccelerationEndFrame.TabIndex = 17;
+            this.labelForwardAccelerationEndFrame.Text = "Forward Acceleration End Frame";
             // 
-            // nForwardVelocity
+            // nForwardAccelerationEndFrame
             // 
-            this.nForwardVelocity.DecimalPlaces = 4;
-            this.nForwardVelocity.Location = new System.Drawing.Point(545, 358);
-            this.nForwardVelocity.Maximum = new decimal(new int[] {
+            this.nForwardAccelerationEndFrame.Location = new System.Drawing.Point(530, 379);
+            this.nForwardAccelerationEndFrame.Maximum = new decimal(new int[] {
+            32767,
+            0,
+            0,
+            0});
+            this.nForwardAccelerationEndFrame.Minimum = new decimal(new int[] {
+            32768,
+            0,
+            0,
+            -2147483648});
+            this.nForwardAccelerationEndFrame.Name = "nForwardAccelerationEndFrame";
+            this.nForwardAccelerationEndFrame.Size = new System.Drawing.Size(340, 20);
+            this.nForwardAccelerationEndFrame.TabIndex = 18;
+            // 
+            // labelForwardAccelerationSpeed
+            // 
+            this.labelForwardAccelerationSpeed.AutoSize = true;
+            this.labelForwardAccelerationSpeed.Location = new System.Drawing.Point(527, 405);
+            this.labelForwardAccelerationSpeed.Name = "labelForwardAccelerationSpeed";
+            this.labelForwardAccelerationSpeed.Size = new System.Drawing.Size(141, 13);
+            this.labelForwardAccelerationSpeed.TabIndex = 19;
+            this.labelForwardAccelerationSpeed.Text = "Forward Acceleration Speed";
+            // 
+            // nForwardAccelerationSpeed
+            // 
+            this.nForwardAccelerationSpeed.DecimalPlaces = 4;
+            this.nForwardAccelerationSpeed.Increment = new decimal(new int[] {
+            1,
+            0,
+            0,
+            262144});
+            this.nForwardAccelerationSpeed.Location = new System.Drawing.Point(530, 421);
+            this.nForwardAccelerationSpeed.Maximum = new decimal(new int[] {
             1000000,
             0,
             0,
             0});
-            this.nForwardVelocity.Minimum = new decimal(new int[] {
+            this.nForwardAccelerationSpeed.Minimum = new decimal(new int[] {
             1000000,
             0,
             0,
             -2147483648});
-            this.nForwardVelocity.Name = "nForwardVelocity";
-            this.nForwardVelocity.Size = new System.Drawing.Size(250, 20);
-            this.nForwardVelocity.TabIndex = 16;
+            this.nForwardAccelerationSpeed.Name = "nForwardAccelerationSpeed";
+            this.nForwardAccelerationSpeed.Size = new System.Drawing.Size(340, 20);
+            this.nForwardAccelerationSpeed.TabIndex = 20;
+            // 
+            // labelPadding
+            // 
+            this.labelPadding.AutoSize = true;
+            this.labelPadding.Location = new System.Drawing.Point(527, 447);
+            this.labelPadding.Name = "labelPadding";
+            this.labelPadding.Size = new System.Drawing.Size(92, 13);
+            this.labelPadding.TabIndex = 21;
+            this.labelPadding.Text = "Padding (Unused)";
+            // 
+            // nPadding
+            // 
+            this.nPadding.Location = new System.Drawing.Point(530, 463);
+            this.nPadding.Maximum = new decimal(new int[] {
+            2147483647,
+            0,
+            0,
+            0});
+            this.nPadding.Minimum = new decimal(new int[] {
+            -2147483648,
+            0,
+            0,
+            -2147483648});
+            this.nPadding.Name = "nPadding";
+            this.nPadding.Size = new System.Drawing.Size(340, 20);
+            this.nPadding.TabIndex = 22;
             // 
             // buttonAdd
             // 
-            this.buttonAdd.Location = new System.Drawing.Point(545, 395);
+            this.buttonAdd.Location = new System.Drawing.Point(530, 498);
             this.buttonAdd.Name = "buttonAdd";
-            this.buttonAdd.Size = new System.Drawing.Size(80, 35);
-            this.buttonAdd.TabIndex = 17;
+            this.buttonAdd.Size = new System.Drawing.Size(108, 35);
+            this.buttonAdd.TabIndex = 23;
             this.buttonAdd.Text = "Add";
             this.buttonAdd.UseVisualStyleBackColor = true;
             this.buttonAdd.Click += new System.EventHandler(this.buttonAdd_Click);
             // 
             // buttonDelete
             // 
-            this.buttonDelete.Location = new System.Drawing.Point(631, 395);
+            this.buttonDelete.Location = new System.Drawing.Point(646, 498);
             this.buttonDelete.Name = "buttonDelete";
-            this.buttonDelete.Size = new System.Drawing.Size(80, 35);
-            this.buttonDelete.TabIndex = 18;
+            this.buttonDelete.Size = new System.Drawing.Size(108, 35);
+            this.buttonDelete.TabIndex = 24;
             this.buttonDelete.Text = "Delete";
             this.buttonDelete.UseVisualStyleBackColor = true;
             this.buttonDelete.Click += new System.EventHandler(this.buttonDelete_Click);
             // 
             // buttonSave
             // 
-            this.buttonSave.Location = new System.Drawing.Point(717, 395);
+            this.buttonSave.Location = new System.Drawing.Point(762, 498);
             this.buttonSave.Name = "buttonSave";
-            this.buttonSave.Size = new System.Drawing.Size(78, 35);
-            this.buttonSave.TabIndex = 19;
+            this.buttonSave.Size = new System.Drawing.Size(108, 35);
+            this.buttonSave.TabIndex = 25;
             this.buttonSave.Text = "Save Entry";
             this.buttonSave.UseVisualStyleBackColor = true;
             this.buttonSave.Click += new System.EventHandler(this.buttonSave_Click);
@@ -290,8 +413,8 @@ namespace NSUNS4_Character_Manager.Tools
             this.saveAndCloseToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(798, 24);
-            this.menuStrip1.TabIndex = 20;
+            this.menuStrip1.Size = new System.Drawing.Size(884, 24);
+            this.menuStrip1.TabIndex = 26;
             this.menuStrip1.Text = "menuStrip1";
             // 
             // saveAndCloseToolStripMenuItem
@@ -305,26 +428,32 @@ namespace NSUNS4_Character_Manager.Tools
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(798, 447);
+            this.ClientSize = new System.Drawing.Size(884, 545);
             this.Controls.Add(this.buttonSave);
             this.Controls.Add(this.buttonDelete);
             this.Controls.Add(this.buttonAdd);
-            this.Controls.Add(this.nForwardVelocity);
-            this.Controls.Add(this.label8);
-            this.Controls.Add(this.nMovementFrequency);
-            this.Controls.Add(this.label7);
-            this.Controls.Add(this.nCircleVelocityStrength);
-            this.Controls.Add(this.label6);
-            this.Controls.Add(this.nUnk2);
-            this.Controls.Add(this.label5);
-            this.Controls.Add(this.nCircleVelocity);
-            this.Controls.Add(this.label4);
-            this.Controls.Add(this.nUnk1);
-            this.Controls.Add(this.label3);
-            this.Controls.Add(this.nActionLength);
-            this.Controls.Add(this.label2);
-            this.Controls.Add(this.nFrameActionUnlock);
-            this.Controls.Add(this.label1);
+            this.Controls.Add(this.nPadding);
+            this.Controls.Add(this.labelPadding);
+            this.Controls.Add(this.nForwardAccelerationSpeed);
+            this.Controls.Add(this.labelForwardAccelerationSpeed);
+            this.Controls.Add(this.nForwardAccelerationEndFrame);
+            this.Controls.Add(this.labelForwardAccelerationEndFrame);
+            this.Controls.Add(this.nForwardAccelerationStartFrame);
+            this.Controls.Add(this.labelForwardAccelerationStartFrame);
+            this.Controls.Add(this.nCircularAccelerationSpeedMax);
+            this.Controls.Add(this.labelCircularAccelerationSpeedMax);
+            this.Controls.Add(this.nCircularAccelerationSpeedDropoff);
+            this.Controls.Add(this.labelCircularAccelerationSpeedDropoff);
+            this.Controls.Add(this.nCircularAccelerationSpeed);
+            this.Controls.Add(this.labelCircularAccelerationSpeed);
+            this.Controls.Add(this.nCircularAccelerationEndFrame);
+            this.Controls.Add(this.labelCircularAccelerationEndFrame);
+            this.Controls.Add(this.nCircularAccelerationStartFrame);
+            this.Controls.Add(this.labelCircularAccelerationStartFrame);
+            this.Controls.Add(this.nAirLength);
+            this.Controls.Add(this.labelAirLength);
+            this.Controls.Add(this.nCancelFrame);
+            this.Controls.Add(this.labelCancelFrame);
             this.Controls.Add(this.listBox1);
             this.Controls.Add(this.menuStrip1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
@@ -332,14 +461,17 @@ namespace NSUNS4_Character_Manager.Tools
             this.MaximizeBox = false;
             this.Name = "Tool_PRMEtcEditor";
             this.Text = "PRM ETC editor";
-            ((System.ComponentModel.ISupportInitialize)(this.nFrameActionUnlock)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.nActionLength)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.nUnk1)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.nCircleVelocity)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.nUnk2)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.nCircleVelocityStrength)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.nMovementFrequency)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.nForwardVelocity)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nCancelFrame)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nAirLength)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nCircularAccelerationStartFrame)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nCircularAccelerationEndFrame)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nCircularAccelerationSpeed)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nCircularAccelerationSpeedDropoff)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nCircularAccelerationSpeedMax)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nForwardAccelerationStartFrame)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nForwardAccelerationEndFrame)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nForwardAccelerationSpeed)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nPadding)).EndInit();
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
             this.ResumeLayout(false);
@@ -348,22 +480,28 @@ namespace NSUNS4_Character_Manager.Tools
         }
 
         private System.Windows.Forms.ListBox listBox1;
-        private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.NumericUpDown nFrameActionUnlock;
-        private System.Windows.Forms.Label label2;
-        private System.Windows.Forms.NumericUpDown nActionLength;
-        private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.NumericUpDown nUnk1;
-        private System.Windows.Forms.Label label4;
-        private System.Windows.Forms.NumericUpDown nCircleVelocity;
-        private System.Windows.Forms.Label label5;
-        private System.Windows.Forms.NumericUpDown nUnk2;
-        private System.Windows.Forms.Label label6;
-        private System.Windows.Forms.NumericUpDown nCircleVelocityStrength;
-        private System.Windows.Forms.Label label7;
-        private System.Windows.Forms.NumericUpDown nMovementFrequency;
-        private System.Windows.Forms.Label label8;
-        private System.Windows.Forms.NumericUpDown nForwardVelocity;
+        private System.Windows.Forms.Label labelCancelFrame;
+        private System.Windows.Forms.NumericUpDown nCancelFrame;
+        private System.Windows.Forms.Label labelAirLength;
+        private System.Windows.Forms.NumericUpDown nAirLength;
+        private System.Windows.Forms.Label labelCircularAccelerationStartFrame;
+        private System.Windows.Forms.NumericUpDown nCircularAccelerationStartFrame;
+        private System.Windows.Forms.Label labelCircularAccelerationEndFrame;
+        private System.Windows.Forms.NumericUpDown nCircularAccelerationEndFrame;
+        private System.Windows.Forms.Label labelCircularAccelerationSpeed;
+        private System.Windows.Forms.NumericUpDown nCircularAccelerationSpeed;
+        private System.Windows.Forms.Label labelCircularAccelerationSpeedDropoff;
+        private System.Windows.Forms.NumericUpDown nCircularAccelerationSpeedDropoff;
+        private System.Windows.Forms.Label labelCircularAccelerationSpeedMax;
+        private System.Windows.Forms.NumericUpDown nCircularAccelerationSpeedMax;
+        private System.Windows.Forms.Label labelForwardAccelerationStartFrame;
+        private System.Windows.Forms.NumericUpDown nForwardAccelerationStartFrame;
+        private System.Windows.Forms.Label labelForwardAccelerationEndFrame;
+        private System.Windows.Forms.NumericUpDown nForwardAccelerationEndFrame;
+        private System.Windows.Forms.Label labelForwardAccelerationSpeed;
+        private System.Windows.Forms.NumericUpDown nForwardAccelerationSpeed;
+        private System.Windows.Forms.Label labelPadding;
+        private System.Windows.Forms.NumericUpDown nPadding;
         private System.Windows.Forms.Button buttonAdd;
         private System.Windows.Forms.Button buttonDelete;
         private System.Windows.Forms.Button buttonSave;

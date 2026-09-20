@@ -333,7 +333,8 @@ namespace NSUNS4_Character_Manager
             this.managersSplitContainer.Panel2.Padding = new System.Windows.Forms.Padding(6);
             this.managersSplitContainer.Panel2.Paint += new System.Windows.Forms.PaintEventHandler(this.managersSplitContainer_Panel2_Paint);
             this.managersSplitContainer.Size = new System.Drawing.Size(1395, 640);
-            this.managersSplitContainer.SplitterDistance = 952;
+            this.managersSplitContainer.SplitterDistance = 480;
+            this.managersSplitContainer.IsSplitterFixed = true;
             this.managersSplitContainer.TabIndex = 0;
             // 
             // managersListBox
@@ -354,6 +355,8 @@ namespace NSUNS4_Character_Manager
             this.managersButtonsPanel.Controls.Add(this.duplicateManagerButton);
             this.managersButtonsPanel.Controls.Add(this.deleteManagerButton);
             this.managersButtonsPanel.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.managersButtonsPanel.AutoSize = true;
+            this.managersButtonsPanel.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.managersButtonsPanel.Location = new System.Drawing.Point(6, 598);
             this.managersButtonsPanel.Name = "managersButtonsPanel";
             this.managersButtonsPanel.Padding = new System.Windows.Forms.Padding(0, 4, 0, 0);
@@ -445,7 +448,8 @@ namespace NSUNS4_Character_Manager
             this.resourcesSplitContainer.Panel2.Controls.Add(this.resourcesPropertyGrid);
             this.resourcesSplitContainer.Panel2.Padding = new System.Windows.Forms.Padding(6);
             this.resourcesSplitContainer.Size = new System.Drawing.Size(1395, 680);
-            this.resourcesSplitContainer.SplitterDistance = 995;
+            this.resourcesSplitContainer.SplitterDistance = 480;
+            this.resourcesSplitContainer.IsSplitterFixed = true;
             this.resourcesSplitContainer.TabIndex = 0;
             // 
             // resourcesListBox
@@ -467,6 +471,8 @@ namespace NSUNS4_Character_Manager
             this.resourcesButtonsPanel.Controls.Add(this.duplicateResourceButton);
             this.resourcesButtonsPanel.Controls.Add(this.deleteResourceButton);
             this.resourcesButtonsPanel.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.resourcesButtonsPanel.AutoSize = true;
+            this.resourcesButtonsPanel.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.resourcesButtonsPanel.Location = new System.Drawing.Point(6, 638);
             this.resourcesButtonsPanel.Name = "resourcesButtonsPanel";
             this.resourcesButtonsPanel.Padding = new System.Windows.Forms.Padding(0, 4, 0, 0);
@@ -557,7 +563,8 @@ namespace NSUNS4_Character_Manager
             this.positionsSplitContainer.Panel2.Padding = new System.Windows.Forms.Padding(6);
             this.positionsSplitContainer.Panel2.Paint += new System.Windows.Forms.PaintEventHandler(this.positionsSplitContainer_Panel2_Paint);
             this.positionsSplitContainer.Size = new System.Drawing.Size(1395, 680);
-            this.positionsSplitContainer.SplitterDistance = 1116;
+            this.positionsSplitContainer.SplitterDistance = 480;
+            this.positionsSplitContainer.IsSplitterFixed = true;
             this.positionsSplitContainer.TabIndex = 0;
             // 
             // positionsListBox
@@ -578,6 +585,8 @@ namespace NSUNS4_Character_Manager
             this.positionsButtonsPanel.Controls.Add(this.duplicatePositionButton);
             this.positionsButtonsPanel.Controls.Add(this.deletePositionButton);
             this.positionsButtonsPanel.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.positionsButtonsPanel.AutoSize = true;
+            this.positionsButtonsPanel.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.positionsButtonsPanel.Location = new System.Drawing.Point(6, 638);
             this.positionsButtonsPanel.Name = "positionsButtonsPanel";
             this.positionsButtonsPanel.Padding = new System.Windows.Forms.Padding(0, 4, 0, 0);
@@ -667,7 +676,8 @@ namespace NSUNS4_Character_Manager
             this.forceFieldsSplitContainer.Panel2.Controls.Add(this.forceFieldsPropertyGrid);
             this.forceFieldsSplitContainer.Panel2.Padding = new System.Windows.Forms.Padding(6);
             this.forceFieldsSplitContainer.Size = new System.Drawing.Size(1395, 680);
-            this.forceFieldsSplitContainer.SplitterDistance = 1116;
+            this.forceFieldsSplitContainer.SplitterDistance = 480;
+            this.forceFieldsSplitContainer.IsSplitterFixed = true;
             this.forceFieldsSplitContainer.TabIndex = 0;
             // 
             // forceFieldsListBox
@@ -688,6 +698,8 @@ namespace NSUNS4_Character_Manager
             this.forceFieldsButtonsPanel.Controls.Add(this.duplicateForceFieldButton);
             this.forceFieldsButtonsPanel.Controls.Add(this.deleteForceFieldButton);
             this.forceFieldsButtonsPanel.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.forceFieldsButtonsPanel.AutoSize = true;
+            this.forceFieldsButtonsPanel.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.forceFieldsButtonsPanel.Location = new System.Drawing.Point(6, 638);
             this.forceFieldsButtonsPanel.Name = "forceFieldsButtonsPanel";
             this.forceFieldsButtonsPanel.Padding = new System.Windows.Forms.Padding(0, 4, 0, 0);
@@ -777,7 +789,8 @@ namespace NSUNS4_Character_Manager
             this.mapIdsSplitContainer.Panel2.Controls.Add(this.mapIdsPropertyGrid);
             this.mapIdsSplitContainer.Panel2.Padding = new System.Windows.Forms.Padding(6);
             this.mapIdsSplitContainer.Size = new System.Drawing.Size(1395, 680);
-            this.mapIdsSplitContainer.SplitterDistance = 1116;
+            this.mapIdsSplitContainer.SplitterDistance = 480;
+            this.mapIdsSplitContainer.IsSplitterFixed = true;
             this.mapIdsSplitContainer.TabIndex = 0;
             // 
             // mapIdsListBox
@@ -798,6 +811,8 @@ namespace NSUNS4_Character_Manager
             this.mapIdsButtonsPanel.Controls.Add(this.duplicateMapButton);
             this.mapIdsButtonsPanel.Controls.Add(this.deleteMapButton);
             this.mapIdsButtonsPanel.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.mapIdsButtonsPanel.AutoSize = true;
+            this.mapIdsButtonsPanel.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.mapIdsButtonsPanel.Location = new System.Drawing.Point(6, 638);
             this.mapIdsButtonsPanel.Name = "mapIdsButtonsPanel";
             this.mapIdsButtonsPanel.Padding = new System.Windows.Forms.Padding(0, 4, 0, 0);
@@ -887,7 +902,8 @@ namespace NSUNS4_Character_Manager
             this.nodesSplitContainer.Panel2.Controls.Add(this.nodeDetailsSplitContainer);
             this.nodesSplitContainer.Panel2.Padding = new System.Windows.Forms.Padding(6);
             this.nodesSplitContainer.Size = new System.Drawing.Size(1395, 680);
-            this.nodesSplitContainer.SplitterDistance = 1116;
+            this.nodesSplitContainer.SplitterDistance = 480;
+            this.nodesSplitContainer.IsSplitterFixed = true;
             this.nodesSplitContainer.TabIndex = 0;
             // 
             // nodesListBox
@@ -908,6 +924,8 @@ namespace NSUNS4_Character_Manager
             this.nodesButtonsPanel.Controls.Add(this.duplicateNodeButton);
             this.nodesButtonsPanel.Controls.Add(this.deleteNodeButton);
             this.nodesButtonsPanel.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.nodesButtonsPanel.AutoSize = true;
+            this.nodesButtonsPanel.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.nodesButtonsPanel.Location = new System.Drawing.Point(6, 638);
             this.nodesButtonsPanel.Name = "nodesButtonsPanel";
             this.nodesButtonsPanel.Padding = new System.Windows.Forms.Padding(0, 4, 0, 0);
@@ -976,8 +994,9 @@ namespace NSUNS4_Character_Manager
             // 
             this.nodeDetailsSplitContainer.Panel2.Controls.Add(this.framesSplitContainer);
             this.nodeDetailsSplitContainer.Panel2.Padding = new System.Windows.Forms.Padding(6);
-            this.nodeDetailsSplitContainer.Size = new System.Drawing.Size(263, 668);
-            this.nodeDetailsSplitContainer.SplitterDistance = 446;
+            this.nodeDetailsSplitContainer.Size = new System.Drawing.Size(899, 668);
+            this.nodeDetailsSplitContainer.SplitterDistance = 200;
+            this.nodeDetailsSplitContainer.IsSplitterFixed = true;
             this.nodeDetailsSplitContainer.TabIndex = 0;
             // 
             // nodesPropertyGrid
@@ -1016,8 +1035,9 @@ namespace NSUNS4_Character_Manager
             this.framesSplitContainer.Panel2.Controls.Add(this.framesPropertyGrid);
             this.framesSplitContainer.Panel2.Controls.Add(this.frameDetailsLabel);
             this.framesSplitContainer.Panel2.Padding = new System.Windows.Forms.Padding(6);
-            this.framesSplitContainer.Size = new System.Drawing.Size(251, 206);
-            this.framesSplitContainer.SplitterDistance = 115;
+            this.framesSplitContainer.Size = new System.Drawing.Size(887, 452);
+            this.framesSplitContainer.SplitterDistance = 400;
+            this.framesSplitContainer.IsSplitterFixed = true;
             this.framesSplitContainer.TabIndex = 0;
             // 
             // framesListBox
@@ -1038,6 +1058,8 @@ namespace NSUNS4_Character_Manager
             this.framesButtonsPanel.Controls.Add(this.duplicateFrameButton);
             this.framesButtonsPanel.Controls.Add(this.deleteFrameButton);
             this.framesButtonsPanel.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.framesButtonsPanel.AutoSize = true;
+            this.framesButtonsPanel.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.framesButtonsPanel.Location = new System.Drawing.Point(6, 48);
             this.framesButtonsPanel.Name = "framesButtonsPanel";
             this.framesButtonsPanel.Padding = new System.Windows.Forms.Padding(0, 4, 0, 0);
@@ -1173,7 +1195,8 @@ namespace NSUNS4_Character_Manager
             this.Controls.Add(this.detailsPanel);
             this.Controls.Add(this.menuStrip1);
             this.MainMenuStrip = this.menuStrip1;
-            this.MinimumSize = new System.Drawing.Size(1080, 700);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
             this.Name = "Tool_TrailEditor";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Trail Chunk Editor";

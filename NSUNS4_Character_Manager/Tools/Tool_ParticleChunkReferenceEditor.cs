@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using System;
 using System.ComponentModel;
 using System.Collections.Generic;
@@ -9,6 +10,15 @@ namespace NSUNS4_Character_Manager
 {
     internal partial class Tool_ParticleChunkReferenceEditor : Form
     {
+        private const string ClipboardPrefix = "NS4_PARTICLE_CHUNK_REFERENCE_V1:";
+
+        private sealed class ReferenceClipboardPayload
+        {
+            public string Name = "";
+            public string Type = "";
+            public string Path = "";
+        }
+
         private static readonly string[] StandardChunkTypes =
         {
             "nuccChunkAnm",
@@ -170,6 +180,65 @@ namespace NSUNS4_Character_Manager
             RefreshAfterListEdit(index + 1);
             nameTextBox.Focus();
             nameTextBox.SelectAll();
+        }
+
+        private void copyButton_Click(object sender, EventArgs e)
+        {
+            EndCurrentEdit();
+            int index = GetSelectedRowIndex();
+            if (index < 0 || index >= rows.Count)
+                return;
+
+            EditableReferenceRow row = rows[index];
+            ReferenceClipboardPayload payload = new ReferenceClipboardPayload
+            {
+                Name = row.Name ?? "",
+                Type = row.Type ?? "",
+                Path = row.Path ?? ""
+            };
+            Clipboard.SetText(ClipboardPrefix + JsonConvert.SerializeObject(payload));
+            statusLabel.Text = "Copied linked chunk \"" + (string.IsNullOrWhiteSpace(row.Name) ? "(unnamed)" : row.Name) + "\" to the clipboard.";
+        }
+
+        private void pasteButton_Click(object sender, EventArgs e)
+        {
+            EndCurrentEdit();
+            ReferenceClipboardPayload payload;
+            if (!TryReadClipboard(out payload))
+            {
+                MessageBox.Show(this, "The clipboard does not contain a particle linked-chunk reference.", "Particle Linked Chunks", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            int newIndex = rows.Count;
+            rows.Add(new EditableReferenceRow
+            {
+                OriginalIndex = -1,
+                Name = payload.Name ?? "",
+                Type = payload.Type ?? "",
+                Path = payload.Path ?? ""
+            });
+            RefreshAfterListEdit(newIndex);
+            statusLabel.Text = "Pasted linked chunk from the clipboard.";
+        }
+
+        private static bool TryReadClipboard(out ReferenceClipboardPayload payload)
+        {
+            payload = null;
+            if (!Clipboard.ContainsText())
+                return false;
+            string text = Clipboard.GetText();
+            if (string.IsNullOrEmpty(text) || !text.StartsWith(ClipboardPrefix, StringComparison.Ordinal))
+                return false;
+            try
+            {
+                payload = JsonConvert.DeserializeObject<ReferenceClipboardPayload>(text.Substring(ClipboardPrefix.Length));
+                return payload != null;
+            }
+            catch (JsonException)
+            {
+                return false;
+            }
         }
 
         private void deleteButton_Click(object sender, EventArgs e)
@@ -351,6 +420,7 @@ namespace NSUNS4_Character_Manager
             int selectedIndex = GetSelectedRowIndex();
             countLabel.Text = rows.Count.ToString() + " linked chunk" + (rows.Count == 1 ? "" : "s");
             duplicateButton.Enabled = selectedIndex >= 0;
+            copyButton.Enabled = selectedIndex >= 0;
             moveUpButton.Enabled = selectedIndex > 0;
             moveDownButton.Enabled = selectedIndex >= 0 && selectedIndex < rows.Count - 1;
             deleteButton.Enabled = selectedIndex >= 0;

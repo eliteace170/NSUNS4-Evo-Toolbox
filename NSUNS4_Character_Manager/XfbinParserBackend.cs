@@ -19,6 +19,7 @@ namespace NSUNS4_Character_Manager
         private static readonly Encoding Utf8NoBom = new UTF8Encoding(false);
         private readonly string parserExePath;
         private bool disposed;
+        private readonly Dictionary<string, Tuple<int, int>> sourceVersions = new Dictionary<string, Tuple<int, int>>();
 
         public string SourceFilePath { get; private set; }
         public string WorkingDirectory { get; private set; }
@@ -31,6 +32,7 @@ namespace NSUNS4_Character_Manager
                 throw new FileNotFoundException("Source XFBIN file was not found.", sourceFilePath);
 
             SourceFilePath = sourceFilePath;
+            ReadSourceVersions(File.ReadAllBytes(sourceFilePath));
             parserExePath = ResolveParserExePath();
             WorkingDirectory = CreateWorkingDirectory();
             RunParser(string.Format("\"{0}\" \"{1}\" -f", SourceFilePath, WorkingDirectory));
@@ -39,6 +41,59 @@ namespace NSUNS4_Character_Manager
         public List<XfbinBinaryChunkPage> GetBinaryChunkPages()
         {
             return GetChunkPages(BinaryChunkType);
+        }
+
+        // Older xfbin_parser builds omit Version and Version Attribute from page JSON.
+        // Read the original 12-byte chunk headers so layout selection never treats that omission as version zero.
+        private void ReadSourceVersions(byte[] data)
+        {
+            if (data.Length < 0x44 || Encoding.ASCII.GetString(data, 0, 4) != "NUCC")
+                throw new InvalidDataException("Invalid XFBIN header.");
+            Func<int, uint> word = wordOffset =>
+            {
+                if (wordOffset < 0 || wordOffset > data.Length - 4) throw new InvalidDataException("Truncated XFBIN table.");
+                return (uint)(data[wordOffset] << 24 | data[wordOffset + 1] << 16 | data[wordOffset + 2] << 8 | data[wordOffset + 3]);
+            };
+            int typeSize = checked((int)word(0x20));
+            if (typeSize > data.Length - 0x44) throw new InvalidDataException("Invalid XFBIN type table.");
+            string[] types = Encoding.UTF8.GetString(data, 0x44, typeSize).Split('\0');
+            int maps = checked((int)((0x44L + typeSize + word(0x28) + word(0x30) + 3) & ~3L));
+            int indices = checked(maps + (int)word(0x38) + checked((int)word(0x40) * 8));
+            int offset = checked(indices + checked((int)word(0x3C) * 4));
+            if (offset > data.Length) throw new InvalidDataException("Invalid XFBIN table size.");
+            int page = 0;
+            uint pageStart = 0;
+            while (offset < data.Length)
+            {
+                if (data.Length - offset < 12) throw new InvalidDataException("Truncated XFBIN chunk header.");
+                uint size = word(offset), localIndex = word(offset + 4);
+                if (size > data.Length - offset - 12) throw new InvalidDataException("Truncated XFBIN chunk.");
+                if ((ulong)pageStart + localIndex >= word(0x3C)) throw new InvalidDataException("Invalid XFBIN chunk index.");
+                uint map = word(checked(indices + (int)(pageStart + localIndex) * 4));
+                if (map >= word(0x34)) throw new InvalidDataException("Invalid XFBIN chunk map.");
+                uint type = word(checked(maps + (int)map * 12));
+                if (type >= types.Length) throw new InvalidDataException("Invalid XFBIN chunk type.");
+                sourceVersions[page + ":" + localIndex] = Tuple.Create((data[offset + 8] << 8) | data[offset + 9], (data[offset + 10] << 8) | data[offset + 11]);
+                if (types[type] == "nuccChunkPage")
+                {
+                    if (size < 4) throw new InvalidDataException("Truncated XFBIN page.");
+                    pageStart = checked(pageStart + word(offset + 12));
+                    page++;
+                }
+                offset = checked(offset + 12 + (int)size);
+            }
+        }
+
+        private void RestoreVersion(XfbinParserPageDefinition definition, XfbinParserChunkEntry entry, int pageIndex)
+        {
+            if (entry.Version != 0 || definition.ChunkMaps == null) return;
+            int index = definition.ChunkMaps.FindIndex(map => map != null && map.Name == entry.Chunk.Name && map.Type == entry.Chunk.Type && map.Path == entry.Chunk.Path);
+            Tuple<int, int> version;
+            if (sourceVersions.TryGetValue(pageIndex + ":" + index, out version))
+            {
+                entry.Version = version.Item1;
+                entry.VersionAttribute = version.Item2;
+            }
         }
 
         public List<XfbinBinaryChunkPage> GetChunkPages(string chunkType)
@@ -57,33 +112,33 @@ namespace NSUNS4_Character_Manager
                 if (definition == null || definition.Chunks == null || definition.ChunkMaps == null)
                     continue;
 
-                XfbinParserChunkEntry binaryChunk = definition.Chunks.FirstOrDefault(x =>
+                foreach (XfbinParserChunkEntry binaryChunk in definition.Chunks.Where(x =>
                     x != null &&
                     x.Chunk != null &&
-                    string.Equals(x.Chunk.Type, chunkType, StringComparison.OrdinalIgnoreCase));
-                if (binaryChunk == null || binaryChunk.Chunk == null)
-                    continue;
-
-                int index = ParseDirectoryIndex(Path.GetFileName(directory));
-                result.Add(new XfbinBinaryChunkPage
+                    string.Equals(x.Chunk.Type, chunkType, StringComparison.OrdinalIgnoreCase)))
                 {
-                    Index = index,
-                    DirectoryPath = directory,
-                    PageJsonPath = pageJsonPath,
-                    Definition = definition,
-                    BinaryFileName = binaryChunk.FileName ?? string.Empty,
-                     BinaryFilePath = Path.Combine(directory, binaryChunk.FileName ?? string.Empty),
-                     BinaryData = File.Exists(Path.Combine(directory, binaryChunk.FileName ?? string.Empty)) ? File.ReadAllBytes(Path.Combine(directory, binaryChunk.FileName ?? string.Empty)) : new byte[0],
-                     ChunkName = binaryChunk.Chunk.Name ?? string.Empty,
-                     ChunkPath = binaryChunk.Chunk.Path ?? string.Empty,
-                     ChunkType = binaryChunk.Chunk.Type ?? string.Empty,
-                     Version = binaryChunk.Version,
-                     VersionAttribute = binaryChunk.VersionAttribute
-                 });
+
+                    int index = ParseDirectoryIndex(Path.GetFileName(directory));
+                    RestoreVersion(definition, binaryChunk, index);
+                    result.Add(new XfbinBinaryChunkPage
+                    {
+                        Index = index,
+                        DirectoryPath = directory,
+                        PageJsonPath = pageJsonPath,
+                        Definition = definition,
+                        BinaryFileName = binaryChunk.FileName ?? string.Empty,
+                        BinaryFilePath = Path.Combine(directory, binaryChunk.FileName ?? string.Empty),
+                        BinaryData = File.Exists(Path.Combine(directory, binaryChunk.FileName ?? string.Empty)) ? File.ReadAllBytes(Path.Combine(directory, binaryChunk.FileName ?? string.Empty)) : new byte[0],
+                        ChunkName = binaryChunk.Chunk.Name ?? string.Empty,
+                        ChunkPath = binaryChunk.Chunk.Path ?? string.Empty,
+                        ChunkType = binaryChunk.Chunk.Type ?? string.Empty,
+                        Version = binaryChunk.Version,
+                        VersionAttribute = binaryChunk.VersionAttribute
+                     });
+                }
              }
 
-            result.Sort((left, right) => left.Index.CompareTo(right.Index));
-            return result;
+            return result.OrderBy(page => page.Index).ToList();
         }
 
         public List<XfbinBinaryChunkItem> GetBinaryChunks()
@@ -117,6 +172,7 @@ namespace NSUNS4_Character_Manager
                         continue;
 
                     string fileName = chunkEntry.FileName ?? string.Empty;
+                    RestoreVersion(definition, chunkEntry, pageIndex);
                     string fullPath = Path.Combine(directory, fileName);
                     result.Add(new XfbinBinaryChunkItem
                     {

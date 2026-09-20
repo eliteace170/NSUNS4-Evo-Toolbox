@@ -33,38 +33,47 @@ namespace NSUNS4_Character_Manager.Tools
 
         public Tool_MovesetCoder tool;
         public int EntryCount;
-        public List<int> FrameActionUnlockValues = new List<int>();
-        public List<int> ActionLengthValues = new List<int>();
-        public List<int> Unk1Values = new List<int>();
-        public List<float> CircleVelocityValues = new List<float>();
-        public List<float> Unk2Values = new List<float>();
-        public List<float> CircleVelocityStrengthValues = new List<float>();
-        public List<int> MovementFrequencyValues = new List<int>();
-        public List<float> ForwardVelocityValues = new List<float>();
+        public List<int> CancelFrameValues = new List<int>();
+        public List<int> AirLengthValues = new List<int>();
+        public List<int> CircularAccelerationStartFrameValues = new List<int>();
+        public List<int> CircularAccelerationEndFrameValues = new List<int>();
+        public List<float> CircularAccelerationSpeedValues = new List<float>();
+        public List<float> CircularAccelerationSpeedDropoffValues = new List<float>();
+        public List<float> CircularAccelerationSpeedMaxValues = new List<float>();
+        public List<int> ForwardAccelerationStartFrameValues = new List<int>();
+        public List<int> ForwardAccelerationEndFrameValues = new List<int>();
+        public List<float> ForwardAccelerationSpeedValues = new List<float>();
+        public List<int> PaddingValues = new List<int>();
 
         public Tool_PRMEtcEditor(
             Tool_MovesetCoder t,
-            List<int> frameActionUnlockValues,
-            List<int> actionLengthValues,
-            List<int> unk1Values,
-            List<float> circleVelocityValues,
-            List<float> unk2Values,
-            List<float> circleVelocityStrengthValues,
-            List<int> movementFrequencyValues,
-            List<float> forwardVelocityValues,
+            List<int> cancelFrameValues,
+            List<int> airLengthValues,
+            List<int> circularAccelerationStartFrameValues,
+            List<int> circularAccelerationEndFrameValues,
+            List<float> circularAccelerationSpeedValues,
+            List<float> circularAccelerationSpeedDropoffValues,
+            List<float> circularAccelerationSpeedMaxValues,
+            List<int> forwardAccelerationStartFrameValues,
+            List<int> forwardAccelerationEndFrameValues,
+            List<float> forwardAccelerationSpeedValues,
+            List<int> paddingValues,
             int count)
         {
             InitializeComponent();
             tool = t;
             EntryCount = count;
-            FrameActionUnlockValues = frameActionUnlockValues;
-            ActionLengthValues = actionLengthValues;
-            Unk1Values = unk1Values;
-            CircleVelocityValues = circleVelocityValues;
-            Unk2Values = unk2Values;
-            CircleVelocityStrengthValues = circleVelocityStrengthValues;
-            MovementFrequencyValues = movementFrequencyValues;
-            ForwardVelocityValues = forwardVelocityValues;
+            CancelFrameValues = cancelFrameValues;
+            AirLengthValues = airLengthValues;
+            CircularAccelerationStartFrameValues = circularAccelerationStartFrameValues;
+            CircularAccelerationEndFrameValues = circularAccelerationEndFrameValues;
+            CircularAccelerationSpeedValues = circularAccelerationSpeedValues;
+            CircularAccelerationSpeedDropoffValues = circularAccelerationSpeedDropoffValues;
+            CircularAccelerationSpeedMaxValues = circularAccelerationSpeedMaxValues;
+            ForwardAccelerationStartFrameValues = forwardAccelerationStartFrameValues;
+            ForwardAccelerationEndFrameValues = forwardAccelerationEndFrameValues;
+            ForwardAccelerationSpeedValues = forwardAccelerationSpeedValues;
+            PaddingValues = paddingValues;
 
             for (int i = 0; i < EntryCount; i++)
                 listBox1.Items.Add(FormatEntry(i));
@@ -74,9 +83,9 @@ namespace NSUNS4_Character_Manager.Tools
         {
             string name = index < DefaultMovementNames.Length ? DefaultMovementNames[index] : ("Entry " + index.ToString());
             return name +
-                   " | Frame Unlock: " + FrameActionUnlockValues[index].ToString("X4") +
-                   " | Action Length: " + ActionLengthValues[index].ToString("X4") +
-                   " | Forward Velocity: " + ForwardVelocityValues[index].ToString("0.###");
+                   " | Cancel Frame: " + CancelFrameValues[index].ToString() +
+                   " | Air Length: " + AirLengthValues[index].ToString() +
+                   " | Forward Acceleration Speed: " + ForwardAccelerationSpeedValues[index].ToString("0.###");
         }
 
         private static void SetNumericValue(NumericUpDown control, decimal value)
@@ -92,26 +101,32 @@ namespace NSUNS4_Character_Manager.Tools
                 return;
 
             int index = listBox1.SelectedIndex;
-            SetNumericValue(nFrameActionUnlock, FrameActionUnlockValues[index]);
-            SetNumericValue(nActionLength, ActionLengthValues[index]);
-            SetNumericValue(nUnk1, Unk1Values[index]);
-            SetNumericValue(nCircleVelocity, (decimal)CircleVelocityValues[index]);
-            SetNumericValue(nUnk2, (decimal)Unk2Values[index]);
-            SetNumericValue(nCircleVelocityStrength, (decimal)CircleVelocityStrengthValues[index]);
-            SetNumericValue(nMovementFrequency, MovementFrequencyValues[index]);
-            SetNumericValue(nForwardVelocity, (decimal)ForwardVelocityValues[index]);
+            SetNumericValue(nCancelFrame, CancelFrameValues[index]);
+            SetNumericValue(nAirLength, AirLengthValues[index]);
+            SetNumericValue(nCircularAccelerationStartFrame, CircularAccelerationStartFrameValues[index]);
+            SetNumericValue(nCircularAccelerationEndFrame, CircularAccelerationEndFrameValues[index]);
+            SetNumericValue(nCircularAccelerationSpeed, (decimal)CircularAccelerationSpeedValues[index]);
+            SetNumericValue(nCircularAccelerationSpeedDropoff, (decimal)CircularAccelerationSpeedDropoffValues[index]);
+            SetNumericValue(nCircularAccelerationSpeedMax, (decimal)CircularAccelerationSpeedMaxValues[index]);
+            SetNumericValue(nForwardAccelerationStartFrame, ForwardAccelerationStartFrameValues[index]);
+            SetNumericValue(nForwardAccelerationEndFrame, ForwardAccelerationEndFrameValues[index]);
+            SetNumericValue(nForwardAccelerationSpeed, (decimal)ForwardAccelerationSpeedValues[index]);
+            SetNumericValue(nPadding, PaddingValues[index]);
         }
 
         private void buttonAdd_Click(object sender, EventArgs e)
         {
-            FrameActionUnlockValues.Add((int)nFrameActionUnlock.Value);
-            ActionLengthValues.Add((int)nActionLength.Value);
-            Unk1Values.Add((int)nUnk1.Value);
-            CircleVelocityValues.Add((float)nCircleVelocity.Value);
-            Unk2Values.Add((float)nUnk2.Value);
-            CircleVelocityStrengthValues.Add((float)nCircleVelocityStrength.Value);
-            MovementFrequencyValues.Add((int)nMovementFrequency.Value);
-            ForwardVelocityValues.Add((float)nForwardVelocity.Value);
+            CancelFrameValues.Add((int)nCancelFrame.Value);
+            AirLengthValues.Add((int)nAirLength.Value);
+            CircularAccelerationStartFrameValues.Add((int)nCircularAccelerationStartFrame.Value);
+            CircularAccelerationEndFrameValues.Add((int)nCircularAccelerationEndFrame.Value);
+            CircularAccelerationSpeedValues.Add((float)nCircularAccelerationSpeed.Value);
+            CircularAccelerationSpeedDropoffValues.Add((float)nCircularAccelerationSpeedDropoff.Value);
+            CircularAccelerationSpeedMaxValues.Add((float)nCircularAccelerationSpeedMax.Value);
+            ForwardAccelerationStartFrameValues.Add((int)nForwardAccelerationStartFrame.Value);
+            ForwardAccelerationEndFrameValues.Add((int)nForwardAccelerationEndFrame.Value);
+            ForwardAccelerationSpeedValues.Add((float)nForwardAccelerationSpeed.Value);
+            PaddingValues.Add((int)nPadding.Value);
             EntryCount++;
             listBox1.Items.Add(FormatEntry(EntryCount - 1));
             listBox1.SelectedIndex = EntryCount - 1;
@@ -126,14 +141,17 @@ namespace NSUNS4_Character_Manager.Tools
             }
 
             int index = listBox1.SelectedIndex;
-            FrameActionUnlockValues[index] = (int)nFrameActionUnlock.Value;
-            ActionLengthValues[index] = (int)nActionLength.Value;
-            Unk1Values[index] = (int)nUnk1.Value;
-            CircleVelocityValues[index] = (float)nCircleVelocity.Value;
-            Unk2Values[index] = (float)nUnk2.Value;
-            CircleVelocityStrengthValues[index] = (float)nCircleVelocityStrength.Value;
-            MovementFrequencyValues[index] = (int)nMovementFrequency.Value;
-            ForwardVelocityValues[index] = (float)nForwardVelocity.Value;
+            CancelFrameValues[index] = (int)nCancelFrame.Value;
+            AirLengthValues[index] = (int)nAirLength.Value;
+            CircularAccelerationStartFrameValues[index] = (int)nCircularAccelerationStartFrame.Value;
+            CircularAccelerationEndFrameValues[index] = (int)nCircularAccelerationEndFrame.Value;
+            CircularAccelerationSpeedValues[index] = (float)nCircularAccelerationSpeed.Value;
+            CircularAccelerationSpeedDropoffValues[index] = (float)nCircularAccelerationSpeedDropoff.Value;
+            CircularAccelerationSpeedMaxValues[index] = (float)nCircularAccelerationSpeedMax.Value;
+            ForwardAccelerationStartFrameValues[index] = (int)nForwardAccelerationStartFrame.Value;
+            ForwardAccelerationEndFrameValues[index] = (int)nForwardAccelerationEndFrame.Value;
+            ForwardAccelerationSpeedValues[index] = (float)nForwardAccelerationSpeed.Value;
+            PaddingValues[index] = (int)nPadding.Value;
             listBox1.Items[index] = FormatEntry(index);
         }
 
@@ -146,14 +164,17 @@ namespace NSUNS4_Character_Manager.Tools
             }
 
             int index = listBox1.SelectedIndex;
-            FrameActionUnlockValues.RemoveAt(index);
-            ActionLengthValues.RemoveAt(index);
-            Unk1Values.RemoveAt(index);
-            CircleVelocityValues.RemoveAt(index);
-            Unk2Values.RemoveAt(index);
-            CircleVelocityStrengthValues.RemoveAt(index);
-            MovementFrequencyValues.RemoveAt(index);
-            ForwardVelocityValues.RemoveAt(index);
+            CancelFrameValues.RemoveAt(index);
+            AirLengthValues.RemoveAt(index);
+            CircularAccelerationStartFrameValues.RemoveAt(index);
+            CircularAccelerationEndFrameValues.RemoveAt(index);
+            CircularAccelerationSpeedValues.RemoveAt(index);
+            CircularAccelerationSpeedDropoffValues.RemoveAt(index);
+            CircularAccelerationSpeedMaxValues.RemoveAt(index);
+            ForwardAccelerationStartFrameValues.RemoveAt(index);
+            ForwardAccelerationEndFrameValues.RemoveAt(index);
+            ForwardAccelerationSpeedValues.RemoveAt(index);
+            PaddingValues.RemoveAt(index);
             listBox1.Items.RemoveAt(index);
             EntryCount--;
 
@@ -166,14 +187,17 @@ namespace NSUNS4_Character_Manager.Tools
 
         private void saveAndCloseToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            tool.prmEtcFrameActionUnlockValue = FrameActionUnlockValues;
-            tool.prmEtcActionLengthValue = ActionLengthValues;
-            tool.prmEtcUnk1Value = Unk1Values;
-            tool.prmEtcCircleVelocityValue = CircleVelocityValues;
-            tool.prmEtcUnk2Value = Unk2Values;
-            tool.prmEtcCircleVelocityStrengthValue = CircleVelocityStrengthValues;
-            tool.prmEtcMovementFrequencyValue = MovementFrequencyValues;
-            tool.prmEtcForwardVelocityValue = ForwardVelocityValues;
+            tool.prmEtcCancelFrameValues = CancelFrameValues;
+            tool.prmEtcAirLengthValues = AirLengthValues;
+            tool.prmEtcCircularAccelerationStartFrameValues = CircularAccelerationStartFrameValues;
+            tool.prmEtcCircularAccelerationEndFrameValues = CircularAccelerationEndFrameValues;
+            tool.prmEtcCircularAccelerationSpeedValues = CircularAccelerationSpeedValues;
+            tool.prmEtcCircularAccelerationSpeedDropoffValues = CircularAccelerationSpeedDropoffValues;
+            tool.prmEtcCircularAccelerationSpeedMaxValues = CircularAccelerationSpeedMaxValues;
+            tool.prmEtcForwardAccelerationStartFrameValues = ForwardAccelerationStartFrameValues;
+            tool.prmEtcForwardAccelerationEndFrameValues = ForwardAccelerationEndFrameValues;
+            tool.prmEtcForwardAccelerationSpeedValues = ForwardAccelerationSpeedValues;
+            tool.prmEtcPaddingValues = PaddingValues;
             tool.prmEtcSecCount = EntryCount;
             tool.prmEtcChanged = true;
             MessageBox.Show("PRM ETC data saved.");

@@ -75,14 +75,32 @@ namespace NSUNS4_Character_Manager.Tools
         public bool prmEtcChanged = false;
         public int prmEtcSecLength = 0;
         public int prmEtcSecCount = 0;
-        public List<int> prmEtcFrameActionUnlockValue = new List<int>();
-        public List<int> prmEtcActionLengthValue = new List<int>();
-        public List<int> prmEtcUnk1Value = new List<int>();
-        public List<float> prmEtcCircleVelocityValue = new List<float>();
-        public List<float> prmEtcUnk2Value = new List<float>();
-        public List<float> prmEtcCircleVelocityStrengthValue = new List<float>();
-        public List<int> prmEtcMovementFrequencyValue = new List<int>();
-        public List<float> prmEtcForwardVelocityValue = new List<float>();
+        public List<int> prmEtcCancelFrameValues = new List<int>();
+        public List<int> prmEtcAirLengthValues = new List<int>();
+        public List<int> prmEtcCircularAccelerationStartFrameValues = new List<int>();
+        public List<int> prmEtcCircularAccelerationEndFrameValues = new List<int>();
+        public List<float> prmEtcCircularAccelerationSpeedValues = new List<float>();
+        public List<float> prmEtcCircularAccelerationSpeedDropoffValues = new List<float>();
+        public List<float> prmEtcCircularAccelerationSpeedMaxValues = new List<float>();
+        public List<int> prmEtcForwardAccelerationStartFrameValues = new List<int>();
+        public List<int> prmEtcForwardAccelerationEndFrameValues = new List<int>();
+        public List<float> prmEtcForwardAccelerationSpeedValues = new List<float>();
+        public List<int> prmEtcPaddingValues = new List<int>();
+
+        private void ClearPrmEtcValues()
+        {
+            prmEtcCancelFrameValues.Clear();
+            prmEtcAirLengthValues.Clear();
+            prmEtcCircularAccelerationStartFrameValues.Clear();
+            prmEtcCircularAccelerationEndFrameValues.Clear();
+            prmEtcCircularAccelerationSpeedValues.Clear();
+            prmEtcCircularAccelerationSpeedDropoffValues.Clear();
+            prmEtcCircularAccelerationSpeedMaxValues.Clear();
+            prmEtcForwardAccelerationStartFrameValues.Clear();
+            prmEtcForwardAccelerationEndFrameValues.Clear();
+            prmEtcForwardAccelerationSpeedValues.Clear();
+            prmEtcPaddingValues.Clear();
+        }
 
         List<byte[]> verSection = new List<byte[]>();
         List<int> anmCount = new List<int>();
@@ -393,14 +411,7 @@ namespace NSUNS4_Character_Manager.Tools
             collisionSecBoneName.Clear();
             prmEtcSecLength = 0;
             prmEtcSecCount = 0;
-            prmEtcFrameActionUnlockValue.Clear();
-            prmEtcActionLengthValue.Clear();
-            prmEtcUnk1Value.Clear();
-            prmEtcCircleVelocityValue.Clear();
-            prmEtcUnk2Value.Clear();
-            prmEtcCircleVelocityStrengthValue.Clear();
-            prmEtcMovementFrequencyValue.Clear();
-            prmEtcForwardVelocityValue.Clear();
+            ClearPrmEtcValues();
             effectChunkName = "";
             effectChunkPath = "";
             collisionChunkName = "";
@@ -530,20 +541,23 @@ namespace NSUNS4_Character_Manager.Tools
                 for (int z = 0; z < prmEtcSecCount; z++)
                 {
                     int prmEtcIndex = 4 + (z * 0x20);
-                    if (prmEtcIndex + 0x1B >= prmEtcBytes.Length)
+                    if (prmEtcIndex + 0x1F >= prmEtcBytes.Length)
                         break;
 
-                    prmEtcFrameActionUnlockValue.Add(BitConverter.ToUInt16(prmEtcBytes, prmEtcIndex + 0x00));
-                    prmEtcActionLengthValue.Add(BitConverter.ToUInt16(prmEtcBytes, prmEtcIndex + 0x02));
-                    prmEtcUnk1Value.Add(BitConverter.ToUInt16(prmEtcBytes, prmEtcIndex + 0x06));
-                    prmEtcCircleVelocityValue.Add(BitConverter.ToSingle(prmEtcBytes, prmEtcIndex + 0x08));
-                    prmEtcUnk2Value.Add(BitConverter.ToSingle(prmEtcBytes, prmEtcIndex + 0x0C));
-                    prmEtcCircleVelocityStrengthValue.Add(BitConverter.ToSingle(prmEtcBytes, prmEtcIndex + 0x10));
-                    prmEtcMovementFrequencyValue.Add(BitConverter.ToUInt16(prmEtcBytes, prmEtcIndex + 0x16));
-                    prmEtcForwardVelocityValue.Add(BitConverter.ToSingle(prmEtcBytes, prmEtcIndex + 0x18));
+                    prmEtcCancelFrameValues.Add(BitConverter.ToInt16(prmEtcBytes, prmEtcIndex + 0x00));
+                    prmEtcAirLengthValues.Add(BitConverter.ToInt16(prmEtcBytes, prmEtcIndex + 0x02));
+                    prmEtcCircularAccelerationStartFrameValues.Add(BitConverter.ToInt16(prmEtcBytes, prmEtcIndex + 0x04));
+                    prmEtcCircularAccelerationEndFrameValues.Add(BitConverter.ToInt16(prmEtcBytes, prmEtcIndex + 0x06));
+                    prmEtcCircularAccelerationSpeedValues.Add(BitConverter.ToSingle(prmEtcBytes, prmEtcIndex + 0x08));
+                    prmEtcCircularAccelerationSpeedDropoffValues.Add(BitConverter.ToSingle(prmEtcBytes, prmEtcIndex + 0x0C));
+                    prmEtcCircularAccelerationSpeedMaxValues.Add(BitConverter.ToSingle(prmEtcBytes, prmEtcIndex + 0x10));
+                    prmEtcForwardAccelerationStartFrameValues.Add(BitConverter.ToInt16(prmEtcBytes, prmEtcIndex + 0x14));
+                    prmEtcForwardAccelerationEndFrameValues.Add(BitConverter.ToInt16(prmEtcBytes, prmEtcIndex + 0x16));
+                    prmEtcForwardAccelerationSpeedValues.Add(BitConverter.ToSingle(prmEtcBytes, prmEtcIndex + 0x18));
+                    prmEtcPaddingValues.Add(BitConverter.ToInt32(prmEtcBytes, prmEtcIndex + 0x1C));
                 }
 
-                prmEtcSecCount = prmEtcFrameActionUnlockValue.Count;
+                prmEtcSecCount = prmEtcCancelFrameValues.Count;
                 editPrmEtcToolStripMenuItem.Enabled = true;
             }
         }
@@ -2036,14 +2050,17 @@ namespace NSUNS4_Character_Manager.Tools
             for (int z = 0; z < prmEtcSecCount; z++)
             {
                 byte[] newPrmEtcSection = new byte[0x20];
-                newPrmEtcSection = Main.b_ReplaceBytes(newPrmEtcSection, BitConverter.GetBytes((ushort)prmEtcFrameActionUnlockValue[z]), 0x00);
-                newPrmEtcSection = Main.b_ReplaceBytes(newPrmEtcSection, BitConverter.GetBytes((ushort)prmEtcActionLengthValue[z]), 0x02);
-                newPrmEtcSection = Main.b_ReplaceBytes(newPrmEtcSection, BitConverter.GetBytes((ushort)prmEtcUnk1Value[z]), 0x06);
-                newPrmEtcSection = Main.b_ReplaceBytes(newPrmEtcSection, BitConverter.GetBytes(prmEtcCircleVelocityValue[z]), 0x08);
-                newPrmEtcSection = Main.b_ReplaceBytes(newPrmEtcSection, BitConverter.GetBytes(prmEtcUnk2Value[z]), 0x0C);
-                newPrmEtcSection = Main.b_ReplaceBytes(newPrmEtcSection, BitConverter.GetBytes(prmEtcCircleVelocityStrengthValue[z]), 0x10);
-                newPrmEtcSection = Main.b_ReplaceBytes(newPrmEtcSection, BitConverter.GetBytes((ushort)prmEtcMovementFrequencyValue[z]), 0x16);
-                newPrmEtcSection = Main.b_ReplaceBytes(newPrmEtcSection, BitConverter.GetBytes(prmEtcForwardVelocityValue[z]), 0x18);
+                newPrmEtcSection = Main.b_ReplaceBytes(newPrmEtcSection, BitConverter.GetBytes((short)prmEtcCancelFrameValues[z]), 0x00);
+                newPrmEtcSection = Main.b_ReplaceBytes(newPrmEtcSection, BitConverter.GetBytes((short)prmEtcAirLengthValues[z]), 0x02);
+                newPrmEtcSection = Main.b_ReplaceBytes(newPrmEtcSection, BitConverter.GetBytes((short)prmEtcCircularAccelerationStartFrameValues[z]), 0x04);
+                newPrmEtcSection = Main.b_ReplaceBytes(newPrmEtcSection, BitConverter.GetBytes((short)prmEtcCircularAccelerationEndFrameValues[z]), 0x06);
+                newPrmEtcSection = Main.b_ReplaceBytes(newPrmEtcSection, BitConverter.GetBytes(prmEtcCircularAccelerationSpeedValues[z]), 0x08);
+                newPrmEtcSection = Main.b_ReplaceBytes(newPrmEtcSection, BitConverter.GetBytes(prmEtcCircularAccelerationSpeedDropoffValues[z]), 0x0C);
+                newPrmEtcSection = Main.b_ReplaceBytes(newPrmEtcSection, BitConverter.GetBytes(prmEtcCircularAccelerationSpeedMaxValues[z]), 0x10);
+                newPrmEtcSection = Main.b_ReplaceBytes(newPrmEtcSection, BitConverter.GetBytes((short)prmEtcForwardAccelerationStartFrameValues[z]), 0x14);
+                newPrmEtcSection = Main.b_ReplaceBytes(newPrmEtcSection, BitConverter.GetBytes((short)prmEtcForwardAccelerationEndFrameValues[z]), 0x16);
+                newPrmEtcSection = Main.b_ReplaceBytes(newPrmEtcSection, BitConverter.GetBytes(prmEtcForwardAccelerationSpeedValues[z]), 0x18);
+                newPrmEtcSection = Main.b_ReplaceBytes(newPrmEtcSection, BitConverter.GetBytes(prmEtcPaddingValues[z]), 0x1C);
                 prmEtcSections = Main.b_AddBytes(prmEtcSections, newPrmEtcSection);
             }
 
@@ -2280,14 +2297,7 @@ namespace NSUNS4_Character_Manager.Tools
             prmEtcChanged = false;
             prmEtcSecLength = 0;
             prmEtcSecCount = 0;
-            prmEtcFrameActionUnlockValue.Clear();
-            prmEtcActionLengthValue.Clear();
-            prmEtcUnk1Value.Clear();
-            prmEtcCircleVelocityValue.Clear();
-            prmEtcUnk2Value.Clear();
-            prmEtcCircleVelocityStrengthValue.Clear();
-            prmEtcMovementFrequencyValue.Clear();
-            prmEtcForwardVelocityValue.Clear();
+            ClearPrmEtcValues();
             editPrmEtcToolStripMenuItem.Enabled = false;
 
             t_planm.Text = "";
@@ -2841,14 +2851,17 @@ namespace NSUNS4_Character_Manager.Tools
         {
             Tool_PRMEtcEditor t = new Tool_PRMEtcEditor(
                 this,
-                prmEtcFrameActionUnlockValue,
-                prmEtcActionLengthValue,
-                prmEtcUnk1Value,
-                prmEtcCircleVelocityValue,
-                prmEtcUnk2Value,
-                prmEtcCircleVelocityStrengthValue,
-                prmEtcMovementFrequencyValue,
-                prmEtcForwardVelocityValue,
+                prmEtcCancelFrameValues,
+                prmEtcAirLengthValues,
+                prmEtcCircularAccelerationStartFrameValues,
+                prmEtcCircularAccelerationEndFrameValues,
+                prmEtcCircularAccelerationSpeedValues,
+                prmEtcCircularAccelerationSpeedDropoffValues,
+                prmEtcCircularAccelerationSpeedMaxValues,
+                prmEtcForwardAccelerationStartFrameValues,
+                prmEtcForwardAccelerationEndFrameValues,
+                prmEtcForwardAccelerationSpeedValues,
+                prmEtcPaddingValues,
                 prmEtcSecCount);
             t.ShowDialog();
         }

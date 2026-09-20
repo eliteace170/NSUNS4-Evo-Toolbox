@@ -9,16 +9,48 @@ using System.Windows.Forms;
 
 namespace NSUNS4_Character_Manager
 {
+    [Flags]
+    public enum TrailFlags : ushort
+    {
+        NoFade = 0x00,
+        FadeAlpha = 0x01,
+        FadeWidth = 0x02,
+        FadeBoth = 0x03,
+        WidthProfile = 0x10,
+        ProfileFadeAlpha = 0x11,
+        ProfileFadeWidth = 0x12,
+        ProfileFadeBoth = 0x13
+    }
+
+    public enum TrailForceType : uint
+    {
+        NoForce = 0,
+        Directional = 1
+    }
+
+    [Flags]
+    public enum TrailForceFlags : uint
+    {
+        DefaultForce = 0x00,
+        HalfStrength = 0x01,
+        InwardWeight = 0x02,
+        OutwardWeight = 0x04,
+        WorldDirection = 0x10,
+        WorldHalfStrength = 0x11,
+        WorldInward = 0x12,
+        WorldOutward = 0x14
+    }
+
     public partial class Tool_TrailEditor : Form
     {
-        private const string ClipboardPrefix = "NS4_TRAIL_EDITOR_ENTRY:";
+        private const string ClipboardPrefix = "NS4_TRAIL_EDITOR_ENTRY_V2:";
         private const string TrailChunkType = "nuccChunkTrail";
         private const int HeaderCount = 5;
         private const int HeaderSize = 8;
         private const int ManagerSize = 0x60;
         private const int ResourceSize = 0x20;
         private const int PositionSize = 0x30;
-        private const int ForceFieldSize = 0x3C;
+        private const int ForceFieldSize = 0x40;
         private const int NodeBaseSize = 0x14;
 
         private XfbinParserBackend backend;
@@ -156,112 +188,161 @@ namespace NSUNS4_Character_Manager
 
         public sealed class TrailManagerEntry
         {
-            public int AnimationChunkMapId;
-            public int EntryIndex;
-            public uint Unk1;
-            public uint Unk2;
-            public uint Unk3;
-            public uint Lifetime;
-            public ushort TrailType;
-            public ushort Unk4;
-            public float Unk5;
-            public float Unk6;
-            public float ColorRStart;
-            public float ColorGStart;
-            public float ColorBStart;
-            public float ColorAStart;
-            public float ColorRMiddle;
-            public float ColorGMiddle;
-            public float ColorBMiddle;
-            public float ColorAMiddle;
-            public float ColorREnd;
-            public float ColorGEnd;
-            public float ColorBEnd;
-            public float ColorAEnd;
-            public float ColorFactor;
-            public float ScaleFirstBoneStart;
-            public float ScaleSecondBoneStart;
-            public float ScaleFirstBoneMiddle;
-            public float ScaleSecondBoneMiddle;
-            public float ScaleFirstBoneEnd;
-            public float ScaleSecondBoneEnd;
-
-            public TrailManagerEntry Clone()
-            {
-                return (TrailManagerEntry)MemberwiseClone();
-            }
+            [Category("Parameters"), Description("Offset 0x00 (u32). ")]
+            public int AnimationChunkMapId { get; set; }
+            [Category("Links"), Description("Offset 0x04 (u32). Matches resources, positions and forces; timelines use array order.")]
+            public int EntryIndex { get; set; }
+            [Category("Reserved / Runtime"), Description("Offset 0x08 (u32). Replaced on load: resolved AnimationChunkIndex pointer.")]
+            public uint AnimationRef { get; set; }
+            [Category("Reserved / Runtime"), Description("Offset 0x0C (u32). Unused by game loader: skipped prefix word.")]
+            public uint Field0C { get; set; }
+            [Category("Reserved / Runtime"), Description("Offset 0x10 (u32). Unknown: copied; no use found in traced NX/S4/Connections trail code.")]
+            public uint Field10 { get; set; }
+            [Category("Parameters"), Description("Offset 0x14 (u32). History length in 30 FPS frames.")]
+            public uint Lifetime { get; set; }
+            [Category("Parameters"), Description("Offset 0x18 (u32). Extra samples used to smooth the trail.")]
+            public uint Subdivisions { get; set; }
+            [Category("Parameters"), Description("Offset 0x1C (u16). Named bits are used; other bits have no confirmed game use.")]
+            public TrailFlags TrailFlags { get; set; }
+            [Category("Parameters"), Description("Offset 0x1E (u8). Unused without FadeAlpha bit; otherwise fade per update after stop, raw / 255. Stored raw; divide by 255 for the game value.")]
+            public byte AlphaFade { get; set; }
+            [Category("Parameters"), Description("Offset 0x1F (u8). Unused without FadeWidth bit; otherwise shrink per update after stop, raw / 255. Stored raw; divide by 255 for the game value.")]
+            public byte WidthFade { get; set; }
+            [Category("Parameters"), Description("Offset 0x20 (f32). ")]
+            public float ColorStartR { get; set; }
+            [Category("Parameters"), Description("Offset 0x24 (f32). ")]
+            public float ColorStartG { get; set; }
+            [Category("Parameters"), Description("Offset 0x28 (f32). ")]
+            public float ColorStartB { get; set; }
+            [Category("Parameters"), Description("Offset 0x2C (f32). ")]
+            public float ColorStartA { get; set; }
+            [Category("Parameters"), Description("Offset 0x30 (f32). ")]
+            public float ColorMiddleR { get; set; }
+            [Category("Parameters"), Description("Offset 0x34 (f32). ")]
+            public float ColorMiddleG { get; set; }
+            [Category("Parameters"), Description("Offset 0x38 (f32). ")]
+            public float ColorMiddleB { get; set; }
+            [Category("Parameters"), Description("Offset 0x3C (f32). ")]
+            public float ColorMiddleA { get; set; }
+            [Category("Parameters"), Description("Offset 0x40 (f32). ")]
+            public float ColorEndR { get; set; }
+            [Category("Parameters"), Description("Offset 0x44 (f32). ")]
+            public float ColorEndG { get; set; }
+            [Category("Parameters"), Description("Offset 0x48 (f32). ")]
+            public float ColorEndB { get; set; }
+            [Category("Parameters"), Description("Offset 0x4C (f32). ")]
+            public float ColorEndA { get; set; }
+            [Category("Parameters"), Description("Offset 0x50 (f32). Middle color position along trail distance, 0..1.")]
+            public float ColorFactor { get; set; }
+            [Category("Parameters"), Description("Offset 0x54 (u16). Width samples use raw / 255. Stored raw; divide by 255 for the game value.")]
+            public ushort WidthStart { get; set; }
+            [Category("Parameters"), Description("Offset 0x56 (u16).  Stored raw; divide by 255 for the game value.")]
+            public ushort WidthMiddle { get; set; }
+            [Category("Parameters"), Description("Offset 0x58 (u16).  Stored raw; divide by 255 for the game value.")]
+            public ushort WidthEnd { get; set; }
+            [Category("Parameters"), Description("Offset 0x5A (u8). Middle width position in the history; raw / 255. Stored raw; divide by 255 for the game value.")]
+            public byte WidthMiddlePoint { get; set; }
+            [Category("Reserved / Runtime"), Description("Offset 0x5B (u8). Unknown use: copied byte, seen as 0x00 and 0x20. Preserve it.")]
+            public byte Field5B { get; set; }
+            [Category("Reserved / Runtime"), Description("Offset 0x5C (u32). Unknown: copied without byte swapping; no confirmed game use.")]
+            public uint Field5C { get; set; }
+            public TrailManagerEntry Clone() { return (TrailManagerEntry)MemberwiseClone(); }
         }
 
         public sealed class TrailResourceEntry
         {
-            public int EffectChunkMapId;
-            public int TrailEntryIndex;
-            public uint Unk1;
-            public uint Unk2;
-            public uint Unk3;
-            public uint Unk4;
-            public uint Unk5;
-            public uint Unk6;
-
-            public TrailResourceEntry Clone()
-            {
-                return (TrailResourceEntry)MemberwiseClone();
-            }
+            [Category("Parameters"), Description("Offset 0x00 (u32). ")]
+            public int EffectChunkMapId { get; set; }
+            [Category("Links"), Description("Offset 0x04 (u32). ")]
+            public int TrailEntryIndex { get; set; }
+            [Category("Reserved / Runtime"), Description("Offset 0x08 (u32). Replaced on load: resolved EffectChunkIndex pointer.")]
+            public uint EffectRef { get; set; }
+            [Category("Reserved / Runtime"), Description("Offset 0x0C (u32). Unused by game loader: skipped prefix word.")]
+            public uint Field0C { get; set; }
+            [Category("Reserved / Runtime"), Description("Offset 0x10 (u32). Used as cached billboard pointer; replaced by lookup when CacheState is 0.")]
+            public uint BillboardPtr { get; set; }
+            [Category("Reserved / Runtime"), Description("Offset 0x14 (u32). 0 allows lookup; runtime becomes 2. Keep file value unchanged.")]
+            public uint CacheState { get; set; }
+            [Category("Reserved / Runtime"), Description("Offset 0x18 (u32). Unknown: copied beside cache state; no confirmed game use.")]
+            public uint Field18 { get; set; }
+            [Category("Reserved / Runtime"), Description("Offset 0x1C (u32). Unknown: copied resource tail; no confirmed game use.")]
+            public uint Field1C { get; set; }
+            public TrailResourceEntry Clone() { return (TrailResourceEntry)MemberwiseClone(); }
         }
 
         public sealed class TrailPositionEntry
         {
-            public int CoordChunkMapId;
-            public int TrailEntryIndex;
-            public int Unk1;
-            public int Unk2;
-            public int Unk3;
-            public int Unk4;
-            public int Unk5;
-            public int Unk6;
-            public int ClumpChunkMapId;
-            public int Unk7;
-            public int Unk8;
-            public int Unk9;
-
-            public TrailPositionEntry Clone()
-            {
-                return (TrailPositionEntry)MemberwiseClone();
-            }
+            [Category("Parameters"), Description("Offset 0x00 (s32). ")]
+            public int CoordChunkMapId { get; set; }
+            [Category("Links"), Description("Offset 0x04 (u32). Matching records supply the trail edges, in file order.")]
+            public int TrailEntryIndex { get; set; }
+            [Category("Reserved / Runtime"), Description("Offset 0x08 (s32). Replaced on load: resolved CoordChunkIndex pointer.")]
+            public int CoordRef { get; set; }
+            [Category("Reserved / Runtime"), Description("Offset 0x0C (s32). Unknown prefix word: no confirmed game use.")]
+            public int Field0C { get; set; }
+            [Category("Reserved / Runtime"), Description("Offset 0x10 (s32). Unknown: copied; no endpoint offset or other game use established.")]
+            public int Field10 { get; set; }
+            [Category("Reserved / Runtime"), Description("Offset 0x14 (s32). Unknown: copied; no confirmed game use.")]
+            public int Field14 { get; set; }
+            [Category("Reserved / Runtime"), Description("Offset 0x18 (s32). Unknown: copied; no confirmed game use.")]
+            public int Field18 { get; set; }
+            [Category("Reserved / Runtime"), Description("Offset 0x1C (s32). Unknown: copied; no confirmed game use.")]
+            public int Field1C { get; set; }
+            [Category("Parameters"), Description("Offset 0x20 (s32). ")]
+            public int ClumpChunkMapId { get; set; }
+            [Category("Reserved / Runtime"), Description("Offset 0x24 (s32). Replaced on load when ClumpChunkIndex != -1: clump reference pointer.")]
+            public int ClumpRef { get; set; }
+            [Category("Reserved / Runtime"), Description("Offset 0x28 (s32). Unused by game loader (0x79+): not mapped into runtime data.")]
+            public int Field28 { get; set; }
+            [Category("Reserved / Runtime"), Description("Offset 0x2C (s32). Unused by game loader (0x79+): not mapped into runtime data.")]
+            public int Field2C { get; set; }
+            public TrailPositionEntry Clone() { return (TrailPositionEntry)MemberwiseClone(); }
         }
 
         public sealed class TrailForceFieldEntry
         {
-            public int Unk1;
-            public int TrailEntryIndex;
-            public int Unk2;
-            public int Unk3;
-            public float Unk4;
-            public float Unk5;
-            public float Unk6;
-            public int Unk7;
-            public int Unk8;
-            public int Unk9;
-            public float Unk10;
-            public float Unk11;
-            public int Unk12;
-            public int Unk13;
-            public int Unk14;
-            public int Unk15;
-            public int Unk16;
-
-            public TrailForceFieldEntry Clone()
-            {
-                return (TrailForceFieldEntry)MemberwiseClone();
-            }
+            [Category("Parameters"), Description("Offset 0x00 (s32). ")]
+            public int CoordChunkMapId { get; set; }
+            [Category("Links"), Description("Offset 0x04 (u32). ")]
+            public int TrailEntryIndex { get; set; }
+            [Category("Reserved / Runtime"), Description("Offset 0x08 (s32). Replaced on load: resolved CoordChunkIndex pointer.")]
+            public int CoordRef { get; set; }
+            [Category("Reserved / Runtime"), Description("Offset 0x0C (s32). Unknown prefix word: no confirmed game use.")]
+            public int Field0C { get; set; }
+            [Category("Parameters"), Description("Offset 0x10 (f32). ")]
+            public float DirectionX { get; set; }
+            [Category("Parameters"), Description("Offset 0x14 (f32). ")]
+            public float DirectionY { get; set; }
+            [Category("Parameters"), Description("Offset 0x18 (f32). ")]
+            public float DirectionZ { get; set; }
+            [Category("Parameters"), Description("Offset 0x1C (f32). Each update: velocity += velocity * value.")]
+            public float VelocityGrowth { get; set; }
+            [Category("Parameters"), Description("Offset 0x20 (u32). ")]
+            public TrailForceType ForceType { get; set; }
+            [Category("Parameters"), Description("Offset 0x24 (f32). Game multiplies this value by 100.")]
+            public float Radius { get; set; }
+            [Category("Parameters"), Description("Offset 0x28 (f32). ")]
+            public float Strength { get; set; }
+            [Category("Parameters"), Description("Offset 0x2C (u32). Named bits are used; other bits have no confirmed game use.")]
+            public TrailForceFlags ForceFlags { get; set; }
+            [Category("Parameters"), Description("Offset 0x30 (s32). ")]
+            public int ClumpChunkMapId { get; set; }
+            [Category("Reserved / Runtime"), Description("Offset 0x34 (s32). Replaced on load when ClumpChunkIndex != -1: clump reference pointer.")]
+            public int ClumpRef { get; set; }
+            [Category("Reserved / Runtime"), Description("Offset 0x38 (s32). Unused by game loader (0x79+): not mapped into runtime data.")]
+            public int Field38 { get; set; }
+            [Category("Reserved / Runtime"), Description("Offset 0x3C (s32). Unused by game loader (0x79+): not mapped into runtime data.")]
+            public int Field3C { get; set; }
+            public TrailForceFieldEntry Clone() { return (TrailForceFieldEntry)MemberwiseClone(); }
         }
 
         public sealed class TrailNodeEntry
         {
-            public uint Unk1;
+            public uint Field00;
             public int TrailEntryIndex;
-            public uint Unk2;
-            public uint Unk3;
+            public uint Field08;
+            public uint Field0C;
+            public uint Padding;
             public List<TrailFrameEntry> Frames = new List<TrailFrameEntry>();
 
             public TrailNodeEntry Clone()
@@ -274,8 +355,9 @@ namespace NSUNS4_Character_Manager
 
         public sealed class TrailFrameEntry
         {
-            public ushort Flag;
-            public float Frame;
+            public uint Raw;
+            public bool Enabled { get { return (Raw & 0x80000000u) != 0; } set { Raw = (Raw & 0x7FFFFFFFu) | (value ? 0x80000000u : 0u); } }
+            public uint TimeUnits { get { return Raw & 0x7FFFFFFFu; } set { if (value > 0x7FFFFFFFu) throw new ArgumentOutOfRangeException("value"); Raw = (Raw & 0x80000000u) | value; } }
 
             public TrailFrameEntry Clone()
             {
@@ -428,6 +510,17 @@ namespace NSUNS4_Character_Manager
                 };
             }
 
+            // The loader ignores stored positions and fixed-record sizes.
+            int sequentialOffset = HeaderCount * HeaderSize;
+            int[] sizes = { ManagerSize, ResourceSize, page.Version >= 0x79 ? PositionSize : 0x20, page.Version >= 0x79 ? ForceFieldSize : 0x30 };
+            for (int i = 0; i < HeaderCount; i++)
+            {
+                headers[i].Offset = sequentialOffset;
+                if (i < 4) headers[i].Size = sizes[i];
+                sequentialOffset += i < 4 ? headers[i].Count * sizes[i] : headers[i].Size;
+            }
+            if (sequentialOffset > data.Length) return false;
+
             chunk = new TrailChunkState
             {
                 OriginalChunkName = page.ChunkName ?? string.Empty,
@@ -478,44 +571,42 @@ namespace NSUNS4_Character_Manager
 
         private bool TryParseManagers(byte[] data, TrailSectionHeader header, List<TrailManagerEntry> list)
         {
-            if (!ValidateSectionBounds(data, header))
-                return false;
+            int entrySize = header.Size;
+            if (!ValidateSectionBounds(data, header)) return false;
             for (int i = 0; i < header.Count; i++)
             {
-                int offset = header.Offset + (i * ManagerSize);
-                if (offset + ManagerSize > data.Length)
-                    return false;
-
-                TrailManagerEntry entry = new TrailManagerEntry();
+                int offset = header.Offset + i * entrySize;
+                if (offset > data.Length - entrySize) return false;
+                var entry = new TrailManagerEntry();
                 entry.AnimationChunkMapId = (int)ReadUInt32BE(data, offset + 0x00);
                 entry.EntryIndex = (int)ReadUInt32BE(data, offset + 0x04);
-                entry.Unk1 = ReadUInt32BE(data, offset + 0x08);
-                entry.Unk2 = ReadUInt32BE(data, offset + 0x0C);
-                entry.Unk3 = ReadUInt32BE(data, offset + 0x10);
+                entry.AnimationRef = ReadUInt32BE(data, offset + 0x08);
+                entry.Field0C = ReadUInt32BE(data, offset + 0x0C);
+                entry.Field10 = ReadUInt32BE(data, offset + 0x10);
                 entry.Lifetime = ReadUInt32BE(data, offset + 0x14);
-                entry.TrailType = ReadUInt16BE(data, offset + 0x18);
-                entry.Unk4 = ReadUInt16BE(data, offset + 0x1A);
-                entry.Unk5 = ReadUInt16BE(data, offset + 0x1C) / 65535f;
-                entry.Unk6 = ReadUInt16BE(data, offset + 0x1E) / 65535f;
-                entry.ColorRStart = ReadSingleBE(data, offset + 0x20);
-                entry.ColorGStart = ReadSingleBE(data, offset + 0x24);
-                entry.ColorBStart = ReadSingleBE(data, offset + 0x28);
-                entry.ColorAStart = ReadSingleBE(data, offset + 0x2C);
-                entry.ColorRMiddle = ReadSingleBE(data, offset + 0x30);
-                entry.ColorGMiddle = ReadSingleBE(data, offset + 0x34);
-                entry.ColorBMiddle = ReadSingleBE(data, offset + 0x38);
-                entry.ColorAMiddle = ReadSingleBE(data, offset + 0x3C);
-                entry.ColorREnd = ReadSingleBE(data, offset + 0x40);
-                entry.ColorGEnd = ReadSingleBE(data, offset + 0x44);
-                entry.ColorBEnd = ReadSingleBE(data, offset + 0x48);
-                entry.ColorAEnd = ReadSingleBE(data, offset + 0x4C);
+                entry.Subdivisions = ReadUInt32BE(data, offset + 0x18);
+                entry.TrailFlags = (TrailFlags)ReadUInt16BE(data, offset + 0x1C);
+                entry.AlphaFade = data[offset + 0x1E];
+                entry.WidthFade = data[offset + 0x1F];
+                entry.ColorStartR = ReadSingleBE(data, offset + 0x20);
+                entry.ColorStartG = ReadSingleBE(data, offset + 0x24);
+                entry.ColorStartB = ReadSingleBE(data, offset + 0x28);
+                entry.ColorStartA = ReadSingleBE(data, offset + 0x2C);
+                entry.ColorMiddleR = ReadSingleBE(data, offset + 0x30);
+                entry.ColorMiddleG = ReadSingleBE(data, offset + 0x34);
+                entry.ColorMiddleB = ReadSingleBE(data, offset + 0x38);
+                entry.ColorMiddleA = ReadSingleBE(data, offset + 0x3C);
+                entry.ColorEndR = ReadSingleBE(data, offset + 0x40);
+                entry.ColorEndG = ReadSingleBE(data, offset + 0x44);
+                entry.ColorEndB = ReadSingleBE(data, offset + 0x48);
+                entry.ColorEndA = ReadSingleBE(data, offset + 0x4C);
                 entry.ColorFactor = ReadSingleBE(data, offset + 0x50);
-                entry.ScaleFirstBoneStart = ReadUInt16BE(data, offset + 0x54) / 65535f * 100f;
-                entry.ScaleSecondBoneStart = ReadUInt16BE(data, offset + 0x56) / 65535f * 100f;
-                entry.ScaleFirstBoneMiddle = ReadUInt16BE(data, offset + 0x58) / 65535f * 100f;
-                entry.ScaleSecondBoneMiddle = ReadUInt16BE(data, offset + 0x5A) / 65535f * 100f;
-                entry.ScaleFirstBoneEnd = ReadUInt16BE(data, offset + 0x5C) / 65535f * 100f;
-                entry.ScaleSecondBoneEnd = ReadUInt16BE(data, offset + 0x5E) / 65535f * 100f;
+                entry.WidthStart = ReadUInt16BE(data, offset + 0x54);
+                entry.WidthMiddle = ReadUInt16BE(data, offset + 0x56);
+                entry.WidthEnd = ReadUInt16BE(data, offset + 0x58);
+                entry.WidthMiddlePoint = data[offset + 0x5A];
+                entry.Field5B = data[offset + 0x5B];
+                entry.Field5C = ReadUInt32BE(data, offset + 0x5C);
                 list.Add(entry);
             }
             return true;
@@ -523,85 +614,78 @@ namespace NSUNS4_Character_Manager
 
         private bool TryParseResources(byte[] data, TrailSectionHeader header, List<TrailResourceEntry> list)
         {
-            if (!ValidateSectionBounds(data, header))
-                return false;
+            int entrySize = header.Size;
+            if (!ValidateSectionBounds(data, header)) return false;
             for (int i = 0; i < header.Count; i++)
             {
-                int offset = header.Offset + (i * ResourceSize);
-                if (offset + ResourceSize > data.Length)
-                    return false;
-                list.Add(new TrailResourceEntry
-                {
-                    EffectChunkMapId = (int)ReadUInt32BE(data, offset + 0x00),
-                    TrailEntryIndex = (int)ReadUInt32BE(data, offset + 0x04),
-                    Unk1 = ReadUInt32BE(data, offset + 0x08),
-                    Unk2 = ReadUInt32BE(data, offset + 0x0C),
-                    Unk3 = ReadUInt32BE(data, offset + 0x10),
-                    Unk4 = ReadUInt32BE(data, offset + 0x14),
-                    Unk5 = ReadUInt32BE(data, offset + 0x18),
-                    Unk6 = ReadUInt32BE(data, offset + 0x1C)
-                });
+                int offset = header.Offset + i * entrySize;
+                if (offset > data.Length - entrySize) return false;
+                var entry = new TrailResourceEntry();
+                entry.EffectChunkMapId = (int)ReadUInt32BE(data, offset + 0x00);
+                entry.TrailEntryIndex = (int)ReadUInt32BE(data, offset + 0x04);
+                entry.EffectRef = ReadUInt32BE(data, offset + 0x08);
+                entry.Field0C = ReadUInt32BE(data, offset + 0x0C);
+                entry.BillboardPtr = ReadUInt32BE(data, offset + 0x10);
+                entry.CacheState = ReadUInt32BE(data, offset + 0x14);
+                entry.Field18 = ReadUInt32BE(data, offset + 0x18);
+                entry.Field1C = ReadUInt32BE(data, offset + 0x1C);
+                list.Add(entry);
             }
             return true;
         }
 
         private bool TryParsePositions(byte[] data, TrailSectionHeader header, List<TrailPositionEntry> list)
         {
-            if (!ValidateSectionBounds(data, header))
-                return false;
+            int entrySize = header.Size;
+            if (!ValidateSectionBounds(data, header)) return false;
             for (int i = 0; i < header.Count; i++)
             {
-                int offset = header.Offset + (i * PositionSize);
-                if (offset + PositionSize > data.Length)
-                    return false;
-                list.Add(new TrailPositionEntry
-                {
-                    CoordChunkMapId = ReadInt32BE(data, offset + 0x00),
-                    TrailEntryIndex = (int)ReadUInt32BE(data, offset + 0x04),
-                    Unk1 = ReadInt32BE(data, offset + 0x08),
-                    Unk2 = ReadInt32BE(data, offset + 0x0C),
-                    Unk3 = ReadInt32BE(data, offset + 0x10),
-                    Unk4 = ReadInt32BE(data, offset + 0x14),
-                    Unk5 = ReadInt32BE(data, offset + 0x18),
-                    Unk6 = ReadInt32BE(data, offset + 0x1C),
-                    ClumpChunkMapId = ReadInt32BE(data, offset + 0x20),
-                    Unk7 = ReadInt32BE(data, offset + 0x24),
-                    Unk8 = ReadInt32BE(data, offset + 0x28),
-                    Unk9 = ReadInt32BE(data, offset + 0x2C)
-                });
+                int offset = header.Offset + i * entrySize;
+                if (offset > data.Length - entrySize) return false;
+                var entry = new TrailPositionEntry();
+                entry.CoordChunkMapId = ReadInt32BE(data, offset + 0x00);
+                entry.TrailEntryIndex = (int)ReadUInt32BE(data, offset + 0x04);
+                entry.CoordRef = ReadInt32BE(data, offset + 0x08);
+                entry.Field0C = ReadInt32BE(data, offset + 0x0C);
+                entry.Field10 = ReadInt32BE(data, offset + 0x10);
+                entry.Field14 = ReadInt32BE(data, offset + 0x14);
+                entry.Field18 = ReadInt32BE(data, offset + 0x18);
+                entry.Field1C = ReadInt32BE(data, offset + 0x1C);
+                if (entrySize > 0x20) entry.ClumpChunkMapId = ReadInt32BE(data, offset + 0x20);
+                if (entrySize > 0x20) entry.ClumpRef = ReadInt32BE(data, offset + 0x24);
+                if (entrySize > 0x20) entry.Field28 = ReadInt32BE(data, offset + 0x28);
+                if (entrySize > 0x20) entry.Field2C = ReadInt32BE(data, offset + 0x2C);
+                list.Add(entry);
             }
             return true;
         }
 
         private bool TryParseForceFields(byte[] data, TrailSectionHeader header, List<TrailForceFieldEntry> list)
         {
-            if (!ValidateSectionBounds(data, header))
-                return false;
+            int entrySize = header.Size;
+            if (!ValidateSectionBounds(data, header)) return false;
             for (int i = 0; i < header.Count; i++)
             {
-                int offset = header.Offset + (i * ForceFieldSize);
-                if (offset + ForceFieldSize > data.Length)
-                    return false;
-                list.Add(new TrailForceFieldEntry
-                {
-                    Unk1 = ReadInt32BE(data, offset + 0x00),
-                    TrailEntryIndex = (int)ReadUInt32BE(data, offset + 0x04),
-                    Unk2 = ReadInt32BE(data, offset + 0x08),
-                    Unk3 = ReadInt32BE(data, offset + 0x0C),
-                    Unk4 = ReadUInt16BE(data, offset + 0x10) / 65535f,
-                    Unk5 = ReadUInt16BE(data, offset + 0x12) / 65535f,
-                    Unk6 = ReadSingleBE(data, offset + 0x14),
-                    Unk7 = ReadInt32BE(data, offset + 0x18),
-                    Unk8 = ReadInt32BE(data, offset + 0x1C),
-                    Unk9 = ReadInt32BE(data, offset + 0x20),
-                    Unk10 = ReadSingleBE(data, offset + 0x24),
-                    Unk11 = ReadSingleBE(data, offset + 0x28),
-                    Unk12 = ReadInt32BE(data, offset + 0x2C),
-                    Unk13 = ReadInt32BE(data, offset + 0x30),
-                    Unk14 = ReadInt32BE(data, offset + 0x34),
-                    Unk15 = ReadInt32BE(data, offset + 0x38),
-                    Unk16 = ReadInt32BE(data, offset + 0x3C - 4)
-                });
+                int offset = header.Offset + i * entrySize;
+                if (offset > data.Length - entrySize) return false;
+                var entry = new TrailForceFieldEntry();
+                entry.CoordChunkMapId = ReadInt32BE(data, offset + 0x00);
+                entry.TrailEntryIndex = (int)ReadUInt32BE(data, offset + 0x04);
+                entry.CoordRef = ReadInt32BE(data, offset + 0x08);
+                entry.Field0C = ReadInt32BE(data, offset + 0x0C);
+                entry.DirectionX = ReadSingleBE(data, offset + 0x10);
+                entry.DirectionY = ReadSingleBE(data, offset + 0x14);
+                entry.DirectionZ = ReadSingleBE(data, offset + 0x18);
+                entry.VelocityGrowth = ReadSingleBE(data, offset + 0x1C);
+                entry.ForceType = (TrailForceType)ReadUInt32BE(data, offset + 0x20);
+                entry.Radius = ReadSingleBE(data, offset + 0x24);
+                entry.Strength = ReadSingleBE(data, offset + 0x28);
+                entry.ForceFlags = (TrailForceFlags)ReadUInt32BE(data, offset + 0x2C);
+                if (entrySize > 0x30) entry.ClumpChunkMapId = ReadInt32BE(data, offset + 0x30);
+                if (entrySize > 0x30) entry.ClumpRef = ReadInt32BE(data, offset + 0x34);
+                if (entrySize > 0x30) entry.Field38 = ReadInt32BE(data, offset + 0x38);
+                if (entrySize > 0x30) entry.Field3C = ReadInt32BE(data, offset + 0x3C);
+                list.Add(entry);
             }
             return true;
         }
@@ -611,37 +695,43 @@ namespace NSUNS4_Character_Manager
             if (!ValidateSectionBounds(data, header))
                 return false;
             int offset = header.Offset;
+            int end = offset + header.Size;
+            if (end > data.Length) return false;
             for (int i = 0; i < header.Count; i++)
             {
-                if (offset + NodeBaseSize > data.Length)
+                if (end - offset < NodeBaseSize)
                     return false;
 
                 TrailNodeEntry node = new TrailNodeEntry();
-                node.Unk1 = ReadUInt32BE(data, offset + 0x00);
+                node.Field00 = ReadUInt32BE(data, offset + 0x00);
                 node.TrailEntryIndex = (int)ReadUInt32BE(data, offset + 0x04);
-                node.Unk2 = ReadUInt32BE(data, offset + 0x08);
-                node.Unk3 = ReadUInt32BE(data, offset + 0x0C);
+                node.Field08 = ReadUInt32BE(data, offset + 0x08);
+                node.Field0C = ReadUInt32BE(data, offset + 0x0C);
                 int frameCount = (int)ReadUInt32BE(data, offset + 0x10);
                 offset += NodeBaseSize;
+                if (frameCount < 0 || frameCount > (end - offset) / 4) return false;
 
                 for (int frameIndex = 0; frameIndex < frameCount; frameIndex++)
                 {
-                    if (offset + 4 > data.Length)
+                    if (end - offset < 4)
                         return false;
                     node.Frames.Add(new TrailFrameEntry
                     {
-                        Flag = ReadUInt16BE(data, offset + 0x00),
-                        Frame = ReadUInt16BE(data, offset + 0x02) / 100f
+                        Raw = ReadUInt32BE(data, offset)
                     });
                     offset += 4;
                 }
 
-                if ((frameCount & 1) == 0 && offset + 4 <= data.Length)
+                if ((frameCount & 1) == 0)
+                {
+                    if (end - offset < 4) return false;
+                    node.Padding = ReadUInt32BE(data, offset);
                     offset += 4;
+                }
 
                 list.Add(node);
             }
-            return true;
+            return offset == end;
         }
 
         private byte[] BuildChunkData(TrailChunkState chunk)
@@ -655,16 +745,16 @@ namespace NSUNS4_Character_Manager
 
             headers[0] = WriteManagers(writer, chunk.Managers);
             headers[1] = WriteResources(writer, chunk.Resources);
-            headers[2] = WritePositions(writer, chunk.Positions);
-            headers[3] = WriteForceFields(writer, chunk.ForceFields);
+            headers[2] = WritePositions(writer, chunk.Positions, chunk.SourcePage == null || chunk.SourcePage.Version >= 0x79);
+            headers[3] = WriteForceFields(writer, chunk.ForceFields, chunk.SourcePage == null || chunk.SourcePage.Version >= 0x79);
             headers[4] = WriteNodes(writer, chunk.Nodes);
 
             stream.Position = 0;
             for (int i = 0; i < headers.Length; i++)
             {
                 WriteUInt32BE(writer, (uint)headers[i].Offset);
-                WriteUInt16BE(writer, (ushort)headers[i].Count);
-                WriteUInt16BE(writer, (ushort)headers[i].Size);
+                WriteUInt16BE(writer, checked((ushort)headers[i].Count));
+                WriteUInt16BE(writer, checked((ushort)headers[i].Size));
             }
 
             return stream.ToArray();
@@ -672,122 +762,113 @@ namespace NSUNS4_Character_Manager
 
         private TrailSectionHeader WriteManagers(BinaryWriter writer, List<TrailManagerEntry> entries)
         {
-            TrailSectionHeader header = new TrailSectionHeader();
-            if (entries.Count == 0)
-                return header;
+            var header = new TrailSectionHeader();
             header.Offset = (int)writer.BaseStream.Position;
             header.Count = entries.Count;
             header.Size = ManagerSize;
-            foreach (TrailManagerEntry entry in entries)
+            foreach (var entry in entries)
             {
                 WriteUInt32BE(writer, (uint)entry.AnimationChunkMapId);
                 WriteUInt32BE(writer, (uint)entry.EntryIndex);
-                WriteUInt32BE(writer, entry.Unk1);
-                WriteUInt32BE(writer, entry.Unk2);
-                WriteUInt32BE(writer, entry.Unk3);
+                WriteUInt32BE(writer, entry.AnimationRef);
+                WriteUInt32BE(writer, entry.Field0C);
+                WriteUInt32BE(writer, entry.Field10);
                 WriteUInt32BE(writer, entry.Lifetime);
-                WriteUInt16BE(writer, entry.TrailType);
-                WriteUInt16BE(writer, entry.Unk4);
-                WriteUInt16BE(writer, FloatToUInt16(entry.Unk5));
-                WriteUInt16BE(writer, FloatToUInt16(entry.Unk6));
-                WriteSingleBE(writer, entry.ColorRStart);
-                WriteSingleBE(writer, entry.ColorGStart);
-                WriteSingleBE(writer, entry.ColorBStart);
-                WriteSingleBE(writer, entry.ColorAStart);
-                WriteSingleBE(writer, entry.ColorRMiddle);
-                WriteSingleBE(writer, entry.ColorGMiddle);
-                WriteSingleBE(writer, entry.ColorBMiddle);
-                WriteSingleBE(writer, entry.ColorAMiddle);
-                WriteSingleBE(writer, entry.ColorREnd);
-                WriteSingleBE(writer, entry.ColorGEnd);
-                WriteSingleBE(writer, entry.ColorBEnd);
-                WriteSingleBE(writer, entry.ColorAEnd);
+                WriteUInt32BE(writer, entry.Subdivisions);
+                WriteUInt16BE(writer, (ushort)entry.TrailFlags);
+                writer.Write(entry.AlphaFade);
+                writer.Write(entry.WidthFade);
+                WriteSingleBE(writer, entry.ColorStartR);
+                WriteSingleBE(writer, entry.ColorStartG);
+                WriteSingleBE(writer, entry.ColorStartB);
+                WriteSingleBE(writer, entry.ColorStartA);
+                WriteSingleBE(writer, entry.ColorMiddleR);
+                WriteSingleBE(writer, entry.ColorMiddleG);
+                WriteSingleBE(writer, entry.ColorMiddleB);
+                WriteSingleBE(writer, entry.ColorMiddleA);
+                WriteSingleBE(writer, entry.ColorEndR);
+                WriteSingleBE(writer, entry.ColorEndG);
+                WriteSingleBE(writer, entry.ColorEndB);
+                WriteSingleBE(writer, entry.ColorEndA);
                 WriteSingleBE(writer, entry.ColorFactor);
-                WriteUInt16BE(writer, FloatToUInt16(entry.ScaleFirstBoneStart / 100f));
-                WriteUInt16BE(writer, FloatToUInt16(entry.ScaleSecondBoneStart / 100f));
-                WriteUInt16BE(writer, FloatToUInt16(entry.ScaleFirstBoneMiddle / 100f));
-                WriteUInt16BE(writer, FloatToUInt16(entry.ScaleSecondBoneMiddle / 100f));
-                WriteUInt16BE(writer, FloatToUInt16(entry.ScaleFirstBoneEnd / 100f));
-                WriteUInt16BE(writer, FloatToUInt16(entry.ScaleSecondBoneEnd / 100f));
+                WriteUInt16BE(writer, entry.WidthStart);
+                WriteUInt16BE(writer, entry.WidthMiddle);
+                WriteUInt16BE(writer, entry.WidthEnd);
+                writer.Write(entry.WidthMiddlePoint);
+                writer.Write(entry.Field5B);
+                WriteUInt32BE(writer, entry.Field5C);
             }
             return header;
         }
 
         private TrailSectionHeader WriteResources(BinaryWriter writer, List<TrailResourceEntry> entries)
         {
-            TrailSectionHeader header = new TrailSectionHeader();
-            if (entries.Count == 0)
-                return header;
+            var header = new TrailSectionHeader();
             header.Offset = (int)writer.BaseStream.Position;
             header.Count = entries.Count;
             header.Size = ResourceSize;
-            foreach (TrailResourceEntry entry in entries)
+            foreach (var entry in entries)
             {
                 WriteUInt32BE(writer, (uint)entry.EffectChunkMapId);
                 WriteUInt32BE(writer, (uint)entry.TrailEntryIndex);
-                WriteUInt32BE(writer, entry.Unk1);
-                WriteUInt32BE(writer, entry.Unk2);
-                WriteUInt32BE(writer, entry.Unk3);
-                WriteUInt32BE(writer, entry.Unk4);
-                WriteUInt32BE(writer, entry.Unk5);
-                WriteUInt32BE(writer, entry.Unk6);
+                WriteUInt32BE(writer, entry.EffectRef);
+                WriteUInt32BE(writer, entry.Field0C);
+                WriteUInt32BE(writer, entry.BillboardPtr);
+                WriteUInt32BE(writer, entry.CacheState);
+                WriteUInt32BE(writer, entry.Field18);
+                WriteUInt32BE(writer, entry.Field1C);
             }
             return header;
         }
 
-        private TrailSectionHeader WritePositions(BinaryWriter writer, List<TrailPositionEntry> entries)
+        private TrailSectionHeader WritePositions(BinaryWriter writer, List<TrailPositionEntry> entries, bool modern)
         {
-            TrailSectionHeader header = new TrailSectionHeader();
-            if (entries.Count == 0)
-                return header;
+            var header = new TrailSectionHeader();
             header.Offset = (int)writer.BaseStream.Position;
             header.Count = entries.Count;
-            header.Size = PositionSize;
-            foreach (TrailPositionEntry entry in entries)
+            header.Size = modern ? PositionSize : 0x20;
+            foreach (var entry in entries)
             {
                 WriteInt32BE(writer, entry.CoordChunkMapId);
                 WriteUInt32BE(writer, (uint)entry.TrailEntryIndex);
-                WriteInt32BE(writer, entry.Unk1);
-                WriteInt32BE(writer, entry.Unk2);
-                WriteInt32BE(writer, entry.Unk3);
-                WriteInt32BE(writer, entry.Unk4);
-                WriteInt32BE(writer, entry.Unk5);
-                WriteInt32BE(writer, entry.Unk6);
-                WriteInt32BE(writer, entry.ClumpChunkMapId);
-                WriteInt32BE(writer, entry.Unk7);
-                WriteInt32BE(writer, entry.Unk8);
-                WriteInt32BE(writer, entry.Unk9);
+                WriteInt32BE(writer, entry.CoordRef);
+                WriteInt32BE(writer, entry.Field0C);
+                WriteInt32BE(writer, entry.Field10);
+                WriteInt32BE(writer, entry.Field14);
+                WriteInt32BE(writer, entry.Field18);
+                WriteInt32BE(writer, entry.Field1C);
+                if (modern) WriteInt32BE(writer, entry.ClumpChunkMapId);
+                if (modern) WriteInt32BE(writer, entry.ClumpRef);
+                if (modern) WriteInt32BE(writer, entry.Field28);
+                if (modern) WriteInt32BE(writer, entry.Field2C);
             }
             return header;
         }
 
-        private TrailSectionHeader WriteForceFields(BinaryWriter writer, List<TrailForceFieldEntry> entries)
+        private TrailSectionHeader WriteForceFields(BinaryWriter writer, List<TrailForceFieldEntry> entries, bool modern)
         {
-            TrailSectionHeader header = new TrailSectionHeader();
-            if (entries.Count == 0)
-                return header;
+            var header = new TrailSectionHeader();
             header.Offset = (int)writer.BaseStream.Position;
             header.Count = entries.Count;
-            header.Size = ForceFieldSize;
-            foreach (TrailForceFieldEntry entry in entries)
+            header.Size = modern ? ForceFieldSize : 0x30;
+            foreach (var entry in entries)
             {
-                WriteInt32BE(writer, entry.Unk1);
+                WriteInt32BE(writer, entry.CoordChunkMapId);
                 WriteUInt32BE(writer, (uint)entry.TrailEntryIndex);
-                WriteInt32BE(writer, entry.Unk2);
-                WriteInt32BE(writer, entry.Unk3);
-                WriteUInt16BE(writer, FloatToUInt16(entry.Unk4));
-                WriteUInt16BE(writer, FloatToUInt16(entry.Unk5));
-                WriteSingleBE(writer, entry.Unk6);
-                WriteInt32BE(writer, entry.Unk7);
-                WriteInt32BE(writer, entry.Unk8);
-                WriteInt32BE(writer, entry.Unk9);
-                WriteSingleBE(writer, entry.Unk10);
-                WriteSingleBE(writer, entry.Unk11);
-                WriteInt32BE(writer, entry.Unk12);
-                WriteInt32BE(writer, entry.Unk13);
-                WriteInt32BE(writer, entry.Unk14);
-                WriteInt32BE(writer, entry.Unk15);
-                WriteInt32BE(writer, entry.Unk16);
+                WriteInt32BE(writer, entry.CoordRef);
+                WriteInt32BE(writer, entry.Field0C);
+                WriteSingleBE(writer, entry.DirectionX);
+                WriteSingleBE(writer, entry.DirectionY);
+                WriteSingleBE(writer, entry.DirectionZ);
+                WriteSingleBE(writer, entry.VelocityGrowth);
+                WriteUInt32BE(writer, (uint)entry.ForceType);
+                WriteSingleBE(writer, entry.Radius);
+                WriteSingleBE(writer, entry.Strength);
+                WriteUInt32BE(writer, (uint)entry.ForceFlags);
+                if (modern) WriteInt32BE(writer, entry.ClumpChunkMapId);
+                if (modern) WriteInt32BE(writer, entry.ClumpRef);
+                if (modern) WriteInt32BE(writer, entry.Field38);
+                if (modern) WriteInt32BE(writer, entry.Field3C);
             }
             return header;
         }
@@ -802,18 +883,17 @@ namespace NSUNS4_Character_Manager
             header.Count = entries.Count;
             foreach (TrailNodeEntry entry in entries)
             {
-                WriteUInt32BE(writer, entry.Unk1);
+                WriteUInt32BE(writer, entry.Field00);
                 WriteUInt32BE(writer, (uint)entry.TrailEntryIndex);
-                WriteUInt32BE(writer, entry.Unk2);
-                WriteUInt32BE(writer, entry.Unk3);
+                WriteUInt32BE(writer, entry.Field08);
+                WriteUInt32BE(writer, entry.Field0C);
                 WriteUInt32BE(writer, (uint)entry.Frames.Count);
                 foreach (TrailFrameEntry frame in entry.Frames)
                 {
-                    WriteUInt16BE(writer, frame.Flag);
-                    WriteUInt16BE(writer, (ushort)Math.Max(0, Math.Min(65535, (int)Math.Round(frame.Frame * 100f))));
+                    WriteUInt32BE(writer, frame.Raw);
                 }
                 if ((entry.Frames.Count & 1) == 0)
-                    WriteUInt32BE(writer, 0);
+                    WriteUInt32BE(writer, entry.Padding);
             }
             header.Size = (int)(writer.BaseStream.Position - start);
             return header;
@@ -1045,20 +1125,13 @@ namespace NSUNS4_Character_Manager
 
         private void AnyPropertyGrid_PropertyValueChanged(object s, PropertyValueChangedEventArgs e)
         {
+            (s as PropertyGrid)?.Refresh();
             RefreshAllDisplays();
         }
 
         private string GetChunkDisplay(TrailChunkState chunk)
         {
-            return string.Format(
-                "{0} | {1} | M:{2} R:{3} P:{4} F:{5} N:{6}",
-                chunk.ChunkName,
-                chunk.ChunkPath,
-                chunk.Managers.Count,
-                chunk.Resources.Count,
-                chunk.Positions.Count,
-                chunk.ForceFields.Count,
-                chunk.Nodes.Count);
+            return chunk != null ? chunk.ChunkName : string.Empty;
         }
 
         private string GetMapDisplay(TrailChunkState chunk, int index)
@@ -1098,8 +1171,16 @@ namespace NSUNS4_Character_Manager
         private void positionsListBox_Format(object sender, ListControlConvertEventArgs e) { e.Value = e.ListItem is TrailPositionEntry ? string.Format("{0} | Coord {1}", GetTrailEntryDisplay(CurrentChunk, ((TrailPositionEntry)e.ListItem).TrailEntryIndex), GetMapDisplay(CurrentChunk, ((TrailPositionEntry)e.ListItem).CoordChunkMapId)) : string.Empty; }
         private void forceFieldsListBox_Format(object sender, ListControlConvertEventArgs e) { e.Value = e.ListItem is TrailForceFieldEntry ? string.Format("{0} | Force Field", GetTrailEntryDisplay(CurrentChunk, ((TrailForceFieldEntry)e.ListItem).TrailEntryIndex)) : string.Empty; }
         private void mapIdsListBox_Format(object sender, ListControlConvertEventArgs e) { e.Value = e.ListItem is TrailMapEntry ? GetMapDisplay(CurrentChunk, CurrentChunk.MapEntries.IndexOf((TrailMapEntry)e.ListItem)) : string.Empty; }
-        private void nodesListBox_Format(object sender, ListControlConvertEventArgs e) { e.Value = e.ListItem is TrailNodeEntry ? string.Format("{0} | {1} frames", GetTrailEntryDisplay(CurrentChunk, ((TrailNodeEntry)e.ListItem).TrailEntryIndex), ((TrailNodeEntry)e.ListItem).Frames.Count) : string.Empty; }
-        private void framesListBox_Format(object sender, ListControlConvertEventArgs e) { e.Value = e.ListItem is TrailFrameEntry ? string.Format("Frame {0} | Flag {1} | Time {2:0.00}", CurrentNode != null ? CurrentNode.Frames.IndexOf((TrailFrameEntry)e.ListItem) : -1, ((TrailFrameEntry)e.ListItem).Flag, ((TrailFrameEntry)e.ListItem).Frame) : string.Empty; }
+        private void nodesListBox_Format(object sender, ListControlConvertEventArgs e)
+        {
+            var node = e.ListItem as TrailNodeEntry;
+            if (node == null || CurrentChunk == null) { e.Value = string.Empty; return; }
+            int ordinal = CurrentChunk.Nodes.IndexOf(node);
+            string manager = ordinal >= 0 && ordinal < CurrentChunk.Managers.Count
+                ? GetManagerDisplay(CurrentChunk, ordinal) : "Unlinked timeline";
+            e.Value = string.Format("{0} | {1} events", manager, node.Frames.Count);
+        }
+        private void framesListBox_Format(object sender, ListControlConvertEventArgs e) { e.Value = e.ListItem is TrailFrameEntry ? string.Format("Frame {0} | Enabled {1} | Time units {2}", CurrentNode != null ? CurrentNode.Frames.IndexOf((TrailFrameEntry)e.ListItem) : -1, ((TrailFrameEntry)e.ListItem).Enabled, ((TrailFrameEntry)e.ListItem).TimeUnits) : string.Empty; }
 
         private void managersListBox_SelectedIndexChanged(object sender, EventArgs e) { this.managersPropertyGrid.SelectedObject = CurrentChunk != null && this.managersListBox.SelectedItem is TrailManagerEntry ? new TrailManagerViewModel(this, CurrentChunk, (TrailManagerEntry)this.managersListBox.SelectedItem) : null; }
         private void resourcesListBox_SelectedIndexChanged(object sender, EventArgs e) { this.resourcesPropertyGrid.SelectedObject = CurrentChunk != null && this.resourcesListBox.SelectedItem is TrailResourceEntry ? new TrailResourceViewModel(this, CurrentChunk, (TrailResourceEntry)this.resourcesListBox.SelectedItem) : null; }
@@ -1319,7 +1400,7 @@ namespace NSUNS4_Character_Manager
             if (CurrentChunk == null || CurrentChunk.Managers.Count == 0)
                 return 0;
 
-            return CurrentChunk.Managers.Max(x => x.EntryIndex) + 1;
+            return CurrentChunk.Managers[CurrentChunk.Managers.Count - 1].EntryIndex + 1;
         }
 
         private void RefreshFramesAndDisplays()
@@ -1339,6 +1420,11 @@ namespace NSUNS4_Character_Manager
                 if (entry.CoordChunkMapId >= startIndex) entry.CoordChunkMapId += delta;
                 if (entry.ClumpChunkMapId >= startIndex) entry.ClumpChunkMapId += delta;
             }
+            foreach (TrailForceFieldEntry entry in CurrentChunk.ForceFields)
+            {
+                if (entry.CoordChunkMapId >= startIndex) entry.CoordChunkMapId += delta;
+                if (entry.ClumpChunkMapId >= startIndex) entry.ClumpChunkMapId += delta;
+            }
         }
 
         private void RemapDeletedMapReference(int removedIndex)
@@ -1352,6 +1438,11 @@ namespace NSUNS4_Character_Manager
                 entry.CoordChunkMapId = RemapDeletedIndex(entry.CoordChunkMapId, removedIndex);
                 entry.ClumpChunkMapId = RemapDeletedIndex(entry.ClumpChunkMapId, removedIndex);
             }
+            foreach (TrailForceFieldEntry entry in CurrentChunk.ForceFields)
+            {
+                entry.CoordChunkMapId = RemapDeletedIndex(entry.CoordChunkMapId, removedIndex);
+                entry.ClumpChunkMapId = RemapDeletedIndex(entry.ClumpChunkMapId, removedIndex);
+            }
         }
 
         private void RemapTrailEntryReferences(int removedIndex, int replacement)
@@ -1361,8 +1452,6 @@ namespace NSUNS4_Character_Manager
             foreach (TrailPositionEntry entry in CurrentChunk.Positions)
                 entry.TrailEntryIndex = RemapDeletedIndex(entry.TrailEntryIndex, removedIndex, replacement);
             foreach (TrailForceFieldEntry entry in CurrentChunk.ForceFields)
-                entry.TrailEntryIndex = RemapDeletedIndex(entry.TrailEntryIndex, removedIndex, replacement);
-            foreach (TrailNodeEntry entry in CurrentChunk.Nodes)
                 entry.TrailEntryIndex = RemapDeletedIndex(entry.TrailEntryIndex, removedIndex, replacement);
         }
 
@@ -1390,123 +1479,135 @@ namespace NSUNS4_Character_Manager
             [Category("Map")] public string Path { get { return entry.Path; } set { entry.Path = value ?? string.Empty; } }
         }
 
+        private static int ToScaleRaw(float value, int maximum)
+        {
+            if (float.IsNaN(value) || float.IsInfinity(value) || value < 0 || value > maximum / 255f)
+                throw new ArgumentOutOfRangeException("value", "Value must be between 0 and " + (maximum / 255f).ToString(CultureInfo.CurrentCulture) + ".");
+            return (int)Math.Round(value * 255.0, MidpointRounding.AwayFromZero);
+        }
+
         private sealed class TrailManagerViewModel : IChunkViewModel
         {
             private readonly TrailManagerEntry entry;
             public TrailManagerViewModel(Tool_TrailEditor editor, TrailChunkState chunk, TrailManagerEntry entry) { Editor = editor; Chunk = chunk; this.entry = entry; }
-            public Tool_TrailEditor Editor { get; private set; }
-            public TrailChunkState Chunk { get; private set; }
-            [Category("Links"), TypeConverter(typeof(MapReferenceConverter))] public int AnimationMap { get { return entry.AnimationChunkMapId; } set { entry.AnimationChunkMapId = value; } }
-            [Category("Main")] public int EntryIndex { get { return entry.EntryIndex; } set { entry.EntryIndex = value; } }
-            [Category("Main")] public uint Lifetime { get { return entry.Lifetime; } set { entry.Lifetime = value; } }
-            [Category("Main")] public ushort TrailType { get { return entry.TrailType; } set { entry.TrailType = value; } }
-            [Category("Unknown")] public uint Unk1 { get { return entry.Unk1; } set { entry.Unk1 = value; } }
-            [Category("Unknown")] public uint Unk2 { get { return entry.Unk2; } set { entry.Unk2 = value; } }
-            [Category("Unknown")] public uint Unk3 { get { return entry.Unk3; } set { entry.Unk3 = value; } }
-            [Category("Unknown")] public ushort Unk4 { get { return entry.Unk4; } set { entry.Unk4 = value; } }
-            [Category("Unknown")] public float Unk5 { get { return entry.Unk5; } set { entry.Unk5 = value; } }
-            [Category("Unknown")] public float Unk6 { get { return entry.Unk6; } set { entry.Unk6 = value; } }
-            [Category("Start Color")] public float ColorRStart { get { return entry.ColorRStart; } set { entry.ColorRStart = value; } }
-            [Category("Start Color")] public float ColorGStart { get { return entry.ColorGStart; } set { entry.ColorGStart = value; } }
-            [Category("Start Color")] public float ColorBStart { get { return entry.ColorBStart; } set { entry.ColorBStart = value; } }
-            [Category("Start Color")] public float ColorAStart { get { return entry.ColorAStart; } set { entry.ColorAStart = value; } }
-            [Category("Middle Color")] public float ColorRMiddle { get { return entry.ColorRMiddle; } set { entry.ColorRMiddle = value; } }
-            [Category("Middle Color")] public float ColorGMiddle { get { return entry.ColorGMiddle; } set { entry.ColorGMiddle = value; } }
-            [Category("Middle Color")] public float ColorBMiddle { get { return entry.ColorBMiddle; } set { entry.ColorBMiddle = value; } }
-            [Category("Middle Color")] public float ColorAMiddle { get { return entry.ColorAMiddle; } set { entry.ColorAMiddle = value; } }
-            [Category("End Color")] public float ColorREnd { get { return entry.ColorREnd; } set { entry.ColorREnd = value; } }
-            [Category("End Color")] public float ColorGEnd { get { return entry.ColorGEnd; } set { entry.ColorGEnd = value; } }
-            [Category("End Color")] public float ColorBEnd { get { return entry.ColorBEnd; } set { entry.ColorBEnd = value; } }
-            [Category("End Color")] public float ColorAEnd { get { return entry.ColorAEnd; } set { entry.ColorAEnd = value; } }
-            [Category("Other")] public float ColorFactor { get { return entry.ColorFactor; } set { entry.ColorFactor = value; } }
-            [Category("Width")] public float ScaleFirstBoneStart { get { return entry.ScaleFirstBoneStart; } set { entry.ScaleFirstBoneStart = value; } }
-            [Category("Width")] public float ScaleSecondBoneStart { get { return entry.ScaleSecondBoneStart; } set { entry.ScaleSecondBoneStart = value; } }
-            [Category("Width")] public float ScaleFirstBoneMiddle { get { return entry.ScaleFirstBoneMiddle; } set { entry.ScaleFirstBoneMiddle = value; } }
-            [Category("Width")] public float ScaleSecondBoneMiddle { get { return entry.ScaleSecondBoneMiddle; } set { entry.ScaleSecondBoneMiddle = value; } }
-            [Category("Width")] public float ScaleFirstBoneEnd { get { return entry.ScaleFirstBoneEnd; } set { entry.ScaleFirstBoneEnd = value; } }
-            [Category("Width")] public float ScaleSecondBoneEnd { get { return entry.ScaleSecondBoneEnd; } set { entry.ScaleSecondBoneEnd = value; } }
+            [Browsable(false)] public Tool_TrailEditor Editor { get; private set; }
+            [Browsable(false)] public TrailChunkState Chunk { get; private set; }
+            [Category("Links"), TypeConverter(typeof(MapReferenceConverter))] public int AnimationChunkMapId { get { return entry.AnimationChunkMapId; } set { entry.AnimationChunkMapId = value; } }
+            [Category("Parameters"), Description("Offset 0x04. Matches resources, positions and forces; timelines use array order.")] public int EntryIndex { get { return entry.EntryIndex; } set { entry.EntryIndex = value; } }
+            [Category("Parameters"), Description("Offset 0x08. Replaced on load: resolved AnimationChunkIndex pointer.")] public uint AnimationRef { get { return entry.AnimationRef; } set { entry.AnimationRef = value; } }
+            [Category("Parameters"), Description("Offset 0x0C. Unused by game loader: skipped prefix word.")] public uint Field0C { get { return entry.Field0C; } set { entry.Field0C = value; } }
+            [Category("Parameters"), Description("Offset 0x10. Unknown: copied; no use found in traced NX/S4/Connections trail code.")] public uint Field10 { get { return entry.Field10; } set { entry.Field10 = value; } }
+            [Category("Parameters"), Description("Offset 0x14. History length in 30 FPS frames.")] public uint Lifetime { get { return entry.Lifetime; } set { entry.Lifetime = value; } }
+            [Category("Parameters"), Description("Offset 0x18. Extra samples used to smooth the trail.")] public uint Subdivisions { get { return entry.Subdivisions; } set { entry.Subdivisions = value; } }
+            [Category("Parameters"), Description("Offset 0x1C. Named bits are used; other bits have no confirmed game use.")] public TrailFlags TrailFlags { get { return entry.TrailFlags; } set { entry.TrailFlags = value; } }
+            [Category("Parameters"), Description("Offset 0x1E. Unused without FadeAlpha bit; otherwise fade per update after stop, raw / 255.")] public byte AlphaFade { get { return entry.AlphaFade; } set { entry.AlphaFade = value; } }
+            [Category("Scaled values"), RefreshProperties(RefreshProperties.All), Description("Editable game value (raw / 255), rounded to the nearest stored step.")] public float AlphaFadeValue { get { return entry.AlphaFade / 255f; } set { entry.AlphaFade = (byte)ToScaleRaw(value, byte.MaxValue); } }
+            [Category("Parameters"), Description("Offset 0x1F. Unused without FadeWidth bit; otherwise shrink per update after stop, raw / 255.")] public byte WidthFade { get { return entry.WidthFade; } set { entry.WidthFade = value; } }
+            [Category("Scaled values"), RefreshProperties(RefreshProperties.All), Description("Editable game value (raw / 255), rounded to the nearest stored step.")] public float WidthFadeValue { get { return entry.WidthFade / 255f; } set { entry.WidthFade = (byte)ToScaleRaw(value, byte.MaxValue); } }
+            [Category("Parameters"), Description("Offset 0x20. ")] public float ColorStartR { get { return entry.ColorStartR; } set { entry.ColorStartR = value; } }
+            [Category("Parameters"), Description("Offset 0x24. ")] public float ColorStartG { get { return entry.ColorStartG; } set { entry.ColorStartG = value; } }
+            [Category("Parameters"), Description("Offset 0x28. ")] public float ColorStartB { get { return entry.ColorStartB; } set { entry.ColorStartB = value; } }
+            [Category("Parameters"), Description("Offset 0x2C. ")] public float ColorStartA { get { return entry.ColorStartA; } set { entry.ColorStartA = value; } }
+            [Category("Parameters"), Description("Offset 0x30. ")] public float ColorMiddleR { get { return entry.ColorMiddleR; } set { entry.ColorMiddleR = value; } }
+            [Category("Parameters"), Description("Offset 0x34. ")] public float ColorMiddleG { get { return entry.ColorMiddleG; } set { entry.ColorMiddleG = value; } }
+            [Category("Parameters"), Description("Offset 0x38. ")] public float ColorMiddleB { get { return entry.ColorMiddleB; } set { entry.ColorMiddleB = value; } }
+            [Category("Parameters"), Description("Offset 0x3C. ")] public float ColorMiddleA { get { return entry.ColorMiddleA; } set { entry.ColorMiddleA = value; } }
+            [Category("Parameters"), Description("Offset 0x40. ")] public float ColorEndR { get { return entry.ColorEndR; } set { entry.ColorEndR = value; } }
+            [Category("Parameters"), Description("Offset 0x44. ")] public float ColorEndG { get { return entry.ColorEndG; } set { entry.ColorEndG = value; } }
+            [Category("Parameters"), Description("Offset 0x48. ")] public float ColorEndB { get { return entry.ColorEndB; } set { entry.ColorEndB = value; } }
+            [Category("Parameters"), Description("Offset 0x4C. ")] public float ColorEndA { get { return entry.ColorEndA; } set { entry.ColorEndA = value; } }
+            [Category("Parameters"), Description("Offset 0x50. Middle color position along trail distance, 0..1.")] public float ColorFactor { get { return entry.ColorFactor; } set { entry.ColorFactor = value; } }
+            [Category("Parameters"), Description("Offset 0x54. Width samples use raw / 255.")] public ushort WidthStart { get { return entry.WidthStart; } set { entry.WidthStart = value; } }
+            [Category("Scaled values"), RefreshProperties(RefreshProperties.All), Description("Editable game value (raw / 255), rounded to the nearest stored step.")] public float WidthStartValue { get { return entry.WidthStart / 255f; } set { entry.WidthStart = (ushort)ToScaleRaw(value, ushort.MaxValue); } }
+            [Category("Parameters"), Description("Offset 0x56. ")] public ushort WidthMiddle { get { return entry.WidthMiddle; } set { entry.WidthMiddle = value; } }
+            [Category("Scaled values"), RefreshProperties(RefreshProperties.All), Description("Editable game value (raw / 255), rounded to the nearest stored step.")] public float WidthMiddleValue { get { return entry.WidthMiddle / 255f; } set { entry.WidthMiddle = (ushort)ToScaleRaw(value, ushort.MaxValue); } }
+            [Category("Parameters"), Description("Offset 0x58. ")] public ushort WidthEnd { get { return entry.WidthEnd; } set { entry.WidthEnd = value; } }
+            [Category("Scaled values"), RefreshProperties(RefreshProperties.All), Description("Editable game value (raw / 255), rounded to the nearest stored step.")] public float WidthEndValue { get { return entry.WidthEnd / 255f; } set { entry.WidthEnd = (ushort)ToScaleRaw(value, ushort.MaxValue); } }
+            [Category("Parameters"), Description("Offset 0x5A. Middle width position in the history; raw / 255.")] public byte WidthMiddlePoint { get { return entry.WidthMiddlePoint; } set { entry.WidthMiddlePoint = value; } }
+            [Category("Scaled values"), RefreshProperties(RefreshProperties.All), Description("Editable game value (raw / 255), rounded to the nearest stored step.")] public float WidthMiddlePointValue { get { return entry.WidthMiddlePoint / 255f; } set { entry.WidthMiddlePoint = (byte)ToScaleRaw(value, byte.MaxValue); } }
+            [Category("Parameters"), Description("Offset 0x5B. Unknown use: copied byte, seen as 0x00 and 0x20. Preserve it.")] public byte Field5B { get { return entry.Field5B; } set { entry.Field5B = value; } }
+            [Category("Parameters"), Description("Offset 0x5C. Unknown: copied without byte swapping; no confirmed game use.")] public uint Field5C { get { return entry.Field5C; } set { entry.Field5C = value; } }
         }
 
         private sealed class TrailResourceViewModel : IChunkViewModel
         {
             private readonly TrailResourceEntry entry;
             public TrailResourceViewModel(Tool_TrailEditor editor, TrailChunkState chunk, TrailResourceEntry entry) { Editor = editor; Chunk = chunk; this.entry = entry; }
-            public Tool_TrailEditor Editor { get; private set; }
-            public TrailChunkState Chunk { get; private set; }
-            [Category("Links"), TypeConverter(typeof(MapReferenceConverter))] public int EffectMap { get { return entry.EffectChunkMapId; } set { entry.EffectChunkMapId = value; } }
-            [Category("Links"), TypeConverter(typeof(ManagerReferenceConverter))] public int TrailEntry { get { return entry.TrailEntryIndex; } set { entry.TrailEntryIndex = value; } }
-            [Category("Unknown")] public uint Unk1 { get { return entry.Unk1; } set { entry.Unk1 = value; } }
-            [Category("Unknown")] public uint Unk2 { get { return entry.Unk2; } set { entry.Unk2 = value; } }
-            [Category("Unknown")] public uint Unk3 { get { return entry.Unk3; } set { entry.Unk3 = value; } }
-            [Category("Unknown")] public uint Unk4 { get { return entry.Unk4; } set { entry.Unk4 = value; } }
-            [Category("Unknown")] public uint Unk5 { get { return entry.Unk5; } set { entry.Unk5 = value; } }
-            [Category("Unknown")] public uint Unk6 { get { return entry.Unk6; } set { entry.Unk6 = value; } }
+            [Browsable(false)] public Tool_TrailEditor Editor { get; private set; }
+            [Browsable(false)] public TrailChunkState Chunk { get; private set; }
+            [Category("Links"), TypeConverter(typeof(MapReferenceConverter))] public int EffectChunkMapId { get { return entry.EffectChunkMapId; } set { entry.EffectChunkMapId = value; } }
+            [Category("Links"), TypeConverter(typeof(ManagerReferenceConverter))] public int TrailEntryIndex { get { return entry.TrailEntryIndex; } set { entry.TrailEntryIndex = value; } }
+            [Category("Parameters"), Description("Offset 0x08. Replaced on load: resolved EffectChunkIndex pointer.")] public uint EffectRef { get { return entry.EffectRef; } set { entry.EffectRef = value; } }
+            [Category("Parameters"), Description("Offset 0x0C. Unused by game loader: skipped prefix word.")] public uint Field0C { get { return entry.Field0C; } set { entry.Field0C = value; } }
+            [Category("Parameters"), Description("Offset 0x10. Used as cached billboard pointer; replaced by lookup when CacheState is 0.")] public uint BillboardPtr { get { return entry.BillboardPtr; } set { entry.BillboardPtr = value; } }
+            [Category("Parameters"), Description("Offset 0x14. 0 allows lookup; runtime becomes 2. Keep file value unchanged.")] public uint CacheState { get { return entry.CacheState; } set { entry.CacheState = value; } }
+            [Category("Parameters"), Description("Offset 0x18. Unknown: copied beside cache state; no confirmed game use.")] public uint Field18 { get { return entry.Field18; } set { entry.Field18 = value; } }
+            [Category("Parameters"), Description("Offset 0x1C. Unknown: copied resource tail; no confirmed game use.")] public uint Field1C { get { return entry.Field1C; } set { entry.Field1C = value; } }
         }
 
         private sealed class TrailPositionViewModel : IChunkViewModel
         {
             private readonly TrailPositionEntry entry;
             public TrailPositionViewModel(Tool_TrailEditor editor, TrailChunkState chunk, TrailPositionEntry entry) { Editor = editor; Chunk = chunk; this.entry = entry; }
-            public Tool_TrailEditor Editor { get; private set; }
-            public TrailChunkState Chunk { get; private set; }
-            [Category("Links"), TypeConverter(typeof(MapReferenceConverter))] public int CoordMap { get { return entry.CoordChunkMapId; } set { entry.CoordChunkMapId = value; } }
-            [Category("Links"), TypeConverter(typeof(MapReferenceConverter))] public int ClumpMap { get { return entry.ClumpChunkMapId; } set { entry.ClumpChunkMapId = value; } }
-            [Category("Links"), TypeConverter(typeof(ManagerReferenceConverter))] public int TrailEntry { get { return entry.TrailEntryIndex; } set { entry.TrailEntryIndex = value; } }
-            [Category("Unknown")] public int Unk1 { get { return entry.Unk1; } set { entry.Unk1 = value; } }
-            [Category("Unknown")] public int Unk2 { get { return entry.Unk2; } set { entry.Unk2 = value; } }
-            [Category("Unknown")] public int Unk3 { get { return entry.Unk3; } set { entry.Unk3 = value; } }
-            [Category("Unknown")] public int Unk4 { get { return entry.Unk4; } set { entry.Unk4 = value; } }
-            [Category("Unknown")] public int Unk5 { get { return entry.Unk5; } set { entry.Unk5 = value; } }
-            [Category("Unknown")] public int Unk6 { get { return entry.Unk6; } set { entry.Unk6 = value; } }
-            [Category("Unknown")] public int Unk7 { get { return entry.Unk7; } set { entry.Unk7 = value; } }
-            [Category("Unknown")] public int Unk8 { get { return entry.Unk8; } set { entry.Unk8 = value; } }
-            [Category("Unknown")] public int Unk9 { get { return entry.Unk9; } set { entry.Unk9 = value; } }
+            [Browsable(false)] public Tool_TrailEditor Editor { get; private set; }
+            [Browsable(false)] public TrailChunkState Chunk { get; private set; }
+            [Category("Links"), TypeConverter(typeof(MapReferenceConverter))] public int CoordChunkMapId { get { return entry.CoordChunkMapId; } set { entry.CoordChunkMapId = value; } }
+            [Category("Links"), TypeConverter(typeof(ManagerReferenceConverter))] public int TrailEntryIndex { get { return entry.TrailEntryIndex; } set { entry.TrailEntryIndex = value; } }
+            [Category("Parameters"), Description("Offset 0x08. Replaced on load: resolved CoordChunkIndex pointer.")] public int CoordRef { get { return entry.CoordRef; } set { entry.CoordRef = value; } }
+            [Category("Parameters"), Description("Offset 0x0C. Unknown prefix word: no confirmed game use.")] public int Field0C { get { return entry.Field0C; } set { entry.Field0C = value; } }
+            [Category("Parameters"), Description("Offset 0x10. Unknown: copied; no endpoint offset or other game use established.")] public int Field10 { get { return entry.Field10; } set { entry.Field10 = value; } }
+            [Category("Parameters"), Description("Offset 0x14. Unknown: copied; no confirmed game use.")] public int Field14 { get { return entry.Field14; } set { entry.Field14 = value; } }
+            [Category("Parameters"), Description("Offset 0x18. Unknown: copied; no confirmed game use.")] public int Field18 { get { return entry.Field18; } set { entry.Field18 = value; } }
+            [Category("Parameters"), Description("Offset 0x1C. Unknown: copied; no confirmed game use.")] public int Field1C { get { return entry.Field1C; } set { entry.Field1C = value; } }
+            [Category("Links"), TypeConverter(typeof(MapReferenceConverter))] public int ClumpChunkMapId { get { return entry.ClumpChunkMapId; } set { entry.ClumpChunkMapId = value; } }
+            [Category("Parameters"), Description("Offset 0x24. Replaced on load when ClumpChunkIndex != -1: clump reference pointer.")] public int ClumpRef { get { return entry.ClumpRef; } set { entry.ClumpRef = value; } }
+            [Category("Parameters"), Description("Offset 0x28. Unused by game loader (0x79+): not mapped into runtime data.")] public int Field28 { get { return entry.Field28; } set { entry.Field28 = value; } }
+            [Category("Parameters"), Description("Offset 0x2C. Unused by game loader (0x79+): not mapped into runtime data.")] public int Field2C { get { return entry.Field2C; } set { entry.Field2C = value; } }
         }
 
         private sealed class TrailForceFieldViewModel : IChunkViewModel
         {
             private readonly TrailForceFieldEntry entry;
             public TrailForceFieldViewModel(Tool_TrailEditor editor, TrailChunkState chunk, TrailForceFieldEntry entry) { Editor = editor; Chunk = chunk; this.entry = entry; }
-            public Tool_TrailEditor Editor { get; private set; }
-            public TrailChunkState Chunk { get; private set; }
-            [Category("Links"), TypeConverter(typeof(ManagerReferenceConverter))] public int TrailEntry { get { return entry.TrailEntryIndex; } set { entry.TrailEntryIndex = value; } }
-            [Category("Unknown")] public int Unk1 { get { return entry.Unk1; } set { entry.Unk1 = value; } }
-            [Category("Unknown")] public int Unk2 { get { return entry.Unk2; } set { entry.Unk2 = value; } }
-            [Category("Unknown")] public int Unk3 { get { return entry.Unk3; } set { entry.Unk3 = value; } }
-            [Category("Unknown")] public float Unk4 { get { return entry.Unk4; } set { entry.Unk4 = value; } }
-            [Category("Unknown")] public float Unk5 { get { return entry.Unk5; } set { entry.Unk5 = value; } }
-            [Category("Unknown")] public float Unk6 { get { return entry.Unk6; } set { entry.Unk6 = value; } }
-            [Category("Unknown")] public int Unk7 { get { return entry.Unk7; } set { entry.Unk7 = value; } }
-            [Category("Unknown")] public int Unk8 { get { return entry.Unk8; } set { entry.Unk8 = value; } }
-            [Category("Unknown")] public int Unk9 { get { return entry.Unk9; } set { entry.Unk9 = value; } }
-            [Category("Unknown")] public float Unk10 { get { return entry.Unk10; } set { entry.Unk10 = value; } }
-            [Category("Unknown")] public float Unk11 { get { return entry.Unk11; } set { entry.Unk11 = value; } }
-            [Category("Unknown")] public int Unk12 { get { return entry.Unk12; } set { entry.Unk12 = value; } }
-            [Category("Unknown")] public int Unk13 { get { return entry.Unk13; } set { entry.Unk13 = value; } }
-            [Category("Unknown")] public int Unk14 { get { return entry.Unk14; } set { entry.Unk14 = value; } }
-            [Category("Unknown")] public int Unk15 { get { return entry.Unk15; } set { entry.Unk15 = value; } }
-            [Category("Unknown")] public int Unk16 { get { return entry.Unk16; } set { entry.Unk16 = value; } }
+            [Browsable(false)] public Tool_TrailEditor Editor { get; private set; }
+            [Browsable(false)] public TrailChunkState Chunk { get; private set; }
+            [Category("Links"), TypeConverter(typeof(MapReferenceConverter))] public int CoordChunkMapId { get { return entry.CoordChunkMapId; } set { entry.CoordChunkMapId = value; } }
+            [Category("Links"), TypeConverter(typeof(ManagerReferenceConverter))] public int TrailEntryIndex { get { return entry.TrailEntryIndex; } set { entry.TrailEntryIndex = value; } }
+            [Category("Parameters"), Description("Offset 0x08. Replaced on load: resolved CoordChunkIndex pointer.")] public int CoordRef { get { return entry.CoordRef; } set { entry.CoordRef = value; } }
+            [Category("Parameters"), Description("Offset 0x0C. Unknown prefix word: no confirmed game use.")] public int Field0C { get { return entry.Field0C; } set { entry.Field0C = value; } }
+            [Category("Parameters"), Description("Offset 0x10. ")] public float DirectionX { get { return entry.DirectionX; } set { entry.DirectionX = value; } }
+            [Category("Parameters"), Description("Offset 0x14. ")] public float DirectionY { get { return entry.DirectionY; } set { entry.DirectionY = value; } }
+            [Category("Parameters"), Description("Offset 0x18. ")] public float DirectionZ { get { return entry.DirectionZ; } set { entry.DirectionZ = value; } }
+            [Category("Parameters"), Description("Offset 0x1C. Each update: velocity += velocity * value.")] public float VelocityGrowth { get { return entry.VelocityGrowth; } set { entry.VelocityGrowth = value; } }
+            [Category("Parameters"), Description("Offset 0x20. ")] public TrailForceType ForceType { get { return entry.ForceType; } set { entry.ForceType = value; } }
+            [Category("Parameters"), Description("Offset 0x24. Game multiplies this value by 100.")] public float Radius { get { return entry.Radius; } set { entry.Radius = value; } }
+            [Category("Parameters"), Description("Offset 0x28. ")] public float Strength { get { return entry.Strength; } set { entry.Strength = value; } }
+            [Category("Parameters"), Description("Offset 0x2C. Named bits are used; other bits have no confirmed game use.")] public TrailForceFlags ForceFlags { get { return entry.ForceFlags; } set { entry.ForceFlags = value; } }
+            [Category("Links"), TypeConverter(typeof(MapReferenceConverter))] public int ClumpChunkMapId { get { return entry.ClumpChunkMapId; } set { entry.ClumpChunkMapId = value; } }
+            [Category("Parameters"), Description("Offset 0x34. Replaced on load when ClumpChunkIndex != -1: clump reference pointer.")] public int ClumpRef { get { return entry.ClumpRef; } set { entry.ClumpRef = value; } }
+            [Category("Parameters"), Description("Offset 0x38. Unused by game loader (0x79+): not mapped into runtime data.")] public int Field38 { get { return entry.Field38; } set { entry.Field38 = value; } }
+            [Category("Parameters"), Description("Offset 0x3C. Unused by game loader (0x79+): not mapped into runtime data.")] public int Field3C { get { return entry.Field3C; } set { entry.Field3C = value; } }
         }
 
         private sealed class TrailNodeViewModel : IChunkViewModel
         {
             private readonly TrailNodeEntry entry;
             public TrailNodeViewModel(Tool_TrailEditor editor, TrailChunkState chunk, TrailNodeEntry entry) { Editor = editor; Chunk = chunk; this.entry = entry; }
-            public Tool_TrailEditor Editor { get; private set; }
-            public TrailChunkState Chunk { get; private set; }
-            [Category("Links"), TypeConverter(typeof(ManagerReferenceConverter))] public int TrailEntry { get { return entry.TrailEntryIndex; } set { entry.TrailEntryIndex = value; } }
+            [Browsable(false)] public Tool_TrailEditor Editor { get; private set; }
+            [Browsable(false)] public TrailChunkState Chunk { get; private set; }
+            [Category("Stored metadata"), Description("Unused stored ID. Timelines attach to managers by node order.")] public int TrailEntry { get { return entry.TrailEntryIndex; } set { entry.TrailEntryIndex = value; } }
             [Category("Main")] public int FrameCount { get { return entry.Frames.Count; } }
-            [Category("Unknown")] public uint Unk1 { get { return entry.Unk1; } set { entry.Unk1 = value; } }
-            [Category("Unknown")] public uint Unk2 { get { return entry.Unk2; } set { entry.Unk2 = value; } }
-            [Category("Unknown")] public uint Unk3 { get { return entry.Unk3; } set { entry.Unk3 = value; } }
+            [Category("Unknown")] public uint Field00 { get { return entry.Field00; } set { entry.Field00 = value; } }
+            [Category("Unknown")] public uint Field08 { get { return entry.Field08; } set { entry.Field08 = value; } }
+            [Category("Unknown")] public uint Field0C { get { return entry.Field0C; } set { entry.Field0C = value; } }
         }
 
         private sealed class TrailFrameViewModel
         {
             private readonly TrailFrameEntry entry;
             public TrailFrameViewModel(TrailFrameEntry entry) { this.entry = entry; }
-            [Category("Main")] public ushort Flag { get { return entry.Flag; } set { entry.Flag = value; } }
-            [Category("Main")] public float Frame { get { return entry.Frame; } set { entry.Frame = value; } }
+            [Category("Main")] public bool Enabled { get { return entry.Enabled; } set { entry.Enabled = value; } }
+            [Category("Main")] [Description("Ticks in version 0x79 and later; legacy units in older versions.")] public uint TimeUnits { get { return entry.TimeUnits; } set { entry.TimeUnits = value; } }
         }
 
         private sealed class MapReferenceConverter : Int32Converter

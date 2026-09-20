@@ -1,6 +1,7 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -10,7 +11,95 @@ namespace NSUNS4_Character_Manager
 {
     public partial class Tool_ParticleEditor : Form
     {
-        private const string ClipboardPrefix = "NS4_PARTICLE_EDITOR_ENTRY:";
+        private const string ClipboardPrefix = "NS4_PARTICLE_EDITOR_ENTRY_V2:";
+
+        private static object WrapProperties(object entry, ParticleChunkState chunk)
+        {
+            return entry == null ? null : new ParticlePropertyView(entry, chunk);
+        }
+
+        private sealed class ParticlePropertyView : CustomTypeDescriptor
+        {
+            private readonly object entry;
+            private readonly ParticleChunkState chunk;
+            public ParticlePropertyView(object entry, ParticleChunkState chunk)
+                : base(TypeDescriptor.GetProvider(entry).GetTypeDescriptor(entry))
+            {
+                this.entry = entry;
+                this.chunk = chunk;
+            }
+            public override object GetPropertyOwner(PropertyDescriptor pd) { return entry; }
+            public override PropertyDescriptorCollection GetProperties() { return GetProperties(null); }
+            public override PropertyDescriptorCollection GetProperties(Attribute[] attributes)
+            {
+                return new PropertyDescriptorCollection(TypeDescriptor.GetProperties(entry, attributes).Cast<PropertyDescriptor>()
+                    .Select(property => property.Name.EndsWith("ChunkIndex", StringComparison.Ordinal)
+                        ? new ChunkReferenceProperty(property, chunk, entry) : property).ToArray());
+            }
+        }
+
+        private sealed class ChunkReferenceProperty : PropertyDescriptor
+        {
+            private readonly PropertyDescriptor property;
+            private readonly object entry;
+            private readonly TypeConverter converter;
+            public ChunkReferenceProperty(PropertyDescriptor property, ParticleChunkState chunk, object entry) : base(property)
+            {
+                this.property = property;
+                this.entry = entry;
+                converter = new ParticleChunkReferenceConverter(chunk, property.PropertyType, () => property.GetValue(entry));
+            }
+            public override TypeConverter Converter { get { return converter; } }
+            public override Type ComponentType { get { return property.ComponentType; } }
+            public override Type PropertyType { get { return property.PropertyType; } }
+            public override bool IsReadOnly { get { return property.IsReadOnly; } }
+            public override object GetValue(object component) { return property.GetValue(entry); }
+            public override void SetValue(object component, object value) { property.SetValue(entry, value); OnValueChanged(component, EventArgs.Empty); }
+            public override bool CanResetValue(object component) { return property.CanResetValue(entry); }
+            public override void ResetValue(object component) { property.ResetValue(entry); }
+            public override bool ShouldSerializeValue(object component) { return property.ShouldSerializeValue(entry); }
+        }
+
+        private sealed class ParticleChunkReferenceConverter : TypeConverter
+        {
+            private readonly ParticleChunkState chunk;
+            private readonly Type valueType;
+            private readonly Func<object> currentValue;
+            public ParticleChunkReferenceConverter(ParticleChunkState chunk, Type valueType, Func<object> currentValue)
+            {
+                this.chunk = chunk;
+                this.valueType = valueType;
+                this.currentValue = currentValue;
+            }
+            public override bool GetStandardValuesSupported(ITypeDescriptorContext context) { return true; }
+            public override bool GetStandardValuesExclusive(ITypeDescriptorContext context) { return true; }
+            public override StandardValuesCollection GetStandardValues(ITypeDescriptorContext context)
+            {
+                var values = new List<object>();
+                if (valueType == typeof(int)) values.Add(-1);
+                for (int i = 0; i < chunk.References.Count; i++) values.Add(Convert.ChangeType(i, valueType));
+                object current = currentValue();
+                if (!values.Contains(current)) values.Add(current);
+                return new StandardValuesCollection(values);
+            }
+            public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) { return sourceType == typeof(string) || base.CanConvertFrom(context, sourceType); }
+            public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
+            {
+                if (destinationType == typeof(string))
+                {
+                    long index = Convert.ToInt64(value);
+                    return (index < 0 ? "None" : ParticleChunkCodec.ResolveReferenceLabel(chunk, (uint)index)) + " (" + index + ")";
+                }
+                return base.ConvertTo(context, culture, value, destinationType);
+            }
+            public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+            {
+                if (value is string)
+                    foreach (object option in GetStandardValues(context))
+                        if (string.Equals((string)ConvertTo(context, culture, option, typeof(string)), (string)value, StringComparison.Ordinal)) return option;
+                return base.ConvertFrom(context, culture, value);
+            }
+        }
 
         private sealed class ReferenceComboItem
         {
@@ -32,17 +121,16 @@ namespace NSUNS4_Character_Manager
         }
 
         private readonly List<ParticleChunkState> chunks = new List<ParticleChunkState>();
+        private readonly Dictionary<Tool_ParticleChunkReferenceEditor, ParticleChunkState> openReferenceEditors = new Dictionary<Tool_ParticleChunkReferenceEditor, ParticleChunkState>();
         private string filePath = "";
         private bool suppressChunkSelection;
         private bool suppressSectionSelection;
         private bool suppressReferenceSelection;
         private bool suppressIndexSelection;
         private int lastNodeIndex = -1;
-
         public Tool_ParticleEditor()
         {
             InitializeComponent();
-            InitializeNodeGrid();
             ResetUi();
         }
 
@@ -77,37 +165,17 @@ namespace NSUNS4_Character_Manager
         private ParticlePositionEntry SelectedPositionEntry { get { return GetSelectedItem(SelectedChunk != null ? SelectedChunk.Positions : null, positionListBox); } }
         private ParticleForceFieldEntry SelectedForceFieldEntry { get { return GetSelectedItem(SelectedChunk != null ? SelectedChunk.ForceFields : null, forceFieldListBox); } }
 
-        private void InitializeNodeGrid()
+        private void entryPropertyGrid_PropertyValueChanged(object sender, PropertyValueChangedEventArgs e)
         {
-            nodeEventsGrid.AutoGenerateColumns = false;
-            nodeEventsGrid.Columns.Clear();
+            RefreshSectionLists();
+            PopulateReferenceCombos();
+            PopulateIndexControls();
+        }
 
-            DataGridViewComboBoxColumn actionColumn = new DataGridViewComboBoxColumn();
-            actionColumn.Name = "actionColumn";
-            actionColumn.HeaderText = "State";
-            actionColumn.DisplayStyle = DataGridViewComboBoxDisplayStyle.DropDownButton;
-            actionColumn.ValueType = typeof(string);
-            actionColumn.DataSource = new[] { "Enabled / On", "Disabled / Off" };
-            actionColumn.Width = 180;
-            nodeEventsGrid.Columns.Add(actionColumn);
-
-            DataGridViewTextBoxColumn timeColumn = new DataGridViewTextBoxColumn();
-            timeColumn.Name = "timeColumn";
-            timeColumn.HeaderText = "Time (ms)";
-            timeColumn.ToolTipText = "Exact timeline time stored in the file. Valid range: 0 to 2147483647 milliseconds.";
-            timeColumn.ValueType = typeof(uint);
-            timeColumn.Width = 135;
-            nodeEventsGrid.Columns.Add(timeColumn);
-
-            DataGridViewTextBoxColumn frameColumn = new DataGridViewTextBoxColumn();
-            frameColumn.Name = "frameColumn";
-            frameColumn.HeaderText = "Frame (30 FPS)";
-            frameColumn.ToolTipText = "Read-only frame equivalent calculated as milliseconds / 33.";
-            frameColumn.ValueType = typeof(float);
-            frameColumn.DefaultCellStyle.Format = "0.###";
-            frameColumn.ReadOnly = true;
-            frameColumn.Width = 140;
-            nodeEventsGrid.Columns.Add(frameColumn);
+        private void cutoutPropertyGrid_PropertyValueChanged(object sender, PropertyValueChangedEventArgs e)
+        {
+            if (SelectedChunk != null)
+                SelectedChunk.CutoutData = cutoutPropertyGrid.SelectedObject as ParticleCutoutData;
         }
 
         private void ResetUi()
@@ -129,6 +197,7 @@ namespace NSUNS4_Character_Manager
             resourcePropertyGrid.SelectedObject = null;
             positionPropertyGrid.SelectedObject = null;
             forceFieldPropertyGrid.SelectedObject = null;
+            cutoutPropertyGrid.SelectedObject = null;
             ClearReferenceCombos();
             suppressIndexSelection = true;
             managerEntryIndexNumericUpDown.Value = 0;
@@ -206,7 +275,7 @@ namespace NSUNS4_Character_Manager
             suppressChunkSelection = true;
             chunkComboBox.Items.Clear();
             foreach (ParticleChunkState chunk in chunks.Where(x => !x.DeletePending))
-                chunkComboBox.Items.Add(ParticleChunkCodec.BuildChunkLabel(chunk));
+                chunkComboBox.Items.Add(chunk.ChunkName);
             chunkComboBox.SelectedIndex = chunkComboBox.Items.Count == 0 ? -1 : Math.Max(0, Math.Min(selectedIndex, chunkComboBox.Items.Count - 1));
             suppressChunkSelection = false;
 
@@ -229,6 +298,8 @@ namespace NSUNS4_Character_Manager
             particleTabControl.Enabled = true;
             chunkNameTextBox.Text = chunk.ChunkName;
             chunkPathTextBox.Text = chunk.ChunkPath;
+            cutoutPropertyGrid.Enabled = chunk.Version >= 0x7B;
+            cutoutPropertyGrid.SelectedObject = chunk.Version >= 0x7B ? chunk.CutoutData ?? new ParticleCutoutData() : null;
             EnsureNodeLinks(chunk);
             RefreshSectionLists();
             LoadSelectedObjects();
@@ -259,14 +330,14 @@ namespace NSUNS4_Character_Manager
         private static string BuildManagerLabel(ParticleChunkState chunk, ParticleManagerEntry entry)
         {
             int slot = GetManagerSlotByEntryIndex(chunk, entry.EntryIndex);
-            string slotLabel = slot >= 0 ? "Particle Setting " + slot : "Particle Setting ?";
+            string slotLabel = slot >= 0 ? "Particle Setting " + (slot + 1) + " (ID " + entry.EntryIndex + ")" : "Particle Setting ?";
             return slotLabel + " | " + ParticleChunkCodec.ResolveReferenceLabel(chunk, entry.AnimationChunkIndex);
         }
 
         private static string BuildParticleLinkLabel(ParticleChunkState chunk, uint entryIndex)
         {
             int slot = GetManagerSlotByEntryIndex(chunk, entryIndex);
-            return slot >= 0 ? "Particle Setting " + slot : "Unlinked Setting (" + entryIndex + ")";
+            return slot >= 0 ? "Particle Setting " + (slot + 1) : "Unlinked Setting (" + entryIndex + ")";
         }
 
         private static int GetManagerSlotByEntryIndex(ParticleChunkState chunk, uint entryIndex)
@@ -287,13 +358,13 @@ namespace NSUNS4_Character_Manager
         {
             List<ParticleNodeEvent> events = ParticleChunkCodec.DecodeNodeEvents(node);
             string linkLabel = nodeIndex >= 0 && nodeIndex < chunk.Managers.Count
-                ? "Particle Setting " + nodeIndex
+                ? "Particle Setting " + (nodeIndex + 1)
                 : "Unlinked Setting";
             if (events.Count == 0)
                 return linkLabel + " | No timing";
 
             return linkLabel + " | " + string.Join(", ", events.Select(x =>
-                string.Format(CultureInfo.InvariantCulture, "{0} @ {1:0.###}", x.Action == ParticleNodeAction.On ? "Enabled" : "Disabled", x.Frame)).ToArray());
+                string.Format(CultureInfo.InvariantCulture, "{0} @ {1:0.###}", GetNodeActionLabel(x.Action), x.Frame)).ToArray());
         }
 
         private static void EnsureNodeLinks(ParticleChunkState chunk)
@@ -303,9 +374,6 @@ namespace NSUNS4_Character_Manager
 
             while (chunk.Nodes.Count < chunk.Managers.Count)
                 chunk.Nodes.Add(new ParticleNodeEntry());
-
-            while (chunk.Nodes.Count > chunk.Managers.Count && chunk.Managers.Count >= 0)
-                chunk.Nodes.RemoveAt(chunk.Nodes.Count - 1);
         }
 
         private static void RefreshSectionList<T>(ListBox listBox, List<T> items, Func<T, string> labelBuilder)
@@ -330,10 +398,10 @@ namespace NSUNS4_Character_Manager
             if (chunk == null)
                 return;
 
-            managerPropertyGrid.SelectedObject = SelectedManagerEntry;
-            resourcePropertyGrid.SelectedObject = SelectedResourceEntry;
-            positionPropertyGrid.SelectedObject = SelectedPositionEntry;
-            forceFieldPropertyGrid.SelectedObject = SelectedForceFieldEntry;
+            managerPropertyGrid.SelectedObject = WrapProperties(SelectedManagerEntry, chunk);
+            resourcePropertyGrid.SelectedObject = WrapProperties(SelectedResourceEntry, chunk);
+            positionPropertyGrid.SelectedObject = WrapProperties(SelectedPositionEntry, chunk);
+            forceFieldPropertyGrid.SelectedObject = WrapProperties(SelectedForceFieldEntry, chunk);
             PopulateReferenceCombos();
             PopulateIndexControls();
             LoadSelectedNode();
@@ -423,9 +491,6 @@ namespace NSUNS4_Character_Manager
 
             foreach (var pair in chunk.References.Select((entry, index) => new { entry, index }))
             {
-                if (!string.IsNullOrWhiteSpace(chunkTypeFilter) && !string.Equals(pair.entry.Type, chunkTypeFilter, StringComparison.OrdinalIgnoreCase))
-                    continue;
-
                 comboBox.Items.Add(new ReferenceComboItem
                 {
                     Index = pair.index,
@@ -443,7 +508,8 @@ namespace NSUNS4_Character_Manager
                 }
             }
 
-            comboBox.SelectedIndex = comboBox.Items.Count > 0 ? 0 : -1;
+            comboBox.Items.Add(new ReferenceComboItem { Index = selectedIndex, Label = "(unresolved chunk index " + selectedIndex + ")" });
+            comboBox.SelectedIndex = comboBox.Items.Count - 1;
         }
 
         private void LoadSelectedNode()
@@ -453,7 +519,10 @@ namespace NSUNS4_Character_Manager
             if (chunk != null && nodeListBox.SelectedIndex >= 0 && nodeListBox.SelectedIndex < chunk.Nodes.Count)
             {
                 foreach (ParticleNodeEvent particleEvent in ParticleChunkCodec.DecodeNodeEvents(chunk.Nodes[nodeListBox.SelectedIndex]))
-                    nodeEventsGrid.Rows.Add(GetNodeActionLabel(particleEvent.Action), particleEvent.TimeMilliseconds, particleEvent.Frame);
+                {
+                    int rowIndex = nodeEventsGrid.Rows.Add(GetNodeActionLabel(particleEvent.Action), particleEvent.TimeMilliseconds, particleEvent.Frame);
+                    nodeEventsGrid.Rows[rowIndex].Tag = particleEvent.PreservedFlags;
+                }
             }
             PopulateIndexControls();
             lastNodeIndex = nodeListBox.SelectedIndex;
@@ -551,8 +620,8 @@ namespace NSUNS4_Character_Manager
                 if (!uint.TryParse(timeValue.ToString(), NumberStyles.Integer, CultureInfo.CurrentCulture, out timeMilliseconds) &&
                     !uint.TryParse(timeValue.ToString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out timeMilliseconds))
                     throw new InvalidOperationException("Timeline time values must be whole milliseconds.");
-                if (timeMilliseconds > 0x7FFFFFFFu)
-                    throw new InvalidOperationException("Timeline time values must be between 0 and 2147483647 milliseconds.");
+                if (timeMilliseconds > 0x0FFFFFFFu)
+                    throw new InvalidOperationException("Timeline time values must be between 0 and 268435455 milliseconds.");
 
                 ParticleNodeAction action;
                 if (actionValue is ParticleNodeAction)
@@ -560,7 +629,7 @@ namespace NSUNS4_Character_Manager
                 else
                     action = ParseNodeActionLabel(actionValue.ToString());
 
-                events.Add(new ParticleNodeEvent { Action = action, TimeMilliseconds = timeMilliseconds });
+                events.Add(new ParticleNodeEvent { Action = action, TimeMilliseconds = timeMilliseconds, PreservedFlags = row.Tag is uint ? (uint)row.Tag : 0u });
             }
 
             ParticleNodeEntry updatedTimeline = ParticleChunkCodec.EncodeNodeEvents(events);
@@ -667,17 +736,35 @@ namespace NSUNS4_Character_Manager
             if (chunk == null)
                 return;
 
-            using (Tool_ParticleChunkReferenceEditor editor = new Tool_ParticleChunkReferenceEditor(chunk.References))
-            {
-                if (editor.ShowDialog(this) != DialogResult.OK)
-                    return;
+            Tool_ParticleChunkReferenceEditor editor = new Tool_ParticleChunkReferenceEditor(chunk.References);
+            openReferenceEditors.Add(editor, chunk);
+            editor.FormClosed += referenceEditor_FormClosed;
+            editor.Show(this);
+            editor.Activate();
+        }
 
+        private void referenceEditor_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            Tool_ParticleChunkReferenceEditor editor = sender as Tool_ParticleChunkReferenceEditor;
+            ParticleChunkState chunk;
+            if (editor == null || !openReferenceEditors.TryGetValue(editor, out chunk))
+                return;
+
+            openReferenceEditors.Remove(editor);
+            editor.FormClosed -= referenceEditor_FormClosed;
+            if (editor.DialogResult == DialogResult.OK && !chunk.DeletePending)
+            {
                 RemapReferenceIndexes(chunk, editor);
                 chunk.References.Clear();
                 chunk.References.AddRange(editor.BuildResult());
+            }
+
+            if (ReferenceEquals(SelectedChunk, chunk))
+            {
                 RefreshSectionLists();
                 LoadSelectedObjects();
             }
+            editor.Dispose();
         }
 
         private static void RemapReferenceIndexes(ParticleChunkState chunk, Tool_ParticleChunkReferenceEditor editor)
@@ -757,7 +844,7 @@ namespace NSUNS4_Character_Manager
                 return;
 
             ParticleManagerEntry newEntry = template != null ? ParticleChunkCodec.CloneManager(template) : new ParticleManagerEntry();
-            newEntry.EntryIndex = (uint)SelectedChunk.Managers.Count;
+            newEntry.EntryIndex = GetNextParticleEntryIndex();
             SelectedChunk.Managers.Add(newEntry);
             EnsureNodeLinks(SelectedChunk);
             RefreshSelectedSection(false);
@@ -792,7 +879,7 @@ namespace NSUNS4_Character_Manager
             ParticleManagerEntry manager = duplicateCurrent && SelectedNodeRowIndex >= 0 && SelectedNodeRowIndex < SelectedChunk.Managers.Count
                 ? ParticleChunkCodec.CloneManager(SelectedChunk.Managers[SelectedNodeRowIndex])
                 : new ParticleManagerEntry();
-            manager.EntryIndex = (uint)SelectedChunk.Managers.Count;
+            manager.EntryIndex = GetNextParticleEntryIndex();
             SelectedChunk.Managers.Add(manager);
 
             ParticleNodeEntry node = duplicateCurrent && SelectedNodeRowIndex >= 0 && SelectedNodeRowIndex < SelectedChunk.Nodes.Count
@@ -866,6 +953,14 @@ namespace NSUNS4_Character_Manager
 
         private void CopyManagerEntry() { CopyClipboardEntry(SelectedManagerEntry, "manager"); }
 
+        private uint GetNextParticleEntryIndex()
+        {
+            if (SelectedChunk == null || SelectedChunk.Managers.Count == 0)
+                return 0;
+
+            return SelectedChunk.Managers[SelectedChunk.Managers.Count - 1].EntryIndex + 1;
+        }
+
         private void PasteManagerEntry()
         {
             ParticleManagerEntry entry;
@@ -927,7 +1022,7 @@ namespace NSUNS4_Character_Manager
                 return;
 
             ParticleManagerEntry manager = entry.Manager != null ? ParticleChunkCodec.CloneManager(entry.Manager) : new ParticleManagerEntry();
-            manager.EntryIndex = (uint)SelectedChunk.Managers.Count;
+            manager.EntryIndex = GetNextParticleEntryIndex();
             SelectedChunk.Managers.Add(manager);
             SelectedChunk.Nodes.Add(entry.Node != null ? ParticleChunkCodec.CloneNode(entry.Node) : new ParticleNodeEntry());
             RefreshSelectedSection(false);
@@ -935,14 +1030,13 @@ namespace NSUNS4_Character_Manager
 
         private static string GetNodeActionLabel(ParticleNodeAction action)
         {
-            return action == ParticleNodeAction.On ? "Enabled / On" : "Disabled / Off";
+            return action == ParticleNodeAction.On ? "Start" : action == ParticleNodeAction.Clear ? "Clear" : "Stop";
         }
 
         private static ParticleNodeAction ParseNodeActionLabel(string value)
         {
-            return string.Equals(value, "Disabled / Off", StringComparison.OrdinalIgnoreCase)
-                ? ParticleNodeAction.Off
-                : ParticleNodeAction.On;
+            if (value == "Clear") return ParticleNodeAction.Clear;
+            return value == "Stop" || value == "Disabled / Off" ? ParticleNodeAction.Off : ParticleNodeAction.On;
         }
 
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
@@ -982,7 +1076,7 @@ namespace NSUNS4_Character_Manager
 
             DataGridViewRow row = nodeEventsGrid.Rows[e.RowIndex];
             uint timeMilliseconds;
-            if (row.Cells[1].Value != null && uint.TryParse(row.Cells[1].Value.ToString(), NumberStyles.Integer, CultureInfo.CurrentCulture, out timeMilliseconds) && timeMilliseconds <= 0x7FFFFFFFu)
+            if (row.Cells[1].Value != null && uint.TryParse(row.Cells[1].Value.ToString(), NumberStyles.Integer, CultureInfo.CurrentCulture, out timeMilliseconds) && timeMilliseconds <= 0x0FFFFFFFu)
                 row.Cells[2].Value = timeMilliseconds / 33f;
         }
 
@@ -1010,9 +1104,14 @@ namespace NSUNS4_Character_Manager
                     SelectedResourceEntry.EffectChunkIndex = v;
                     if (chunk != null && v < chunk.References.Count)
                     {
-                        ParticleEffectChunkType type;
-                        if (Enum.TryParse(chunk.References[(int)v].Type, true, out type))
-                            SelectedResourceEntry.EffectChunkType = type;
+                        switch (chunk.References[(int)v].Type)
+                        {
+                            case "nuccChunkClump": SelectedResourceEntry.ResourceType = ParticleResourceType.Clump; break;
+                            case "nuccChunkAnm": SelectedResourceEntry.ResourceType = ParticleResourceType.Animation; break;
+                            case "nuccChunkSprite": SelectedResourceEntry.ResourceType = ParticleResourceType.Sprite3D; break;
+                            case "nuccChunkSprite2": SelectedResourceEntry.ResourceType = ParticleResourceType.Sprite2D; break;
+                            case "nuccChunkBillboard": SelectedResourceEntry.ResourceType = ParticleResourceType.Billboard; break;
+                        }
                     }
                 });
             }

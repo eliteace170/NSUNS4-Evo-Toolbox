@@ -251,5 +251,15 @@ namespace NSUNS4_Character_Manager.Tools
             tool.collisionChanged = true;
             MessageBox.Show("Collision data saved.");
         }
+
+        private void numberFormatToolStripButton_Click(object sender, EventArgs e)
+        {
+            bool displayHexadecimal = numberFormatToolStripButton.Checked;
+            numericUpDown1.Hexadecimal = displayHexadecimal;
+            numericUpDown2.Hexadecimal = displayHexadecimal;
+            numericUpDown3.Hexadecimal = displayHexadecimal;
+            numericUpDown4.Hexadecimal = displayHexadecimal;
+            numberFormatToolStripButton.Text = displayHexadecimal ? "Hex" : "Dec";
+        }
     }
 }

@@ -559,9 +559,7 @@ namespace NSUNS4_Character_Manager
             this.costumeGrid.AccessibleName = "Base and awake costume slots";
             this.costumeGrid.AllowUserToAddRows = false;
             this.costumeGrid.AllowUserToDeleteRows = false;
-            this.costumeGrid.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.costumeGrid.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left;
             this.costumeGrid.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.costumeGrid.BackgroundColor = System.Drawing.SystemColors.Window;
             this.costumeGrid.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
@@ -570,6 +568,9 @@ namespace NSUNS4_Character_Manager
             this.awakeCostumeColumn});
             this.costumeGrid.Location = new System.Drawing.Point(8, 22);
             this.costumeGrid.MultiSelect = false;
+            this.costumeGrid.AllowUserToResizeColumns = false;
+            this.costumeGrid.AllowUserToResizeRows = false;
+            this.costumeGrid.AllowUserToOrderColumns = false;
             this.costumeGrid.Name = "costumeGrid";
             this.costumeGrid.RowHeadersVisible = false;
             this.costumeGrid.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
@@ -2934,6 +2935,8 @@ namespace NSUNS4_Character_Manager
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoScroll = true;
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
             this.ClientSize = new System.Drawing.Size(1120, 632);
             this.Controls.Add(this.editorTabs);
             this.Controls.Add(this.menuStrip1);
@@ -2946,9 +2949,9 @@ namespace NSUNS4_Character_Manager
             this.Controls.Add(this.copySettingsButton);
             this.Controls.Add(this.pasteSettingsButton);
             this.MainMenuStrip = this.menuStrip1;
-            this.MinimumSize = new System.Drawing.Size(1136, 671);
+
             this.Name = "Tool_DuelPlayerParamEditor";
-            this.Text = "DuelPlayerParam Editor";
+            this.Text = "DuelPlayerParam Editor 2.0";
             this.Load += new System.EventHandler(this.Tool_DuelPlayerParamEditor_Load_1);
             this.editorTabs.ResumeLayout(false);
             this.identityTab.ResumeLayout(false);
